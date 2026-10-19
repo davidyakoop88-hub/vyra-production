@@ -3,8 +3,8 @@
 //
 // För varje modell som har en post i vyra-panelregister.js — i dag Top Gift · Design 1–3 och
 // Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
-// (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js) och Top Like/Coins/Points (vyra-ranking-panel.js)
-// — kräver provet
+// (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js), Top Like/Coins/Points (vyra-ranking-panel.js) och
+// målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -131,6 +131,33 @@ const RANKING_MODELLER = [
   ...RANKING_DESIGNER.map(d => RANKING('Top Coins', d, 'catalog:ranking:templateTopCoins:' + d, d === 'prism-horizontal', RANKING_EXEMPEL('tcName', 'tcValue'))),
   ...RANKING_DESIGNER.map(d => RANKING('Top Points', d, 'catalog:ranking:templateTopPoints:' + d, d === 'celestial', RANKING_EXEMPEL('tpName', 'tpValue'))),
 ];
+// MÅLEN (vyra-mal-panel.js, PR 9): Follower/Like/Diamond Goal (9), Heart Me Goal (12) och Gift Campaign
+// (6). Panelkraven gäller alla 27. Effekten per kontroll mäts för ett format per sort i Social Goal
+// (cirkel, liggande, stående), ett tema i Heart Me och en design per orientering i Gift Campaign.
+//
+// TIDSSTYRT: Mål och Startvärde i Social Goal är serverdata (VyraGoals.patchTarget/patchBaseline) och
+// syns först när servern svarat — utan server återställs fältet, vilket är det provet ser. Kampanjens
+// entré, rörelse och ljud syns bara medan de spelar
+// (rörelsen är kontinuerlig och räknas av mätningen som brus). Allt det provas i mal-livevag, liksom
+// Heart Me:s firande (som här syns som en klass på widgeten, och i livevägen som en animation).
+const MAL_SERVER = { pfGoalCurrent: 'startvärdet sparas i målet på servern — provas i mal-livevag.browser.test.js',
+  pfGoalTarget: 'målet sparas i målet på servern — provas i mal-livevag.browser.test.js' };
+const SOCIAL = [['followers', 'crown-orbit', 'circle'], ['followers', 'crown-rail', 'landscape'], ['followers', 'crown-tower', 'portrait'],
+  ['likes', 'heart-orbit', 'circle'], ['likes', 'heart-rail', 'landscape'], ['likes', 'heart-tower', 'portrait'],
+  ['diamonds', 'diamond-orbit', 'circle'], ['diamonds', 'diamond-rail', 'landscape'], ['diamonds', 'diamond-tower', 'portrait']];
+const HJARTTEMAN = ['classic', 'dark', 'emerald', 'galaxy', 'golden', 'ice', 'neon', 'ocean', 'sakura', 'frost', 'midnight', 'citrus'];
+const MAL_MODELLER = [
+  ...SOCIAL.map(([sort, id, format]) => ({ namn: 'Social Goal · ' + id, nyckel: `catalog:socialgoal:${sort}:${id}:${format}`,
+    effekt: ['crown-orbit', 'heart-rail', 'diamond-tower'].includes(id), aterstall: { utseende: 'goalGlow', innehall: 'goalTitle' }, tidsstyrt: MAL_SERVER })),
+  ...HJARTTEMAN.map(t => ({ namn: 'Heart Me Goal · ' + t, nyckel: 'catalog:heartgoal:' + t, effekt: t === 'classic',
+    aterstall: { utseende: 'heartColor', innehall: 'templateTitle' } })),
+  ...['gold', 'platinum', 'emerald'].flatMap(t => ['landscape', 'portrait'].map(o => ({ namn: `Gift Campaign · ${t} ${o}`,
+    nyckel: `catalog:giftcampaign:${t}:${o}`, effekt: (t === 'gold' && o === 'landscape') || (t === 'emerald' && o === 'portrait'),
+    aterstall: { utseende: 'campaignMotion', innehall: 'templateTitle' },
+    tidsstyrt: { campaignDirection: 'entrén syns bara medan den spelar — provas i mal-livevag.browser.test.js',
+      campaignMotion: 'rörelsen är kontinuerlig — provas i mal-livevag.browser.test.js',
+      campaignSound: 'ljudet hörs bara vid en gåva — provas i mal-livevag.browser.test.js' } }))),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -140,13 +167,14 @@ const MODELLER = [
   ...ALERT_MODELLER,
   ...MVP_MODELLER,
   ...RANKING_MODELLER,
+  ...MAL_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 // st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st").
 const ENHET = /(px|%|ms|×|°|s|st)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
-// exempelpoäng (coins).
-const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng)$/;
+// exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor).
+const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng|Mål|Startvärde|Gåva \d: mål)$/;
 const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important;caret-color:transparent!important}';
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk

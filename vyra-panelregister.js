@@ -47,7 +47,7 @@
   // Gemensamma block (spec 1.5). Innehållet i varje block definieras i vyra-panelram.js.
   const STD = Object.freeze(['std-position', 'std-storlek', 'std-text', 'std-bakgrund', 'std-entre', 'std-aterstall']);
   const KALLOR = Object.freeze(['egen', 'exempel', 'live']);
-  const MEDIETYPER = Object.freeze(['bild', 'video']);
+  const MEDIETYPER = Object.freeze(['bild', 'video', 'gava']);
   const ARV = Object.freeze(['highlight', 'secondary', 'text', 'background', 'fontFamily']);
 
   const poster = [];
@@ -93,7 +93,8 @@
       }
       if (!arText(k.falt)) fel.push(`${namn}: falt saknas`);
       if (k.typ === 'val' && !k.legacyId && !Array.isArray(k.alternativ)) fel.push(`${namn}: val kräver alternativ`);
-      // media byggs av vyra-mediaval.js. medietyp är 'bild' (standard) eller 'video'; lagring 'meta'
+      // media byggs av vyra-mediaval.js. medietyp är 'bild' (standard), 'video' eller 'gava' (en gåva ur
+      // familjens galleri, med valj(w) som öppnar det — Gift Campaign); lagring 'meta'
       // sparar {id,…} ur IndexedDB (som w.mediaMeta) i stället för en länk.
       if (k.typ === 'media') {
         if (k.medietyp !== undefined && !MEDIETYPER.includes(k.medietyp)) fel.push(`${namn}: okänd medietyp "${k.medietyp}"`);

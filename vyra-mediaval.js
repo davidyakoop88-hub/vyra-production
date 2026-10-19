@@ -41,6 +41,11 @@
   // pr-<falt>-auto), och "Använd automatisk" inaktiveras aldrig — en inaktiverad knapp kan inte ta
   // emot fokus igen.
   //
+  // GÅVA (typ 'gava', spec 3.2, Gift Campaign i PR 9). Fältet är en gåva ur gåvogalleriet
+  // (assets/gifts/events/…). Kontrollen visar gåvans bild och NAMN, aldrig sökvägen, och har en knapp:
+  // "Välj gåva", som anropar opts.valj(w) — familjen öppnar sitt befintliga galleri, som skriver samma
+  // värde som förut. Namnet ges av opts.gavonamn(w, v), annars läses det ur filnamnet (0001_Rose → Rose).
+  //
   // Inget här körs i overlay-utdata: noden byggs bara när panelen byggs.
 
   const VANTA_MS = 5000, VANTA_GANGER = 24;
@@ -59,9 +64,9 @@
     const o = Object.assign({}, opts || {});
     // Från panelramen kommer registerkontrollen, där typ är 'media' och medietypen står i medietyp.
     const typ = o.medietyp || o.typ;
-    o.typ = typ === 'video' ? 'video' : 'bild';
+    o.typ = typ === 'video' ? 'video' : typ === 'gava' ? 'gava' : 'bild';
     o.lagring = o.lagring === 'meta' ? 'meta' : 'url';
-    if (!o.etikett) o.etikett = o.typ === 'video' ? 'Video' : 'Bild';
+    if (!o.etikett) o.etikett = o.typ === 'video' ? 'Video' : o.typ === 'gava' ? 'Gåva' : 'Bild';
     o.harReserv = !!(o.reserv || o.reservText);
     o.id = 'pr-' + idDel(o.falt || o.id || 'media');
     return o;
@@ -82,7 +87,20 @@
     return 'egen';
   }
 
+  // Gåvans namn ur filnamnet: assets/gifts/events/0001_Rose.png → Rose.
+  function namnUrFil(v) {
+    const fil = String(v == null ? '' : v).split(/[?#]/)[0].split('/').pop() || '';
+    return fil.replace(/\.[a-z0-9]+$/i, '').replace(/^\d+_/, '').replace(/_+/g, ' ').trim();
+  }
+  function gavonamn(o, v) {
+    if (typeof o.gavonamn === 'function') { try { const n = o.gavonamn(o.w, v); if (n) return String(n); } catch (_) {} }
+    const s = sort(v);
+    if (s === 'moln' || s === 'projekt' || s === 'meta') return 'Egen bild';
+    return namnUrFil(v);
+  }
+
   function statustext(o, v) {
+    if (o.typ === 'gava') return gavonamn(o, v) || 'Ingen gåva vald';
     const vad = o.typ === 'video' ? 'Egen video' : 'Egen bild';
     switch (sort(v)) {
       case 'moln': return vad + ' · sparad i molnet';
@@ -111,7 +129,7 @@
   function kalla(o, v) {
     const s = sort(v);
     if (s === 'meta') return null;                        // hämtas asynkront ur IndexedDB
-    if (s === 'tom') return o.reserv || '';
+    if (s === 'tom') return o.typ === 'gava' ? (String(v == null ? '' : v).trim() || o.reserv || '') : (o.reserv || '');
     return String(v).trim();
   }
 
@@ -394,18 +412,25 @@
     nod.dataset.mediaval = o.falt || o.id;
     nod.dataset.mediavalTyp = o.typ;
     nod.dataset.mediavalNyckel = nyckelAv(o.w, o.falt);
-    const valjText = o.typ === 'video' ? 'Välj video' : 'Välj bild';
+    const valjText = o.typ === 'video' ? 'Välj video' : o.typ === 'gava' ? 'Välj gåva' : 'Välj bild';
     const autoText = o.harReserv ? 'Använd automatisk' : 'Ta bort';
     const accept = (o.typ === 'video' ? VIDEOTYPER : BILDTYPER).join(',');
     nod.innerHTML =
       `<div class="vm-rad"><div class="vm-miniatyr" aria-hidden="true"></div>`
       + `<div class="vm-text"><span class="vm-etikett">${esc(o.etikett)}</span><small class="vm-status"></small></div></div>`
       + `<div class="vm-knappar"><button type="button" id="${o.id}-valj" data-vm-valj>${valjText}</button>`
-      + `<button type="button" id="${o.id}-auto" data-vm-auto>${autoText}</button></div>`
+      + (o.typ === 'gava' ? '' : `<button type="button" id="${o.id}-auto" data-vm-auto>${autoText}</button>`) + '</div>'
       + `<small class="vm-meddelande" hidden></small>`
       + `<input type="file" hidden data-vm-fil accept="${accept}" tabindex="-1">`;
     nod._vm = o;
     const fil = nod.querySelector('[data-vm-fil]');
+    if (o.typ === 'gava') {
+      // Galleriet är familjens (Gift Campaign: openPagedGiftPicker). Ingen fil och ingen uppladdning här.
+      fil.remove();
+      nod.querySelector('[data-vm-valj]').onclick = () => { if (typeof o.valj === 'function') { try { o.valj(aktuell(o.w)); } catch (e) { console.error('[VyraMediaval]', e); } } };
+      uppdatera(nod);
+      return nod;
+    }
     nod.querySelector('[data-vm-valj]').onclick = () => fil.click();
     fil.onchange = () => {
       const f = fil.files && fil.files[0];
