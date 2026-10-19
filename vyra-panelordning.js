@@ -58,6 +58,14 @@
     return OKAND;
   }
 
+  // RAMSEKTIONER (vyra-panelram.js) bär sitt nummer i data-sektion och väger sektion × 10. De följer
+  // registret, inte rubriken: "Storlek och placering" hade annars fångats av ^STORLEK som innehåll.
+  function viktFor(grupp) {
+    const nr = Number(grupp.dataset && grupp.dataset.sektion);
+    if (nr >= 1 && nr <= 7) return nr * 10;
+    return vikt(rubrikFor(grupp));
+  }
+
   function rubrikFor(grupp) {
     const h = grupp.querySelector('h4, .pg-toggle');
     return h ? h.textContent.replace(/[▸▾›]/g, '').trim() : '';
@@ -122,6 +130,9 @@
     if (grupper.length < 2) return;
 
     for (const g of grupper) {
+      // En ramsektion fälls aldrig ihop härifrån: ramen bestämmer själv (1 och 2 alltid öppna, 3–6
+      // minns sitt läge, 7 hopfälld).
+      if (g.dataset.sektion) continue;
       const r = rubrikFor(g);
       if (FALLS.has(vikt(r))) gorFallbar(g, r);
     }
@@ -129,7 +140,7 @@
     // Stabil sortering: lika vikt behåller inbördes ordning, så en familj som bygger två grupper
     // efter varandra får behålla sin egen logik.
     const sorterade = grupper
-      .map((g, i) => ({ g, v: vikt(rubrikFor(g)), i }))
+      .map((g, i) => ({ g, v: viktFor(g), i }))
       .sort((a, b) => a.v - b.v || a.i - b.i)
       .map(x => x.g);
 
