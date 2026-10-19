@@ -1,7 +1,7 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
-// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal' och 'kampanj' i Chrome.
-// (Last-X, alertfamiljerna, Battle MVP, rankingen och målen har egna prov längre ner.)
+// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal', 'kampanj' och 'topstreak' i Chrome.
+// (Last-X, alertfamiljerna, Battle MVP, rankingen, målen och Top Streak har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
 // med två widgetar av samma modell plus en Goal Pro och en Top Like. Den första testas. Provet kräver:
@@ -962,5 +962,181 @@ test('målen: ett test som får gå klart passerar entré → visning → utgån
     assert.deepEqual(fel, []);
   } finally {
     await page.close();
+  }
+});
+
+// ---- Top Streak: Clean Flip och Design 1–3 (adaptern 'topstreak', PR 10) -------------------------
+//
+// Testet räknar en combo 1 → 12 på KLONEN med streakSpelaPa (approved-rankings.js) — samma skrivning som
+// livevägen gör på en riktig combo (gift-event-images.js skrivProfilNod) och samma markering ('hit' och
+// rekordpulsen 'record') — medan widgeten flippar mellan gåva och profil i sin egen takt. Livevägen
+// skriver på ALLA Top Streak i state och höjer sändningens rekord (VyraGiftRecords.streakCoins); testet
+// får göra ingetdera. B av samma modell har ett eget namn, så att ett läckage dit syns, och sändningens
+// rekord, topplistorna och sessionStorage ingår i bilden (bild ovan).
+const STREAK_ISOLERING = [
+  // Clean Flip vänder var 8:e sekund: visningen räcker till att profilsidan hinner synas (halva varvet + 1,2 s).
+  { namn: 'Top Streak · Clean Flip', nyckel: 'catalog:topstreak', faser: { entre: 0, visning: 5200, utgang: 500 }, flipp: ['.streak-flip', '8s'] },
+  // Design 1 vänder var 7:e sekund.
+  { namn: 'Top Streak · Design 1', nyckel: 'catalog:topstreak:design:1', faser: { entre: 0, visning: 4700, utgang: 500 }, flipp: ['.tsd1-flip', '7s'] },
+  // Design 3 vänder inte: visningen är bara comboräkningen (0,6 s + 11 × 0,25 s + 1,2 s).
+  { namn: 'Top Streak · Design 3', nyckel: 'catalog:topstreak:design:3', faser: { entre: 0, visning: 4550, utgang: 500 } },
+];
+const streakKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  return { id: k.dataset.id, klass: k.className,
+    namn: (k.querySelector('.approved-streak-copy strong') || {}).textContent || null,
+    varde: (k.querySelector('.approved-streak-copy em b') || {}).textContent || null,
+    em: ((k.querySelector('.approved-streak-copy em') || {}).textContent || '').replace(/\s+/g, ' ').trim(),
+    gava: (k.querySelector('.streak-gift-face img') || {}).getAttribute?.('src') || null,
+    profil: (k.querySelector('.streak-profile-face img') || {}).getAttribute?.('src') || null };
+});
+
+for (const m of STREAK_ISOLERING) {
+  test(`topstreak-adaptern är isolerad: ${m.namn}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      // B har ett eget namn och en egen streak, så att ett läckage från testet till B syns.
+      await page.evaluate(() => { const b = liveWidget('prov-b'); b.dataName = 'AndraWidget'; b.dataValue = 7; save(); render(); });
+      // Sparningens efterföljare (POST /api/state) ska ha gått innan räknarna slås på — som i rankingprovet.
+      await page.waitForTimeout(3500);
+      await installeraRaknare(page);
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'familjen har ingen typväljare');
+      const fore = await bild(page);
+      const rekordFore = await page.evaluate(() => JSON.stringify(window.VyraGiftRecords));
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, 'topstreak');
+      assert.equal(await page.textContent('#pr-testspel'), '■ Stoppa test');
+      assert.deepEqual(s1.faser, m.faser, 'faserna');
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      if (m.flipp) {
+        const flipp = await page.evaluate(([sel]) => { const n = document.querySelector('.canvas [data-testspel-klon] ' + sel); return n ? getComputedStyle(n).animationDuration : null; }, m.flipp);
+        assert.equal(flipp, m.flipp[1], 'klonen flippar i widgetens takt (Flippar var)');
+      }
+
+      // Första gåvan efter 0,6 s: streak 1, exempelgivaren, Cap och exempelprofilen.
+      await page.waitForTimeout(600 + 120);
+      const k1 = await streakKlon(page);
+      assert.ok(k1, 'klonen finns i duken');
+      assert.equal(k1.id, 'prov-a__prov');
+      assert.equal(k1.namn, 'Alex', 'exempelgivaren står på klonen');
+      assert.equal(k1.varde, '1', 'combon börjar på 1');
+      assert.match(k1.em, /×\s?1 STREAK$/, 'prefixet och STREAK står kvar runt talet');
+      assert.match(k1.gava || '', /7460_Cap\.png$/, 'exempelgåvan');
+      assert.match(k1.profil || '', /test-profile\.svg$/, 'exempelprofilen');
+      assert.match(k1.klass, /\bhit\b/, 'klonen är armad som vid en riktig combo');
+      assert.match(k1.klass, /\brecord\b/, 'rekordpulsen startade på klonen');
+      lika(fore, await bild(page), 'efter första gåvan');
+
+      // Combon räknas upp till 12 (11 steg à 0,25 s).
+      await page.waitForTimeout(11 * 250 + 200);
+      assert.equal((await streakKlon(page)).varde, '12', 'combon räknades upp till 12 på klonen');
+      lika(fore, await bild(page), 'efter combon');
+      assert.equal(await page.evaluate(() => JSON.stringify(window.VyraGiftRecords)), rekordFore, 'sändningens rekord är orört');
+      assert.deepEqual(await page.evaluate(() => state.widgets.filter(w => w.type === 'templateTopStreak').map(w => w.id + ':' + w.dataName + ':' + w.dataValue)),
+        ['prov-a:' + JSON.parse(fore.state).widgets[0].dataName + ':' + JSON.parse(fore.state).widgets[0].dataValue, 'prov-b:AndraWidget:7'], 'ingen Top Streak i state fick testets combo');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(200);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      assert.equal(await page.textContent('#pr-testspel'), '▶ Testa widget');
+      await page.waitForTimeout(400);
+      lika(fore, await bild(page), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser och samma början.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+      await page.waitForTimeout(600 + 120);
+      assert.equal((await streakKlon(page)).varde, '1', 'omspelningen börjar på 1 igen');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('topstreak: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:topstreak');
+    // Widgetens egen inträdeseffekt och varaktighet är testets entré (Clean Flip; Design 1–3 har ingen).
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.entranceAnimation = 'fade'; w.entranceDuration = 400; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await bild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    // Visningen räcker till profilsidan: halva varvet (4 s) + 1,2 s, räknat från monteringen.
+    assert.deepEqual(s.faser, { entre: 400, visning: 4800, utgang: 500 }, 'entrén följer widgetens Varaktighet');
+    const klass = await page.evaluate(() => { const k = document.querySelector('.canvas [data-testspel-klon]'); return [k.className, k.style.getPropertyValue('--ws-anim-duration'), k.style.animationDelay]; });
+    assert.match(klass[0], /ws-anim-fade/, 'klonen bär widgetens inträdeseffekt');
+    assert.equal(klass[1].trim(), '400ms', 'och dess varaktighet');
+    assert.equal(klass[2], '', 'den riktiga nodens fördröjning följer inte med, så entrén spelar från början');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await bild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+test('topstreak: ingenting når overlayn', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const editor = await oppnaStudio(fel);
+  const overlay = await context.newPage();
+  try {
+    await layout(editor, 'catalog:topstreak:design:2');
+    await overlay.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    await overlay.waitForTimeout(3000);
+    const lage = await overlay.evaluate(() => ({
+      knapp: !!document.querySelector('#pr-testspel'),
+      spela: window.VyraTestspel ? window.VyraTestspel.spela(state.widgets[0]) : null,
+      klon: !!document.querySelector('[data-testspel-klon]'),
+    }));
+    assert.deepEqual(lage, { knapp: false, spela: false, klon: false }, 'overlayn har ingen knapp och spelar ingenting');
+    const ovFore = await overlay.evaluate(() => [...document.querySelectorAll('.vyra-streak')].map(n => n.outerHTML.replace(/ style="[^"]*"/g, '')).join('|'));
+    await editor.click('#pr-testspel');
+    await editor.waitForTimeout(2500);
+    const ovUnder = await overlay.evaluate(() => ({
+      html: [...document.querySelectorAll('.vyra-streak')].map(n => n.outerHTML.replace(/ style="[^"]*"/g, '')).join('|'),
+      klon: !!document.querySelector('[data-testspel-klon]'),
+    }));
+    assert.equal(ovUnder.klon, false, 'ingen klon i overlayn');
+    assert.equal(ovUnder.html, ovFore, 'overlayns Top Streak är oförändrad medan editorn testar');
+    await editor.click('#pr-testspel');
+    assert.deepEqual(fel, []);
+  } finally {
+    await overlay.close();
+    await editor.close();
   }
 });

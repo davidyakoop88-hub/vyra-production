@@ -4,7 +4,8 @@
 // För varje modell som har en post i vyra-panelregister.js — i dag Top Gift · Design 1–3 och
 // Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
 // (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js), Top Like/Coins/Points (vyra-ranking-panel.js) och
-// målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) — kräver provet
+// målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) och
+// Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -158,6 +159,15 @@ const MAL_MODELLER = [
       campaignMotion: 'rörelsen är kontinuerlig — provas i mal-livevag.browser.test.js',
       campaignSound: 'ljudet hörs bara vid en gåva — provas i mal-livevag.browser.test.js' } }))),
 ];
+// TOP STREAK (vyra-streak-panel.js, PR 10): Clean Flip och Design 1–3. Panelkraven och effekten per kontroll
+// gäller alla fyra — panelerna skiljer sig mellan alla fyra (Clean Flip har accent och entré men inga
+// Visa-rutor, Design 1 vänder, Design 2 har Färg 2, Design 3 har Stil). De 18 kontroller granskningen mätte
+// utan verkan i Clean Flip, och inträdeseffekten i Design 1–3, finns inte i panelen; mätningen här visar att
+// det som står kvar gör något.
+const STREAK_MODELLER = [
+  { namn: 'Top Streak · Clean Flip', nyckel: 'catalog:topstreak', aterstall: { utseende: 'accent', innehall: 'dataName' } },
+  ...[1, 2, 3].map(d => ({ namn: 'Top Streak · Design ' + d, nyckel: 'catalog:topstreak:design:' + d, aterstall: { utseende: 'accent', innehall: 'dataName' } })),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -168,13 +178,15 @@ const MODELLER = [
   ...MVP_MODELLER,
   ...RANKING_MODELLER,
   ...MAL_MODELLER,
+  ...STREAK_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 // st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st").
 const ENHET = /(px|%|ms|×|°|s|st)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
-// exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor).
-const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng|Mål|Startvärde|Gåva \d: mål)$/;
+// exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor), och
+// Top Streaks exempelstreak (antalet gåvor i combon).
+const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng|Mål|Startvärde|Gåva \d: mål|Streak)$/;
 const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important;caret-color:transparent!important}';
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk

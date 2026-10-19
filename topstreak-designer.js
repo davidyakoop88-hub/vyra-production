@@ -29,6 +29,11 @@
   ];
   const hex = (v, f) => (/^#[0-9a-f]{6}$/i.test(v || '') ? v : f);
   const design = w => (w && w.type === 'templateTopStreak' && [1, 2, 3].includes(Number(w.streakDesign)) ? Number(w.streakDesign) : 0);
+  // ÄRV FÄRGSCHEMA (panelspecifikationen 4.2, vyra-streak-panel.js): Färg 1 tar färgschemats accent och
+  // Färg 2 dess andra färg, med media.js bk() — samma regel som de andra familjerna. Utan arv, eller där
+  // bk() saknas (proven som laddar filen ensam), gäller widgetens egna färger som förut. Design 1 ritar
+  // inte Färg 2 och ärver den därför inte heller.
+  const farg = (w, egen, falt) => (typeof bk === 'function' ? bk(w, egen, falt, '') : egen);
 
   function rot(w, d, o, inner) {
     const k = ((Number(w.width) || BAS[d]) / BAS[d]).toFixed(3);
@@ -39,7 +44,7 @@
       .filter(([key]) => w[key] === false).map(([, c]) => ' ' + c).join('');
     const stil = `${o.dold}left:${w.x || 0}px;top:${w.y || 0}px;width:${Number(w.width) || BAS[d]}px;opacity:${(w.opacity ?? 100) / 100};z-index:${w.layer || 1};`
       + `zoom:${w.widgetScale || 1};font-family:${txt(w.fontFamily, 'Inter')};font-style:${w.fontStyle === 'italic' ? 'italic' : 'normal'};`
-      + `--streak:${hex(w.accent, FARG[d])};--a2:${hex(w.accent2, FARG2[d])};--g:${g};--t:${hex(w.dataColor, '#ffffff')};`
+      + `--streak:${hex(farg(w, w.accent, 'highlight'), FARG[d])};--a2:${hex(d === 1 ? w.accent2 : farg(w, w.accent2, 'secondaryText'), FARG2[d])};--g:${g};--t:${hex(w.dataColor, '#ffffff')};`
       + `--tsd-text:${Number(w.dataSize) || 20}px;--tsd-z:${z};--tsd-flip:${Math.max(4, Number(w.streakFlipSeconds) || 7)}s`;
     return `<div class="widget vyra-streak tsd tsd${d}${d === 2 ? ' ram-farg' : ''}${utan}${w.hidden ? ' widget-hidden' : ''}${o.valt ? ' selected' : ''}" data-id="${w.id}" style="${stil}">`
       + `<div class="tsd-in" style="zoom:${k}">${inner}</div>${o.valt ? '<span class="resize-handle">↘</span>' : ''}</div>`;
@@ -100,11 +105,36 @@
   // och Gift-redigeraren har Rubrik och Giftstorlek. Inget av det läses av Design 1–3 — uppmätt
   // 2026-10-17: widgeten ändrades inte av något av dem. Samma grepp som approved-rankings.js använder
   // för Clean Flips döda kontroller. (Höjd visas skrivskyddad av vyra-proportioner.js: höjden är designens.)
+  //
+  // CLEAN FLIP HAR SAMMA DÖDA REGLAGE OCH FLER (2026-10-19, panelspecifikationen 5.4). cleanStreakHtml i
+  // approved-rankings.js läser inte heller Gift-redigerarens kryssrutor eller Textstil: granskningen
+  // mätte alla 18 utan verkan (scratchpad panel-fynd.json). Inträdeseffekten "Gilded Invite" förlorar mot
+  // widgetens egen entré (streakEnter i studio.css) och tas bort ur listan; ett sparat val av den står
+  // kvar, så att listan visar det som faktiskt är valt. GIFT EDITOR-gruppen döljs när inget finns kvar i
+  // den — den tas inte bort, för media.js bygger om gruppen när den saknas.
+  //
+  // REGLAGEN TAS BORT, INTE FÄLTEN. Inget fält raderas ur state, och media.js-omslagen som byggde
+  // reglagen binder bara i samma svep som de bygger (de kollar #streakExtraOptions och
+  // #universalGiftEditor först), så ett senare bind utan omritning kastar inte.
   const UTAN_VERKAN = ['streakLabel', 'streakPrefix', 'showStreakTitle', 'showStreakName', 'showStreakLabel', 'showStreakEffect',
     'streakNameSize', 'streakNumberSize', 'streakSpeed', 'universalShowTitle', 'universalGiftSize'];
+  const UTAN_VERKAN_CLEAN = ['universalShowGift', 'universalShowProfile', 'universalShowName', 'universalShowValue', 'universalFontStyle'];
+  function rensa(w) {
+    const clean = !design(w);
+    const ids = clean ? UTAN_VERKAN.concat(UTAN_VERKAN_CLEAN) : UTAN_VERKAN;
+    const gor = () => {
+      ids.forEach(id => { const el = document.querySelector('.properties #' + id); const l = el && el.closest('label'); if (l) l.remove(); else if (el) el.remove(); });
+      if (!clean) return;
+      const val = document.querySelector('.properties #gafEntrance');
+      const gilded = val && val.querySelector('option[value="gilded"]');
+      if (gilded && val.value !== 'gilded') gilded.remove();
+      const redigerare = document.querySelector('.properties #universalGiftEditor');
+      if (redigerare && !redigerare.querySelector('input, select, textarea, button')) redigerare.hidden = true;
+    };
+    gor(); setTimeout(gor, 0);
+  }
   function bind(w) {
-    const rensa = () => UTAN_VERKAN.forEach(id => { const el = document.querySelector('.properties #' + id); const l = el && el.closest('label'); if (l) l.remove(); else if (el) el.remove(); });
-    rensa(); setTimeout(rensa, 0);
+    rensa(w);
     const commit = () => { if (typeof save === 'function') save(); if (typeof render === 'function') render(); };
     const set = (id, fn) => { const el = document.getElementById(id); if (el) el.onchange = e => { fn(e.target.value); commit(); }; };
     set('tsdFarg', val => { w.accent = val; if (design(w) === 3) w.streakStil = ''; });
@@ -143,7 +173,7 @@
   }
 
   window.VyraStreakDesigner = Object.freeze({
-    har: w => design(w) > 0, html, props, bind,
+    har: w => design(w) > 0, design, html, props, bind, rensa,
     stilar: STILAR.map(([id, namn, a, b]) => ({ id, namn, farg: a, farg2: b }))
   });
 })();

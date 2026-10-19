@@ -180,7 +180,8 @@
         "vyra-alert-panel.js",
         "vyra-mvp-panel.js",
         "vyra-ranking-panel.js",
-        "vyra-mal-panel.js"
+        "vyra-mal-panel.js",
+        "vyra-streak-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -193,6 +194,7 @@
         "tests/browser/mvp-livevag.browser.test.js",
         "tests/browser/ranking-livevag.browser.test.js",
         "tests/browser/mal-livevag.browser.test.js",
+        "tests/browser/streak-livevag.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",

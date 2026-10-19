@@ -75,20 +75,27 @@
     // Top Streak · Design 1–3 (topstreak-designer.js) ritas med samma demonollning, döljning och rot-stil.
     const D = window.VyraStreakDesigner;
     if (D && D.har(w)) return D.html(w, { name, value, profile, gift, dold, valt: selected === w.id });
-    return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${w.accent||'#ffc94d'};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    // ÄRV FÄRGSCHEMA (panelspecifikationen 4.2): Accentfärgen tar färgschemats accent med media.js bk(),
+    // som de andra familjerna. Utan arv — eller där bk() saknas (proven som laddar filen ensam) — är det
+    // widgetens egen accent som förut.
+    const accent = typeof bk === 'function' ? bk(w, w.accent, 'highlight', '#ffc94d') : (w.accent || '#ffc94d');
+    return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${accent};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
   function approvedStreakProps(w) {
     return `<h3>VYRA TOP STREAK</h3><div class="template-badge">CLEAN FLIP · VAR 8:E SEKUND</div><div hidden><input id="pt" value="${VyraSafe.text(w.title,'Top Streak')}"><input id="pv" value=""></div><div class="property-group"><h4>INNEHÅLL</h4><label>Namn<input id="approvedStreakName" value="${VyraSafe.text(w.dataName,'MAYA')}"></label><label>Streak<input id="approvedStreakValue" type="number" min="1" value="${Number(w.dataValue)||18}"></label><label>Profilbild<input id="approvedStreakProfile" value="${VyraSafe.url(w.profileImage,'assets/images/test-profile.svg')}"></label><label>Gåvobild<input id="approvedStreakGift" value="${VyraSafe.url(w.giftImage,'assets/gifts/events/0001_Rose.png')}"></label></div><div class="property-group"><h4>DESIGN</h4><label>Accent<input id="approvedStreakAccent" type="color" value="${w.accent||'#ffc94d'}"></label><label class="range-label">Flippar var <b>${Math.max(4,Number(w.streakFlipSeconds)||8)} sek</b><input id="approvedStreakSeconds" type="range" min="4" max="20" value="${Math.max(4,Number(w.streakFlipSeconds)||8)}"></label><small>Flippen fortsätter under hela LIVE-sändningen.</small></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" min="150" max="500" value="${w.width||220}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
   }
 
+  // Katalogkortets Clean Flip: fabrikens widget med de här värdena ovanpå. Exporteras (cleanGrund) så att
+  // "Återställ utseende" i panelen (vyra-streak-panel.js) återställer till samma utseende som kortet ger.
+  const CLEAN_GRUND = Object.freeze({
+    streakTheme: 'approved-clean', streakFrame: null, width: 220,
+    dataName: 'MAYA', dataValue: 18, showBackground: false,
+    streakFlipSeconds: 8, accent: '#ffc94d'
+  });
   function createCleanStreak() {
     const w = VyraWidgets.create('catalog:topstreak');
-    Object.assign(w, {
-      streakTheme: 'approved-clean', streakFrame: null, width: 220,
-      dataName: 'MAYA', dataValue: 18, showBackground: false,
-      streakFlipSeconds: 8, accent: '#ffc94d'
-    });
+    Object.assign(w, CLEAN_GRUND);
     state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.type !== 'templateTopStreak');
     state.widgets.push(w); selected = w.id; save(); render(); toast('Top Streak · Clean Flip skapad');
   }
@@ -262,7 +269,10 @@
         }
         if (w && w.type === 'templateTopStreak') {
           bindControls(w);
+          // Design 1–3 binder sina reglage och tar bort de döda; Clean Flip har bara de döda att ta bort
+          // (topstreak-designer.js rensa, UTAN_VERKAN utvidgad till Clean Flip 2026-10-19).
           if (window.VyraStreakDesigner?.har(w)) window.VyraStreakDesigner.bind(w);
+          else window.VyraStreakDesigner?.rensa?.(w);
           // DODA KONTROLLER TAS BORT, OCH BADA SKJUTS IN I EN SENARE BINDARE - inte i props().
           //
           // `#streakTheme` ar media.js:139:s stilmeny med de SJU avvecklade designerna (inferno, neon,
@@ -304,5 +314,41 @@
   document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
   addEventListener('load', install, { once: true });
 
-  window.VyraApprovedRankings = Object.freeze({ cleanCatalog, cleanStreakHtml, createLike: createApprovedLike, likeSkins: [...LIKE_SKINS] });
+  // ▶ TESTA WIDGET FÖR TOP STREAK (panelspecifikationen 2.4, adaptern 'topstreak' i vyra-streak-panel.js).
+  // Skriver ETT steg av en streak på EN nod — klonens — med exempeldatan: samma skrivning som livevägen
+  // gör på en riktig combo (gift-event-images.js skrivProfilNod med SHAPES.templateTopStreak, så namnet,
+  // talet i sitt <b> och de två bilderna byts och '×' och 'STREAK' står kvar) och samma markering som
+  // arma() där: 'hit' vid första gåvan, och rekordpulsen 'record' vid varje nytt tal.
+  //
+  // Den går INTE via window.VyraFlip: det registret är nycklat på widget-id och hör till sändningen, och
+  // mark() är den enda delen som behövs (pulsens fördröjning nollas och klassen sätts om). Ingen state,
+  // ingen save(), inga rekord (records i gift-event-images.js), ingen kö och inget nät. Flippen mellan
+  // gåva och profil är widgetens egen CSS-animation och går i widgetens takt (Flippar var).
+  //
+  //   antal  streaktalet för steget (testet räknar 1 → 12, exempeldatans streak.fran → streak.till)
+  function streakSpelaPa(nod, k, ex, antal) {
+    if (!nod || !k || !ex) return false;
+    const G = window.VyraGiftImages;
+    if (!G || typeof G.skrivProfilNod !== 'function' || !G.shapes || !G.shapes.templateTopStreak) return false;
+    const bild = typeof ex.bild === 'function' ? ex.bild : v => v;
+    const gava = ex.gava || {};
+    const tal = antal != null ? antal : (ex.streak && ex.streak.till) || 1;
+    G.skrivProfilNod(nod, G.shapes.templateTopStreak, {
+      giftImage: gava.bild ? bild(gava.bild) : '',
+      profileImage: ex.profil ? bild(ex.profil) : '',
+      name: ex.namn || '',
+      amount: tal
+    });
+    if (nod.classList) {
+      if (!nod.classList.contains('hit')) { void nod.offsetWidth; nod.classList.add('hit'); }
+      nod.querySelectorAll('.streak-gift-face').forEach(n => { n.style.animationDelay = ''; });
+      nod.classList.remove('record');
+      void nod.offsetWidth;
+      nod.classList.add('record');
+    }
+    return true;
+  }
+  window.streakSpelaPa = streakSpelaPa;
+
+  window.VyraApprovedRankings = Object.freeze({ cleanCatalog, cleanStreakHtml, streakSpelaPa, cleanGrund: CLEAN_GRUND, createLike: createApprovedLike, likeSkins: [...LIKE_SKINS] });
 })();
