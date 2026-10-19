@@ -8,7 +8,8 @@
 // Sedan PR 4 har Top Gift · Design 1–3 och Signal Orbit poster (vyra-topgift-panel.js), och sedan
 // PR 5 alla elva Last-X (vyra-lastx-panel.js), och sedan PR 6 alla 26 modeller i Fan Level Up, Gifter
 // Level Up, Follower Spotlight och Guardian Emblem (vyra-alert-panel.js), och sedan PR 7 alla 20 Battle
-// MVP (vyra-mvp-panel.js), och sedan PR 8 alla 18 rankingmodeller (vyra-ranking-panel.js). Familjens
+// MVP (vyra-mvp-panel.js), och sedan PR 8 alla 18 rankingmodeller (vyra-ranking-panel.js), och sedan PR 9
+// alla 27 mål: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js). Familjens
 // representant är därför den första katalognyckeln vars modell SAKNAR post; en typ där alla modeller
 // har post (Top Gift) provas i stället av panel-krav.browser.test.js.
 //
@@ -18,6 +19,12 @@
 // Content/Design/Animation inräknade. Den är därför en RESERV: en typ som saknar representant i
 // katalogen provas med reservnyckeln om dess modell saknar post. Utan den hade Top Coins tappats ur
 // provet, och antalet familjer hade sjunkit under golvet nedan.
+//
+// MÅLEN (PR 9) har ingen modell utan post och ingen reserv: Social Goal och Gift Campaign ritas alltid som
+// en av sina designer (goal-motion.js modelFor, gift-campaign-aura.js theme), så även en äldre sparad
+// widget får målpanelen, och Heart Me har bara sina tolv teman. De tre typerna provas därför av
+// panel-krav.browser.test.js, och GOLVET nedan är antalet typer som fortfarande har en modell utan post:
+// 20 till och med PR 8, 17 sedan PR 9. Det sjunker med varje familj som flyttar in i ramen.
 //
 // FAMILJERNA RÄKNAS FRAM UR KATALOGEN, inte ur en handskriven lista: varje katalognyckel i
 // docs/katalogkarta.md byggs med fabriken, och den första nyckeln per widgettyp får representera
@@ -34,7 +41,7 @@ const vm = require('vm');
 // Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
 function registret() {
   const window = {};
-  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js', 'vyra-mal-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
   vm.runInNewContext(kod, { window });
   return window.VyraPanelregister;
 }
@@ -93,7 +100,7 @@ test.after(async () => {
 async function panelerna(lista, { utanRam }) {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, reducedMotion: 'reduce' });
   try {
-    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel|alert-panel|mvp-panel|ranking-panel)\.js/, r => r.abort());
+    if (utanRam) await page.route(/\/vyra-(panelram|panelregister|topgift-panel|lastx-panel|alert-panel|mvp-panel|ranking-panel|mal-panel)\.js/, r => r.abort());
     await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
     await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
     await page.waitForTimeout(2500);
@@ -149,7 +156,7 @@ async function panelerna(lista, { utanRam }) {
 
 test('panelens DOM är identisk med och utan ramen, en modell per familj', { skip, timeout: 600000 }, async () => {
   const lista = familjer();
-  assert.ok(lista.length >= 20, `bara ${lista.length} familjer räknades fram ur katalogen`);
+  assert.ok(lista.length >= 17, `bara ${lista.length} familjer räknades fram ur katalogen`);
 
   const utan = await panelerna(lista, { utanRam: true });
   const med = await panelerna(lista, { utanRam: false });

@@ -1,7 +1,7 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
-// 'gifterlevel', 'follower', 'guardian', 'mvp' och 'ranking' i Chrome. (Last-X, alertfamiljerna, Battle MVP
-// och rankingen har egna prov längre ner.)
+// 'gifterlevel', 'follower', 'guardian', 'mvp', 'ranking', 'socialgoal', 'heartgoal' och 'kampanj' i Chrome.
+// (Last-X, alertfamiljerna, Battle MVP, rankingen och målen har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
 // med två widgetar av samma modell plus en Goal Pro och en Top Like. Den första testas. Provet kräver:
@@ -803,6 +803,156 @@ test('ranking: ett test som får gå klart passerar entré → visning → utgå
     assert.match(klass[0], /ws-anim-fade/, 'klonen bär widgetens inträdeseffekt');
     assert.equal(klass[1].trim(), '400ms', 'och dess varaktighet');
     await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
+    lika(fore, await bild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// ---- Målen: Social Goal, Heart Me och Gift Campaign (adaptrarna 'socialgoal', 'heartgoal' och 'kampanj', PR 9)
+//
+// Social Goal och Heart Me spelar 0 → 1 → 60 % → 100 % med VyraGoalDom.patch mot KLONENS id — samma
+// riktade DOM-väg som en riktig målram, men aldrig målruntimen: inget VyraGoals-anrop (räknaren ovan
+// lindar varje metod på VyraGoals), inget sparat, inget nät. Kampanjen nollar klonens räknare och tar
+// emot fyra gåvor genom motorn (gift-campaign-aura-engine.js receive), där den sista når sitt mål; den
+// riktiga livebryggan (gift-event-images.js, VyraCampaignAuraSession) och de riktiga räknarna rörs inte.
+//
+// KAMPANJENS NODER RÖR SIG HELA TIDEN (motorn skriver transform och opacitet varje bildruta), så deras
+// outerHTML jämförs utan style-attributen inuti widgeten. Räknarna jämförs för sig: motorns värden för
+// A och B (inspect) och w.giftCurrent* i state.
+const MAL_ISOLERING = [
+  { namn: 'Social Goal · crown-rail', nyckel: 'catalog:socialgoal:followers:crown-rail:landscape', adapter: 'socialgoal',
+    faser: { entre: 0, visning: 5000, utgang: 500 }, mitt: '600', slut: '1 000' },
+  { namn: 'Heart Me Goal · classic', nyckel: 'catalog:heartgoal:classic', adapter: 'heartgoal',
+    faser: { entre: 0, visning: 5000, utgang: 500 }, mitt: '30', slut: '50' },
+  { namn: 'Gift Campaign · gold landscape', nyckel: 'catalog:giftcampaign:gold:landscape', adapter: 'kampanj',
+    faser: { entre: 1200, visning: 5600, utgang: 500 }, kampanj: true },
+];
+const utanStil = html => html == null ? html : html.replace(/^(<[^>]*>)([\s\S]*)$/, (_, rot, rest) => rot + rest.replace(/ style="[^"]*"/g, ''));
+const malBild = (page, kampanj) => bild(page).then(async b => {
+  if (!kampanj) return b;
+  const varden = await page.evaluate(() => ['prov-a', 'prov-b'].map(id => {
+    const nod = document.querySelector(`.canvas [data-id="${id}"]:not([data-testspel-klon])`);
+    const i = nod && window.VyraCampaignAuraEngine.inspect(nod);
+    return i ? i.values.join(',') : null;
+  }));
+  return Object.assign({}, b, { a: utanStil(b.a), b: utanStil(b.b), motorA: varden[0], motorB: varden[1] });
+});
+const malKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const i = window.VyraCampaignAuraEngine && window.VyraCampaignAuraEngine.inspect(k);
+  return { id: k.dataset.id, klass: k.className, varde: (k.querySelector('[data-goal-value]') || {}).textContent || null,
+    procent: (k.querySelector('[data-goal-pct]') || {}).textContent || null, motor: i ? i.values : null,
+    klart: [...k.querySelectorAll('.goal-mark')].map(n => n.textContent) };
+});
+
+for (const m of MAL_ISOLERING) {
+  test(`${m.adapter}-adaptern är isolerad: ${m.namn}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      await installeraRaknare(page);
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'familjen har ingen typväljare');
+      const fore = await malBild(page, m.kampanj);
+      if (m.kampanj) assert.ok(fore.motorA && fore.motorB, 'motorn är monterad på A och B');
+      const monterade = m.kampanj ? await page.evaluate(() => window.VyraCampaignAuraEngine.active()) : 0;
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, m.adapter);
+      assert.equal(await page.textContent('#pr-testspel'), '■ Stoppa test');
+      assert.deepEqual(s1.faser, m.faser, 'faserna');
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+
+      if (!m.kampanj) {
+        // 0 direkt, 1 efter 0,7 s, 60 % efter 1,9 s och målet efter 3,3 s.
+        await page.waitForTimeout(200);
+        const k0 = await malKlon(page);
+        assert.ok(k0, 'klonen finns i duken');
+        assert.equal(k0.id, 'prov-a__prov');
+        assert.equal(k0.varde, '0', 'klonen börjar på noll');
+        await page.waitForTimeout(2000);
+        assert.equal((await malKlon(page)).varde, m.mitt, '60 % av målet');
+        lika(fore, await malBild(page), 'mitt i testet');
+        await page.waitForTimeout(1500);
+        const k2 = await malKlon(page);
+        assert.equal(k2.varde.replace(/\s/g, ' '), m.slut, 'målet är nått på klonen (sv-SE skriver tusental med hårt mellanslag)');
+        assert.match(k2.procent, /^100%/);
+        assert.match(k2.klass, /\bgoal-uppnatt\b/, 'klonen är märkt som uppnådd');
+      } else {
+        // Fyra gåvor, sju bidrag: Rose 3+5, Galaxy 2+3, Lion 1 och sedan resten till målet (50), Universe 1.
+        await page.waitForTimeout(m.faser.entre + 7 * 600 + 300);
+        const k = await malKlon(page);
+        assert.ok(k, 'klonen finns i duken');
+        assert.equal(k.id, 'prov-a__prov');
+        assert.deepEqual(k.motor, [8, 5, 50, 1], 'klonens räknare började på noll och tog emot testets gåvor');
+        assert.equal(k.klart[2], 'MÅL KLART', 'den sista gåvan når sitt mål');
+      }
+      lika(fore, await malBild(page, m.kampanj), 'efter förloppet');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(200);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      if (m.kampanj) assert.equal(await page.evaluate(() => window.VyraCampaignAuraEngine.active()), monterade, 'klonens motor är riven, de riktiga står kvar');
+      await page.waitForTimeout(400);
+      lika(fore, await malBild(page, m.kampanj), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget VyraGoals-anrop, inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+
+      // ▶ igen: samma faser.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, s1.faser, 'omspelningen har samma faser');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('målen: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:heartgoal:golden');
+    // Widgetens egen inträdeseffekt är testets entré, och firandet syns när målet är nått.
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.entranceAnimation = 'fade'; w.entranceDuration = 400; w.heartFirande = true; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await bild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 400, visning: 5000, utgang: 500 }, 'entrén följer widgetens Varaktighet');
+    assert.match(await page.evaluate(() => document.querySelector('.canvas [data-testspel-klon]').className), /ws-anim-fade/, 'klonen bär widgetens inträdeseffekt');
+    await page.waitForTimeout(400 + 3300 + 300);
+    const firande = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-testspel-klon] .heart-fill-wrap')).animationName);
+    assert.equal(firande, 'heartGoalFirande', 'firandet spelar på klonen när målet är nått');
+    await page.waitForTimeout(s.faser.visning - 3300 + s.faser.utgang + 600);
     const slut = await page.evaluate(() => window.VyraTestspel.status());
     assert.equal(slut.aktiv, false);
     assert.equal(slut.senaste.orsak, 'klar');

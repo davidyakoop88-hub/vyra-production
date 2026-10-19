@@ -178,7 +178,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-10-17 (-2): TikTok-rutan visar e-postkravet som steg 1 och låser steg 2 (#connectModal
   // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
-  assert.match(studio, /studio\.css\?v=20261019-1/);
+  // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
+  assert.match(studio, /studio\.css\?v=20261019-2/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -349,7 +350,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
   // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);   // 20261011-1: kryssrutor + ws-anim-specificitet
-  assert.match(media, /toplike-studio\.js\?v=20261019-2/);
+  assert.match(media, /toplike-studio\.js\?v=20261019-3/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20261019-1/);
@@ -382,7 +383,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // och Ta bort, Battle MVP-ramar en kryssrad, bustar för toplike-studio.css/gift-campaign-aura/
   // gift-supernova-panel.
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
-  assert.match(media, /const version='20261019-1'/);
+  assert.match(media, /const version='20261019-2'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

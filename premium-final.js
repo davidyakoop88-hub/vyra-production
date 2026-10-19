@@ -46,7 +46,7 @@
       const out=field==='baseline'?await window.VyraGoals?.patchBaseline?.(w.id,value)
                                   :await window.VyraGoals?.patchTarget?.(w.id,value);
       if(!out||!out.ok){e.target.value=field==='baseline'?(w.goalCurrent??0):(w.goalTarget||1000);
-        toast?.('Kunde inte spara malet')}}}
+        toast?.('Kunde inte spara målet')}}}
   const oldBind=bind;
   bind=function(){oldBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w)return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(!el)return;const las=e=>num?+e.target.value:e.target.value;el.oninput=e=>vyraLivePatch(w,el,key,las(e));el.onchange=e=>{w[key]=las(e);save();vyraRenderKeepingPanel()}};
     if(w.type==='templateTopGift'){set('#pfTopGiftStyle','theme');set('#pfTopGiftProfile','profileImage');set('#pfTopGiftGift','giftImage');set('#pfTopGiftName','dataName');set('#pfTopGiftCoins','dataValue');set('#pfTopGiftColor','accent');set('#pfTopGiftSize','giftSize',true);set('#pfTopGiftText','dataSize',true);set('#pfTopGiftSpeed','topGiftFlipSpeed',true);set('#pfTopGiftGlow','topGiftGlow',true);document.querySelector('#pfTestTopGift')?.addEventListener('click',()=>{let e=document.querySelector(`[data-id="${w.id}"]`);e.classList.remove('play');void e.offsetWidth;e.classList.add('play')})}

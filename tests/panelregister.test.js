@@ -103,7 +103,7 @@ test('registret rör ingen DOM', () => {
   assert.doesNotMatch(kod, /document\.|querySelector|innerHTML/);
 });
 
-test('media: medietyp är bild eller video, lagring är url eller meta', () => {
+test('media: medietyp är bild, video eller gava, lagring är url eller meta', () => {
   const R = nyttRegister();
   const med = k => giltig({ kontroller: [Object.assign({ sektion: 2, typ: 'media', falt: 'profileImage' }, k)] });
   // Listorna kommer från en annan vm-kontext; jämför innehållet, inte prototypen.
@@ -112,5 +112,7 @@ test('media: medietyp är bild eller video, lagring är url eller meta', () => {
   assert.match(R.validera(med({ medietyp: 'ljud' })).join(), /okänd medietyp "ljud"/);
   assert.match(R.validera(med({ lagring: 'fil' })).join(), /lagring/);
   assert.match(R.validera(med({ falt: undefined })).join(), /falt saknas/);
-  assert.equal([...R.MEDIETYPER].join(), 'bild,video');
+  // gava (PR 9, Gift Campaign): en gåva ur familjens galleri, aldrig en sökväg i panelen.
+  assert.equal(R.validera(med({ medietyp: 'gava', falt: 'giftImage0' })).length, 0);
+  assert.equal([...R.MEDIETYPER].join(), 'bild,video,gava');
 });

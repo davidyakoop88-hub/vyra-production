@@ -72,6 +72,14 @@ const MODELLER = [
   ...[['Top Like · voltage', 'catalog:toplike:voltage'], ['Top Coins · prism-horizontal', 'catalog:ranking:templateTopCoins:prism-horizontal'],
     ['Top Points · celestial', 'catalog:ranking:templateTopPoints:celestial']].map(([namn, nyckel]) => ({ namn, nyckel,
     egna: ['falt:rankingAccent', 'falt:textFont'], arver: ['accentfärg', 'textfärg', 'typsnitt'] })),
+  // Målen (PR 9, spec 4.2): Heart Me ärver accent (hjärtat, glöden och pillen), text (rubrik och procent) och
+  // andra färgen (talet — studio.css:169 läser nu --heart-number); typsnitt och bakgrund ärvs inte. Gift
+  // Campaign ärver accent (ljuset och mätarna, gift-campaign-aura-engine.js), text (rubrik, räknare och namn)
+  // och typsnitt. Social Goal erbjuder inget arv (provet längst ner).
+  ...['classic', 'midnight'].map(t => ({ namn: 'Heart Me Goal · ' + t, nyckel: 'catalog:heartgoal:' + t,
+    egna: ['falt:heartColor', 'falt:heartTextColor', 'falt:heartNumberColor'], arver: ['accentfärg', 'textfärg', 'andra färgen'] })),
+  ...['gold:landscape', 'emerald:portrait'].map(m => ({ namn: 'Gift Campaign · ' + m, nyckel: 'catalog:giftcampaign:' + m,
+    egna: ['falt:textFont'], arver: ['accentfärg', 'textfärg', 'typsnitt'] })),
 ];
 
 let server, browser, bas;
@@ -226,6 +234,26 @@ for (const [nyckel, rad] of [
         };
       });
       assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, farger: false, rad });
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+// Follower/Like/Diamond Goal har en registerpost men erbjuder inget arv (spec 4.2: modellen har inga
+// färgfält — konsten är fasta bilder). Panelen är ramens, utan arvsruta.
+for (const nyckel of ['catalog:socialgoal:followers:crown-orbit:circle', 'catalog:socialgoal:likes:heart-rail:landscape', 'catalog:socialgoal:diamonds:diamond-tower:portrait']) {
+  test(`fargarv-sant: Social Goal (${nyckel.split(':').slice(2).join(':')}) erbjuder inget arv`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => ({
+        ram: document.querySelector('.properties')?.dataset.panelram || null,
+        arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+        gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
+      }));
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false });
       assert.deepEqual(fel, [], 'inga sidfel');
     } finally {
       await page.close();
