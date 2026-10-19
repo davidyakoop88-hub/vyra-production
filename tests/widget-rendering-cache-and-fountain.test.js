@@ -350,7 +350,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
   // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);   // 20261011-1: kryssrutor + ws-anim-specificitet
-  assert.match(media, /toplike-studio\.js\?v=20261019-2/);
+  assert.match(media, /toplike-studio\.js\?v=20261019-3/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20261019-1/);
