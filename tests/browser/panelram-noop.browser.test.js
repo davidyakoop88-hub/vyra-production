@@ -106,7 +106,16 @@ async function panelerna(lista, { utanRam }) {
       await page.waitForTimeout(500);
       ut[typ] = await page.evaluate(() => {
         const p = document.querySelector('.properties');
-        return p ? p.outerHTML : null;
+        if (!p) return null;
+        // Attributens ordning är ingen skillnad i panelen: den beror på i vilken ordning skript
+        // sätter dem (data-ws-tab och data-property-section bytte plats i CI). Sortera dem.
+        const k = p.cloneNode(true);
+        for (const el of [k, ...k.querySelectorAll('*')]) {
+          const a = [...el.attributes].map(x => [x.name, x.value]).sort((x, y) => x[0] < y[0] ? -1 : 1);
+          for (const [n] of a) el.removeAttribute(n);
+          for (const [n, v] of a) el.setAttribute(n, v);
+        }
+        return k.outerHTML;
       });
     }
     return { lage, ut };
