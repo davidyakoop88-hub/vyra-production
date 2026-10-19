@@ -107,11 +107,15 @@ for (const nyckel of WIDGETS) {
       const rubrik = await page.evaluate(() => {
         const picker = document.querySelector('.properties .pro-frame-picker');
         if (!picker) return null;
+        // I panelramen (2026-10-19) bor väljaren i sektion 5 Utseende, som är rubriken och gruppen.
+        // Kontraktet är detsamma: en egen rubrik som säger vad den är och en plats i panelordningen.
+        const sek = picker.closest('[data-panelram-sektion]');
+        if (sek) return 'UTSEENDE (panelramen, sektion ' + sek.dataset.panelramSektion + ')';
         const g = picker.closest('.property-group');
         return g ? (g.querySelector('h4, .pg-toggle')?.textContent || '').replace(/[▸▾›]/g, '').trim() : '(ingen grupp)';
       });
       assert.ok(rubrik !== null, `${nyckel}: ingen ramväljare i panelen`);
-      assert.match(rubrik, /^AVATAR-RAM/,
+      assert.match(rubrik, /^AVATAR-RAM|^UTSEENDE \(panelramen, sektion 5\)/,
         `${nyckel}: väljaren ligger i gruppen "${rubrik}" — den hör hemma i en egen AVATAR-RAM, `
         + 'annars hamnar den fel i panelordningen och fälls inte ihop med de andra tilläggen');
     } finally { await page.close(); }
