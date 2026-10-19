@@ -48,7 +48,8 @@
         "vyra-panelordning.js",
         "vyra-tomma-handlingar.js",
         "widget-handles.js",
-        "vyra-extravy-vakt.js"
+        "vyra-extravy-vakt.js",
+        "vyra-panelram.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -79,7 +80,9 @@
         "tests/browser/login-slapp-in.browser.test.js",
         "tests/oversikt-en-sanning.test.js",
         "tests/browser/verktygsrad-overlapp.browser.test.js",
-        "tests/browser/extravy-sen-render.browser.test.js"
+        "tests/browser/extravy-sen-render.browser.test.js",
+        "tests/panelram.test.js",
+        "tests/browser/panelram-noop.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -164,10 +167,12 @@
         "gift-supernova-panel.js",
         "gift-jar-animals.js",
         "gift-jar-animals.css",
-        "gift-jar-textures.js"
+        "gift-jar-textures.js",
+        "vyra-panelregister.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/panelregister.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",
