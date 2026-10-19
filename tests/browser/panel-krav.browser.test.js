@@ -3,7 +3,8 @@
 //
 // För varje modell som har en post i vyra-panelregister.js — i dag Top Gift · Design 1–3 och
 // Signal Orbit (vyra-topgift-panel.js), de elva Last-X (vyra-lastx-panel.js), alertfamiljerna
-// (vyra-alert-panel.js) och Battle MVP (vyra-mvp-panel.js) — kräver provet
+// (vyra-alert-panel.js), Battle MVP (vyra-mvp-panel.js) och Top Like/Coins/Points (vyra-ranking-panel.js)
+// — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -106,6 +107,30 @@ const MVP_MODELLER = [
     effekt: ['coronation', 'gold-ribbon', 'lion-clash'].includes(f), minKontroller: f === 'gold-ribbon' ? 12 : undefined,
     aterstall: { utseende: f === 'coronation' ? 'mvpFxTint' : 'textOutlineColor', innehall: 'mvpName' } })),
 ];
+// RANKING (vyra-ranking-panel.js, PR 8): Top Like, Top Coins och Top Points i de sex designerna — 18
+// modeller med en gemensam rankingpanel. Panelkraven gäller alla 18. Effekten per kontroll mäts för en
+// lista och en rad i Top Like (Voltage, Royal Rose — Royal Rose har inga placeringstal), podiet i Top
+// Coins (Prism horisontal, med Lager och den rubrik som ritas först när Visa rubrik slås på) och en rad
+// i Top Points (Celestial).
+//
+// TIDSSTYRT är här det som bara verkar utanför en ögonblicksbild av editorn: exempeldatan (Namn och
+// värde) syns bara i ▶ Testa widget — testspel-isolering provar att den står på klonen — och
+// Rangordna efter och Period väljer vilken riktig topplista som visas, vilket bara syns med livedata
+// (ranking-livevag.browser.test.js).
+const RANKING_DESIGNER = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose'];
+const RANKING_LIVE = {
+  wsLiveMetric: 'rangordningen verkar bara med livedata — provas i ranking-livevag.browser.test.js',
+  wsDateRange: 'perioden verkar bara med livedata — provas i ranking-livevag.browser.test.js',
+};
+const RANKING_EXEMPEL = (namn, varde) => ({ [namn]: 'exempeldatan syns bara i testet — provas i testspel-isolering.browser.test.js',
+  [varde]: 'exempeldatan syns bara i testet — provas i testspel-isolering.browser.test.js' });
+const RANKING = (typ, d, nyckel, effekt, exempel) => ({ namn: typ + ' · ' + d, nyckel, effekt,
+  aterstall: { utseende: 'rankingAccent', innehall: 'templateTitle' }, tidsstyrt: Object.assign({}, RANKING_LIVE, exempel) });
+const RANKING_MODELLER = [
+  ...RANKING_DESIGNER.map(d => RANKING('Top Like', d, 'catalog:toplike:' + d, d === 'voltage' || d === 'royal-rose', RANKING_EXEMPEL('pr-dataName', 'pr-dataValue'))),
+  ...RANKING_DESIGNER.map(d => RANKING('Top Coins', d, 'catalog:ranking:templateTopCoins:' + d, d === 'prism-horizontal', RANKING_EXEMPEL('tcName', 'tcValue'))),
+  ...RANKING_DESIGNER.map(d => RANKING('Top Points', d, 'catalog:ranking:templateTopPoints:' + d, d === 'celestial', RANKING_EXEMPEL('tpName', 'tpValue'))),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -114,9 +139,11 @@ const MODELLER = [
   ...LASTX_MODELLER,
   ...ALERT_MODELLER,
   ...MVP_MODELLER,
+  ...RANKING_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
-const ENHET = /(px|%|ms|×|°|s)\s*$/;
+// st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st").
+const ENHET = /(px|%|ms|×|°|s|st)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
 // exempelpoäng (coins).
 const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng)$/;

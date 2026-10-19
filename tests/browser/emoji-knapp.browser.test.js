@@ -89,9 +89,9 @@ const SKA_INTE = [
   // Top Gift: bildfälten är mediaväljaren sedan 2026-10-19 och har ingen textruta alls.
   // Follower Spotlight: profilbilden är mediaväljaren sedan PR 6 (vyra-alert-panel.js), och
   // #followProfile tas bort ur panelen. Battle MVP likaså sedan PR 7 (vyra-mvp-panel.js, #mvpProfile).
-  // Top Coins (voltage) har kvar ett sökvägsfält och bär provet — tills rankingfamiljen flyttas in i
-  // panelramen (PR 8); då byts raden igen.
-  ['catalog:ranking:templateTopCoins:voltage', 'tcAvatar', 'sökväg till en bild'],
+  // Top Coins i de sex designerna har inget sökvägsfält sedan PR 8 (vyra-ranking-panel.js). Top Coins
+  // Halo (avvecklad, ingen registerpost, dagens panel) har kvar det och bär provet.
+  ['catalog:ranking:templateTopCoins:halo', 'tcAvatar', 'sökväg till en bild'],
   ['catalog:custom:text', 'runtimePresetName', 'internt namn'],
 ];
 

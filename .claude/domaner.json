@@ -178,7 +178,8 @@
         "vyra-topgift-panel.js",
         "vyra-lastx-panel.js",
         "vyra-alert-panel.js",
-        "vyra-mvp-panel.js"
+        "vyra-mvp-panel.js",
+        "vyra-ranking-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -189,6 +190,7 @@
         "tests/browser/lastx-livevag.browser.test.js",
         "tests/browser/alert-livevag.browser.test.js",
         "tests/browser/mvp-livevag.browser.test.js",
+        "tests/browser/ranking-livevag.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",

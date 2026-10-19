@@ -67,6 +67,11 @@ const MODELLER = [
   // arv (provet längst ner).
   ...['inferno', 'samurai'].map(s => ({ namn: 'Battle MVP · ' + s, nyckel: 'catalog:battlemvp:' + s,
     egna: ['falt:mvpColor', 'falt:mvpColor2', 'falt:textFont'], arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] })),
+  // Ranking (PR 8, spec 4.2): accent (ring, glöd och värde), textfärg (namn och värde) och typsnitt —
+  // ranking-sixpack.js läser färgschemat, och arvet ersätter Accentfärg. En modell per typ.
+  ...[['Top Like · voltage', 'catalog:toplike:voltage'], ['Top Coins · prism-horizontal', 'catalog:ranking:templateTopCoins:prism-horizontal'],
+    ['Top Points · celestial', 'catalog:ranking:templateTopPoints:celestial']].map(([namn, nyckel]) => ({ namn, nyckel,
+    egna: ['falt:rankingAccent', 'falt:textFont'], arver: ['accentfärg', 'textfärg', 'typsnitt'] })),
 ];
 
 let server, browser, bas;

@@ -86,9 +86,11 @@ const GOMS = [
   // Follower Spotlight och Fan Level Up har inga bildfält sedan PR 6 (vyra-alert-panel.js): profilbilden
   // väljs i mediaväljaren, och #followProfile/#fanProfile tas bort ur panelen. Raderna togs bort; det
   // provas i panel-krav-provet (ingen sökväg i panelen, mediaväljaren har verkan).
-  // Battle MVP likaså sedan PR 7 (vyra-mvp-panel.js): #mvpProfile tas bort, och raden med den. Top
-  // Coins (voltage) har ingen registerpost än och bär provet för en panel som fortfarande har BILDER.
-  ['catalog:ranking:templateTopCoins:voltage', 'tcAvatar'],
+  // Battle MVP likaså sedan PR 7 (vyra-mvp-panel.js): #mvpProfile tas bort, och raden med den.
+  // Top Coins i de sex designerna likaså sedan PR 8 (vyra-ranking-panel.js): #tcAvatar tas bort.
+  // Top Coins Halo (avvecklad, men kan finnas i en sparad layout) har ingen registerpost och bär
+  // provet för en panel som fortfarande har BILDER.
+  ['catalog:ranking:templateTopCoins:halo', 'tcAvatar'],
 ];
 
 // Fält som INTE får hamna i gruppen.

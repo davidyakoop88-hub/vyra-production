@@ -1,6 +1,7 @@
 'use strict';
 // ▶ TESTA WIDGET ÄR ISOLERAT (panelspecifikationen 2.6) — adaptrarna 'topgift', 'lastx', 'fanlevel',
-// 'gifterlevel', 'follower' och 'guardian' i Chrome. (Last-X och alertfamiljerna har egna prov längre ner.)
+// 'gifterlevel', 'follower', 'guardian', 'mvp' och 'ranking' i Chrome. (Last-X, alertfamiljerna, Battle MVP
+// och rankingen har egna prov längre ner.)
 //
 // För varje modell med testadaptern topgift (Top Gift · Design 1–3 och Signal Orbit) byggs en layout
 // med två widgetar av samma modell plus en Goal Pro och en Top Like. Den första testas. Provet kräver:
@@ -143,6 +144,7 @@ const bild = page => page.evaluate(() => {
     state: JSON.stringify(state),
     a: nod('prov-a'), b: nod('prov-b'), mal: nod('prov-mal'), lista: nod('prov-lista'),
     topp: JSON.stringify([window.VyraLeaderboard?.getTop?.('coins', 10), window.VyraLeaderboard?.getTop?.('likes', 10)]),
+    poang: JSON.stringify(window.VyraPoints?.getTop?.(10) || null),
     rekord: JSON.stringify(window.VyraGiftRecords),
     session: JSON.stringify(Object.keys(sessionStorage).sort().map(k => [k, sessionStorage.getItem(k)])),
   };
@@ -675,6 +677,137 @@ test('mvp: ett test som får gå klart passerar entré → visning → utgång o
     assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
     assert.deepEqual(await resterIDuken(page, /\bmvp-active\b/), []);
     assert.equal(await page.evaluate(() => window.VyraMvpParticles.active()), 0, 'inga partiklar i gång efter slutet');
+    lika(fore, await bild(page), 'efter ett färdigt test');
+    assert.deepEqual(fel, []);
+  } finally {
+    await page.close();
+  }
+});
+
+// ---- Ranking: Top Like, Top Coins och Top Points (adaptern 'ranking', PR 8) ------------------------
+//
+// Testet spelar klonen med en egen lista (k.__provlista, ranking-sixpack.js): fem exempelpersoner i
+// widgetens enhet, där widgetens exempelperson (Namn och värde i sektion 1) klättrar från plats 3 till
+// plats 1 i två omsorteringar. Ingenting av det får nå den riktiga topplistan: B av samma modell och
+// grannarna är tecken för tecken desamma, topplistornas totaler (live-leaderboard.js) och poängen
+// (VyraPoints) är oförändrade, och inget sparas, köas eller går till nätet.
+const RANKING_MODELLER = [
+  { namn: 'Top Like · voltage', nyckel: 'catalog:toplike:voltage', exempel: { dataName: 'Provnamn', dataValue: '5000' }, varde: '5.0K' },
+  { namn: 'Top Coins · prism-horizontal', nyckel: 'catalog:ranking:templateTopCoins:prism-horizontal', exempel: { dataName: 'Provnamn', dataValue: 5000 }, varde: '5.0K' },
+  // Utan egen exempelperson: panelens reserv (MAYA, 1 500 poäng) är den som klättrar.
+  { namn: 'Top Points · celestial', nyckel: 'catalog:ranking:templateTopPoints:celestial', exempel: {}, varde: '1.5K', namnVantat: 'MAYA' },
+];
+const rankingKlon = page => page.evaluate(() => {
+  const k = document.querySelector('.canvas [data-testspel-klon]');
+  if (!k) return null;
+  const rader = [...k.querySelectorAll('.toplike-row')];
+  return { id: k.dataset.id, namn: rader.map(r => (r.querySelector('strong') || {}).textContent || ''),
+    varden: rader.map(r => ((r.querySelector('em') || {}).textContent || '').trim()), prov: rader.filter(r => r.dataset.prov).length };
+});
+
+for (const m of RANKING_MODELLER) {
+  test(`ranking-adaptern är isolerad: ${m.namn}`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppnaStudio(fel);
+    try {
+      await layout(page, m.nyckel);
+      // A har widgetens egen exempelperson; B ett annat namn, så att ett läckage till B syns.
+      await page.evaluate(ex => {
+        Object.assign(liveWidget('prov-a'), ex);
+        liveWidget('prov-b').dataName = 'AndraWidget';
+        save(); render();
+      }, m.exempel);
+      await page.waitForTimeout(3500);
+      await installeraRaknare(page);
+      assert.equal(await page.$('#pr-testspel-typ'), null, 'familjen har ingen typväljare');
+      const fore = await bild(page);
+      const vantatNamn = m.namnVantat || m.exempel.dataName;
+
+      // ▶
+      await page.evaluate(() => { window.__provRaknare.pa = true; });
+      await page.click('#pr-testspel');
+      const s1 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s1.aktiv, true, 'testet startade');
+      assert.equal(s1.adapter, 'ranking');
+      assert.equal(await page.textContent('#pr-testspel'), '■ Stoppa test');
+      const faser1 = s1.faser;
+      assert.deepEqual(faser1, { entre: 0, visning: 4400, utgang: 500 }, 'utan inträdeseffekt: visning med två omsorteringar, uttoning');
+      await page.waitForTimeout(300);
+      const k0 = await rankingKlon(page);
+      assert.ok(k0, 'klonen finns i duken');
+      assert.equal(k0.id, 'prov-a__prov');
+      assert.equal(k0.prov, 5, 'klonen visar testets lista, inte demolistan');
+      assert.deepEqual(k0.namn, ['Alex', 'Mia', vantatNamn, 'Sara', 'Zoe'], 'exempelpersonen börjar på plats 3');
+      const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
+      assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
+      lika(fore, await bild(page), 'mitt i testet');
+
+      // Första omsorteringen (1,2 s): förbi tvåan. Andra (2,8 s): förbi ettan, med sitt eget värde.
+      await page.waitForTimeout(1400);
+      assert.deepEqual((await rankingKlon(page)).namn, ['Alex', vantatNamn, 'Mia', 'Sara', 'Zoe'], 'första omsorteringen');
+      await page.waitForTimeout(1600);
+      const k2 = await rankingKlon(page);
+      assert.deepEqual(k2.namn, [vantatNamn, 'Alex', 'Mia', 'Sara', 'Zoe'], '#3 tog #1');
+      assert.match(k2.varden[0], new RegExp(m.varde.replace('.', '\\.') + '$'), 'exempelvärdet står på ettan');
+      lika(fore, await bild(page), 'efter omsorteringarna');
+
+      // ■
+      await page.click('#pr-testspel');
+      await page.waitForTimeout(150);
+      const s2 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s2.aktiv, false, 'testet stoppades');
+      assert.equal(s2.senaste.orsak, 'knapp');
+      assert.deepEqual(s2.senaste.brott, [], 'inga brott i motorns vakter');
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'klonen är borta');
+      await page.waitForTimeout(600);
+      lika(fore, await bild(page), 'efter ■');
+      const anrop = await page.evaluate(() => { window.__provRaknare.pa = false; return window.__provRaknare.anrop.slice(); });
+      assert.deepEqual(anrop, [], 'inget nät, ingen lagring och ingen kö under ▶ och ■');
+      assert.deepEqual(await page.evaluate(() => window.VyraTestspel.brott()), [], 'motorn registrerade inga brott');
+      assert.equal(await page.evaluate(() => state.widgets.some(w => '__provlista' in w)), false, 'ingen widget i state fick testets lista');
+
+      // ▶ igen: samma faser och samma början.
+      await page.click('#pr-testspel');
+      const s3 = await page.evaluate(() => window.VyraTestspel.status());
+      assert.equal(s3.aktiv, true, 'testet kan spelas om');
+      assert.deepEqual(s3.faser, faser1, 'omspelningen har samma faser');
+      await page.waitForTimeout(200);
+      assert.deepEqual((await rankingKlon(page)).namn, k0.namn, 'omspelningen börjar likadant');
+
+      // render() mitt i testet tar bort klonen.
+      await page.evaluate(() => render());
+      await page.waitForTimeout(150);
+      assert.equal(await page.$('.canvas [data-testspel-klon]'), null, 'render() tog bort klonen');
+      assert.equal((await page.evaluate(() => window.VyraTestspel.status())).senaste.orsak, 'render');
+      assert.equal(await page.evaluate(() => JSON.stringify(state)), fore.state, 'state oförändrad efter render-stoppet');
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+test('ranking: ett test som får gå klart passerar entré → visning → utgång och lämnar inget kvar', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppnaStudio(fel);
+  try {
+    await layout(page, 'catalog:ranking:templateTopPoints:voltage');
+    // Widgetens egen inträdeseffekt och varaktighet är testets entré.
+    await page.evaluate(() => { const w = liveWidget('prov-a'); w.entranceAnimation = 'fade'; w.entranceDuration = 400; save(); render(); });
+    await page.waitForTimeout(800);
+    const fore = await bild(page);
+    await page.click('#pr-testspel');
+    const s = await page.evaluate(() => window.VyraTestspel.status());
+    assert.deepEqual(s.faser, { entre: 400, visning: 4400, utgang: 500 }, 'entrén följer widgetens Varaktighet');
+    const klass = await page.evaluate(() => { const k = document.querySelector('.canvas [data-testspel-klon]'); return [k.className, k.style.getPropertyValue('--ws-anim-duration')]; });
+    assert.match(klass[0], /ws-anim-fade/, 'klonen bär widgetens inträdeseffekt');
+    assert.equal(klass[1].trim(), '400ms', 'och dess varaktighet');
+    await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang + 600);
+    const slut = await page.evaluate(() => window.VyraTestspel.status());
+    assert.equal(slut.aktiv, false);
+    assert.equal(slut.senaste.orsak, 'klar');
+    assert.deepEqual(slut.senaste.forlopp, ['entre', 'visning', 'utgang']);
+    assert.equal(await page.$('.canvas [data-testspel-klon]'), null);
     lika(fore, await bild(page), 'efter ett färdigt test');
     assert.deepEqual(fel, []);
   } finally {
