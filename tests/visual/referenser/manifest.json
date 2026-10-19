@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "F02: katalogen skapar widgetar inom 432-duken — Last X, liggande giftcampaign och äldre socialgoal fick ny standardbredd",
+  "motiv": "Storleksrättningen 2026-10-18: Guardians profilcirkel, Battle MVP-porträtt och Pro-podiets rot ändrades när förvrängningen togs bort",
   "nycklar": 162,
   "filter": null,
-  "tid": "2026-10-18T17:04:18.320Z"
+  "tid": "2026-10-19T00:07:08.400Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -699,75 +699,75 @@
    "fyllnad": 100
   },
   "catalog:pgpodium:celestial-serpent": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:diamond-halo": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:frostfire-crown": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:gilded-lion": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:midnight-butterfly": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:moonlit-sakura": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:neon-valkyrie": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:none": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:obsidian-dragon": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:ocean-oracle": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:royal-phoenix": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:stellar-emperor": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgpodium:thunder-warden": {
-   "matt": "380x364",
+   "matt": "396x364",
    "fyllnad": 100
   },
   "catalog:pgstreak:emerald-wings": {
-   "matt": "300x355",
+   "matt": "300x373",
    "fyllnad": 100
   },
   "catalog:pgstreak:frost-wings": {
-   "matt": "300x355",
+   "matt": "300x373",
    "fyllnad": 100
   },
   "catalog:pgstreak:neon-wings": {
-   "matt": "300x355",
+   "matt": "300x373",
    "fyllnad": 100
   },
   "catalog:pgstreak:rose-wings": {
-   "matt": "300x355",
+   "matt": "300x373",
    "fyllnad": 100
   },
   "catalog:pgstreak:royal-wings": {
-   "matt": "300x355",
+   "matt": "300x373",
    "fyllnad": 100
   },
   "catalog:pggoal:9": {
