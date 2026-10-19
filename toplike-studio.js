@@ -417,8 +417,7 @@
       panel.querySelectorAll('.ws-tabs').forEach(n => n.remove());
       return;
     }
-    const groups = [...panel.querySelectorAll('.property-group')];
-    groups.forEach(g => {
+    const markera = () => panel.querySelectorAll('.property-group').forEach(g => {
       // Rubriken kan ligga i h4 eller, när gruppen redan gjorts hopfällbar, i .pg-toggle. Att bara läsa
       // h4 gjorde att POSITION-gruppen fick fliken content eller inte beroende på vilket skript som hann
       // först (synligt i panelram-noop i CI 2026-10-19).
@@ -426,6 +425,8 @@
       if (heading.includes('POSITION') || g.classList.contains('ranking-cycle-editor')) { delete g.dataset.wsTab; return; }
       g.dataset.wsTab = heading.includes('ANIMATION') ? 'animation' : heading.includes('DESIGN') ? 'design' : 'content';
     });
+    markera();
+    const groups = [...panel.querySelectorAll('.property-group')];
 
     let nav = panel.querySelector('.ws-tabs');
     if (!nav) {
@@ -448,6 +449,15 @@
     const activeTab = w.wsActiveTab || 'content';
     nav.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.wsTab === activeTab));
     applyTab();
+    // Andra omslag kan lägga till grupper efter den här bindningen (vyra-textgrupp.js:s TEXT), och
+    // ordningen mellan dem beror på laddordningen. Utan en andra märkning fick TEXT fliken i den ena
+    // ordningen men inte i den andra (panelram-noop i CI 2026-10-19). En omgång till efter nästa
+    // bildruta gör slutläget oberoende av ordningen.
+    requestAnimationFrame(() => {
+      if (!panel.isConnected || typeof selected === 'undefined' || selected !== w.id) return;
+      markera();
+      applyTab();
+    });
   };
 
   // ---- Full Avatar Frame library (32 names, Killar/Tjejer tabs) — replaces whatever the existing
