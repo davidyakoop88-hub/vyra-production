@@ -7,7 +7,8 @@
 // målen: Social Goal, Heart Me och Gift Campaign (vyra-mal-panel.js) och
 // Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js), playgroundfamiljerna Top Gifter Podium, Top
 // Streak Flip och Goal Pro (vyra-playground-panel.js) och fyrverkerierna Gift Fireworks, Heart Fireworks och Gift
-// Bubbles (vyra-fyrverkeri-panel.js) — kräver provet
+// Bubbles (vyra-fyrverkeri-panel.js) och fontänerna och gåvoburken: Like Fountain klassisk och Portal och Gift Jar
+// (vyra-fontan-panel.js) — kräver provet
 // att panelen
 //   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
 //   * inte har någon tom sektion,
@@ -215,6 +216,27 @@ const FYR_MODELLER = [
     tidsstyrt: Object.fromEntries(['gbMin', 'gbExcludeAnon', 'gbGiftIn', 'gbHearts', 'gbShowCombo'].map(id => [id, FYR_SPELAR])),
     mediaTidsstyrt: { gbGiftImage: 'reservgåvan syns bara när en gåva utan bild spelar — mäts i fyrverkeri-livevag.browser.test.js' } },
 ];
+// FONTÄNERNA OCH GÅVOBURKEN (vyra-fontan-panel.js, PR 13): Like Fountain klassisk, Like Fountain Portal (nio paletter)
+// och Gift Jar (fem djurburkar). Panelkraven gäller alla femton. Effekten per kontroll mäts för den klassiska, en
+// Portal (alla nio delar post och panel; paletten ändrar förhandsbilden) och en burk (alla fem delar post).
+//
+// TIDSSTYRT är det som bara verkar när likes eller gåvor kommer: klassiska fontänens grindar (Minsta like-värde,
+// Max profilbilder, Stjärnläge) och popen vid varje like-paket (start, längd, partiklarnas antal, storlek och
+// hastighet), Portalens hjärtan per paket, profilbilden och det stora hjärtat, och burkens Full vid, automatiska
+// tömning och Töm burken (som bekräftas — provet svarar nej). Varje sådan kontroll mäts i
+// fontan-livevag.browser.test.js genom livevägen; här kräver provet att de verkligen inte syns i vila.
+const FONTAN_SPELAR = 'syns bara när likes eller gåvor kommer — mäts i fontan-livevag.browser.test.js';
+const FONTAN_MODELLER = [
+  { namn: 'Like Fountain klassisk', nyckel: 'catalog:likefountain', effekt: true, aterstall: { utseende: 'fountainSize', innehall: 'fountainMinLikes' },
+    tidsstyrt: Object.fromEntries(['fountainMinLikes', 'fountainMaxAvatars', 'fountainStarLikes', 'fountainPopEntrance', 'fountainPopDuration',
+      'fountainParticleCount', 'fountainParticleSize', 'fountainParticleSpeed'].map(id => [id, FONTAN_SPELAR])) },
+  ...['portal', 'rainbow', 'neon', 'fire', 'ice', 'gold', 'aurora', 'pastel', 'mono'].map(p => ({ namn: 'Like Fountain Portal · ' + p,
+    nyckel: 'catalog:likefountain:portal:' + p, effekt: p === 'aurora', minKontroller: 8, aterstall: { utseende: 'fountainPalette', innehall: 'fountainPerLike' },
+    tidsstyrt: Object.fromEntries(['lfpPer', 'lfpBubblor', 'lfpPop'].map(id => [id, FONTAN_SPELAR])) })),
+  ...['lion', 'dragon', 'phoenix', 'panther', 'peacock'].map(m => ({ namn: 'Gift Jar · ' + m, nyckel: 'catalog:giftjar:' + m,
+    effekt: m === 'dragon', minKontroller: 8, aterstall: { utseende: 'jarModel', innehall: 'jarCapacity' },
+    tidsstyrt: Object.fromEntries(['jarCapacity', 'jarAutoReset', 'pr-jarTom'].map(id => [id, FONTAN_SPELAR])) })),
+];
 const MODELLER = [
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
@@ -228,10 +250,13 @@ const MODELLER = [
   ...STREAK_MODELLER,
   ...PG_MODELLER,
   ...FYR_MODELLER,
+  ...FONTAN_MODELLER,
 ];
 const LACKA = /assets\/|\.png|\.svg|URL/;
 // st: Antal personer i rankingpanelen (spec 5.1: "Antal personer 1–10 st"). mynt: Gift Fireworks Minsta gåva och
 // Final vid, och Minsta gåvovärde i Heart Fireworks och Gift Bubbles (talfält: "(mynt)" i etiketten).
+// likes: klassiska fontänens Minsta like-värde och Stjärnläge och Portalens Stort hjärta var (talfält: "(likes)" i
+// etiketten); st: Gift Jars Full vid.
 const ENHET = /(px|%|ms|×|°|s|st|mynt)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
 // exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor), och
@@ -434,7 +459,7 @@ for (const m of MODELLER) {
       for (const t of s.tal) {
         if (RENA_ANTAL.test(t.etikett)) continue;
         if (t.typ === 'range') assert.ok(t.b && ENHET.test(t.b), `${t.etikett || t.id}: reglaget saknar enhet i <b> (${t.b})`);
-        else assert.ok(/\((px|%|ms|°|s|mynt)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
+        else assert.ok(/\((px|%|ms|°|s|st|mynt|likes)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
       }
 
       if (m.effekt === false) { assert.deepEqual(fel, [], 'inga sidfel'); return; }

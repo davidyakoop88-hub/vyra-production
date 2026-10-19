@@ -98,6 +98,11 @@ const MODELLER = [
     arver: ['accentfärg', 'textfärg', 'typsnitt'] },
   { namn: 'Goal Pro · Rak bar', nyckel: 'catalog:pggoal:1', egna: ['falt:pg.accent', 'falt:pg.text', 'falt:pg.font'],
     arver: ['accentfärg', 'andra färgen', 'textfärg', 'typsnitt'] },
+  // Like Fountain klassisk (PR 13, spec 4.2): Färg 1 → accentfärg och Färg 2 → andra färgen i hjärtpaletten (media.js
+  // lfEgnaFarger läser bk()). Med arvet på ritas hjärtana i schemats färger oavsett palett, och paletten blir inaktiv.
+  // Färg 1 och 2 är redan inaktiva utanför Egna färger (de verkar bara där), så paletten är den kontroll som provas tillbaka.
+  { namn: 'Like Fountain klassisk', nyckel: 'catalog:likefountain', egna: ['falt:fountainPalette', 'falt:fountainColor', 'falt:fountainColor2'],
+    arver: ['accentfärg', 'andra färgen'] },
 ];
 
 let server, browser, bas;
@@ -358,6 +363,61 @@ for (const nyckel of ['catalog:heartfireworks', 'catalog:giftbubbles']) {
         gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
       }));
       assert.deepEqual(lage, { ram: '1', arv: false, gammal: false });
+      assert.deepEqual(fel, [], 'inga sidfel');
+    } finally {
+      await page.close();
+    }
+  });
+}
+
+// Like Fountain Portal (PR 13, spec 4.2) ärver bara i paletten Egna färger, som nu har Färg 1–3. Duken är tom i vila;
+// förhandsbilden (inline-SVG) och duken ritas med samma färger (like-fountain-portal.js farger), så provet läser
+// förhandsbildens gradienter: accentfärgen blir Färg 1 och den andra färgen Färg 2. Färg 3 ärvs inte.
+test('fargarv-sant: Like Fountain Portal med Egna färger ärver accentfärg och andra färgen', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna('catalog:likefountain:portal:aurora', fel, { fountainPalette: 'custom' });
+  try {
+    await page.evaluate(() => document.querySelector('[data-panelram-sektion="5"]')?.classList.add('open'));
+    const ruta = await page.evaluate(() => ({ finns: !!document.querySelector('.properties [data-panelram-sektion="5"] #pr-inheritBrandKit'),
+      lista: (document.querySelector('.properties .pr-arv-lista') || {}).textContent || '',
+      farger: [...document.querySelectorAll('.properties [data-panelram-sektion="5"] input[type=color]')].map(i => i.id) }));
+    assert.deepEqual(ruta, { finns: true, lista: 'Ärver: accentfärg och andra färgen.', farger: ['pr-fountainColor', 'pr-fountainColor2', 'pr-fountainColor3'] });
+    const stopp = () => page.evaluate(() => [...document.querySelectorAll('.canvas [data-id="arv"] .lfp-still stop')].map(s => String(s.getAttribute('stop-color')).toLowerCase()));
+    const av = await stopp();
+    assert.ok(!av.includes('#12ab34') && !av.includes('#a1b2c3'), 'inget av schemat syns innan arvet är på');
+    assert.ok(av.includes('#ff3c88') && av.includes('#b94cff') && av.includes('#ff86bd'), 'Egna färger ger Färg 1–3: ' + av.join());
+    await page.click('#pr-inheritBrandKit');
+    await page.waitForTimeout(900);
+    assert.equal(await page.evaluate(() => liveWidget('arv').inheritBrandKit), true, 'kryssrutan sparar w.inheritBrandKit');
+    const pa = await stopp();
+    assert.ok(pa.includes('#12ab34') && pa.includes('#a1b2c3'), 'accentfärgen och den andra färgen når fontänen: ' + pa.join());
+    assert.ok(pa.includes('#ff86bd'), 'Färg 3 ärvs inte');
+    const inaktiva = await page.evaluate(() => ['falt:fountainColor', 'falt:fountainColor2', 'falt:fountainColor3'].map(n =>
+      [n, !!document.querySelector(`.properties [data-pr-kontroll="${n}"] input`)?.disabled]));
+    assert.deepEqual(inaktiva, [['falt:fountainColor', true], ['falt:fountainColor2', true], ['falt:fountainColor3', false]], 'Färg 1 och 2 är inaktiva när de ärvs');
+    await page.click('#pr-inheritBrandKit');
+    await page.waitForTimeout(900);
+    assert.deepEqual(await stopp(), av, 'egna färger igen när arvet slagits av');
+    assert.deepEqual(fel, [], 'inga sidfel');
+  } finally {
+    await page.close();
+  }
+});
+
+// Portal med en färdig palett (spec 4.2: paletterna är fasta) och Gift Jar (fasta texturer) har registerposter men
+// erbjuder inget arv. Panelen är ramens, utan arvsruta och — i Portal — utan färgväljare.
+for (const nyckel of ['catalog:likefountain:portal:aurora', 'catalog:likefountain:portal:fire', 'catalog:giftjar:lion', 'catalog:giftjar:peacock']) {
+  test(`fargarv-sant: ${nyckel.split(':').slice(1).join(' · ')} erbjuder inget arv`, { skip, timeout: 120000 }, async () => {
+    const fel = [];
+    const page = await oppna(nyckel, fel);
+    try {
+      const lage = await page.evaluate(() => ({
+        ram: document.querySelector('.properties')?.dataset.panelram || null,
+        arv: !!document.querySelector('.properties #pr-inheritBrandKit'),
+        gammal: [...document.querySelectorAll('.properties #bkInherit')].some(el => !el.closest('[data-panelram-forvaring]')),
+        farger: [...document.querySelectorAll('.properties [data-panelram-sektion] input[type=color]')].length,
+      }));
+      assert.deepEqual(lage, { ram: '1', arv: false, gammal: false, farger: 0 });
       assert.deepEqual(fel, [], 'inga sidfel');
     } finally {
       await page.close();
