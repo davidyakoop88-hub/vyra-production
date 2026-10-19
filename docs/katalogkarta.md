@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `2e2efdf`
+Commit: `ecc372e`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -40,7 +40,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
-| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
+| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-17 | [#628](https://github.com/davidyakoop88-hub/vyra-production/pull/628) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-09-25 | [#525](https://github.com/davidyakoop88-hub/vyra-production/pull/525) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
@@ -73,24 +73,24 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Like | `catalog:toplike:voltage` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:voltage` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Like | `catalog:toplike:basic-v2` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:basic-v2` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Like | `catalog:toplike:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:prism-vertical` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Like | `catalog:toplike:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:prism-horizontal` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Like | `catalog:toplike:celestial` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:celestial` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Like | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
-| Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-09-25 | [#522](https://github.com/davidyakoop88-hub/vyra-production/pull/522) |
+| Top Like | `catalog:toplike:voltage` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:voltage` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:voltage` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:basic-v2` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:basic-v2` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:basic-v2` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:prism-vertical` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-vertical` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:prism-vertical` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:prism-horizontal` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:prism-horizontal` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:prism-horizontal` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:celestial` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:celestial` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:celestial` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 
 ### VYRA TOP STREAK
 
@@ -338,7 +338,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Top Gift · Design 1 | `catalog:topgift:premium:neon` | — ⚠️ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | Top Gift · Design 2 | `catalog:topgift:premium:royal` | — ⚠️ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | Top Gift · Design 3 | `catalog:topgift:premium:fokus` | ✓ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| Top Gift · Design 4 | `catalog:ranking:templateTopCoins:signal-orbit` | — ⚠️ | ✓ | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
+| Top Gift · Design 4 | `catalog:ranking:templateTopCoins:signal-orbit` | — ⚠️ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 
 ### TOP GIFTERS PODIUM · VARJE RAM SEPARAT
 
