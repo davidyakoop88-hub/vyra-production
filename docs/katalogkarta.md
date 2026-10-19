@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `8e8573f`
+Commit: `8f6539b`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -63,7 +63,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
-| TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
+| TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
 
@@ -100,11 +100,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Top Streak · Design 1 | `catalog:topstreak:design:1` | — ⚠️ | ✓ | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | Top Streak · Design 2 | `catalog:topstreak:design:2` | — ⚠️ | ✓ | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | Top Streak · Design 3 | `catalog:topstreak:design:3` | — ⚠️ | ✓ | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
-| Top Streak Flip · Royal Amethyst | `catalog:pgstreak:royal-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Streak Flip · Frost Sapphire | `catalog:pgstreak:frost-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Streak Flip · Emerald Leaf | `catalog:pgstreak:emerald-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Streak Flip · Neon Crystal | `catalog:pgstreak:neon-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Streak Flip · Rose Pearl | `catalog:pgstreak:rose-wings` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
+| Top Streak Flip · Royal Amethyst | `catalog:pgstreak:royal-wings` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Streak Flip · Frost Sapphire | `catalog:pgstreak:frost-wings` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Streak Flip · Emerald Leaf | `catalog:pgstreak:emerald-wings` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Streak Flip · Neon Crystal | `catalog:pgstreak:neon-wings` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Streak Flip · Rose Pearl | `catalog:pgstreak:rose-wings` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 
 ### FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER
 
@@ -119,15 +119,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Diamond Orbit | `catalog:socialgoal:diamonds:diamond-orbit:circle` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | Diamond Rail | `catalog:socialgoal:diamonds:diamond-rail:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | Diamond Tower | `catalog:socialgoal:diamonds:diamond-tower:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Goal Pro · Rak bar | `catalog:pggoal:1` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Pill | `catalog:pggoal:2` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Ring | `catalog:pggoal:3` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Mätare | `catalog:pggoal:4` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Steg | `catalog:pggoal:5` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Bara siffra | `catalog:pggoal:6` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Stående | `catalog:pggoal:7` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Smal med pil | `catalog:pggoal:8` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Goal Pro · Stående pill | `catalog:pggoal:9` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
+| Goal Pro · Rak bar | `catalog:pggoal:1` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Pill | `catalog:pggoal:2` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Ring | `catalog:pggoal:3` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Mätare | `catalog:pggoal:4` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Steg | `catalog:pggoal:5` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Bara siffra | `catalog:pggoal:6` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Stående | `catalog:pggoal:7` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Smal med pil | `catalog:pggoal:8` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Goal Pro · Stående pill | `catalog:pggoal:9` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 
 ### FAN LEVEL 50 · MILSTOLPE
 
@@ -344,19 +344,19 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Top Gifter Podium · Kodad ram | `catalog:pgpodium:none` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Royal Phoenix | `catalog:pgpodium:royal-phoenix` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Obsidian Dragon | `catalog:pgpodium:obsidian-dragon` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Gilded Lion | `catalog:pgpodium:gilded-lion` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Frostfire Crown | `catalog:pgpodium:frostfire-crown` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Diamond Halo | `catalog:pgpodium:diamond-halo` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Midnight Butterfly | `catalog:pgpodium:midnight-butterfly` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Thunder Warden | `catalog:pgpodium:thunder-warden` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Stellar Emperor | `catalog:pgpodium:stellar-emperor` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Ocean Oracle | `catalog:pgpodium:ocean-oracle` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Moonlit Sakura | `catalog:pgpodium:moonlit-sakura` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Celestial Serpent | `catalog:pgpodium:celestial-serpent` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
-| Top Gifter Podium · Neon Valkyrie | `catalog:pgpodium:neon-valkyrie` | — ⚠️ | ✓ | 2026-10-08 | [#574](https://github.com/davidyakoop88-hub/vyra-production/pull/574) |
+| Top Gifter Podium · Kodad ram | `catalog:pgpodium:none` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Royal Phoenix | `catalog:pgpodium:royal-phoenix` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Obsidian Dragon | `catalog:pgpodium:obsidian-dragon` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Gilded Lion | `catalog:pgpodium:gilded-lion` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Frostfire Crown | `catalog:pgpodium:frostfire-crown` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Diamond Halo | `catalog:pgpodium:diamond-halo` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Midnight Butterfly | `catalog:pgpodium:midnight-butterfly` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Thunder Warden | `catalog:pgpodium:thunder-warden` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Stellar Emperor | `catalog:pgpodium:stellar-emperor` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Ocean Oracle | `catalog:pgpodium:ocean-oracle` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Moonlit Sakura | `catalog:pgpodium:moonlit-sakura` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Celestial Serpent | `catalog:pgpodium:celestial-serpent` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
+| Top Gifter Podium · Neon Valkyrie | `catalog:pgpodium:neon-valkyrie` | — ⚠️ | ✓ | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 
 ### SKATTKISTA · LIVE
 
