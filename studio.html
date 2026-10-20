@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
   <link rel="stylesheet" href="auth-client.css?v=20261017-epost">
   <link rel="stylesheet" href="auth-security.css?v=20261017-bannerplats">
-  <link rel="stylesheet" href="cloud-sync.css?v=20260724-1">
+  <link rel="stylesheet" href="cloud-sync.css?v=20261020-1">
   <link rel="stylesheet" href="billing-client.css?v=20261020-6">
   <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
   <link rel="stylesheet" href="overlay-access.css?v=20261018-1">
@@ -121,7 +121,7 @@
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
-  <script src="auth-client.js?v=20261017-registrering"></script>
+  <script src="auth-client.js?v=20261020-1"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
        verifieringsmailet. Bada monterar via MutationObserver / auth-handelser. -->
@@ -181,7 +181,7 @@
   <!-- Handtag pa alla sidor: injiceras efter render, darfor EFTER media.js. -->
   <script src="widget-handles.js?v=20261019-1"></script>
   <script src="layout-safe.js?v=20261010-1"></script>
-  <script src="cloud-sync.js?v=20261018-1"></script>
+  <script src="cloud-sync.js?v=20261020-1"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
   <script src="billing-client.js?v=20261020-6"></script>
   <!-- H-falt + proportionslas. Skarvar in i den RENDERADE panelen, inte i props-strangen:

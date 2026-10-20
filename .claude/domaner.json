@@ -789,6 +789,7 @@
         "tests/cloud-sync-empty-layout.test.js",
         "tests/cloud-sync-steady-state.test.js",
         "tests/cloud-sync-omladdning.test.js",
+        "tests/cloud-sync-synkstatus.test.js",
         "tests/sync-visibility.test.js",
         "tests/state-backup-desktop.test.js",
         "tests/browser/cloud-sync-conflict.browser.test.js",

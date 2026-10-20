@@ -146,6 +146,38 @@ not yet done.
   persistence, no auth tokens anywhere in the codebase.** This is the single biggest gap
   relative to the roadmap's later phases (14 onward) — see the conflict note below.
 
+### 7a. Molnsynken och utsändningen (cloud-sync.js, F03 2026-10-20)
+
+Avsnittet ovan beskriver ursprunget. Idag har inloggade konton en overlay per workspace på
+servern (`/api/workspaces/:id/overlays/:id`, optimistisk `version`), och OBS-länken läser
+**serverns** kopia — aldrig editorns `localStorage`. Editorn och utsändningen kan alltså skilja
+sig, och statusraden i overlaylänkraden (`.cloud-status`) är kontraktet som säger när:
+
+- `meta.lastLocal` / `lastLocal` = den `vyra-state` servern senast **bekräftat**. Osynkat =
+  `vyra-state` skiljer sig från den. Raden räknar skillnaden i widgetar ("2 ändringar syns inte i
+  OBS än") och markerar den direkt vid `vyra-session-state-saved`, inte först när PUT:en startar.
+- Klockslaget i molnläge är serverns bekräftelse (`data-bekraftad-vid`), inte den lokala
+  sparningen (`data-sparat-vid`, som bara visas i lokalt läge). `data-server-version` och
+  `data-osynkade` är maskinläsbara.
+- `401` på en skrivning: först förnyas CSRF-token via `GET /api/auth/me` (som roterar den — en
+  annan flik eller skrivbordsappen kan ha gjort det) och PUT:en görs om en gång. Nekar även det
+  är sessionen ute: läget `utloggad`, rutan "Logga in igen" (`VyraAuth.showGate`), kön och
+  `vyra-state` ligger kvar, och ingenting skickas förrän `vyra-auth-ready` kommer — då skickas
+  ändringen utan omladdning. Är det ett annat konto rivs den gamla sessionen först
+  (`beginLogout`, parkerar arbetet). `auth-client.js` sparar CSRF-token från varje lyckat
+  `/api/auth/me`.
+- `409` och en nyare serverversion förklaras innan de kallas konflikt: har servern exakt det
+  innehåll som den här datorn har, eller en ögonblicksbild den skickade utan att få svar
+  (`obekraftade`, kön vid omladdning), är det vår egen skrivning och versionen tas över.
+  Jämförelsen är på innehåll med sorterade nycklar (JSONB sorterar om) utan `savedAt`.
+  Följaren avbryter om en egen PUT startade medan listan hämtades.
+- En återlämnad parkerad layout (`vyra-session-backup:<ws>`) stämplas inte längre som synkad: är
+  den osynkad skickas den (meta-versionen, så servern svarar 409 om någon annan skrivit), och har
+  molnet gått vidare visas konfliktvalet. Under `conflict` och `utloggad` köar tickern inget.
+
+Proven: `tests/cloud-sync-synkstatus.test.js`. Kvar att mäta mot riktig server: se PR-texten
+för F03.
+
 ## 8. Security boundaries (today — see `docs/security-review.md` once Phase 19 runs)
 
 - `server.ps1`'s static file handler path-traversal-guards via `GetFullPath` +
