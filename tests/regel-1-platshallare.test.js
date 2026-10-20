@@ -52,7 +52,7 @@ test('en riktig tittare med samma mönster i namnet döljs inte', () => {
 test('cachebustarna höjdes med filerna', () => {
   const html = las('studio.html'), media = las('media.js');
   assert.match(html, /vyra-tom-widget\.js\?v=20261011-1/);
-  assert.match(html, /media\.js\?v=20261020-6/);  // 20261011-6: busten foljde med nasta andring i samma fil
+  assert.match(html, /media\.js\?v=20261020-10/);  // 20261011-6: busten foljde med nasta andring i samma fil
   assert.match(media, /live-leaderboard\.js\?v=20261018-1/);
   assert.match(media, /playground-widgets\.js\?v=20261019-1/);
   assert.match(media, /fan-level-50\.js\?v=20261019-1/);  // 20261019-1: ▶ Testa widget och deltagarlistan (PR 14); 20261018-1: slideshowen laser studions state

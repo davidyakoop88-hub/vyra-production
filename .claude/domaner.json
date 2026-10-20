@@ -53,7 +53,9 @@
         "vyra-panelram.js",
         "vyra-testspel.js",
         "fargschema-prov.js",
-        "vyra-sidbyte.js"
+        "vyra-sidbyte.js",
+        "vyra-mobil.js",
+        "vyra-mobil.css"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -100,7 +102,8 @@
         "tests/browser/guide-pekar-ratt.browser.test.js",
         "tests/browser/driftstatus-delar.browser.test.js",
         "tests/browser/landning-floede-provperiod.browser.test.js",
-        "tests/varumarke-ett-namn.test.js"
+        "tests/varumarke-ett-namn.test.js",
+        "tests/browser/studio-mobil.browser.test.js"
       ],
       "matning": [],
       "risker": [
