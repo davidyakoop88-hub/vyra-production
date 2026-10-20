@@ -49,3 +49,7 @@ aside.collapsed .user .logga-ut-fot{margin-left:0}
 @media(max-width:600px){.logout-settings{align-items:stretch;flex-direction:column}}
 /* C-030: lankarna under Data och integritet var 15 px hoga. */
 .privacy-settings nav a{display:inline-flex;align-items:center;min-height:32px}
+/* Glomt losenord? i inloggningsgaten ritades som en lila primarknapp bredvid Logga in - .auth-gate button
+   vann over .forgot-password. Den ar en lank (upptackt vid slutgranskningens fore/efter-bilder 2026-10-20). */
+.auth-gate .forgot-password{background:transparent!important;border:0!important;box-shadow:none!important;color:#d76cff!important;padding:4px 0!important;min-height:32px;font-weight:600}
+.auth-gate .forgot-password:hover,.auth-gate .forgot-password:focus-visible{color:#f0c8ff!important;text-decoration:underline}
