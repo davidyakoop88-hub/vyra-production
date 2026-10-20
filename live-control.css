@@ -7,3 +7,22 @@
 .lc-score .lc-wins{font-style:normal;color:#83738e;font-size:11px;letter-spacing:.06em}.lc-score>b{font-size:24px;color:#d459ff;text-shadow:0 0 14px #ad38e6}.lc-battle-meta,.lc-battle-ready,.lc-battle-tests{display:flex;gap:8px;flex-wrap:wrap}.lc-battle-meta span,.lc-battle-ready span{padding:7px 10px;border:1px solid #30203a;border-radius:8px;color:#8f8199;font-size:11px}.lc-battle-ready{margin:11px 0}.lc-battle-ready span.ok{border-color:rgba(46,229,157,.35);color:#61e9b7;background:rgba(46,229,157,.06)}.lc-battle-tests button{border:1px solid #513164;background:#190d22;color:#eee;border-radius:8px;padding:8px 12px}.lc-battle-tests button:hover{border-color:#b33cf0;box-shadow:0 0 12px rgba(179,60,240,.2)}
 .lc-test{display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:320px}.lc-test-status{margin:0;min-height:1.2em;font-size:12px;color:#9f92ac;text-align:right}.lc-test-status[data-state="ok"]{color:#5ee0a0}.lc-test-status[data-state="error"]{color:#ff8a9a}
 .lc-health .lc-konto{display:block;margin-top:4px;font-size:11px;color:#9f92ac;letter-spacing:0;text-transform:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* F23 (granskning 2026-10-17): prestandasektionen hade ingen regel alls — rubrik och mått låg inline
+   ("Stabil0% köbelastning"). Nu: rubrik med status till vänster och last till höger, en lastbar, och
+   varje mått i ett eget kort med samma uttryck som statuskorten ovanför (.lc-health article). */
+.lc-performance{margin:0 0 22px;padding:16px 18px;border:1px solid #32213f;border-radius:14px;background:linear-gradient(145deg,#12091a,#0d0712)}
+.lc-performance header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:10px}
+.lc-performance header span{display:grid;gap:5px}
+.lc-performance header small{font-size:10px;letter-spacing:.12em;color:#9f92ac}
+.lc-performance header b{font-size:16px}
+.lc-performance header em{font-style:normal;font-size:12px;color:#c9bdd6}
+.lc-performance .lc-load{height:6px;border-radius:999px;background:#241830;overflow:hidden}
+.lc-performance .lc-load i{display:block;height:100%;min-width:2px;border-radius:inherit;background:linear-gradient(90deg,#2ee59d,#f5b942)}
+.lc-perf-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+.lc-perf-grid article{min-height:64px;border:1px solid #32213f;border-radius:12px;background:#100916;padding:12px 14px;display:flex;align-items:center}
+.lc-perf-grid span{display:grid;gap:5px}
+.lc-perf-grid small{font-size:10px;letter-spacing:.12em;color:#9f92ac}
+.lc-perf-grid b{font-size:16px;font-variant-numeric:tabular-nums}
+.lc-perf-grid b em{font-style:normal;font-size:11px;font-weight:600;color:#9f92ac}
+@media(max-width:1000px){.lc-perf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

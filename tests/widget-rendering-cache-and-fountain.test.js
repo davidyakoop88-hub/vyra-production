@@ -179,7 +179,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // .tik-epostkrav, [data-epostlast]). En cachad studio.css hade visat låsta knappar som klickbara.
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
   // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
-  assert.match(studio, /studio\.css\?v=20261019-2/);
+  // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
+  assert.match(studio, /studio\.css\?v=20261020-2/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -450,10 +451,12 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
-  assert.match(media, /action-event\.js\?v=20261018-1/, 'action-event.js cachebustades inte');
+  // 20261020-2: Ny Action fäller de avancerade valen (granskning 2026-10-17 F35).
+  assert.match(media, /action-event\.js\?v=20261020-2/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
-  assert.match(media, /action-event\.css\?v=20261018-1/, 'action-event.css cachebustades inte for F01');
+  // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
+  assert.match(media, /action-event\.css\?v=20261020-2/, 'action-event.css cachebustades inte for F35');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
