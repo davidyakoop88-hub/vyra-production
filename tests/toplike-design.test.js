@@ -121,5 +121,5 @@ test('fresh asset versions prevent a cached retired design from surviving reload
   // se motiveringen i tests/widget-rendering-cache-and-fountain.test.js.
   // toplike-studio.css bumpad 20261011-1: kryssrutor 16 px i panelen + (0,3,0) för ws-anim-*.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);
-  assert.match(media, /toplike-studio\.js\?v=20261019-3/);
+  assert.match(media, /toplike-studio\.js\?v=20261020-1/);
 });

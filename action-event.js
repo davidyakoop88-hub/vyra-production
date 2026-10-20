@@ -485,15 +485,15 @@
       <fieldset class="ae-fns"><legend>Vad ska hända? Flera val är möjliga.</legend>${rutor}</fieldset>
       <div class="ae-extra-slot"></div>
       <section class="ae-block"><h4>Hur länge ska den visas?</h4><label class="ae-inline">Visningstid (sekunder)<input id="aeDuration" type="number" min="1" max="600" value="${Number(editing?.duration)||10}"></label></section>
-      <details class="ae-avancerat" data-ae-avancerat${avanceradOppen?' open':''}><summary>Avancerade val <small>poäng, volym, cooldown och fade</small></summary>
+      <details class="ae-avancerat" data-ae-avancerat${avanceradOppen?' open':''}><summary>Avancerade val <small>poäng, volym, väntetid och fade</small></summary>
       <section class="ae-block ae-points"><h4>Ska användaren som triggar få en belöning, eller betala för den? (valfritt)</h4>
         <div class="ae-points-row"><label class="ae-check"><input id="aeAddPoints" type="checkbox"${vald('addPoints')?' checked':''}> Lägg till poäng</label><input id="aeAddPointsAmount" type="number" min="1" value="${Number(config.addPointsAmount)||10}"${vald('addPoints')?'':' hidden'}></div>
         <div class="ae-points-row"><label class="ae-check"><input id="aeRemovePoints" type="checkbox"${vald('removePoints')?' checked':''}> Ta bort poäng</label><input id="aeRemovePointsAmount" type="number" min="1" value="${Number(config.removePointsAmount)||10}"${vald('removePoints')?'':' hidden'}></div>
       </section>
       <section class="ae-block"><h4>Ytterligare inställningar (valfritt)</h4><div class="ae-grid">
         <label>Mediets ljudvolym <output id="aeVolumeOut">${volume} %</output><input id="aeVolume" type="range" min="0" max="100" value="${volume}"></label>
-        <label>Global cooldown (sekunder)<input id="aeCooldown" type="number" min="0" max="300" value="${Number(editing?.cooldown)||0}"></label>
-        <label>Cooldown per användare (sekunder)<input id="aeUserCooldown" type="number" min="0" max="600" value="${Number(editing?.userCooldown)||0}"></label>
+        <label>Väntetid för alla (sekunder)<input id="aeCooldown" type="number" min="0" max="300" value="${Number(editing?.cooldown)||0}"></label>
+        <label>Väntetid per tittare (sekunder)<input id="aeUserCooldown" type="number" min="0" max="600" value="${Number(editing?.userCooldown)||0}"></label>
         <label class="ae-check"><input id="aeFade" type="checkbox"${editing?(editing.fade?' checked':''):' checked'}> Aktivera fade in/ut</label>
         <label class="ae-check"><input id="aeRepeatCombo" type="checkbox"${editing?.repeatCombo?' checked':''}> Upprepa med gift-combo</label>
         <label class="ae-check"><input id="aeSkipOnNext" type="checkbox"${editing?.skipOnNext?' checked':''}> Hoppa över vid nästa action</label>

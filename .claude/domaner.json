@@ -55,7 +55,8 @@
         "fargschema-prov.js",
         "vyra-sidbyte.js",
         "vyra-mobil.js",
-        "vyra-mobil.css"
+        "vyra-mobil.css",
+        "vyra-automationer.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -103,7 +104,8 @@
         "tests/browser/driftstatus-delar.browser.test.js",
         "tests/browser/landning-floede-provperiod.browser.test.js",
         "tests/varumarke-ett-namn.test.js",
-        "tests/browser/studio-mobil.browser.test.js"
+        "tests/browser/studio-mobil.browser.test.js",
+        "tests/browser/slutgranskning-c-medel.browser.test.js"
       ],
       "matning": [],
       "risker": [

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VYRA</title>
   <link rel="stylesheet" href="design-tokens.css?v=1">
-  <link rel="stylesheet" href="studio.css?v=20261020-2">
+  <link rel="stylesheet" href="studio.css?v=20261020-3">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
@@ -51,7 +51,7 @@
         <span class="nav-section-label">Insikter</span>
         <button data-extra="liveControl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>LIVE-kontroll</span></button>
         <button data-view="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Statistik</span></button>
-        <button data-extra="performanceWizard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12 19 5"/><path d="M16 5h3v3"/><path d="M7 16h10"/></svg><span>Performance Wizard</span></button>
+        <button data-extra="performanceWizard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12 19 5"/><path d="M16 5h3v3"/><path d="M7 16h10"/></svg><span>Prestandakontroll</span></button>
         <button data-extra="agencies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V7l6-4 6 4v14"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9 14h.01"/><path d="M15 14h.01"/></svg><span>Agencies <small>TEST</small></span></button>
       </div>
     </nav>
@@ -139,7 +139,7 @@
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
   <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
   <script src="spotify-client.js?v=20260927-ko"></script>
-  <script src="extras.js?v=20261020-2"></script>
+  <script src="extras.js?v=20261020-3"></script>
   <!-- Vakt: ett sent render() skriver aldrig over en aktiv extra-vy (F08). Lagger sig ytterst
        i render-kedjan sjalv (vid load och vid klick pa en extra-knapp), sa platsen ar inte kritisk. -->
   <script src="vyra-extravy-vakt.js?v=20261018-1"></script>
@@ -148,7 +148,7 @@
   <link rel="stylesheet" href="agency-test-v3.css?v=20261020-1">
   <script src="agency-test.js?v=20261020-1"></script>
   <link rel="stylesheet" href="performance-wizard.css?v=20260919-1">
-  <script src="performance-wizard.js?v=20260919-1"></script>
+  <script src="performance-wizard.js?v=20261020-1"></script>
   <link rel="stylesheet" href="performance-runtime.css?v=20260919-1">
   <script src="performance-runtime.js?v=20260919-1"></script>
   <link rel="stylesheet" href="statistics-live.css?v=20261020-2">
@@ -183,7 +183,7 @@
   <script src="layout-safe.js?v=20261010-1"></script>
   <script src="cloud-sync.js?v=20261020-1"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
-  <script src="billing-client.js?v=20261020-6"></script>
+  <script src="billing-client.js?v=20261020-7"></script>
   <!-- H-falt + proportionslas. Skarvar in i den RENDERADE panelen, inte i props-strangen:
        fyra av panelbyggarna laddas dynamiskt av media.js och lagger alltid sina props-wrappar
        utanpa de statiska skriptens. Se filens huvudkommentar. -->

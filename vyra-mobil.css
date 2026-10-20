@@ -77,3 +77,13 @@ html.vy-mobil .live-layer-panel .live-layer-list article:has(>.layer-lock){grid-
 /* Fran duken till egenskaperna for den valda widgeten. */
 .vy-till-egenskaper{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:1500;max-width:calc(100vw - 24px);min-height:44px;padding:0 18px;border:1px solid #db72ff;border-radius:22px;background:linear-gradient(105deg,#8d24ee,#ce3cff);color:#fff;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 24px #05020a99;cursor:pointer}
 .vy-till-egenskaper[hidden]{display:none}
+
+/* ---- HUVUDET, SLUTGRANSKNING 2026-10-20 C-013 -------------------------------------------------
+   Knappraden var en sidrullande remsa dar bara ~71 px av 473 syntes och "Anslut TikTok" lag utanfor
+   skarmen utan att nagot visade att man kunde rulla. Nu far knapparna en egen rad under rubriken och
+   bryts i stallet for att rulla. Tryckytorna ar kvar pa 44 px. */
+html.vy-mobil main>header{flex-wrap:wrap;height:auto!important;min-height:58px;padding:7px 10px!important;row-gap:6px}
+html.vy-mobil main>header .head-actions{flex:1 1 100%;flex-wrap:wrap;overflow:visible;gap:6px}
+html.vy-mobil main>header .head-actions>:first-child{margin-left:0}
+html.vy-mobil main>header .head-actions>*{flex:1 1 auto;justify-content:center;text-align:center;font-size:12px}
+html.vy-mobil main>header>div:not(.head-actions){flex:1 1 0}
