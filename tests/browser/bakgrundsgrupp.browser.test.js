@@ -164,6 +164,11 @@ test('panelen har färg, hörn och innerkant i BAKGRUND-gruppen', { skip }, asyn
   try {
     await seeda(page, 'catalog:custom:text');
     const kontroller = await page.evaluate(() => {
+      // Egen text har panelramen sedan PR 16 (vyra-egen-panel.js): bakgrundskontrollerna ligger då i
+      // ramens sektion Utseende i stället för i en egen BAKGRUND-grupp. Kontraktet är detsamma — färg,
+      // hörn och innerkant finns i panelen — så provet läser ramens sektion när den finns.
+      const ram = document.querySelector('.properties [data-panelram-sektion="5"]');
+      if (ram) return [...ram.querySelectorAll('input, select')].map(el => el.id).filter(Boolean);
       const g = [...document.querySelectorAll('.properties .property-group')]
         .find(x => /^BAKGRUND/i.test((x.querySelector('h4, .pg-toggle')?.textContent || '').trim()));
       if (!g) return null;
