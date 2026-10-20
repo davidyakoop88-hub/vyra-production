@@ -1,0 +1,79 @@
+/* ================================================================================================
+   STUDIO PA SMAL SKARM (granskning 2026-10-18 F05).
+
+   UPPMATT FORE, 390 x 844: sidomenyn tog 210 px, lagerlistan 176 px, och arbetsytan borjade pa
+   X=397 med bredden 0 — duken och egenskaperna lag helt utanfor bild.
+
+   ALLT HAR GALLER BARA UNDER html.vy-mobil. Klassen satts av vyra-mobil.js nar fonstret ar
+   smalare an 768 px, och aldrig i overlay-laget (?overlay=1) — dar laddas inte ens den har filen.
+   Desktop (>= 768 px) ser darfor pixel for pixel ut som forut; tests/browser/studio-mobil.browser.
+   test.js jamfor geometrin med och utan filen.
+
+   Den gamla mobilkollapsen i studio.css (@media max-width:800px, 58 px ikonmeny) lever kvar for
+   768-800 px och ar orord.
+   ================================================================================================ */
+
+/* Element som bara finns pa smal skarm. Byggs forst nar smal skarm intraffar, men om fonstret
+   sedan breddas ligger de kvar i DOM:en — de ska da inte synas och inte ta plats. */
+html:not(.vy-mobil) .vy-mobil-bara{display:none!important}
+
+/* ---- SIDOMENYN: EN INFALLBAR LADA ---------------------------------------------------------- */
+html.vy-mobil body{grid-template-columns:minmax(0,1fr)!important;--meny-bredd:0px}
+html.vy-mobil body>aside{position:fixed!important;top:0;bottom:0;left:0;width:min(280px,86vw)!important;max-width:none;height:100%!important;z-index:3000;transform:translateX(-102%);visibility:hidden;transition:transform .2s ease,visibility 0s linear .2s;box-shadow:none}
+html.vy-mobil.vy-meny-oppen body>aside{transform:none;visibility:visible;transition:transform .2s ease,visibility 0s;box-shadow:12px 0 45px #050207}
+/* Ladan har plats for etiketterna som ikonmenyn under 800 px gommer. */
+html.vy-mobil aside .brand b,html.vy-mobil aside span:not(.user>span){display:block}
+html.vy-mobil aside nav button,html.vy-mobil aside nav a,html.vy-mobil aside .aside-bottom button{min-height:44px}
+html.vy-mobil body>main{grid-column:1;min-width:0}
+.vy-meny-skugga{position:fixed;inset:0;z-index:2999;background:#05020acc;border:0;padding:0;margin:0;cursor:pointer}
+html.vy-mobil:not(.vy-meny-oppen) .vy-meny-skugga{display:none}
+@media (prefers-reduced-motion:reduce){html.vy-mobil body>aside{transition:none}}
+
+/* ---- HUVUDET: HAMBURGARE + RUBRIK + KNAPPAR SOM RULLAR I SIN EGEN RAD --------------------- */
+html.vy-mobil main>header{gap:8px;padding:0 10px!important}
+html.vy-mobil main>header>div:not(.head-actions){flex:0 1 auto;min-width:0}
+/* Rubriken far sin bredd forst; knapparna delar pa resten och rullar i sin rad. */
+html.vy-mobil main>header #title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.vy-mobil main>header .head-actions{flex:1 1 0;min-width:0;display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+html.vy-mobil main>header .head-actions::-webkit-scrollbar{display:none}
+html.vy-mobil main>header .head-actions>:first-child{margin-left:auto}
+html.vy-mobil main>header .head-actions>*{flex:0 0 auto;min-height:44px}
+.vy-menyknapp{flex:0 0 auto;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #452656;border-radius:10px;background:#190d22;color:#fff;cursor:pointer}
+.vy-menyknapp svg{width:22px;height:22px}
+.vy-menyknapp:focus-visible,.vy-mobilflikar button:focus-visible,.vy-till-egenskaper:focus-visible{outline:2px solid #f08aff;outline-offset:2px}
+
+/* ---- LAYOUTLAGET: LAGER / DUK / EGENSKAPER, EN YTA I TAGET -------------------------------- */
+.vy-mobilflikar{display:none}
+html.vy-mobil body:has(.editor-shell) .vy-mobilflikar{display:flex;gap:6px;height:52px;padding:4px 8px;box-sizing:border-box;border-bottom:1px solid #2b1838}
+.vy-mobilflikar button{flex:1 1 0;min-width:0;min-height:44px;border:1px solid #3b234d;border-radius:9px;background:#130b1b;color:#c9bcd4;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.vy-mobilflikar button[aria-selected="true"]{background:linear-gradient(105deg,#8d24ee,#ce3cff);border-color:#db72ff;color:#fff}
+
+html.vy-mobil body:has(.editor-shell) #view{height:calc(100vh - 58px - 52px - var(--verifiering-hojd,0px));padding:0 0 8px}
+html.vy-mobil body:has(.editor-shell) .editor-shell{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:minmax(0,1fr)!important;border-radius:0}
+html.vy-mobil .editor-shell>.elements,html.vy-mobil .editor-shell>.workarea,html.vy-mobil .editor-shell>.properties{grid-column:1;grid-row:1;width:auto!important;min-width:0}
+html.vy-mobil:not([data-vy-yta="lager"]) .editor-shell>.elements,
+html.vy-mobil:not([data-vy-yta="duk"]) .editor-shell>.workarea,
+html.vy-mobil:not([data-vy-yta="egenskaper"]) .editor-shell>.properties{display:none!important}
+html.vy-mobil[data-vy-yta="egenskaper"] .editor-shell>.properties{display:block!important}
+
+/* Duken: skalan satts av vyra-zoom.js (Anpassa), och vyra-mobil.js lagger tillbaka den plats
+   transformen inte tar. Utan det upptar en 432 px duk skalad till 0,86 fortfarande 432 px i
+   flodet, och arbetsytan far en vagrat rullningslist for pixlar som inte syns. */
+html.vy-mobil .workarea>.editor-toolbar{flex-wrap:wrap;height:auto!important;row-gap:6px}
+html.vy-mobil .workarea>.canvas{margin:0 var(--vy-duk-mr,0px) var(--vy-duk-mb,0px) max(0px,calc((100% - var(--vy-duk-b,100%)) / 2))!important}
+html.vy-mobil .workarea>.overlay-link-bar{left:0!important;max-width:100%;box-sizing:border-box}
+/* !important for att studio.css satter min-width:72ch!important pa lankfaltet. */
+html.vy-mobil .workarea>.overlay-link-bar *{min-width:0!important;max-width:100%}
+html.vy-mobil .workarea>.overlay-link-bar input{width:100%;box-sizing:border-box}
+html.vy-mobil .workarea>.overlay-link-bar button:not([hidden]){display:block}
+
+/* Tryckytor pa minst 44 px i de tre ytorna. Duken ar undantagen: widgetarnas egna handtag ar
+   widgetdomanens, och deras storlek ar en del av layouten som visas. */
+html.vy-mobil .editor-shell :is(.elements,.properties,.editor-toolbar,.overlay-link-bar) :is(button,select,input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=color])){min-height:44px!important}
+html.vy-mobil .editor-shell :is(.elements,.editor-toolbar) button{min-width:44px}
+html.vy-mobil .live-layer-panel .live-layer-list article{grid-template-columns:minmax(0,1fr) 58px 44px!important}
+html.vy-mobil .live-layer-panel .live-layer-list article:has(>.layer-lock){grid-template-columns:minmax(0,1fr) repeat(3,44px)!important}
+
+/* Fran duken till egenskaperna for den valda widgeten. */
+.vy-till-egenskaper{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:1500;max-width:calc(100vw - 24px);min-height:44px;padding:0 18px;border:1px solid #db72ff;border-radius:22px;background:linear-gradient(105deg,#8d24ee,#ce3cff);color:#fff;font:inherit;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 6px 24px #05020a99;cursor:pointer}
+.vy-till-egenskaper[hidden]{display:none}
