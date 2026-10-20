@@ -1218,11 +1218,21 @@ for (const m of PG_ISOLERING) {
         await page.waitForTimeout(3500 - (1200 + 11 * 250 + 200) + 800);
         assert.equal((await pgKlon(page)).baksida, true, 'klonen vände till gåvan efter Flip-tid');
       } else {
+        // Procenten räknas upp mjukt (som i pg-livevag): på en långsam CI-maskin stod klonen på 99 %
+        // när provet läste en gång efter fast tid. Läs i stället tills värdet nåtts, med tak.
+        const vanta = async (mal, tak) => {
+          let k = await pgKlon(page);
+          for (const slut = Date.now() + tak; k.mal !== mal && Date.now() < slut;) {
+            await page.waitForTimeout(100);
+            k = await pgKlon(page);
+          }
+          return k;
+        };
         await page.waitForTimeout(1200 + 900);
-        assert.equal((await pgKlon(page)).mal, '60%', '60 % av målet på klonen');
+        assert.equal((await vanta('60%', 3000)).mal, '60%', '60 % av målet på klonen');
         lika(fore, await pgBild(page), 'vid 60 %');
         await page.waitForTimeout(1800);
-        const k = await pgKlon(page);
+        const k = await vanta('100%', 3000);
         assert.equal(k.mal, '100%', 'målet är nått på klonen');
         assert.equal(k.malKlart, true, 'MÅL NÅTT spelar på klonen');
       }
