@@ -1917,3 +1917,8 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra
 // Action & Event-dialogerna: dialogsemantik, fokus in och tillbaka, Tab-falla och Escape
 // (granskning 2026-10-17 F10/F11). Beror inte pa ordningen: ae-dialog.js lyssnar pa klick.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='ae-dialog.js?v=20261020-1';document.body.append(js)});
+// Studio pa smal skarm, under 768 px: infallbar sidomeny och Lager / Duk / Egenskaper i
+// layoutlaget (granskning 2026-10-18 F05). Beror inte pa ordningen: vyra-mobil.js tittar pa #view
+// med en MutationObserver och laser VyraZoom forst nar duken ska anpassas. Stilmallen laddas inte
+// alls i overlay-laget, och skriptet ritar ingenting dar.
+Promise.resolve().then(()=>{if(!new URLSearchParams(location.search).has('overlay')&&!document.querySelector('link[data-vy-mobil]')){let css=document.createElement('link');css.rel='stylesheet';css.href='vyra-mobil.css?v=20261020-1';css.dataset.vyMobil='1';document.head.append(css)}let js=document.createElement('script');js.src='vyra-mobil.js?v=20261020-1';document.body.append(js)});
