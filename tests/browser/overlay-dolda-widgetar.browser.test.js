@@ -296,3 +296,26 @@ test('ogat visar widgeten igen och den syns i layouten', { skip }, async () => {
     assert.ok(r.synlig > 0, 'widgeten syns inte efter att ogat visat den igen');
   } finally { await sida.close(); }
 });
+
+test('en dold fristående widget syns inte heller på sin egen länk', { skip }, async () => {
+  // Beslut 2026-10-18: dold betyder dold, även på widgetens egen länk (?widget=<id>). Länken hittar
+  // widgeten - selectForRender väljer den, så det blir ingen felvy för "borttagen" - men den ritas
+  // aldrig. Kontrollen är en synlig fristående widget på sin länk, så att måttet kan ge utslag.
+  const mat = async (id, dold) => {
+    const sida = await oppna(`/studio.html?overlay=1&widget=${id}`, false);
+    try {
+      return await sida.evaluate(async ([id, dold]) => {
+        state.widgets.length = 0;
+        const w = window.VyraWidgets.create('catalog:pggoal:1', { placement: 'standalone' });
+        w.id = id; w.x = 40; w.y = 30; w.hidden = dold; state.widgets.push(w); render();
+        await new Promise(r => setTimeout(r, 400));
+        return window.__doldBox(id);
+      }, [id, dold]);
+    } finally { await sida.close(); }
+  };
+  const kontroll = await mat('fri-synlig', false);
+  assert.ok(kontroll.finns && kontroll.synliga > 0,
+    `kontrollen: en synlig fristående widget syns inte på sin länk (${JSON.stringify(kontroll)}) - måttet kan inte ge utslag`);
+  const dold = await mat('fri-dold', true);
+  assert.equal(dold.synliga, 0, `den dolda fristående widgeten syns på sin egen länk (${JSON.stringify(dold)})`);
+});

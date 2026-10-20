@@ -55,9 +55,10 @@ test('widgetlänk hittar en standalone-instans', () => {
   assert.equal(result.error, null);
 });
 
-test('en dold standalone kan fortfarande öppnas via sin egen widgetlänk', () => {
-  // hidden is the streamer's eye toggle on the stage. A standalone instance has no stage, so the
-  // flag must not close its link — the two concepts stay separate.
+test('en dold standalone väljs för sin egen widgetlänk, men ritas aldrig', () => {
+  // Urvalet och synligheten är skilda beslut. Länken hittar widgeten (ingen felvy för "borttagen"),
+  // men en dold widget ritas aldrig - inte heller på sin egen länk (beslut 2026-10-18). Det vaktas i
+  // riktig webbläsare av tests/browser/overlay-dolda-widgetar.browser.test.js via overlay-dolda.js.
   const result = VyraWidgets.selectForRender(ALL, { widgetId: 'standalone-hidden' });
   assert.deepEqual(idsOf(result), ['standalone-hidden']);
   assert.equal(result.error, null);
