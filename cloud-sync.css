@@ -25,3 +25,11 @@
    ingar, med !important. Utan det forlorar den har regeln trots hogre specificitet — uppmatt i
    webblasaren, knappen ritades i standardgra. */
 .overlay-link-bar #manageObsLinks[data-first="1"]{border-color:#d14eff!important;background:linear-gradient(90deg,#8f25dc,#c942f4)!important;color:#fff!important}
+
+/* F03: osynkat ar inte sparat. 'vantar' = servern har inte sett den senaste andringen an,
+   'utloggad' = sessionen har gatt ut. Bada ar gula som offline: OBS visar inte det editorn visar. */
+.cloud-status[data-state="vantar"] i,.cloud-status[data-state="utloggad"] i{background:#ffae52}
+.overlay-link-bar .cloud-status[data-state="vantar"] span,
+.overlay-link-bar .cloud-status[data-state="utloggad"] span{color:#ffc07a}
+.cs-offline-note button{justify-self:start;margin-top:5px;padding:8px 13px;border:1px solid #58306c;border-radius:9px;
+  background:linear-gradient(90deg,#8f25dc,#c942f4);color:#fff;font:inherit;font-size:11px;font-weight:700;cursor:pointer}
