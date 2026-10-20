@@ -10,26 +10,26 @@
   // speak the same visual language. multiAccent is each type's signature colour when this widget
   // is configured for more than one type — solo defaults all share the same neon pink, which would
   // make a shared stage unreadable.
-  const giftLine = e => `${String(e.giftName || e.gift || 'GIFT').toUpperCase().slice(0, 40)} ×${Math.max(1, Math.round(Number(e.count ?? e.repeatCount) || 1))}`;
+  const giftLine = e => `${String(e.giftName || e.gift || 'GÅVA').toUpperCase().slice(0, 40)} ×${Math.max(1, Math.round(Number(e.count ?? e.repeatCount) || 1))}`;
   const TESTAVATAR = 'assets/images/test-profile.svg'; // samma reservavatar som resten av studion
   const TYPES = {
     gifter: {
       label: 'SENASTE GÅVOGIVARE', catalogLabel: 'Senaste gåvogivare', typNamn: 'Gåva', events: ['gift'], multiAccent: '#ffd35d',
       themes: { neon: '#ff58d6', gold: '#ffd35d', emerald: '#3ddc84' },
-      defaultName: 'Alex', defaultMsg: 'SENT GALAXY ×5',
-      message: e => e.__test ? undefined : `SENT ${giftLine(e)}`
+      defaultName: 'Alex', defaultMsg: 'SKICKADE GALAXY ×5',
+      message: e => e.__test ? undefined : `SKICKADE ${giftLine(e)}`
     },
     liker: {
       label: 'SENASTE LIKER', catalogLabel: 'Senaste liker', typNamn: 'Like', events: ['like', 'likes'], multiAccent: '#ff58d6',
       themes: { neon: '#ff58d6', blue: '#4fc3ff', lime: '#a3e635' },
-      defaultName: 'Mia', defaultMsg: 'SENT 1 000 LIKES',
-      message: e => e.__test ? undefined : `SENT ${Math.max(1, Math.round(Number(e.count ?? e.likes) || 1)).toLocaleString('sv-SE')} LIKES`
+      defaultName: 'Mia', defaultMsg: 'SKICKADE 1 000 LIKES',
+      message: e => e.__test ? undefined : `SKICKADE ${Math.max(1, Math.round(Number(e.count ?? e.likes) || 1)).toLocaleString('sv-SE')} LIKES`
     },
     sharer: {
       label: 'SENASTE DELARE', catalogLabel: 'Senaste delare', typNamn: 'Delning', events: ['share'], multiAccent: '#2dd4bf',
       themes: { neon: '#ff58d6', teal: '#2dd4bf', orange: '#ff9d16' },
-      defaultName: 'Leo', defaultMsg: 'SHARED THE LIVE',
-      message: () => 'SHARED THE LIVE'
+      defaultName: 'Leo', defaultMsg: 'DELADE SÄNDNINGEN',
+      message: () => 'DELADE SÄNDNINGEN'
     },
     subscriber: {
       label: 'SENASTE PRENUMERANT', catalogLabel: 'Senaste prenumerant', typNamn: 'Prenumeration',
@@ -37,14 +37,14 @@
       // member here too, which fired on every viewer entering the room. Fixed to match the OBS widget.
       events: ['subscribe'], multiAccent: '#4fc3ff',
       themes: { neon: '#ff58d6', ocean: '#4fc3ff', gold: '#ffd35d' },
-      defaultName: 'Sara', defaultMsg: 'JOINED THE CLUB',
-      message: () => 'JOINED THE CLUB'
+      defaultName: 'Sara', defaultMsg: 'GICK MED I KLUBBEN',
+      message: () => 'GICK MED I KLUBBEN'
     },
     follower: {
       label: 'SENASTE FÖLJARE', catalogLabel: 'Senaste följare', typNamn: 'Följare', events: ['follow'], multiAccent: '#a3e635',
       themes: { neon: '#ff58d6', lime: '#a3e635', blue: '#4fc3ff' },
-      defaultName: 'Zoe', defaultMsg: 'FOLLOWED THE LIVE',
-      message: () => 'FOLLOWED THE LIVE'
+      defaultName: 'Zoe', defaultMsg: 'BÖRJADE FÖLJA',
+      message: () => 'BÖRJADE FÖLJA'
     }
   };
   const TYPE_KEYS = Object.keys(TYPES);
@@ -538,7 +538,7 @@
         ['neonCyber', 'Neon Cyber'], ['dragonFlame', 'Dragon Flame'], ['angelGold', 'Angel Gold']
       ];
       section.innerHTML = '<h4>LAST-X ALERTS · VARJE DESIGN SEPARAT</h4>' + lastXCards.map(([d, label]) =>
-        `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gifter · Liker · Sharer · Subscriber · Follower</small></span></button>`
+        `<button data-last-x-add="${d}"><i>✦</i><span><b>Last-X · ${label}</b><small>Gåvogivare · Liker · Delare · Prenumerant · Följare</small></span></button>`
       ).join('');
       catalog.prepend(section);
       // Nyckeln pa knappen ar det som gor designen matbar, forhandsvisningsbar och aterskapbar.

@@ -109,7 +109,7 @@ for (const forst of [false, true]) {
       assert.equal(l['lx-b'].aktiv, true, 'B tändes av gåvan');
       assert.equal(l['lx-c'].aktiv, false, 'C visar bara likes och tändes inte');
       assert.equal(l['lx-a'].namn, 'Kim');
-      assert.equal(l['lx-a'].meddelande, 'SENT ROSE ×3', 'standardmeddelandet för en gåva');
+      assert.equal(l['lx-a'].meddelande, 'SKICKADE ROSE ×3', 'standardmeddelandet för en gåva');
       assert.equal(l['lx-a'].rubrik, 'SENASTE GÅVOGIVARE');
       assert.equal(l['lx-b'].meddelande, 'TACK Kim FÖR 3 Rose', 'B:s eget meddelande för gåvor');
       await page.waitForTimeout(900);
@@ -125,7 +125,7 @@ for (const forst of [false, true]) {
       l = await lage(page);
       assert.equal(l['lx-c'].aktiv, true, 'C tändes av liken');
       assert.equal(l['lx-c'].namn, 'Mia');
-      assert.equal(l['lx-c'].meddelande, 'SENT 20 LIKES');
+      assert.equal(l['lx-c'].meddelande, 'SKICKADE 20 LIKES');
 
       // Visningstiden: B (5 s) har gått ut efter ~6,5 s, A (10 s) visar fortfarande.
       await page.waitForTimeout(6300);

@@ -120,7 +120,7 @@
     font-size:12.5px;font-weight:600;line-height:1.3;color:var(--last-x);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   }
-  /* the hero value line ("12 500 DIAMONDS") and its detail ("ROSE ×250") only exist in artwork
+  /* the hero value line ("12 500 DIAMANTER") and its detail ("ROSE ×250") only exist in artwork
      skins — the compact designs keep the single message line. */
   #value,#detail{display:none}
 
@@ -349,7 +349,7 @@
       <div id="glass"><div id="sheen"></div><div id="gleam"></div></div>
       <div id="avatar"><span id="initial">✦</span><img alt=""></div>
       <div id="copy">
-        <div id="label">LAST GIFTER</div>
+        <div id="label">SENASTE GÅVOGIVARE</div>
         <div id="name">—</div>
         <div id="value"></div>
         <div id="detail"></div>
@@ -372,35 +372,35 @@
   // that type's own theme palette instead.
   // Note: Studio also routes "member" (room join) to Last Subscriber; that fires on every viewer
   // entering the room, so this widget deliberately listens to real "subscribe" events only.
-  const giftLine=e=>`${String(e.giftName||e.gift||'GIFT').toUpperCase().slice(0,40)} ×${Math.max(1,Math.round(Number(e.count??e.repeatCount)||1))}`;
+  const giftLine=e=>`${String(e.giftName||e.gift||'GÅVA').toUpperCase().slice(0,40)} ×${Math.max(1,Math.round(Number(e.count??e.repeatCount)||1))}`;
   const nOf=(...vals)=>{for(const v of vals){const n=Math.round(Number(v));if(Number.isFinite(n)&&n>0)return n}return 0};
 
   // Each type carries a compact `message` (single-line designs) and a `lines` pair for artwork
-  // skins: `value` is the hero line ("12 500 DIAMONDS"), `detail` the small line ("ROSE ×250").
+  // skins: `value` is the hero line ("12 500 DIAMANTER"), `detail` the small line ("ROSE ×250").
   const TYPES={
     gifter:{
-      label:'LAST GIFTER',events:['gift'],multiAccent:'#ffd35d',
+      label:'SENASTE GÅVOGIVARE',events:['gift'],multiAccent:'#ffd35d',
       themes:{neon:'#ff58d6',gold:'#ffd35d',emerald:'#3ddc84'},
-      message:e=>`SENT ${giftLine(e)}`,
-      lines:e=>{const d=nOf(e.diamonds,e.coins,e.value);return d?{value:`${d.toLocaleString('sv-SE')} DIAMONDS`,detail:giftLine(e)}:{value:giftLine(e),detail:''}}
+      message:e=>`SKICKADE ${giftLine(e)}`,
+      lines:e=>{const d=nOf(e.diamonds,e.coins,e.value);return d?{value:`${d.toLocaleString('sv-SE')} DIAMANTER`,detail:giftLine(e)}:{value:giftLine(e),detail:''}}
     },
     liker:{
-      label:'LAST LIKER',events:['like','likes'],multiAccent:'#ff58d6',
+      label:'SENASTE LIKER',events:['like','likes'],multiAccent:'#ff58d6',
       themes:{neon:'#ff58d6',blue:'#4fc3ff',lime:'#a3e635'},
-      message:e=>`SENT ${(nOf(e.count,e.likes)||1).toLocaleString('sv-SE')} LIKES`,
+      message:e=>`SKICKADE ${(nOf(e.count,e.likes)||1).toLocaleString('sv-SE')} LIKES`,
       lines:e=>({value:`${(nOf(e.count,e.likes)||1).toLocaleString('sv-SE')} LIKES`,detail:''})
     },
     sharer:{
-      label:'LAST SHARER',events:['share'],multiAccent:'#2dd4bf',
+      label:'SENASTE DELARE',events:['share'],multiAccent:'#2dd4bf',
       themes:{neon:'#ff58d6',teal:'#2dd4bf',orange:'#ff9d16'},
-      message:()=>'SHARED THE LIVE',
-      lines:()=>({value:'SHARED THE LIVE',detail:''})
+      message:()=>'DELADE SÄNDNINGEN',
+      lines:()=>({value:'DELADE SÄNDNINGEN',detail:''})
     },
     subscriber:{
-      label:'LAST SUBSCRIBER',events:['subscribe'],multiAccent:'#4fc3ff',
+      label:'SENASTE PRENUMERANT',events:['subscribe'],multiAccent:'#4fc3ff',
       themes:{neon:'#ff58d6',ocean:'#4fc3ff',gold:'#ffd35d'},
-      message:()=>'JOINED THE CLUB',
-      lines:()=>({value:'JOINED THE CLUB',detail:''})
+      message:()=>'GICK MED I KLUBBEN',
+      lines:()=>({value:'GICK MED I KLUBBEN',detail:''})
     }
   };
 
