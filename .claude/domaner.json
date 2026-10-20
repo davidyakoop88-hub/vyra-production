@@ -50,7 +50,8 @@
         "widget-handles.js",
         "vyra-extravy-vakt.js",
         "vyra-panelram.js",
-        "vyra-testspel.js"
+        "vyra-testspel.js",
+        "vyra-sidbyte.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -89,7 +90,8 @@
         "tests/browser/panel-krav.browser.test.js",
         "tests/browser/panel-krav-2.browser.test.js",
         "tests/browser/panel-krav-3.browser.test.js",
-        "tests/browser/panel-krav-4.browser.test.js"
+        "tests/browser/panel-krav-4.browser.test.js",
+        "tests/browser/sidbyte-borjar-overst.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -287,7 +289,8 @@
         "tests/browser/nollstallning-vid-ny-sandning.browser.test.js",
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js",
-        "tests/korsfilskopplingar.test.js"
+        "tests/korsfilskopplingar.test.js",
+        "tests/browser/widgetsok-alla-paket.browser.test.js"
       ],
       "matning": [
         {
@@ -348,7 +351,8 @@
         "tests/browser/sidhuvud-knappar.browser.test.js",
         "tests/browser/sidomeny-bredd.browser.test.js",
         "tests/browser/overlaylank-synlig.browser.test.js",
-        "tests/browser/overlay-passform.browser.test.js"
+        "tests/browser/overlay-passform.browser.test.js",
+        "tests/browser/agency-test-detalj.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -373,7 +377,8 @@
         "action-master.js",
         "vyra-masterval.js",
         "vyra-tal.js",
-        "points-system.js"
+        "points-system.js",
+        "ae-dialog.js"
       ],
       "tester": [
         "tests/action-widget-routing.test.js",
@@ -386,7 +391,8 @@
         "tests/action-talutrymme.test.js",
         "tests/action-tts-rost.test.js",
         "tests/browser/alert-egen-placering.browser.test.js",
-        "scripts/test/event-gifts.test.js"
+        "scripts/test/event-gifts.test.js",
+        "tests/browser/ae-dialog-fokus.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -428,7 +434,9 @@
         "tests/overlay-access-sparrad-lank.test.js",
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
-        "tests/browser/overlay-dolda-widgetar.browser.test.js"
+        "tests/browser/overlay-dolda-widgetar.browser.test.js",
+        "tests/browser/forhandsvisning-behaller-sokning.browser.test.js",
+        "tests/browser/paketpreview-affisch.browser.test.js"
       ],
       "matning": [
         {
