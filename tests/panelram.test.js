@@ -318,7 +318,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const fyrverkeri = plats('vyra-fyrverkeri-panel.js', '20261019-2');
   assert.ok(fyrverkeri > reg && fyrverkeri > testspel && fyrverkeri < ordning, 'fyrverkeriernas poster laddas efter registret och testmotorn, före panelordningen');
   // Fontänernas och gåvoburkens poster (vyra-fontan-panel.js, PR 13) på samma sätt.
-  const fontan = plats('vyra-fontan-panel.js', '20261019-2');
+  const fontan = plats('vyra-fontan-panel.js', '20261020-14');  // 20261020-14: svenska alternativ och hela beskrivningar (B-015, B-016)
   assert.ok(fontan > reg && fontan > testspel && fontan < ordning, 'fontänernas och gåvoburkens poster laddas efter registret och testmotorn, före panelordningen');
   // Fan Level 50:s och Glove Snipe-paketens poster (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14) på samma sätt.
   const fl50 = plats('vyra-fl50-panel.js', '20261019-1'), glove = plats('vyra-glove-panel.js', '20261020-14');  // 20261020-14: raden om avvecklade paket (B-001)

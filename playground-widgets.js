@@ -226,7 +226,7 @@ W.streak={name:"Top Streak",title:false,
 
 
 const GMET={
-  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (coins)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
+  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (mynt)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
   gifts:{l:"GÅVOR",i:"🎁",d:50,n:"Antal gåvor",f:e=>e.type==="gift"?e.count:0},
   likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Tap / likes",f:e=>e.type==="likes"?e.count:0},
   // antal: bara sandlådans exempelhändelser bär det (många följare i en händelse, så att ▶ Testa widget
@@ -543,7 +543,7 @@ const PALETTE=[
 
 const GLOBAL=[
   {k:"frameImg",l:"Bildram (HD)",t:"select",o:[["none","Ingen (kodad ram)"]].concat(ALLF.map(f=>[f.id,(f.vy?"VYRA · ":"")+f.name]))},
-  {k:"enter",l:"Entré / utgång",t:"select",o:[["zoom","Zoom (överskjuter)"],["drop","Drop"],["bounce","Bounce"],["rise","Rise"],["glass","Glas"],["neon","Neon-flimmer"],["none","Ingen"]]},
+  {k:"enter",l:"Entré / utgång",t:"select",o:[["zoom","Zooma in med studs"],["drop","Falla in"],["bounce","Studsa in"],["rise","Stiga upp"],["glass","Glas"],["neon","Neon-flimmer"],["none","Ingen"]]},
   {k:"frame",l:"Ramlager på avatar",t:"select",o:[["halo","Halo + ripple"],["flame","Flamma"],["bolt","Blixt"],["glint","Guld + glimt"],["ripple","Ripple"],["comet","Komet"],["petals","Kronblad"],["none","Ingen"]]},
   {k:"namefx",l:"Namneffekt",t:"select",o:[["none","Ingen"],["shimmer","Shimmer"],["aurora","Aurora"],["flicker","Flimmer"]]},
   {k:"accent",l:"Färg 1",t:"color"},{k:"accent2",l:"Färg 2",t:"color"},{k:"text",l:"Textfärg",t:"color"},
