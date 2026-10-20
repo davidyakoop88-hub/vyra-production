@@ -276,3 +276,15 @@
 .vyra-action-alert.has-avatar{flex-wrap:wrap}
 .vyra-action-alert .vaa-user,.vyra-action-alert .vaa-text{min-width:0;overflow-wrap:anywhere}
 .vyra-action-alert.en-rad .vaa-user,.vyra-action-alert.en-rad .vaa-text{overflow-wrap:normal}
+
+/* F35 (granskning 2026-10-17): Ny Action visade allt på en gång och Spara/Avbryt fanns bara längst
+   ned. De avancerade valen är fällda (<details data-ae-avancerat>), och rubriken med stängknappen
+   samt fotraden står fast när dialogen rullar. `.ae-modal>div` har padding 18px och är
+   rullningsytan — de negativa marginalerna låter de fasta raderna täcka hela bredden. */
+.ae-modal-action header{position:sticky;top:-18px;z-index:2;margin:-18px -18px 15px;padding:14px 18px 10px;background:#17101b}
+.ae-modal-action footer{position:sticky;bottom:-18px;z-index:2;margin:18px -18px -18px;padding:12px 18px;border-top:1px solid #402344;background:#17101b}
+.ae-modal-action .ae-avancerat{margin:14px 0 0;border:1px solid #39203e;border-radius:10px;padding:0 14px}
+.ae-modal-action .ae-avancerat>summary{cursor:pointer;padding:12px 0;font-size:12.5px;font-weight:700;color:#eee;list-style-position:inside}
+.ae-modal-action .ae-avancerat>summary small{margin-left:8px;font-weight:500;color:#b9a3c4}
+.ae-modal-action .ae-avancerat>summary:focus-visible{outline:2px solid #c64dea;outline-offset:2px;border-radius:6px}
+.ae-modal-action .ae-avancerat[open]>summary{border-bottom:1px solid #2a1730;margin-bottom:4px}

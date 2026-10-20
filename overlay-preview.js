@@ -313,21 +313,33 @@ function owgPaintedInClip(root, tr) {
 // kortets klippyta och kortet ser tomt ut — trots att HTML:en finns. Fångas det (nästan inget
 // målat syns inne i kortet) ramar vi om till motivets FAKTISKA innehållslåda och fyller kortet.
 // De ~123 kort som redan fyller sin ruta rörs inte (de returnerar tidigt).
+//
+// F36 (granskning 2026-10-17): "förhandsbilderna upptar en liten del av bildytan". Uppmätt på
+// main vid 1400 px: rankingkorten täckte 14–39 % av sin bildyta (median 31 %), eftersom skalan
+// räknades på widgetens hela låda — med genomskinlig luft — i stället för på det som syns. Spärren
+// var 5 %, så bara helt tomma kort ramades om. Nu ramas varje kort under OWG_FYLLD om till sitt
+// synliga innehåll, och omramningen BEHÅLLS BARA OM DEN TÄCKER MER än den vanliga skalningen —
+// ett kort kan alltså aldrig bli sämre av den här funktionen. Uppskalningen är fortsatt högst 3×
+// för helt tomma kort och 2× för övriga, så ett litet motiv inte blåses upp till suddighet.
+const OWG_FYLLD = 0.5;
 function owgFitThumbToContentIfEmpty(thumb) {
   const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner');
   if (!inner) return;
   const tr = thumb.getBoundingClientRect();
-  if (owgPaintedInClip(inner, tr) >= 0.05) return; // redan synligt nog
+  const fore = owgPaintedInClip(inner, tr);
+  if (fore >= OWG_FYLLD) return; // fyller redan sin ruta
   // Mät innehållslådan utan transform och rama om den till att fylla kortet (tillåt måttlig
   // uppskalning så en ensam ledare/symbol inte blir en prick).
   const o = inner.style.transformOrigin, tf = inner.style.transform, l = inner.style.left, t = inner.style.top;
+  const aterstall = () => { inner.style.transformOrigin = o; inner.style.transform = tf; inner.style.left = l; inner.style.top = t };
   inner.style.transformOrigin = '0 0'; inner.style.transform = 'none'; inner.style.left = '0'; inner.style.top = '0';
   const c = owgContentBox(inner);
-  if (!c || c.width < 2 || c.height < 2) { inner.style.transformOrigin = o; inner.style.transform = tf; inner.style.left = l; inner.style.top = t; return; }
-  const pad = 12, s = Math.min((tr.width - pad) / c.width, (tr.height - pad) / c.height, 3);
+  if (!c || c.width < 2 || c.height < 2) { aterstall(); return; }
+  const pad = 12, s = Math.min((tr.width - pad) / c.width, (tr.height - pad) / c.height, fore < 0.05 ? 3 : 2);
   const localL = c.left - tr.left, localT = c.top - tr.top;
   const tx = (tr.width - c.width * s) / 2 - localL * s, ty = (tr.height - c.height * s) / 2 - localT * s;
   inner.style.transform = `translate(${tx}px,${ty}px) scale(${s})`;
+  if (owgPaintedInClip(inner, tr) <= fore) aterstall();
 }
 
 // Renders a real thumbnail for one card, on demand — used by the lazy observer below so only

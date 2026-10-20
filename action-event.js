@@ -473,6 +473,11 @@
     const config=editing?.config||{},types=editing?.types||[];
     const vald=type=>types.includes(type);
     const volume=editing?Number(editing.volume??100):100;
+    // F35 (granskning 2026-10-17): poäng och "Ytterligare inställningar" ligger i en fällbar sektion
+    // som är stängd för en ny action. Vid redigering öppnas den så fort något avancerat val avviker
+    // från standard — en satt cooldown får aldrig gömmas för den som redigerar. Fälten har kvar sina
+    // id:n, så saveAction läser dem som förut (tests/action-avancerade-val.test.js).
+    const avanceradOppen=!!editing&&(vald('addPoints')||vald('removePoints')||volume!==100||Number(editing.cooldown)>0||Number(editing.userCooldown)>0||!editing.fade||!!editing.repeatCombo||!!editing.skipOnNext);
     const rutor=actionTypes.map(([value,label])=>`<div class="ae-fn" data-fn="${value}"><label class="ae-check"><input type="checkbox" data-fn-check value="${value}"${vald(value)?' checked':''}> ${label}</label><div class="ae-fn-slot" data-slot="${value}"${vald(value)?'':' hidden'}></div></div>`).join('');
     document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-action"><div>
       <header><h3>${editing?'Redigera Action':'Ny Action'}</h3>${STANG_KNAPP}</header>
@@ -480,6 +485,7 @@
       <fieldset class="ae-fns"><legend>Vad ska hända? Flera val är möjliga.</legend>${rutor}</fieldset>
       <div class="ae-extra-slot"></div>
       <section class="ae-block"><h4>Hur länge ska den visas?</h4><label class="ae-inline">Visningstid (sekunder)<input id="aeDuration" type="number" min="1" max="600" value="${Number(editing?.duration)||10}"></label></section>
+      <details class="ae-avancerat" data-ae-avancerat${avanceradOppen?' open':''}><summary>Avancerade val <small>poäng, volym, cooldown och fade</small></summary>
       <section class="ae-block ae-points"><h4>Ska användaren som triggar få en belöning, eller betala för den? (valfritt)</h4>
         <div class="ae-points-row"><label class="ae-check"><input id="aeAddPoints" type="checkbox"${vald('addPoints')?' checked':''}> Lägg till poäng</label><input id="aeAddPointsAmount" type="number" min="1" value="${Number(config.addPointsAmount)||10}"${vald('addPoints')?'':' hidden'}></div>
         <div class="ae-points-row"><label class="ae-check"><input id="aeRemovePoints" type="checkbox"${vald('removePoints')?' checked':''}> Ta bort poäng</label><input id="aeRemovePointsAmount" type="number" min="1" value="${Number(config.removePointsAmount)||10}"${vald('removePoints')?'':' hidden'}></div>
@@ -491,7 +497,7 @@
         <label class="ae-check"><input id="aeFade" type="checkbox"${editing?(editing.fade?' checked':''):' checked'}> Aktivera fade in/ut</label>
         <label class="ae-check"><input id="aeRepeatCombo" type="checkbox"${editing?.repeatCombo?' checked':''}> Upprepa med gift-combo</label>
         <label class="ae-check"><input id="aeSkipOnNext" type="checkbox"${editing?.skipOnNext?' checked':''}> Hoppa över vid nästa action</label>
-      </div></section>
+      </div></section></details>
       <footer><button data-close-ae>✘ Avbryt</button><button id="saveAeAction" class="primary">✔ Spara</button></footer>
     </div></div>`;
     bindClose();
