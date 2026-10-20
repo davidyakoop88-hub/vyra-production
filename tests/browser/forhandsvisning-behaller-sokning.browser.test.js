@@ -84,9 +84,9 @@ test('Förhandsvisa behaller soktext och filter', { skip, timeout: 120000 }, asy
 test('paketpreview behaller ocksa sokningen', { skip, timeout: 120000 }, async () => {
   const page = await overlayKatalog();
   try {
-    const { fore, klickad, efter } = await sokOchForhandsvisa(page, 'koi pearl', /hela paketet/);
-    assert.ok(klickad, 'hittade inget Förhandsvisa pa Koi-paketet');
-    assert.equal(efter.q, 'koi pearl', 'sokfaltet tomdes av paketpreview');
+    const { fore, klickad, efter } = await sokOchForhandsvisa(page, 'pink princess', /hela paketet/);
+    assert.ok(klickad, 'hittade inget Förhandsvisa pa Pink Princess-paketet (Koi och Masquerade togs ur katalogen i slutgranskningen B-001)');
+    assert.equal(efter.q, 'pink princess', 'sokfaltet tomdes av paketpreview');
     assert.deepEqual(efter.namn, fore.namn);
   } finally { await page.close(); }
 });
