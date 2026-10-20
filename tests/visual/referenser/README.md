@@ -97,14 +97,14 @@ Guardian Emblem fotograferas i `hyllning` vid 900 ms — 20 fotograferingar av 2
 
 ## Vad som INTE har någon referens
 
-Sex poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans 15 av 181
-nycklar. Varje post bär sitt uppmätta skäl:
+Fyra poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans de nycklar
+tabellen räknar upp. Koi Pearl Lagoon och Masquerade Ball (H.264, åtta nycklar) stod här tills
+slutgranskningen 2026-10-20 tog bort dem ur katalogen: klippen var svarta rutor med vattenstämpel. Varje post bär sitt uppmätta skäl:
 
 | Post | Nycklar | Skäl i korthet |
 |---|---|---|
 | `catalog:custom:image` / `:video` | 2 | tomma behållare som väntar på användarens egen fil — 0,4 % respektive 0,2 % målat |
 | `catalog:giftfireworks:` | 3 | partiklar på en Pixi-duk med egen ticker; duken är tom vid varje fast tidpunkt |
-| `catalog:glovesnipe:koiPearl:` / `:masquerade:` | 8 | effekten är H.264-video, och provets Chromium saknar den kodeken (`DEMUXER_ERROR_NO_SUPPORTED_STREAMS`) — i OBS spelar de. WebM-paketen (Pink Princess, Royal Ruby, Cloud Fox) fotograferas |
 | `catalog:likefountain` | 1 | ständig rörelse: 22 olika bildrutor på 12 s, ingen kom igen |
 
 Ett undantag är alltid ett hål i täckningen, och listan har ett tak i provet så att den ska göra ont

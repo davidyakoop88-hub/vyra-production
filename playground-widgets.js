@@ -226,7 +226,7 @@ W.streak={name:"Top Streak",title:false,
 
 
 const GMET={
-  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (coins)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
+  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (mynt)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
   gifts:{l:"GÅVOR",i:"🎁",d:50,n:"Antal gåvor",f:e=>e.type==="gift"?e.count:0},
   likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Tap / likes",f:e=>e.type==="likes"?e.count:0},
   // antal: bara sandlådans exempelhändelser bär det (många följare i en händelse, så att ▶ Testa widget
@@ -293,7 +293,14 @@ W.goalvar={name:"Mål-varianter",
       q(".v").forEach(e=>e.textContent=fmt(sv)+" / "+fmt(T));q(".pc").forEach(e=>e.textContent=pc);
       q(".n,.mk").forEach(e=>e.textContent=fmt(sv));paintRing();paintGauge();paintSteps();paintBar6();bx1&&bx1.paint();bx2&&bx2.paint();q(".t").forEach(e=>e.textContent=fmt(T));paintFrame();
     }
-    function loop(){shown+=(val-shown)*.14;if(Math.abs(val-shown)<.6)shown=val;paintText();raf=shown===val?0:requestAnimationFrame(loop)}
+    // MÅL NÅTT FÖRST NÄR RÄKNEVERKET ÄR FRAMME (slutgranskning B-008/B-009, 2026-10-20). Skylten tonade in i samma
+    // stund som värdet passerade målet, medan siffran fortfarande räknade upp från 81 %; och vid nollställningen
+    // sa texten "0 % av 2 500" medan staplarna gled tillbaka från 100 % i sin övergång. Nu firas målet när siffran
+    // når fram, och nollställningen hoppar staplar och text samtidigt (övergångarna av under ett ögonblick).
+    let firaNar=false;
+    function fira(){firaNar=false;box.classList.add("done");confetti();
+      setTimeout(()=>{box.classList.add("nollst");box.classList.remove("done","near","full");level++;st.level=level;val=0;st.val=0;shown=0;busy=false;lastP=0;refresh();paintText();void box.offsetWidth;requestAnimationFrame(()=>requestAnimationFrame(()=>box.classList.remove("nollst")))},2300/O().speed)}
+    function loop(){shown+=(val-shown)*.14;if(Math.abs(val-shown)<.6)shown=val;paintText();raf=shown===val?0:requestAnimationFrame(loop);if(!raf&&firaNar)fira()}
     function refresh(){
       const T=tgt(),p=Math.min(1,val/T);
       q(".f:not(.nof)").forEach(e=>e.style.width=(p*100)+"%");q(".s9mark").forEach(e=>e.style.bottom=(p*100)+"%");q(".fv").forEach(e=>e.style.height=(p*100)+"%");
@@ -479,8 +486,7 @@ W.goalvar={name:"Mål-varianter",
       [.25,.5,.75].forEach(m=>{if(p0<m&&p1>=m&&p1<1)toast(REWARD[m])});
       box.classList.toggle("near",p1>=.9&&p1<1);
       refresh();
-      if(val>=tgt()&&!busy){busy=true;box.classList.add("done");confetti();
-        setTimeout(()=>{box.classList.remove("done","near","full");level++;st.level=level;val=0;st.val=0;shown=0;busy=false;lastP=0;refresh()},2300/O().speed)}
+      if(val>=tgt()&&!busy){busy=true;firaNar=true;if(!raf)fira()}
     }
     return{refresh(){refresh()},event(e){const m=GMET[O().x.metric]||GMET.coins;
       if(e.type==="reset"){val=0;st.val=0;st.level=1;shown=0;level=1;busy=false;refresh()}
@@ -537,7 +543,7 @@ const PALETTE=[
 
 const GLOBAL=[
   {k:"frameImg",l:"Bildram (HD)",t:"select",o:[["none","Ingen (kodad ram)"]].concat(ALLF.map(f=>[f.id,(f.vy?"VYRA · ":"")+f.name]))},
-  {k:"enter",l:"Entré / utgång",t:"select",o:[["zoom","Zoom (överskjuter)"],["drop","Drop"],["bounce","Bounce"],["rise","Rise"],["glass","Glas"],["neon","Neon-flimmer"],["none","Ingen"]]},
+  {k:"enter",l:"Entré / utgång",t:"select",o:[["zoom","Zooma in med studs"],["drop","Falla in"],["bounce","Studsa in"],["rise","Stiga upp"],["glass","Glas"],["neon","Neon-flimmer"],["none","Ingen"]]},
   {k:"frame",l:"Ramlager på avatar",t:"select",o:[["halo","Halo + ripple"],["flame","Flamma"],["bolt","Blixt"],["glint","Guld + glimt"],["ripple","Ripple"],["comet","Komet"],["petals","Kronblad"],["none","Ingen"]]},
   {k:"namefx",l:"Namneffekt",t:"select",o:[["none","Ingen"],["shimmer","Shimmer"],["aurora","Aurora"],["flicker","Flimmer"]]},
   {k:"accent",l:"Färg 1",t:"color"},{k:"accent2",l:"Färg 2",t:"color"},{k:"text",l:"Textfärg",t:"color"},

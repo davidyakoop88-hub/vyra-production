@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5d75be0c`
+Commit: `e798ff8c`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **173** |
-| Sektioner | 26 |
-| Med katalognyckel | 173 / 173 |
-| Med shadow DOM-miniatyr | 134 / 173  ⚠️ |
-| Ritar sin design | 173 / 173 |
+| Kort totalt | **171** |
+| Sektioner | 24 |
+| Med katalognyckel | 171 / 171 |
+| Med shadow DOM-miniatyr | 134 / 171  ⚠️ |
+| Ritar sin design | 171 / 171 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -45,7 +45,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
-| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-20 | — |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -53,8 +53,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
-| Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Royal Ruby · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
@@ -64,8 +62,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
-| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
-| LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
+| SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-20 | — |
+| LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-20 | — |
 
 ## Varje kort
 
@@ -152,9 +150,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-20 | — |
+| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-20 | — |
+| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-20 | — |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
@@ -209,7 +207,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Portal · rosa & lil | `catalog:likefountain:portal:portal` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Rosa & lila | `catalog:likefountain:portal:portal` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | Like Fountain · Portal · Rainbow | `catalog:likefountain:portal:rainbow` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | Like Fountain · Portal · Neon | `catalog:likefountain:portal:neon` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | Like Fountain · Portal · Fire | `catalog:likefountain:portal:fire` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
@@ -248,18 +246,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
-
-### Koi Pearl Lagoon · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Koi Pearl Lagoon · hela paketet | `catalog:glovesnipe:koiPearl:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-
-### Masquerade Ball · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Masquerade Ball · hela paketet | `catalog:glovesnipe:masquerade:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Pink Princess · VIDEO FX
 
@@ -362,13 +348,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
-| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | 2026-09-27 | [#535](https://github.com/davidyakoop88-hub/vyra-production/pull/535) |
+| Skattkista | `catalog:skattkista:kista` | ✓ | ✓ | 2026-10-20 | — |
+| Skattkista · rad | `catalog:skattkista:pill` | ✓ | ✓ | 2026-10-20 | — |
 
 ### LÅTÖNSKNINGAR · LIVE
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Låtönskningar · YouTube | `catalog:latonskningar:youtube` | ✓ | ✓ | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
-| Låtönskningar · Spotify | `catalog:latonskningar:spotify` | ✓ | ✓ | 2026-09-27 | [#536](https://github.com/davidyakoop88-hub/vyra-production/pull/536) |
+| Låtönskningar · YouTube | `catalog:latonskningar:youtube` | ✓ | ✓ | 2026-10-20 | — |
+| Låtönskningar · Spotify | `catalog:latonskningar:spotify` | ✓ | ✓ | 2026-10-20 | — |
 

@@ -216,10 +216,12 @@
         + sek('DESIGN', '<label>Design<select id="skDesign"><option value="kista"' + (design === 'kista' ? ' selected' : '') + '>Kista + stor nedräkning</option><option value="pill"' + (design === 'pill' ? ' selected' : '') + '>Kompakt rad</option></select></label>'
           + '<label>Färg<input id="skFarg" type="color" value="' + saker(w.kistaFarg || '#ffc94d') + '"></label>'
           + '<label>Rubrik<input id="skRubrik" maxlength="24" value="' + saker(w.kistaRubrik || 'SKATTKISTA') + '"></label>')
-        + sek('INNEHÅLL', '<label class="switch-row">Visa avsändaren<input id="skAvsandare" type="checkbox"' + (w.kistaVisaAvsandare === false ? '' : ' checked') + '><i></i></label>'
-          + '<label>Visas öppen i … sekunder<input id="skEfter" type="number" min="0" max="60" value="' + (Number.isFinite(Number(w.kistaEfterOppning)) ? Number(w.kistaEfterOppning) : 8) + '"></label>'
-          + '<small>I sändningen syns widgeten bara medan en kista finns. Nedräkningen följer TikToks egen öppningstid.</small>')
-        + sek('TESTA', '<button id="skTesta" type="button">▶ Testa kista (30 s)</button>')
+        // Slutgranskning B-014 (2026-10-20): kryssrutan före texten som i alla andra paneler, ingen ellips i
+        // etiketten, och testknappen har studions knappstil (primary) i stället för webbläsarens grå standardknapp.
+        + sek('INNEHÅLL', '<label><input id="skAvsandare" type="checkbox"' + (w.kistaVisaAvsandare === false ? '' : ' checked') + '> Visa avsändaren</label>'
+          + '<label>Visas öppen efteråt (s)<input id="skEfter" type="number" min="0" max="60" value="' + (Number.isFinite(Number(w.kistaEfterOppning)) ? Number(w.kistaEfterOppning) : 8) + '"></label>'
+          + '<small id="skInfo" class="pr-info">I sändningen syns widgeten bara medan en kista finns. Nedräkningen följer TikToks egen öppningstid.</small>')
+        + sek('TESTA', '<button id="skTesta" class="primary" type="button">▶ Testa kista (30 s)</button>')
         + sek('POSITION & STORLEK', '<div class="property-grid"><label>X<input id="propX" type="number" value="' + (w.x || 0) + '"></label><label>Y<input id="propY" type="number" value="' + (w.y || 0) + '"></label><label>Bredd<input id="propWidth" type="number" value="' + (w.width || 220) + '"></label><label>Lager<input id="propLayer" type="number" value="' + (w.layer || 1) + '"></label></div>')
         + '<button class="delete" id="del">Ta bort</button>';
     };

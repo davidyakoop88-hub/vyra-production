@@ -78,7 +78,9 @@
       kontroller: [
         // 2 · Innehåll
         { sektion: 2, typ: 'val', falt: 'goalKind', etikett: 'Vad räknas', legacyId: '#gmKind' },
-        { sektion: 2, typ: 'text', falt: 'goalTitle', etikett: 'Rubrik', legacyId: '#gmTitle' },
+        // Cirkelns rubrik är målad i konsten (B-005): fältet visas inte där, en rad säger varför.
+        { sektion: 2, typ: 'text', falt: 'goalTitle', etikett: 'Rubrik', legacyId: '#gmTitle', om: () => format !== 'circle' },
+        { sektion: 2, typ: 'text', falt: 'prRubrikIBilden', legacyId: '#gmTitleBild', om: () => format === 'circle' },
         { sektion: 2, typ: 'tal', falt: 'goalTarget', etikett: 'Mål', legacyId: '#pfGoalTarget' },
         { sektion: 2, typ: 'tal', falt: 'goalCurrent', etikett: 'Startvärde', legacyId: '#pfGoalCurrent' },
         { sektion: 2, typ: 'kryss', falt: 'goalShowPercent', etikett: 'Visa procent', legacyId: '#gmShowPct' },

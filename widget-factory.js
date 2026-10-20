@@ -117,7 +117,7 @@
       '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }, '9': { label: 'Stående pill' }
     },
     'likefountain.palette': {
-      portal: { label: 'Portal · rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
+      portal: { label: 'Rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
       fire: { label: 'Fire' }, ice: { label: 'Ice' }, gold: { label: 'Gold' }, aurora: { label: 'Aurora' },
       pastel: { label: 'Pastel' }, mono: { label: 'Mono' }
     },
@@ -463,7 +463,7 @@
       // tal som DESIGNS i goal-motion.js, så katalogknapp och fabrik ger samma widget.
       ...(v.model === 'heart-tower' ? { width: 100 } : {}),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
-      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
+      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWER GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49c8ff',4:'#4d8dff','pulse-rail':'#b629ff','pulse-tower':'#b629ff','prism-core':'#38d9ff','prism-spine':'#38d9ff','signal-ribbon':'#ff3d91','heart-column':'#ff3d91'})[v.model] || '#b629ff',
       goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#d9f6ff',4:'#67dcff','pulse-rail':'#20d9ff','pulse-tower':'#20d9ff','prism-core':'#8768ff','prism-spine':'#8768ff','signal-ribbon':'#ff765e','heart-column':'#ff765e'})[v.model] || '#20d9ff'
@@ -612,7 +612,7 @@
     // media.js, aldrig pa widgetobjektet. Skrevs det hit hamnade varje gava i den sparade
     // layouten — se docs/tech-debt.md punkt 3, skulden som inte ska aterskapas.
     'giftjar.model': v => ({
-      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
+      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: v.label ? 'Gift Jar · ' + v.label : 'Gift Jar',  // B-034: mallnamnet bär modellen
       jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
       jarCount: 0, jarCapacity: 50, jarShowCounter: false, jarAutoResetMs: 0
     })
@@ -758,7 +758,7 @@
     'giftjar': parts => {
       if (!parts[0]) throw new Error('catalog:giftjar kräver en modell');
       const model = pick('giftjar.model', parts[0], 'gift jar-modell');
-      return ['giftjar.model', { model: parts[0], accent: model.accent, light: model.light, symbol: model.symbol }];
+      return ['giftjar.model', { model: parts[0], label: model.label, accent: model.accent, light: model.light, symbol: model.symbol }];
     }
   };
 

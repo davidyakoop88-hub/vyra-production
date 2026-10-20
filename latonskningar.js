@@ -274,8 +274,8 @@
       var s = installning(w), k = kalla(w);
       var sek = function (rubrik, h) { return typeof pgSection === 'function' ? pgSection(rubrik, h, true) : '<div class="property-group"><h4>' + rubrik + '</h4>' + h + '</div>'; };
       var spotifyInfo = k === 'spotify'
-        ? '<small id="latSpotifyStatus">Låtarna läggs i din Spotify-kö från studion. Studion måste vara öppen, Spotify anslutet (Extras → Spotify) och Premium krävs.</small>'
-        : '<small>Låten spelas i OBS-overlayn och syns i widgeten. Sökningen kräver att YouTube är kopplat på servern.</small>';
+        ? '<small id="latKallaInfo" class="pr-info"><span id="latSpotifyStatus">Låtarna läggs i din Spotify-kö från studion. Studion måste vara öppen, Spotify anslutet (Extras → Spotify) och Premium krävs.</span></small>'
+        : '<small id="latKallaInfo" class="pr-info">Låten spelas i OBS-overlayn och syns i widgeten. Sökningen kräver att YouTube är kopplat på servern.</small>';
       return '<h3>LÅTÖNSKNINGAR</h3><div class="template-badge">LIVE · TITTARNA ÖNSKAR I CHATTEN</div>'
         + '<div hidden><input id="pt" value="' + saker(w.title || '') + '"><input id="pv" value=""></div>'
         + sek('KÄLLA', '<label>Spela via<select id="latKalla"><option value="youtube"' + (k === 'youtube' ? ' selected' : '') + '>YouTube</option><option value="spotify"' + (k === 'spotify' ? ' selected' : '') + '>Spotify</option></select></label>' + spotifyInfo)
@@ -283,13 +283,13 @@
           + '<label>Väntetid per tittare (sekunder)<input id="latCooldown" type="number" min="0" max="3600" value="' + (s.cooldownMs / 1000) + '"></label>'
           + '<label>Max antal låtar i kön<input id="latMaxKo" type="number" min="1" max="50" value="' + s.maxKo + '"></label>'
           + '<label>Max längd per låt (minuter)<input id="latMaxMinuter" type="number" min="1" max="30" value="' + (s.maxSek / 60) + '"></label>'
-          + '<small>Moderatorer kan skriva !skip för att hoppa över låten som spelas.</small>')
+          + '<small id="latSkipInfo" class="pr-info">Moderatorer kan skriva !skip för att hoppa över låten som spelas.</small>')
         + sek('UTSEENDE', '<label>Rubrik<input id="latRubrik" maxlength="24" value="' + saker(w.latRubrik || 'LÅTÖNSKNINGAR') + '"></label>'
           + '<label>Färg<input id="latFarg" type="color" value="' + saker(w.latFarg || '#ff3b7a') + '"></label>'
-          + '<label class="switch-row">Visa kön i widgeten<input id="latVisaKo" type="checkbox"' + (w.latVisaKo === false ? '' : ' checked') + '><i></i></label>'
+          + '<label><input id="latVisaKo" type="checkbox"' + (w.latVisaKo === false ? '' : ' checked') + '> Visa kön i widgeten</label>'
           + '<label class="range-label">Visa låtar i kön <b>' + s.visa + '</b><input id="latVisa" type="range" min="0" max="10" value="' + s.visa + '"></label>'
           + '<label class="range-label">Volym (YouTube) <b>' + s.volym + '</b><input id="latVolym" type="range" min="0" max="100" value="' + s.volym + '"></label>')
-        + sek('STYR', '<div class="switch-row"><button id="latTesta" type="button">▶ Testa en önskning</button><button id="latHoppa" type="button">⏭ Hoppa över</button><button id="latTom" type="button">Töm kön</button></div>')
+        + sek('STYR', '<div class="switch-row" id="latStyr"><button id="latTesta" type="button">▶ Testa en önskning</button><button id="latHoppa" type="button">⏭ Hoppa över</button><button id="latTom" type="button">Töm kön</button></div>')
         + sek('POSITION & STORLEK', '<div class="property-grid"><label>X<input id="propX" type="number" value="' + (w.x || 0) + '"></label><label>Y<input id="propY" type="number" value="' + (w.y || 0) + '"></label><label>Bredd<input id="propWidth" type="number" value="' + (w.width || 340) + '"></label><label>Lager<input id="propLayer" type="number" value="' + (w.layer || 1) + '"></label></div>')
         + '<button class="delete" id="del">Ta bort</button>';
     };

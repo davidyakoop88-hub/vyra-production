@@ -37,3 +37,14 @@
 .goal-motion.gm-utan-procent .goal-motion-percent,.goal-motion.gm-utan-antal .goal-motion-copy strong{display:none!important}
 .goal-motion-kvar{display:block;margin-top:3px;text-align:center;font-size:clamp(10px,3.4cqw,16px);letter-spacing:.06em;font-weight:800;opacity:.9;white-space:nowrap}
 .goal-motion-landscape .goal-motion-kvar{position:absolute;right:0;top:115%;margin:0}
+/* RAIL: RUBRIK OCH ANTAL OVANFÖR RÄLSEN (slutgranskning B-006, 2026-10-20). Texten låg absolut över konsten:
+   rubriken ovanpå vänstra ornamentet, och eftersom .social-goal.goal-motion .goal-motion-copy tvingar
+   display:block hamnade "0 / 1 000" på en egen rad under högra ändkapseln. Nu är liggande målet en kolumn:
+   rubrik till vänster och antal till höger på en rad ovanför rälsen, procent och "kvar" under den. */
+.social-goal.goal-motion.goal-motion-landscape{display:flex!important;flex-direction:column}
+.social-goal.goal-motion.goal-motion-landscape .goal-motion-copy{display:grid!important;grid-template-columns:1fr auto;align-items:end;column-gap:8px;order:-1;position:static;inset:auto;transform:none;margin:0 8%;padding-top:2px}
+.goal-motion-landscape .goal-motion-visual{margin:3px 0 max(6.5cqw,29px)}
+.goal-motion-landscape .goal-motion-percent{top:auto;bottom:max(1cqw,4px);margin:0}
+.goal-motion-landscape .goal-motion-kvar{top:auto;right:8%;bottom:max(1cqw,4px)}
+.social-goal.goal-motion.goal-motion-landscape .goal-motion-copy h3{grid-column:1!important;grid-row:1!important;justify-self:start}
+.social-goal.goal-motion.goal-motion-landscape .goal-motion-copy strong{grid-column:2!important;grid-row:1!important;justify-self:end}

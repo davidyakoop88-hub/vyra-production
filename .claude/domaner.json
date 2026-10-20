@@ -305,7 +305,8 @@
         "tests/gift-supernova-panel.test.js",
         "tests/korsfilskopplingar.test.js",
         "tests/browser/spotify-kommandon.browser.test.js",
-        "tests/browser/widgetsok-alla-paket.browser.test.js"
+        "tests/browser/widgetsok-alla-paket.browser.test.js",
+        "tests/browser/slutgranskning-b.browser.test.js"
       ],
       "matning": [
         {
