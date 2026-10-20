@@ -228,7 +228,7 @@ W.streak={name:"Top Streak",title:false,
 const GMET={
   coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (mynt)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
   gifts:{l:"GÅVOR",i:"🎁",d:50,n:"Antal gåvor",f:e=>e.type==="gift"?e.count:0},
-  likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Tap / likes",f:e=>e.type==="likes"?e.count:0},
+  likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Likes (tryck)",f:e=>e.type==="likes"?e.count:0},
   // antal: bara sandlådans exempelhändelser bär det (många följare i en händelse, så att ▶ Testa widget
   // når 60 % utan tusentals händelser). conv() sätter det aldrig, så en riktig händelse räknas som 1.
   follows:{l:"FÖLJ-MÅL",i:"➕",d:50,n:"Följare",f:e=>e.type==="follow"?(e.antal||1):0},

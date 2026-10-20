@@ -165,10 +165,12 @@
     return Object.values(merged).filter(t => t[metric] > 0).sort((a, b) => b[metric] - a[metric]);
   }
 
+  // Svenskt talformat, samma som media.js vyraRankingTal (slutgranskning N-AB-007): "98 700" med hårt
+  // tusentalsmellanslag, från en miljon "1,2 mn". Förut "98.7K".
   function formatNum(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
+    n = Math.max(0, Math.round(Number(n) || 0));
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + '\u00a0mn';
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
   }
 
   function record(e) {

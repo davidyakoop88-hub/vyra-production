@@ -694,10 +694,10 @@ test('mvp: ett test som får gå klart passerar entré → visning → utgång o
 // grannarna är tecken för tecken desamma, topplistornas totaler (live-leaderboard.js) och poängen
 // (VyraPoints) är oförändrade, och inget sparas, köas eller går till nätet.
 const RANKING_MODELLER = [
-  { namn: 'Top Like · voltage', nyckel: 'catalog:toplike:voltage', exempel: { dataName: 'Provnamn', dataValue: '5000' }, varde: '5.0K' },
-  { namn: 'Top Coins · prism-horizontal', nyckel: 'catalog:ranking:templateTopCoins:prism-horizontal', exempel: { dataName: 'Provnamn', dataValue: 5000 }, varde: '5.0K' },
+  { namn: 'Top Like · voltage', nyckel: 'catalog:toplike:voltage', exempel: { dataName: 'Provnamn', dataValue: '5000' }, varde: '5 000' },
+  { namn: 'Top Coins · prism-horizontal', nyckel: 'catalog:ranking:templateTopCoins:prism-horizontal', exempel: { dataName: 'Provnamn', dataValue: 5000 }, varde: '5 000' },
   // Utan egen exempelperson: panelens reserv (MAYA, 1 500 poäng) är den som klättrar.
-  { namn: 'Top Points · celestial', nyckel: 'catalog:ranking:templateTopPoints:celestial', exempel: {}, varde: '1.5K', namnVantat: 'MAYA' },
+  { namn: 'Top Points · celestial', nyckel: 'catalog:ranking:templateTopPoints:celestial', exempel: {}, varde: '1 500', namnVantat: 'MAYA' },  // svenskt talformat (N-AB-007)
 ];
 const rankingKlon = page => page.evaluate(() => {
   const k = document.querySelector('.canvas [data-testspel-klon]');

@@ -63,7 +63,7 @@ test('Like Fountain · Portal: en nyckel per palett, basnyckeln ger portalpalett
   const w = W.create('catalog:likefountain:portal:fire');
   assert.equal(w.fountainDesign, 'portal');
   assert.equal(w.fountainPalette, 'fire');
-  assert.equal(w.title, 'Like Fountain · Portal · Fire');
+  assert.equal(w.title, 'Like Fountain · Portal · Eld');  // svenska palettnamn (slutgranskning N-AB-005)
   assert.equal(W.create('catalog:likefountain:portal').fountainPalette, 'portal');
   assert.equal(W.create('catalog:likefountain').fountainDesign, undefined, 'den klassiska fontanen rors inte');
   assert.throws(() => W.create('catalog:likefountain:portal:custom'), /Okänd palett/, 'egna farger ar inget kort');

@@ -70,6 +70,7 @@
     marke: w => 'Eget innehåll · ' + (w && w.mediaMeta ? (medietyp === 'video' ? 'vald video' : 'vald bild') : (medietyp === 'video' ? 'ingen video vald' : 'ingen bild vald')),
     katalognyckel: () => 'catalog:custom:' + (medietyp === 'video' ? 'video' : 'image'),
     utanText: true,
+    test: 'egenmedia',
     kontroller: [
       // 2 · Innehåll
       { sektion: 2, typ: 'media', medietyp, falt: 'mediaMeta', lagring: 'meta', etikett: medietyp === 'video' ? 'Video' : 'Bild' },
@@ -88,6 +89,29 @@
   media('templateCustomImage', 'Egen bild', 'bild');
   media('templateCustomVideo', 'Egen video', 'video');
 
+  // ▶ TESTA WIDGET FÖR BILD OCH VIDEO (slutgranskning N-AB-008, 2026-10-20). Panelen hade ram men ingen sektion 1.
+  // Bild och video har ingen händelse; det som går att prova är widgetens egen Inträdeseffekt (vyra-intro.js sätter
+  // ws-anim-klassen i wh(), så klonen spelar den när den sätts in), en stund i bild och en uttoning. Utan vald
+  // effekt är entrén 0 ms och tidslinjen visar den inte (vyra-testspel.js utanEntre).
+  (function () {
+    const T = window.VyraTestspel;
+    if (!T || typeof T.registrera !== 'function' || (T.harAdapter && T.harAdapter('egenmedia'))) return;
+    const entreMs = k => (k.entranceAnimation && k.entranceAnimation !== 'none' ? (Number(k.entranceDuration) || 600) : 0);
+    const VISNING = 2500, UTGANG = 500;
+    T.registrera('egenmedia', {
+      utanEntre: w => entreMs(w) === 0,
+      spela(nod, k, ex, ctl) {
+        const entre = entreMs(k);
+        ctl.setTimeout(() => {
+          if (typeof nod.animate === 'function') nod.__egenUt = nod.animate([{ opacity: 1 }, { opacity: 0 }], { duration: UTGANG, fill: 'forwards' });
+          else nod.style.opacity = '0';
+        }, entre + VISNING);
+        return { entre, visning: VISNING, utgang: UTGANG };
+      },
+      stoppa(nod) { if (nod.__egenUt) { try { nod.__egenUt.cancel(); } catch (_) {} nod.__egenUt = null; } },
+    });
+  })();
+
   // ---- Låtönskningar (latonskningar.js) --------------------------------------------------------------
   // Kontrollerna och deras bindningar är latonskningar.js egna; ramen flyttar in dem med legacyId. Styrknapparna
   // (Testa en önskning, Hoppa över, Töm kön) styr den riktiga kön och ligger kvar i sektion 2.
@@ -98,6 +122,9 @@
     katalognyckel: w => 'catalog:latonskningar:' + ((w && w.latKalla) === 'spotify' ? 'spotify' : 'youtube'),
     utanText: true,
     kontroller: [
+      // 1 · Inget ▶ Testa (slutgranskning N-AB-008): önskningarna kommer från chatten, och ett test som lade en låt
+      // i kön hade nått den riktiga kön (och Spotify). Studion visar redan en exempelönskan; raden säger det.
+      { sektion: 1, kalla: 'live', typ: 'text', etikett: 'Inget att testa – önskningarna kommer från chatten under sändningen, och studion visar redan en exempelönskan.' },
       // 2 · Innehåll
       { sektion: 2, typ: 'val', falt: 'latKalla', etikett: 'Spela via', legacyId: '#latKalla' },
       { sektion: 2, typ: 'text', falt: 'prLatKallaInfo', legacyId: '#latKallaInfo' },

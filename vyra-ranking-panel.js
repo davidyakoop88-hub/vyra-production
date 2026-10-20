@@ -419,11 +419,11 @@
   const harEntre = k => !!(k.entranceAnimation && k.entranceAnimation !== 'none');
 
   // Samma kortform som topplistan själv skriver (live-leaderboard.js formatNum).
+  // Svenskt: "98 700", från en miljon "1,2 mn" (slutgranskning N-AB-007).
   function tal(n) {
     n = Math.max(0, Math.round(Number(n) || 0));
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + '\u00a0mn';
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
   }
   const talUr = v => { const n = Number(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return Number.isFinite(n) && n > 0 ? n : 0; };
 
