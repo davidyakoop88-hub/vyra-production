@@ -117,9 +117,9 @@
       '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }, '9': { label: 'Stående pill' }
     },
     'likefountain.palette': {
-      portal: { label: 'Rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
-      fire: { label: 'Fire' }, ice: { label: 'Ice' }, gold: { label: 'Gold' }, aurora: { label: 'Aurora' },
-      pastel: { label: 'Pastel' }, mono: { label: 'Mono' }
+      portal: { label: 'Rosa & lila' }, rainbow: { label: 'Regnbåge' }, neon: { label: 'Neon' },
+      fire: { label: 'Eld' }, ice: { label: 'Is' }, gold: { label: 'Guld' }, aurora: { label: 'Norrsken' },
+      pastel: { label: 'Pastell' }, mono: { label: 'Enfärgad' }
     },
     'followeralert.theme': {
       gold: { label: 'Gold', color: '#ffd35d' }, ocean: { label: 'Ocean', color: '#4fc3ff' }, blush: { label: 'Blush', color: '#ff6f9c' }
@@ -516,7 +516,7 @@
     // Basnyckeln ger exakt det gamla objektet, utan followTheme — snapshotprovet jamfor det.
     'followeralert': v => Object.assign({
       type: 'templateFollowerAlert', x: 100, y: 80, width: 300, title: v.theme ? 'New Follower Alert · ' + v.theme.label : 'New Follower Alert',
-      followLabel: 'NEW FOLLOWER', followName: 'Aurora Vale', followMessage: 'TAKES THE STAGE',
+      followLabel: 'NY FÖLJARE', followName: 'Aurora Vale', followMessage: 'TAR SCENEN',
       followColor: v.theme ? v.theme.color : '#ffd35d', followDuration: 6
     }, v.theme ? { followTheme: v.themeId } : {}),
 

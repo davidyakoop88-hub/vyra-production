@@ -192,9 +192,9 @@
     "y": 80,
     "width": 300,
     "title": "New Follower Alert",
-    "followLabel": "NEW FOLLOWER",
+    "followLabel": "NY FÖLJARE",
     "followName": "Aurora Vale",
-    "followMessage": "TAKES THE STAGE",
+    "followMessage": "TAR SCENEN",
     "followColor": "#ffd35d",
     "followDuration": 6
   },

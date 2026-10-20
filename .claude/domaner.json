@@ -310,7 +310,8 @@
         "tests/korsfilskopplingar.test.js",
         "tests/browser/spotify-kommandon.browser.test.js",
         "tests/browser/widgetsok-alla-paket.browser.test.js",
-        "tests/browser/slutgranskning-b.browser.test.js"
+        "tests/browser/slutgranskning-b.browser.test.js",
+        "tests/browser/slutgranskning-ab2.browser.test.js"
       ],
       "matning": [
         {

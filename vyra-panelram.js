@@ -318,7 +318,8 @@
     }
     if (enhet) {
       const b = rad.querySelector(':scope > b');
-      const tal = b && (b.textContent.match(/^[\d.,-]+/) || [''])[0];
+      // Hårt mellanslag hör till talet ("1 000 mynt", vyra-talformat.js grupperar tusental).
+      const tal = b && (b.textContent.match(/^-?[\d.,]+(?:\u00a0\d{3})*/) || [''])[0];
       if (b && tal && b.textContent !== tal + ' ' + enhet) b.textContent = tal + ' ' + enhet;
     }
   }

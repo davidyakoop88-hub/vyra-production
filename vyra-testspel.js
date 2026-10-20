@@ -104,7 +104,8 @@
     if (adapter.typEtikett !== undefined && !(typeof adapter.typEtikett === 'string' && adapter.typEtikett.trim())) {
       throw new Error('VyraTestspel: ' + id + ' typEtikett måste vara en text');
     }
-    adaptrar.set(id, Object.freeze({ spela: adapter.spela, stoppa: adapter.stoppa,
+    if (adapter.utanEntre !== undefined && typeof adapter.utanEntre !== 'function') throw new Error('VyraTestspel: ' + id + ' utanEntre måste vara en funktion (w) => boolean');
+    adaptrar.set(id, Object.freeze({ spela: adapter.spela, stoppa: adapter.stoppa, utanEntre: adapter.utanEntre || null,
       typer: adapter.typer ? Object.freeze(adapter.typer.map(t => Object.freeze(t.slice()))) : null,
       typEtikett: adapter.typEtikett || 'Typ' }));
     return id;
@@ -319,7 +320,11 @@
     const stil = document.createElement('style');
     stil.dataset.testspelDolj = id;
     // opacity och visibility: ett barn med egen visibility:visible hade annars synts igenom.
-    stil.textContent = `.canvas [data-id="${cssStr(id)}"]:not([data-testspel-klon]){visibility:hidden!important;opacity:0!important}`;
+    // Handtagen (↘ och .vyra-handle) hör till den riktiga, dolda noden. Klonen ritas av samma renderare och
+    // kan bära ett eget ↘ (Goal Pro m.fl. ritar det oavsett markering); det stod då ensamt kvar på duken under
+    // testet (slutgranskning N-AB-011). Klonen visar widgeten, inte redigeringsverktygen.
+    stil.textContent = `.canvas [data-id="${cssStr(id)}"]:not([data-testspel-klon]){visibility:hidden!important;opacity:0!important}`
+      + `.canvas [data-testspel-klon] .resize-handle,.canvas [data-testspel-klon] .vyra-handle,.canvas [data-testspel-klon] .gift-resize-handle{display:none!important}`;
     (document.head || document.documentElement).append(stil);
     return stil;
   }
@@ -372,6 +377,7 @@
       nod.style.cssText = riktig.style.cssText;   // exakt samma placering, även transform satt efter render
       nod.style.pointerEvents = 'none';
       nod.classList.remove('selected');
+      nod.querySelectorAll(':scope > .resize-handle, :scope > .vyra-handle, :scope > .gift-resize-handle').forEach(h => h.remove());
       nod.dataset.testspelKlon = '1';
       nod.setAttribute('aria-hidden', 'true');
       return nod;
@@ -479,6 +485,20 @@
       + `<button type="button" id="pr-testspel" aria-pressed="false">▶ Testa widget</button>`
       + `<ol class="pr-tidslinje" aria-label="Testets förlopp" style="display:flex;gap:10px;list-style:none;margin:6px 0 0;padding:0">`
       + `<li data-fas="entre">Entré</li><li data-fas="visning">Visning</li><li data-fas="utgang">Utgång</li></ol>`;
+    // ETT STEG PÅ 0 MS VISAS INTE HELLER I VILA (slutgranskning N-AB-009, 2026-10-20). B-033 dolde det bara
+    // under testet; i vila och efter testet stod "Entré" kvar. Före första testet frågas adaptern
+    // (utanEntre(w): widgetens entré är 0 ms just nu — den vinner, eftersom Inträdeseffekten kan ha bytts
+    // sedan testet). Utan den frågan gäller det senaste testets faser för samma widget.
+    {
+      const sist = senaste && String(senaste.widget) === String(w.id) && senaste.faser ? senaste.faser : null;
+      let utan = null;
+      try { if (p.a.utanEntre) utan = !!p.a.utanEntre(w); } catch (_) {}
+      rot.querySelectorAll('.pr-tidslinje li').forEach(li => {
+        const fas = li.dataset.fas;
+        const noll = fas === 'entre' && utan !== null ? utan : !!(sist && sist[fas] === 0);
+        if (noll) li.style.display = 'none';
+      });
+    }
     rot.querySelector('#pr-testspel').onclick = () => {
       const v = vald();
       if (spel && v && spel.wid === v.id) stoppa('knapp');

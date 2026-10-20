@@ -41,9 +41,42 @@
     return heltal + (m[2] != null ? ',' + m[2] : '') + (m[3] ? (m[3] === '°' ? '' : ' ') + m[3] : '');
   }
 
+  // SAMMA REGLAGE, SAMMA FORM (slutgranskning N-AB-006, 2026-10-20). Etikettens tal skrevs av olika
+  // vägar: renderaren gav "0.80 ×" (toFixed(2)), vyraLivePatch gav "0.8 ×" (String(värdet)) när
+  // reglaget drogs, och "Final vid" stod "1000 mynt" utan tusentalsmellanslag. När etiketten har ett
+  // reglage (input[type=range]) och talet i <b> ÄR reglagets värde skrivs det därför om ur värdet:
+  //   * decimaler efter reglagets steg (step .05 -> 0,80 ×, step .1 -> 1,0 ×, step 1 -> 62 %),
+  //   * tusentalsmellanslag från fyra siffror (1 000 mynt).
+  // Talet räknas som reglagets värde om det hela talet eller dess första sifferföljd (vyraLivePatch
+  // byter bara /^[\d.,-]+/ och lämnar "\u00a0000" kvar efter ett grupperat tal) är lika med värdet.
+  // En etikett som visar något annat än värdet (t.ex. 0–1 som procent) lämnas som förut.
+  function stegDecimaler(input) {
+    const steg = String(input.getAttribute('step') || '1').trim();
+    if (!/^\d*\.?\d+$/.test(steg)) return 0;
+    const i = steg.indexOf('.');
+    return i < 0 ? 0 : Math.min(3, steg.length - i - 1);
+  }
+  function urReglage(b) {
+    const lab = b.parentElement;
+    const input = lab && lab.querySelector(':scope > input[type="range"]');
+    if (!input || input.value === '') return null;
+    const v = Number(input.value);
+    if (!Number.isFinite(v)) return null;
+    const t = String(b.textContent || '').trim();
+    const m = /^(-?\d[\d\u00a0]*(?:[.,]\d+)?)\s*(.*)$/.exec(t);
+    if (!m || (m[2] && ENHETER.indexOf(m[2]) < 0)) return null;
+    const hela = Number(m[1].replace(/\u00a0/g, '').replace(',', '.'));
+    const forsta = Number((/^-?[\d.,]+/.exec(m[1]) || [''])[0].replace(',', '.'));
+    const d = stegDecimaler(input), tol = Math.pow(10, -d) / 2 + 1e-9;
+    if (!(Math.abs(hela - v) <= tol || Math.abs(forsta - v) <= tol)) return null;
+    const fast = v.toFixed(d);
+    const [heltal, dec] = fast.split('.');
+    return formatera(heltal + (dec ? '.' + dec : '') + (m[2] ? ' ' + m[2] : ''), true);
+  }
+
   function skriv(b) {
     if (!b || b.children.length) return;
-    const ny = formatera(b.textContent, b.hasAttribute('data-pgv'));
+    const ny = urReglage(b) ?? formatera(b.textContent, b.hasAttribute('data-pgv'));
     if (ny != null && ny !== b.textContent) b.textContent = ny;
   }
 
@@ -70,7 +103,7 @@
     window.VyraTalformat.installerad = true;
   }
 
-  window.VyraTalformat = { formatera, alla, installerad: false };
+  window.VyraTalformat = { formatera, urReglage, alla, installerad: false };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', installera, { once: true });
   else installera();
 })();

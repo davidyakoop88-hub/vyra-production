@@ -362,11 +362,13 @@
 }
 .last-x-widget.design-crownBanner .last-x-copy{left:0;right:0;top:0;bottom:0;padding:0}
 .last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-label{
-  position:absolute;left:0;right:0;top:4%;font-size:1.8cqw;line-height:1;letter-spacing:.18em;color:#ffe38b;
+  position:absolute;left:0;right:0;top:4%;font-size:2.75cqw;line-height:1;letter-spacing:.1em;white-space:nowrap;color:#ffe38b;
   text-shadow:0 1px 3px #000,0 0 6px #000;
 }
 .last-x-widget:is(.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-label{top:18%}
-.last-x-widget.design-crownBanner .last-x-label{left:42%;right:22%;top:32%;transform:translateY(-50%);text-align:center}
+/* Etiketten var 1,8cqw = 7,2 px vid 400 px bredd (slutgranskning N-AB-002). 2,75cqw = 11 px; spärren .1em och en
+   bredare remsa i crownBanner (35-85 %, mitten kvar på 60 %) så att "SENASTE GÅVOGIVARE" ryms på en rad mellan kronan och spetsen. */
+.last-x-widget.design-crownBanner .last-x-label{left:35%;right:15%;top:32%;transform:translateY(-50%);text-align:center}
 .last-x-widget:is(.design-crownBanner,.design-royalAmethyst,.design-iceKing,.design-neonCyber,.design-dragonFlame,.design-angelGold) .last-x-name{
   position:absolute;left:0;right:0;top:56%;transform:translateY(-50%);width:100%;font-size:4.2cqw;line-height:1;
   max-width:100%;color:#fff;background:none;-webkit-text-fill-color:#fff;-webkit-text-stroke:.55px rgba(0,0,0,.95);

@@ -48,8 +48,8 @@
     pastel: ['#ffb3d1', '#c9b3ff', '#b3e0ff', '#b3ffd9'],
     mono: ['#ffffff', '#d8d8e0', '#a0a0ac', '#e8e8f0']
   };
-  var PALETTNAMN = { portal: 'Rosa & lila', rainbow: 'Rainbow', neon: 'Neon', fire: 'Fire', ice: 'Ice',
-    gold: 'Gold', aurora: 'Aurora', pastel: 'Pastel', mono: 'Mono', custom: 'Egna färger' };
+  var PALETTNAMN = { portal: 'Rosa & lila', rainbow: 'Regnbåge', neon: 'Neon', fire: 'Eld', ice: 'Is',
+    gold: 'Guld', aurora: 'Norrsken', pastel: 'Pastell', mono: 'Enfärgad', custom: 'Egna färger' };
   var RINGAR = ['#b36bff', '#ffb347', '#ff4fa3', '#4d8dff', '#ff7ae0'];
 
   // ---- REN RÄKNING (provas utan DOM, tests/like-fountain-portal.test.js) ----------------------

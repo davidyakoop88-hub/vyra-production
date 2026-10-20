@@ -186,6 +186,7 @@
   }
 
   T.registrera('topgift', {
+    utanEntre: w => !harEntre(w),
     typer: [['rose', 'Rose · 1 mynt'], ['lion', 'Lion · 29 999 mynt']],
     typEtikett: 'Gåva',
     spela(nod, k, ex, ctl) {

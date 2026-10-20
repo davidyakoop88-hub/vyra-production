@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `61885b57`
+Commit: `da41d749`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -208,14 +208,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Like Fountain | `catalog:likefountain` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | Like Fountain · Portal · Rosa & lila | `catalog:likefountain:portal:portal` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Rainbow | `catalog:likefountain:portal:rainbow` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Regnbåge | `catalog:likefountain:portal:rainbow` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | Like Fountain · Portal · Neon | `catalog:likefountain:portal:neon` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Fire | `catalog:likefountain:portal:fire` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Ice | `catalog:likefountain:portal:ice` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Gold | `catalog:likefountain:portal:gold` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Aurora | `catalog:likefountain:portal:aurora` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Pastel | `catalog:likefountain:portal:pastel` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
-| Like Fountain · Portal · Mono | `catalog:likefountain:portal:mono` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Eld | `catalog:likefountain:portal:fire` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Is | `catalog:likefountain:portal:ice` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Guld | `catalog:likefountain:portal:gold` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Norrsken | `catalog:likefountain:portal:aurora` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Pastell | `catalog:likefountain:portal:pastel` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
+| Like Fountain · Portal · Enfärgad | `catalog:likefountain:portal:mono` | ✓ | ✓ | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 
 ### BATTLE MVP · 12 DESIGNER
 

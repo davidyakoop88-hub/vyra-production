@@ -333,6 +333,7 @@
   const STEG_MS = [700, 1900, 3300], MAL_VISNING = 5000;
   function malAdapter(malFalt, stegFor) {
     return {
+      utanEntre: w => entreMs(w) === 0,
       spela(nod, k, ex, ctl) {
         const P = window.VyraGoalDom;
         if (!P || typeof P.patch !== 'function') throw new Error('media.js saknar VyraGoalDom');

@@ -99,8 +99,8 @@
   });
 
   // ---- 1b. Like Fountain Portal (spec 5.15) ------------------------------------------------------
-  const PALETTNAMN = { portal: 'Rosa & lila', rainbow: 'Rainbow', neon: 'Neon', fire: 'Fire', ice: 'Ice', gold: 'Gold',
-    aurora: 'Aurora', pastel: 'Pastel', mono: 'Mono', custom: 'egna färger' };
+  const PALETTNAMN = { portal: 'Rosa & lila', rainbow: 'Regnbåge', neon: 'Neon', fire: 'Eld', ice: 'Is', gold: 'Guld',
+    aurora: 'Norrsken', pastel: 'Pastell', mono: 'Enfärgad', custom: 'egna färger' };
   const egna = w => w.fountainPalette === 'custom';
   R.definiera({
     typ: 'templateLikeFountain',
