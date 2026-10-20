@@ -117,23 +117,20 @@ const MVP_MODELLER = [
 // Coins (Prism horisontal, med Lager och den rubrik som ritas först när Visa rubrik slås på) och en rad
 // i Top Points (Celestial).
 //
-// TIDSSTYRT är här det som bara verkar utanför en ögonblicksbild av editorn: exempeldatan (Namn och
-// värde) syns bara i ▶ Testa widget — testspel-isolering provar att den står på klonen — och
-// Rangordna efter och Period väljer vilken riktig topplista som visas, vilket bara syns med livedata
-// (ranking-livevag.browser.test.js).
+// TIDSSTYRT är här det som bara verkar utanför en ögonblicksbild av editorn: Rangordna efter och Period
+// väljer vilken riktig topplista som visas, vilket bara syns med livedata (ranking-livevag.browser.test.js).
+// Exempeldatan (Namn och värde) står inte i panelen sedan 2026-10-20 (David: inget exempeldatablock).
 const RANKING_DESIGNER = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose'];
 const RANKING_LIVE = {
   wsLiveMetric: 'rangordningen verkar bara med livedata — provas i ranking-livevag.browser.test.js',
   wsDateRange: 'perioden verkar bara med livedata — provas i ranking-livevag.browser.test.js',
 };
-const RANKING_EXEMPEL = (namn, varde) => ({ [namn]: 'exempeldatan syns bara i testet — provas i testspel-isolering.browser.test.js',
-  [varde]: 'exempeldatan syns bara i testet — provas i testspel-isolering.browser.test.js' });
-const RANKING = (typ, d, nyckel, effekt, exempel) => ({ namn: typ + ' · ' + d, nyckel, effekt,
-  aterstall: { utseende: 'rankingAccent', innehall: 'templateTitle' }, tidsstyrt: Object.assign({}, RANKING_LIVE, exempel) });
+const RANKING = (typ, d, nyckel, effekt) => ({ namn: typ + ' · ' + d, nyckel, effekt,
+  aterstall: { utseende: 'rankingAccent', innehall: 'templateTitle' }, tidsstyrt: Object.assign({}, RANKING_LIVE) });
 const RANKING_MODELLER = [
-  ...RANKING_DESIGNER.map(d => RANKING('Top Like', d, 'catalog:toplike:' + d, d === 'voltage' || d === 'royal-rose', RANKING_EXEMPEL('pr-dataName', 'pr-dataValue'))),
-  ...RANKING_DESIGNER.map(d => RANKING('Top Coins', d, 'catalog:ranking:templateTopCoins:' + d, d === 'prism-horizontal', RANKING_EXEMPEL('tcName', 'tcValue'))),
-  ...RANKING_DESIGNER.map(d => RANKING('Top Points', d, 'catalog:ranking:templateTopPoints:' + d, d === 'celestial', RANKING_EXEMPEL('tpName', 'tpValue'))),
+  ...RANKING_DESIGNER.map(d => RANKING('Top Like', d, 'catalog:toplike:' + d, d === 'voltage' || d === 'royal-rose')),
+  ...RANKING_DESIGNER.map(d => RANKING('Top Coins', d, 'catalog:ranking:templateTopCoins:' + d, d === 'prism-horizontal')),
+  ...RANKING_DESIGNER.map(d => RANKING('Top Points', d, 'catalog:ranking:templateTopPoints:' + d, d === 'celestial')),
 ];
 // MÅLEN (vyra-mal-panel.js, PR 9): Follower/Like/Diamond Goal (9), Heart Me Goal (12) och Gift Campaign
 // (6). Panelkraven gäller alla 27. Effekten per kontroll mäts för ett format per sort i Social Goal
@@ -627,10 +624,10 @@ testOvrig('en modell utan registerpost får ingen ramsektion och ingen arvsruta'
   }
 });
 
-// Battle MVP (spec 5.18): Poäng (exempeldata) och Poängsymbol hör till poängen och visas bara när Visa
+// Battle MVP (spec 5.18): Poängsymbol hör till poängen och visas bara när Visa
 // poäng är på — i de klassiska stilarna, de enda som ritar poängen. Med poängen på gäller panelkraven
 // fortfarande (enheter, inga dubbla etiketter), och båda fälten syns i widgeten.
-testOvrig('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: Poängsymbol visas bara när Visa poäng är på, och Poäng aldrig (ingen exempeldata)', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:inferno', fel);
   try {
@@ -640,7 +637,8 @@ testOvrig('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är p
     await page.click('#mvpShowCoins');
     await page.waitForTimeout(900);
     assert.equal(await page.evaluate(() => liveWidget('krav').mvpShowCoins), true, 'Visa poäng sparar mvpShowCoins');
-    assert.deepEqual(await falt(), ['mvpCoinSymbol@2', 'mvpScore@1'], 'Poäng i exempeldatan, Poängsymbol i Innehåll');
+    // Poäng var exempeldata och står inte i panelen sedan 2026-10-20 (David: inget exempeldatablock).
+    assert.deepEqual(await falt(), ['mvpCoinSymbol@2'], 'Poängsymbol i Innehåll, ingen Poäng');
     const s = await page.evaluate(sidStruktur);
     assert.deepEqual(s.etiketter.filter((e, i) => s.etiketter.indexOf(e) !== i), [], 'etiketter som står två gånger');
     const synlig = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="krav"] .mvp-copy strong')).display);

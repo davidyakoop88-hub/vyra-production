@@ -36,15 +36,14 @@
   // (vyra-proportioner.js). I de modeller där level-lasbar.js dessutom låser bredden (Fan Heartbeat
   // Side och Community Duo, Gifter Sidobadge, Myntvändning och Kompakt duo) står det under fältet.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Namn och Nivå (och Guardians användarnamn) syns i editorn men
-  // ersätts av tittaren i sändningen; de är exempeldata (sektion 1) och testet spelar med dem.
-  // Rubrik, Meddelande och Egen text är egen text som syns i sändningen. Profilbilden väljs med
-  // mediaväljaren och gäller tills tittarens egen kommer.
+  // EGEN TEXT OCH LIVEDATA. Namn, nivå och profilbild kommer från tittaren i sändningen. Panelen har
+  // varken exempeldata eller bildväljare för profilbilden (David 2026-10-20): ▶ Testa widget spelar
+  // vyra-exempeldata.js, och renderaren ritar sin automatiska reserv tills tittarens egen kommer.
+  // Rubrik, Meddelande och Egen text är egen text som syns i sändningen.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const PROFIL = 'assets/images/test-profile.svg';
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
@@ -80,17 +79,12 @@
   const profilram = { sektion: 5, typ: 'knapp', id: 'profilram', legacyId: '.gaf-frame-group .pro-frame-picker', etikett: 'Profilram' };
   const narDenVisas = { sektion: 2, typ: 'text', falt: 'prNarDenVisas', legacyId: '#prNarDenVisas' };
   const fastBreddRad = { sektion: 3, typ: 'text', falt: 'prFastBredd', legacyId: '#prFastBredd' };
-  const profilbild = (reservText) => ({ sektion: 5, typ: 'media', medietyp: 'bild', falt: 'profileImage',
-    etikett: 'Profilbild innan första händelsen', reserv: PROFIL, reservText });
 
   // ---- 1a. Fan Level Up --------------------------------------------------------------------------
   function fanLevel(modell) {
     const profil = modell !== 'hearts';
     const nivatext = modell !== 'ribbon';
     const kontroller = [
-      // 1 · Exempeldata
-      { kalla: 'exempel', typ: 'text', falt: 'fanName', etikett: 'Namn', legacyId: '#fanName' },
-      { kalla: 'exempel', typ: 'tal', falt: 'fanLevel', etikett: 'Nivå', legacyId: '#fanLevel' },
       // 2 · Innehåll
       { sektion: 2, typ: 'text', falt: 'fanHeadline', etikett: 'Rubrik', legacyId: '#fanHeadline' },
       ...(nivatext ? [{ sektion: 2, typ: 'text', falt: 'fanLevelLabel', etikett: 'Nivåtext', legacyId: '#fanLevelLabel' }] : []),
@@ -112,7 +106,7 @@
       { sektion: 5, typ: 'val', falt: 'fanTheme', etikett: 'Tema', legacyId: '#fanTheme' },
       { sektion: 5, typ: 'farg', falt: 'fanColor', etikett: 'Huvudfärg', legacyId: '#fanColor', arv: 'highlight' },
       { sektion: 5, typ: 'farg', falt: 'fanLight', etikett: 'Ljus färg', legacyId: '#fanLight', arv: 'secondary' },
-      ...(profil ? [profilram, profilbild('Automatisk – ersätts av tittarens profilbild när en nivåhöjning kommer')] : []),
+      ...(profil ? [profilram] : []),
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation
       { sektion: 6, typ: 'std-entre' },
@@ -142,8 +136,6 @@
     const ljus = modell !== 'orbitlevel' && modell !== 'duo';
     const ram = modell !== 'number';
     const kontroller = [
-      { kalla: 'exempel', typ: 'text', falt: 'gifterName', etikett: 'Namn', legacyId: '#gifterName' },
-      { kalla: 'exempel', typ: 'tal', falt: 'gifterLevel', etikett: 'Nivå', legacyId: '#gifterLevel' },
       { sektion: 2, typ: 'text', falt: 'gifterHeadline', etikett: 'Rubrik', legacyId: '#gifterHeadline' },
       { sektion: 2, typ: 'text', falt: 'gifterMessage', etikett: 'Meddelande', legacyId: '#gifterMessage' },
       { sektion: 2, typ: 'kryss', falt: 'levelVideoMode', etikett: 'Spela en egen video för vissa nivåer', legacyId: '#gifterLevelVideoMode' },
@@ -160,7 +152,6 @@
       { sektion: 5, typ: 'farg', falt: 'gifterColor', etikett: 'Huvudfärg', legacyId: '#gifterColor', arv: 'highlight' },
       ...(ljus ? [{ sektion: 5, typ: 'farg', falt: 'gifterLight', etikett: 'Ljus färg', legacyId: '#gifterLight', arv: 'secondary' }] : []),
       ...(ram ? [profilram] : []),
-      profilbild('Automatisk – ersätts av tittarens profilbild när en nivåhöjning kommer'),
       { sektion: 5, typ: 'std-bakgrund' },
       { sektion: 6, typ: 'std-entre' },
       { sektion: 6, typ: 'tal', falt: 'gifterDuration', etikett: 'Visningstid', enhet: 's', legacyId: '#gifterDuration' },
@@ -194,7 +185,6 @@
     // färgen når ingenting i modellen och listas inte.
     arv: ['highlight', 'text', 'fontFamily'],
     kontroller: [
-      { kalla: 'exempel', typ: 'text', falt: 'followName', etikett: 'Namn', legacyId: '#followName' },
       { sektion: 2, typ: 'text', falt: 'followLabel', etikett: 'Rubrik', legacyId: '#followLabel' },
       { sektion: 2, typ: 'text', falt: 'followMessage', etikett: 'Text under', legacyId: '#followMessage' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från TikTok: namn och profilbild för den nya följaren.' },
@@ -208,7 +198,6 @@
       { sektion: 5, typ: 'val', falt: 'followTheme', etikett: 'Tema', legacyId: '#followTheme' },
       { sektion: 5, typ: 'farg', falt: 'followColor', etikett: 'Accentfärg', legacyId: '#followColor', arv: 'highlight' },
       profilram,
-      profilbild('Automatisk – ersätts av följarens profilbild när en ny följare kommer'),
       { sektion: 5, typ: 'std-bakgrund' },
       { sektion: 6, typ: 'std-entre' },
       { sektion: 6, typ: 'tal', falt: 'followDuration', etikett: 'Visningstid', enhet: 's', legacyId: '#followDuration' },
@@ -232,7 +221,6 @@
       ersatter: ['#testGuardianEmblem'],
       arv: [],
       kontroller: [
-        { kalla: 'exempel', typ: 'text', falt: 'guardianUsername', etikett: 'Användarnamn', legacyId: '#geUsername' },
         { sektion: 2, typ: 'text', falt: 'guardianCustomText', etikett: 'Egen text', legacyId: '#geCustomText' },
         { sektion: 2, typ: 'kryss', falt: 'guardianShowUsername', etikett: 'Visa användarnamnet', legacyId: '#geShowUsername' },
         { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från TikTok: Guardians namn och profilbild.' },
@@ -425,7 +413,6 @@
     const v = nod.querySelector('video.level-up-video');
     if (v) { try { v.pause(); } catch (_) {} v.removeAttribute('src'); }
   }
-  const nivaAv = (v, standard) => Math.max(1, Math.min(50, Math.round(Number(v)) || standard));
   // Namnet i testet skrivs som i vilan: fanNamnHtml/gifterNamnHtml i media.js sätter @ framför
   // widgetens namn, så testet visade "HeartRiser" medan vilan och overlayn visade "@HeartRiser"
   // (slutgranskningen 2026-10-20, A-014).
@@ -435,8 +422,8 @@
     spela(nod, k, ex, ctl) {
       if (typeof window.fanSpelaPa !== 'function') throw new Error('media.js saknar fanSpelaPa');
       textgrupp(nod, k);
-      const till = nivaAv(k.fanLevel, ex.niva.till);
-      window.fanSpelaPa(nod, k, { name: medAt(k.fanName || ex.namn), level: till, fromLevel: Math.max(1, till - 1), isTeamMember: true }, klocka(ctl));
+      const till = ex.niva.till;
+      window.fanSpelaPa(nod, k, { name: medAt(ex.namn), level: till, fromLevel: Math.max(1, till - 1), isTeamMember: true }, klocka(ctl));
       const F = window.VyraFanFas;
       if (F && typeof F.spela === 'function') F.spela(nod);
       const entre = Math.max(fasTotal(F, nod), entreMs(k));
@@ -454,8 +441,8 @@
     spela(nod, k, ex, ctl) {
       if (typeof window.gifterSpelaPa !== 'function') throw new Error('media.js saknar gifterSpelaPa');
       textgrupp(nod, k);
-      const till = nivaAv(k.gifterLevel, ex.niva.till);
-      window.gifterSpelaPa(nod, k, { name: medAt(k.gifterName || ex.namn), level: till, fromLevel: Math.max(1, till - 1) }, klocka(ctl));
+      const till = ex.niva.till;
+      window.gifterSpelaPa(nod, k, { name: medAt(ex.namn), level: till, fromLevel: Math.max(1, till - 1) }, klocka(ctl));
       const F = window.VyraGifterFas;
       if (F && typeof F.spela === 'function') F.spela(nod);
       // Nivåbytet (gifterTransform, 1250 ms) hör till entrén i alla modeller.
@@ -477,7 +464,7 @@
     spela(nod, k, ex, ctl) {
       if (typeof window.followerSpelaPa !== 'function') throw new Error('media.js saknar followerSpelaPa');
       textgrupp(nod, k);
-      window.followerSpelaPa(nod, k, { name: k.followName || ex.namn }, klocka(ctl));
+      window.followerSpelaPa(nod, k, { name: ex.namn }, klocka(ctl));
       const entre = Math.max(FOLJ_OVERGANG, entreMs(k));
       return faser(entre, sek(k.followDuration, 6), FOLJ_OVERGANG);
     },
@@ -488,7 +475,7 @@
     spela(nod, k, ex, ctl) {
       if (typeof window.guardianSpelaPa !== 'function') throw new Error('media.js saknar guardianSpelaPa');
       textgrupp(nod, k);
-      window.guardianSpelaPa(nod, k, { username: k.guardianUsername || ex.namn }, klocka(ctl));
+      window.guardianSpelaPa(nod, k, { username: ex.namn }, klocka(ctl));
       // Faserna ur koreografins register: ljus + öppna är entrén, hyllningen visningen, upplösningen
       // utgången. Emblemet står tänt till max(koreografin, 6,5 s), som triggern.
       const F = window.VyraGuardianEmblemFas;

@@ -23,9 +23,10 @@
   //     hjärtat och pillen har fasta mått inuti. En rad säger det, och Storlek skalar hela widgeten,
   //   * Ljus i målen verkar (goal-motion.css räknade med '62%' i en skuggradie, som var ogiltig),
   //   * Antal (talets färg) i Heart Me verkar (studio.css:169 satte color:#fff på talet),
-  //   * +1 Test och Testa 100 % (Social Goal) är ersatta av ▶ Testa widget, och kampanjens sökvägsfält
-  //     för gåvobilden av gåvoväljaren (mediaväljaren med typ 'gava': gåvans bild och namn, aldrig
-  //     sökvägen),
+  //   * +1 Test och Testa 100 % (Social Goal) är ersatta av ▶ Testa widget. Kampanjens sökvägsfält för
+  //     gåvobilden och gåvoväljaren är borta (David 2026-10-20: ingen widget väljer gåvobild i panelen):
+  //     gåvan anges med sitt namn, och bilden kommer från sändningen när en sådan gåva skickas (platsens
+  //     standardbild innan dess). En redan sparad bild ligger kvar i state,
   //   * Nu (kampanjens räknare per gåva) står inte i panelen: den räknas upp live (gift-event-images.js)
   //     och en LIVE-rad säger det. Fältet ligger kvar i state,
   //   * BAKGRUND visas inte: alla tre är genomskinliga motiv.
@@ -168,17 +169,6 @@
     for (let i = 0; i < 6; i++) {
       const om = w => antalGavor(w) > i;
       ut.push(
-        { sektion: 2, typ: 'media', medietyp: 'gava', falt: 'giftImage' + i, etikett: 'Gåva ' + (i + 1), om,
-          // Galleriet är det befintliga (media.js openPagedGiftPicker): samma värde som förut, och namnet
-          // följer med gåvan.
-          valj: w => { if (typeof openPagedGiftPicker === 'function') openPagedGiftPicker(w, i); },
-          // Miniatyren visar den gåva widgeten faktiskt ritar — platsens standardgåva när fältet är tomt.
-          las: w => w['giftImage' + i] || ((typeof window.VyraCampaignItems === 'function' && window.VyraCampaignItems(w)[i]) || {}).image || '',
-          // Namnet som widgeten visar (galleriet skriver namn och bild tillsammans).
-          gavonamn: w => {
-            const lista = typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(w) : [];
-            return lista[i] ? lista[i].name : '';
-          } },
         { sektion: 2, typ: 'text', falt: 'giftName' + i, etikett: `Gåva ${i + 1}: namn`, legacyId: '#giftName' + i, om },
         { sektion: 2, typ: 'tal', falt: 'giftTarget' + i, etikett: `Gåva ${i + 1}: mål`, legacyId: '#giftTarget' + i, om },
       );
@@ -195,8 +185,7 @@
       marke: () => KAMPANJTEMA[tema] + ' · ' + (orient === 'portrait' ? 'stående' : 'liggande'),
       katalognyckel: () => `catalog:giftcampaign:${tema}:${orient}`,
       test: 'kampanj',
-      // Sökvägsfälten för gåvobilden och knappen som öppnade galleriet bredvid dem: gåvoväljaren ersätter
-      // båda.
+      // Sökvägsfälten för gåvobilden och knappen som öppnade galleriet bredvid dem. Ingen av dem visas.
       ersatter: ['#giftImage0', '#giftImage1', '#giftImage2', '#giftImage3', '#giftImage4', '#giftImage5', '.open-gift-picker'],
       arv: ['highlight', 'text', 'fontFamily'],
       kontroller: [

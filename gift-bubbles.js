@@ -135,7 +135,7 @@
   document.addEventListener('click',ev=>{if(!ev.target.closest('#testGb'))return;ev.preventDefault();let w=liveWidget(selected,'templateGiftBubbles');if(!w)return window.toast&&toast('Välj Gift Bubbles på canvasen först');const combo=Math.max(1,Math.min(100,+document.querySelector('#gbCombo')?.value||w.gbCombo||1));window.triggerGiftBubbles({combo,giftName:'Rose',__test:true});},true);
 
   // ---------- catalog preview ----------
-  function gbRenderPreview(host,w){if(!host)return;const ctrl=hostCtrl(host);ctrl.clear();host.style.setProperty('opacity','1','important');ctrl.previewStill({size:w.gbSize||'m',giftIn:w.gbGiftIn!==false,fallback:w.gbGiftImage});}
+  function gbRenderPreview(host,w){if(!host)return;const ctrl=hostCtrl(host);ctrl.clear();host.style.setProperty('opacity','1','important');ctrl.previewStill({size:w.gbSize||'m',giftIn:w.gbGiftIn!==false,fallback:(typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.gbGiftImage)});}
   // tiderFor: ▶ Testa widgets faser i ms, ur samma tal som fire(): sista bubblan släpps efter (antal-1)·gap,
   // stiger i högst 4 s och poppar; skärvorna lever i högst 1,3 s. Entrén är den första bubblans intoning.
   function gbTider(combo){const c=Math.max(1,Math.min(100,Math.floor(Number(combo))||1)),cf=(c-1)/99,antal=Math.min(24,Math.round(3+cf*30)),gap=200-cf*150;
@@ -159,7 +159,7 @@
     if(!host||!k)return null;
     const d=(ev&&typeof ev==='object')?ev:{combo:ev};
     const ctrl=hostCtrl(host);
-    ctrl.fire({combo:gbComboOf(d),gift:d.giftImage,size:k.gbSize||'m',hearts:k.gbHearts!==false,giftIn:k.gbGiftIn!==false,showCombo:k.gbShowCombo!==false,fallback:k.gbGiftImage});
+    ctrl.fire({combo:gbComboOf(d),gift:d.giftImage,size:k.gbSize||'m',hearts:k.gbHearts!==false,giftIn:k.gbGiftIn!==false,showCombo:k.gbShowCombo!==false,fallback:(typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(k.gbGiftImage)});
     return ctrl;
   }
   window.gbSpelaPa=gbSpelaPa;

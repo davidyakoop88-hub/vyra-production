@@ -203,7 +203,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261020-24/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261020-15/);
+  assert.match(studio, /gift-event-images\.js\?v=20261020-23/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);

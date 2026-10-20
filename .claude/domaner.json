@@ -216,6 +216,7 @@
       "tester": [
         "tests/widget-factory.test.js",
         "tests/panelregister.test.js",
+        "tests/utan-bildvaljare.test.js",
         "tests/browser/mediaval.browser.test.js",
         "tests/browser/fargarv-sant.browser.test.js",
         "tests/browser/topgift-livevag.browser.test.js",

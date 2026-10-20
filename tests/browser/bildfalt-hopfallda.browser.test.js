@@ -1,5 +1,9 @@
 'use strict';
-// PROFILBILD OCH GÅVOBILD LIGGER INTE FRAMME — RÖTT FÖRST (2026-09-10).
+// PROFILBILD OCH GÅVOBILD LIGGER INTE FRAMME — RÖTT FÖRST (2026-09-10). SEDAN 2026-10-20 SYNS DE INTE ALLS.
+//
+// David 2026-10-20: "ingen ska profil bild eller gåvan ska vara med panel". BILDER-gruppen är därför
+// DOLD (vyra-bildfalt.js), inte bara hopfälld: fälten flyttas dit så att de gamla bindarna hittar dem,
+// men användaren ser dem aldrig. Renderaren ritar sin automatiska reserv (vyraReservbild i media.js).
 //
 // David, om de två fälten i INNEHÅLL: *"måste de vara synliga?"*
 //
@@ -109,19 +113,21 @@ const gruppFor = (page, id) => page.evaluate(f => {
     finns: true,
     grupp: g ? (g.querySelector('h4, .pg-toggle')?.textContent || '').replace(/[▸▾›]/g, '').trim() : '(ingen grupp)',
     hopfalld: !!(g && g.classList.contains('collapsible') && !g.classList.contains('open')),
+    dold: !!(g && (g.hidden || getComputedStyle(g).display === 'none')),
+    synlig: el.getBoundingClientRect().width > 0,
   };
 }, id);
 
 for (const [nyckel, falt] of GOMS) {
-  test(`${nyckel} #${falt}: ligger i en hopfälld BILDER-grupp`, { skip }, async () => {
+  test(`${nyckel} #${falt}: ligger i en DOLD BILDER-grupp`, { skip }, async () => {
     const page = await panelen(nyckel);
     try {
       const ut = await gruppFor(page, falt);
       assert.ok(ut.finns, `${nyckel}: fältet #${falt} finns inte i panelen`);
       assert.match(ut.grupp, /^BILDER/,
         `${nyckel}: #${falt} ligger i "${ut.grupp}", inte i BILDER`);
-      assert.equal(ut.hopfalld, true,
-        `${nyckel}: BILDER-gruppen är utfälld — fälten ska finnas, inte ligga framme`);
+      assert.equal(ut.dold, true, `${nyckel}: BILDER-gruppen syns — ingen panel ska visa profil- eller gåvobild`);
+      assert.equal(ut.synlig, false, `${nyckel}: #${falt} syns i panelen`);
     } finally { await page.close(); }
   });
 }

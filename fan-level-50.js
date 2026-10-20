@@ -127,7 +127,7 @@
     const team = safe.text(m.team || w.fanl50Team || '');
     return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
-      <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
+      <div class="fl50-photo"><img src="${safe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(m.avatar), FALLBACK)}" alt=""></div>
       <div class="fl50-name" style="${namnStil(m.name)}"><span>${safe.text(m.name, 'FAN')}</span></div>
       ${team ? `<div class="fl50-team"><span>#${team}</span></div>` : ''}
       ${rank ? `<div class="fl50-rank">#${rank}</div>` : ''}
@@ -358,7 +358,7 @@
         NYCKLAR.forEach(k => card.classList.remove('fl50-design-' + k)); card.classList.add('fl50-design-' + design);
         const art = card.querySelector('.fl50-art'); if (art) art.src = ART[design].art;
       }
-      const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
+      const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(m.avatar) || FALLBACK, FALLBACK);
       const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); nm.parentElement.style.setProperty('--fl50-nm-ks', namnFaktor(m.name, 8)); }
       const teamText = safe.text(m.team || w.fanl50Team || '');
       const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';

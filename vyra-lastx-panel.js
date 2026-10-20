@@ -30,15 +30,14 @@
   //     och märket "AUTO HIDE".
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Testnamn och Testhändelse är exempeldata (sektion 1): de syns i
-  // editorn och i testet, och i sändningen ersätts de av personen från TikTok. Rubrik och Meddelande
-  // per typ är egen text som syns i sändningen (w.lastXLabel / w.lastXMessage, per typ). Profilbilden
-  // väljs med mediaväljaren och gäller tills den första händelsen kommer.
+  // EGEN TEXT OCH LIVEDATA. Rubrik och Meddelande per typ är egen text som syns i sändningen
+  // (w.lastXLabel / w.lastXMessage, per typ). Panelen har varken exempeldata (Testnamn, Testhändelse)
+  // eller bildväljare för profilbilden (David 2026-10-20): personen kommer från TikTok, och renderaren
+  // ritar sin automatiska reserv tills den första händelsen kommer.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const PROFIL = 'assets/images/test-profile.svg';
   const TYPER = ['gifter', 'liker', 'sharer', 'subscriber', 'follower'];
   const TYPNAMN = { gifter: 'Gåva', liker: 'Like', sharer: 'Delning', subscriber: 'Prenumeration', follower: 'Följare' };
   const DESIGNNAMN = {
@@ -68,12 +67,10 @@
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
 
-  const profilbild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'profileImage', etikett: 'Profilbild innan första händelsen',
-    reserv: PROFIL, reservText: 'Automatisk – ersätts av personens profilbild när en händelse kommer' };
 
   function lastX(design) {
     const platta = PLATTOR.includes(design), royal = design === 'royal';
-    const visarNamn = !royal, visarMeddelande = platta;
+    const visarMeddelande = platta;
     const perTyp = [];
     for (const k of TYPER) {
       perTyp.push({ sektion: 2, typ: 'text', falt: 'lastXLabel_' + k, etikett: 'Rubrik (' + TYPNAMN[k].toLowerCase() + ')',
@@ -89,8 +86,6 @@
 
     const kontroller = [
       // 1 · Exempeldata (Testnamn och Testhändelse)
-      ...(visarNamn ? [{ kalla: 'exempel', typ: 'text', falt: 'followName', etikett: 'Namn', legacyId: '#followName' }] : []),
-      ...(visarMeddelande ? [{ kalla: 'exempel', typ: 'text', falt: 'followMessage', etikett: 'Meddelande', legacyId: '#followMessage' }] : []),
       // 2 · Innehåll
       { sektion: 2, typ: 'kryss', falt: 'lastXType', etikett: 'Vilka ska visas', legacyId: '.last-x-type-checks' },
       ...perTyp,
@@ -118,7 +113,6 @@
             if (typeof vyraRenderKeepingPanel === 'function') vyraRenderKeepingPanel(); else if (typeof render === 'function') render();
           } },
       ] : []),
-      profilbild,
       ...(platta ? [] : [{ sektion: 5, typ: 'text', falt: 'lastXDoltInfo', legacyId: '#lastXDoltInfo' }]),
       // BAKGRUND tas bort (spec 5.17), men bara för widgetar som inte redan har en egen bakgrund.
       // widget-background.js ritar en vald färg bakom kortet (tests/browser/bakgrundsgrupp), så en

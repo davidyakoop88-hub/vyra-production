@@ -30,14 +30,16 @@
   //   * Höjd och Lås proportioner visas inte: höjden följer innehållet,
   //   * Textstorlek i Design 1–3 är px-reglaget (dataSize); TEXT-gruppens Textstorlek % hade varit en andra
   //     kontroll med samma etikett,
-  //   * Profilbild och Gåvobild väljs med mediaväljaren; sökvägsfälten tas bort.
+  //   * Profilbild och Gåvobild har ingen väljare (David 2026-10-20); sökvägsfälten tas bort och
+  //     renderaren ritar sin automatiska reserv tills den första combon kommer.
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas. Samma döda reglage tas också
   // bort ur den gamla panelen (topstreak-designer.js rensa, UTAN_VERKAN utvidgad till Clean Flip), så att
   // flaggläget utan ram (localStorage vyra-panelram=av) inte visar dem heller.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Namn och Streak syns i editorn men ersätts av den dyraste combon i
-  // sändningen (gift-event-images.js); de är exempeldata i sektion 1, och Innehåll säger med en LIVE-rad
-  // vad som kommer från sändningen. I overlayn nollas demovärdena som förut (approved-rankings.js).
+  // LIVEDATA. Namn och Streak ersätts av den dyraste combon i sändningen (gift-event-images.js). Panelen
+  // har inget exempeldatablock (David 2026-10-20): ▶ Testa widget spelar vyra-exempeldata.js, och
+  // Innehåll säger med en LIVE-rad vad som kommer från sändningen. I overlayn nollas demovärdena som
+  // förut (approved-rankings.js).
   //
   // FÄRGARV (spec 4.2): Clean Flip och Design 1 ärver accenten (Accentfärg/Färg 1), Design 2 och 3 även
   // andra färgen (Färg 2). Renderarna läser bk() (approved-rankings.js, topstreak-designer.js).
@@ -45,8 +47,6 @@
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const PROFIL = 'assets/images/test-profile.svg';
-  const GAVA = 'assets/gifts/events/0001_Rose.png';
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
@@ -59,16 +59,8 @@
     return [1, 2, 3].includes(d) ? String(d) : 'clean';
   };
 
-  const exempel = [
-    { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#approvedStreakName' },
-    { kalla: 'exempel', typ: 'tal', falt: 'dataValue', etikett: 'Streak', legacyId: '#approvedStreakValue' },
-  ];
   const live = { sektion: 2, kalla: 'live', typ: 'text',
     etikett: 'Hämtas från sändningen: namn, profilbild, gåva och streak för den dyraste combon hittills.' };
-  const profilbild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'profileImage', etikett: 'Profilbild innan första gåvan',
-    reserv: PROFIL, reservText: 'Automatisk – ersätts av givarens profilbild när en combo kommer' };
-  const gavobild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'giftImage', etikett: 'Gåvobild innan första gåvan',
-    reserv: GAVA, reservText: 'Automatisk – ersätts av gåvan när en combo kommer' };
   const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] };
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const ersatter = ['#approvedStreakProfile', '#approvedStreakGift'];
@@ -85,7 +77,6 @@
     ersatter,
     arv: ['highlight'],
     kontroller: [
-      ...exempel,
       // 2 · Innehåll
       live,
       // 3 · Storlek och placering
@@ -94,8 +85,6 @@
       { sektion: 4, typ: 'std-text' },
       // 5 · Utseende
       { sektion: 5, typ: 'farg', falt: 'accent', etikett: 'Accentfärg', legacyId: '#approvedStreakAccent', arv: 'highlight' },
-      profilbild,
-      gavobild,
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation
       { sektion: 6, typ: 'tal', falt: 'streakFlipSeconds', etikett: 'Flippar var', enhet: 's', legacyId: '#approvedStreakSeconds' },
@@ -108,7 +97,6 @@
   // ---- 1b. Design 1–3 --------------------------------------------------------------------------
   function design(d) {
     const kontroller = [
-      ...exempel,
       // 2 · Innehåll
       { sektion: 2, typ: 'kryss', falt: 'showGift', etikett: 'Visa gåva', legacyId: '#universalShowGift' },
       { sektion: 2, typ: 'kryss', falt: 'showProfile', etikett: 'Visa profilbild', legacyId: '#universalShowProfile' },
@@ -126,8 +114,6 @@
       { sektion: 5, typ: 'farg', falt: 'accent', etikett: 'Färg 1', legacyId: '#tsdFarg', arv: 'highlight' },
       ...(d === 1 ? [] : [{ sektion: 5, typ: 'farg', falt: 'accent2', etikett: 'Färg 2', legacyId: '#tsdFarg2', arv: 'secondary' }]),
       { sektion: 5, typ: 'tal', falt: 'streakGlow', etikett: 'Ljus', enhet: '%', legacyId: '#tsdLjus' },
-      profilbild,
-      gavobild,
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation: bara Design 1 vänder.
       ...(d === 1 ? [{ sektion: 6, typ: 'tal', falt: 'streakFlipSeconds', etikett: 'Flippar var', enhet: 's', legacyId: '#tsdFlip' }] : []),

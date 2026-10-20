@@ -191,7 +191,7 @@
     const label = labelFor(w, typeKey);
     // EN TESTAVATAR FÖR ALLA (David 2026-10-11): utan foto visades initialen; nu samma reservbild
     // som alla andra familjer.
-    const profileImage = remembered?.avatar || w.profileImage || TESTAVATAR;
+    const profileImage = remembered?.avatar || (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage) || TESTAVATAR;
     const hasImage = profileImage ? ` data-has-image="1"` : '';
     const sticky = w.lastXPersistent !== false && remembered ? ' last-x-sticky' : '';
     const banner = BANNER_ASSETS[design] ? `<img class="last-x-frame-art" src="assets/images/last-x/${BANNER_ASSETS[design]}" alt="">` : '';
@@ -397,7 +397,9 @@
     if (nod._lx && !nod._lx.prov) throw new Error('lastXSpelaPa: noden tillhör sändningen');
     stateFor(nod, { prov: true, w: k, setTimeout: opts.setTimeout, clearTimeout: opts.clearTimeout });
     const e = Object.assign({}, event || {});
-    if (!e.username) e.username = k.followName || TYPES[typeKey].defaultName;
+    // Typens exempelnamn, aldrig widgetens sparade followName: panelen har inget exempeldatablock
+    // längre (2026-10-20), så ett gammalt sparat testnamn ska inte styra testet.
+    if (!e.username) e.username = TYPES[typeKey].defaultName;
     // Klonen ritades med den senaste personen synlig (last-x-sticky). Utan den syns entrén, och
     // stilen räknas om innan fasmaskinen tänder kortet så att övergången faktiskt spelar.
     nod.classList.remove('last-x-sticky', 'last-x-active', 'last-x-leaving');
@@ -443,7 +445,7 @@
     const name = box.querySelector('.last-x-name'), message = box.querySelector('.last-x-message'), image = box.querySelector('.last-x-avatar img');
     if (name) name.textContent = w.followName;
     if (message) message.textContent = w.followMessage;
-    if (image) image.src = VyraSafe.src(w.profileImage || TESTAVATAR);
+    if (image) image.src = VyraSafe.src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage) || TESTAVATAR);
     box.classList.remove('last-x-active', 'last-x-leaving');
     void box.offsetWidth;
     box.classList.add('last-x-active');

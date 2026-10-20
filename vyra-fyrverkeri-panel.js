@@ -30,7 +30,9 @@
   //   * Höjd och Lås proportioner visas inte (höjden följer bredden). Lager visas: vyra-lager.js skriver
   //     z-index = lagret på lådan (PR 16). Bredd är skrivskyddad: storleken ändras med Storlek och handtagen,
   //   * Position (Överst/Mitten/Nederst) i Gift Fireworks är en dubblett av Y och är borta,
-  //   * reservbildens textfält i Gift Bubbles är en mediaväljare (Egen reservgåva), utan sökväg.
+  //   * reservbildens textfält i Gift Bubbles finns inte, och ingen väljare för en egen reservgåva heller
+  //     (David 2026-10-20: ingen widget väljer gåvobild i panelen). Den skickade gåvan vinner, annars en ros;
+  //     en sparad egen reservgåva ligger kvar i state men ritas inte (gift-bubbles.js, vyraReservbild).
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
   //
   // FÄRGARV (spec 4.2): bara Gift Fireworks — Färg 1 → accentfärg, Färg 2 → andra färgen och namnets
@@ -136,9 +138,6 @@
       live('Hämtas från sändningen: gåvan och combon. Combon avgör hur många bubblor som stiger.'),
       position,
       { sektion: 3, typ: 'val', falt: 'gbSize', etikett: 'Grundstorlek', legacyId: '#gbSize' },
-      // Reservgåvan används när gåvan saknar bild. Den skickade gåvan vinner alltid.
-      { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'gbGiftImage', etikett: 'Egen reservgåva',
-        reserv: 'assets/gifts/events/0001_Rose.png', reservText: 'Automatisk – den skickade gåvan, annars en ros' },
       aterstall,
     ],
     utseendeFalt: ['gbSize', 'gbGiftIn', 'gbHearts', 'gbShowCombo', 'gbGiftImage'],

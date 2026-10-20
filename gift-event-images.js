@@ -259,7 +259,7 @@
     var noder = nodesFor(widget, shape.root);
     if (!noder.length) return;
     var namn = widget.dataName || (new URLSearchParams(location.search).has('overlay') ? '' : '@StreamQueen');
-    var d = { giftImage: widget.giftImage, profileImage: widget.profileImage, name: namn, amount: amount };
+    var d = { giftImage: (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : function (v) { return v; })(widget.giftImage), profileImage: (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : function (v) { return v; })(widget.profileImage), name: namn, amount: amount };
     noder.forEach(function (node) { skrivProfilNod(node, shape, d); });
   }
 

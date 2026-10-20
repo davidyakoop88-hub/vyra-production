@@ -45,8 +45,8 @@
   const iOverlay = () => new URLSearchParams(location.search).has('overlay');
 
   function cleanStreakHtml(w) {
-    const profile = VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg');
-    const gift = VyraSafe.url(w.giftImage, 'assets/gifts/events/0001_Rose.png');
+    const profile = VyraSafe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), 'assets/images/test-profile.svg');
+    const gift = VyraSafe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.giftImage), 'assets/gifts/events/0001_Rose.png');
     // TVA LAGEN UTAN TITTARE, TVA OLIKA BILDER - MED FLIT (samma som Top Gift):
     //   - DEMOVARDEN, dvs fabrikens '@StreamQueen'/18 eller createCleanStreaks 'MAYA'/18, ar det
     //     man designar mot i editorn. I overlay renderas de som 'Ingen streak än' utan tal (B-018) - ingen
