@@ -60,12 +60,12 @@ test('central retirement guard loads last with its own cache version', () => {
   // 20261011-1: tomDesignGrupp() — DESIGN-rubriken utan kontroller tas bort (panelen utan glapp).
   // 20261019-1: Ärv färgschema (accenten via bk()), streakSpelaPa för ▶ Testa widget och Clean Flips döda
   // reglage bort (topstreak-designer.js rensa) — Top Streak i panelramen, PR 10.
-  assert.match(html, /approved-rankings\.js\?v=20261020-15/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20261020-15') > html.indexOf('vyra-state-sync.js'));
+  assert.match(html, /approved-rankings\.js\?v=20261020-23/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20261020-23') > html.indexOf('vyra-state-sync.js'));
   // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
   // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
   assert.ok(html.indexOf('vyra-tom-widget.js?v=20261011-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261020-15'),
+    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261020-23'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 

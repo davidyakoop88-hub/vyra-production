@@ -413,7 +413,7 @@ test('lastx: ett test som får gå klart passerar entré → visning → utgång
     assert.deepEqual(s.faser, { entre: 400, visning: 5000, utgang: 360 });
     await page.waitForTimeout(700);
     const k = await lastxKlon(page);
-    assert.deepEqual([k.rubrik, k.namn, k.meddelande], ['TACK!', 'Provnamn', '5 × Crown'], 'rubrik, exempelnamn och eget meddelande per typ');
+    assert.deepEqual([k.rubrik, k.namn, k.meddelande], ['TACK!', 'Alex', '5 × Crown'], 'rubrik, exempeldatafilens namn (inte widgetens sparade Provnamn) och eget meddelande per typ');
     await page.waitForTimeout(s.faser.entre + s.faser.visning + s.faser.utgang);
     const slut = await page.evaluate(() => window.VyraTestspel.status());
     assert.equal(slut.aktiv, false);
@@ -438,11 +438,11 @@ test('lastx: ett test som får gå klart passerar entré → visning → utgång
 // en omritning eller när testet gått klart.
 const ALERTFAMILJER = [
   { namn: 'Fan Level Up · hero', nyckel: 'catalog:fanlevel:layout:hero', adapter: 'fanlevel', aktiv: 'fan-active',
-    rester: /\bfan-(active|exit|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@HeartRiser', nivaSel: '.fan-level-pill', nivaVantad: /11\s*→\s*12/ },
+    rester: /\bfan-(active|exit|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@Alex', nivaSel: '.fan-level-pill', nivaVantad: /11\s*→\s*12/ },
   { namn: 'Gifter Level Up · number', nyckel: 'catalog:gifterlevel:number', adapter: 'gifterlevel', aktiv: 'gifter-active',
-    rester: /\bgifter-(active|exit|xform-[a-z]+|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@ThunderGifter', nivaSel: '.gifter-big-level', nivaVantad: /^1[45]$/ },
+    rester: /\bgifter-(active|exit|xform-[a-z]+|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@Alex', nivaSel: '.gifter-big-level', nivaVantad: /^1[45]$/ },
   { namn: 'Follower Spotlight · ocean', nyckel: 'catalog:followeralert:ocean', adapter: 'follower', aktiv: 'follow-active',
-    rester: /\bfollow-active\b/, namnSel: 'h2', namnVantat: 'Aurora Vale' },
+    rester: /\bfollow-active\b/, namnSel: 'h2', namnVantat: 'Alex' },
   { namn: 'Guardian Emblem · Krona', nyckel: 'catalog:guardianemblem:3', adapter: 'guardian', aktiv: 'ge-active',
     rester: /\bge-(active|koreografi|fas-[a-z]+)\b/, namnSel: '.ge-namn', namnVantat: '@Guardian', fas: /\bge-fas-(ljus|oppna)\b/, koreografi: /\bge-koreografi\b/ },
 ];
@@ -487,7 +487,7 @@ for (const m of ALERTFAMILJER) {
       assert.ok(k, 'klonen finns i duken');
       assert.equal(k.id, 'prov-a__prov');
       assert.match(k.klass, new RegExp('\\b' + m.aktiv + '\\b'), 'per-nod-funktionen tände klonen');
-      assert.equal(k.namn, m.namnVantat, 'widgetens exempelnamn står på klonen');
+      assert.equal(k.namn, m.namnVantat, 'exempeldatafilens namn står på klonen (widgetens sparade namn läses inte)');
       if (m.nivaVantad) assert.match(k.niva, m.nivaVantad, 'exempelnivån står på klonen');
       if (m.fas) assert.match(k.klass, m.fas, 'koreografin startade på klonen');
       if (m.koreografi) assert.match(k.klass, m.koreografi, 'koreografiklassen ligger på klonen');
@@ -611,7 +611,7 @@ for (const m of MVP_MODELLER) {
       assert.ok(k, 'klonen finns i duken');
       assert.equal(k.id, 'prov-a__prov');
       assert.match(k.klass, /\bmvp-active\b/, 'mvpSpelaPa tände klonen');
-      assert.equal(k.namn, 'TestAlpha', 'widgetens exempelnamn står på klonen');
+      assert.equal(k.namn, 'Alex', 'exempeldatafilens namn står på klonen (widgetens sparade mvpName läses inte)');
       if (m.partiklar) {
         assert.ok(k.dukar >= 2, 'firandets partikeldukar finns i klonen');
         assert.ok(k.partiklar >= 1, 'partiklarna är i gång');
@@ -694,9 +694,11 @@ test('mvp: ett test som får gå klart passerar entré → visning → utgång o
 // grannarna är tecken för tecken desamma, topplistornas totaler (live-leaderboard.js) och poängen
 // (VyraPoints) är oförändrade, och inget sparas, köas eller går till nätet.
 const RANKING_MODELLER = [
-  { namn: 'Top Like · voltage', nyckel: 'catalog:toplike:voltage', exempel: { dataName: 'Provnamn', dataValue: '5000' }, varde: '5 000' },
-  { namn: 'Top Coins · prism-horizontal', nyckel: 'catalog:ranking:templateTopCoins:prism-horizontal', exempel: { dataName: 'Provnamn', dataValue: 5000 }, varde: '5 000' },
-  // Utan egen exempelperson: panelens reserv (MAYA, 1 500 poäng) är den som klättrar.
+  // Widgetens sparade dataName/dataValue (förr exempeldata i sektion 1) läses INTE sedan 2026-10-20: testet
+  // spelar sin fasta exempelperson. Top Like: Leo klättrar med 112 % av ettans värde (1 240 likes → 1 389).
+  { namn: 'Top Like · voltage', nyckel: 'catalog:toplike:voltage', exempel: { dataName: 'Provnamn', dataValue: '5000' }, varde: '1 389', namnVantat: 'Leo' },
+  { namn: 'Top Coins · prism-horizontal', nyckel: 'catalog:ranking:templateTopCoins:prism-horizontal', exempel: { dataName: 'Provnamn', dataValue: 5000 }, varde: '44 999', namnVantat: 'MAYA' },
+  // Utan sparat värde: samma fasta exempelperson (MAYA, 1 500 poäng).
   { namn: 'Top Points · celestial', nyckel: 'catalog:ranking:templateTopPoints:celestial', exempel: {}, varde: '1 500', namnVantat: 'MAYA' },  // svenskt talformat (N-AB-007)
 ];
 const rankingKlon = page => page.evaluate(() => {

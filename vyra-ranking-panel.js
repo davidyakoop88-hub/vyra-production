@@ -47,10 +47,10 @@
   // ändrad geometri i ranking-sixpack.css per design (sex designer med egna mått och läsbarhetsläge)
   // och hör till en egen PR. Riktningen har kvar det som fungerar: Spegla riktningen.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Listan kommer från sändningen (live-leaderboard.js) eller, för
-  // Top Points, från Actions & Events (VyraPoints). Rubriken är egen text. Namn och värde i Top Coins
-  // och Top Points SÅG redigerbara ut men ignorerades av listan (granskningen) — de är nu exempeldata i
-  // sektion 1, och testet matar in dem i sin lista: exempelpersonen klättrar från plats 3 till plats 1.
+  // EGEN TEXT OCH LIVEDATA. Listan kommer från sändningen (live-leaderboard.js) eller, för
+  // Top Points, från Actions & Events (VyraPoints). Rubriken är egen text. Panelen har inget
+  // exempeldatablock (David 2026-10-20): testet spelar exempeldatafilens personer, där en klättrar från
+  // plats 3 till plats 1. Sparade dataName/dataValue ligger kvar i state men läses inte av testet.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
@@ -92,22 +92,6 @@
     templateTopPoints: 'Listan kommer från sändningen: namn och poäng ur dina Actions & Events (eller likes/mynt, efter Rangordna efter).',
   };
 
-  function exempel(typ) {
-    if (typ === 'templateTopCoins') return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tcName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Mynt', legacyId: '#tcValue' },
-    ];
-    if (typ === 'templateTopPoints') return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tpName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Poäng', legacyId: '#tpValue' },
-    ];
-    // Top Like hade inga fält för det; ramen bygger dem (pr-dataName, pr-dataValue).
-    return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Likes' },
-    ];
-  }
-
   // Kontrollernas id per typ. Top Like har redan Rubrik, Antal och Visa-rutorna (media.js
   // topLikeProps, bundna av topLikeBind) och Top Points sitt Antal (#tpCount); de flyttas in i stället
   // för att få en andra kontroll för samma fält (tests/browser/panel-inga-dubbletter). Resten byggs
@@ -121,8 +105,6 @@
   function post(typ, id) {
     const ids = EGNA_ID[typ];
     const kontroller = [
-      // 1 · Exempeldata
-      ...exempel(typ),
       // 2 · Innehåll
       { sektion: 2, typ: 'text', falt: 'templateTitle', etikett: 'Rubrik', legacyId: ids.rubrik, om: visaRubrik },
       { sektion: 2, typ: 'kryss', falt: 'showTitle', etikett: 'Visa rubrik', legacyId: ids.visaRubrik },
@@ -425,13 +407,13 @@
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + '\u00a0mn';
     return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
   }
-  const talUr = v => { const n = Number(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return Number.isFinite(n) && n > 0 ? n : 0; };
 
-  // Exempelpersonen: widgetens Namn och värde (sektion 1), med samma reserver som panelen visar.
+  // Exempelpersonen: fast, aldrig widgetens sparade dataName/dataValue (panelen har inget
+  // exempeldatablock längre).
   function exempelperson(k) {
-    if (k.type === 'templateTopCoins') return { namn: (k.dataName && String(k.dataName).trim()) || 'MAYA', varde: talUr(k.dataValue) || 44999 };
-    if (k.type === 'templateTopPoints') return { namn: (k.dataName && String(k.dataName).trim()) || 'MAYA', varde: talUr(k.dataValue) || 1500 };
-    return { namn: (k.dataName && String(k.dataName).trim()) || '', varde: talUr(k.dataValue) };
+    if (k.type === 'templateTopCoins') return { namn: 'MAYA', varde: 44999 };
+    if (k.type === 'templateTopPoints') return { namn: 'MAYA', varde: 1500 };
+    return { namn: '', varde: 0 };
   }
 
   // Tre steg av listan. Exempelpersonens slutvärde är exakt det som står i sektion 1; de andra skalas

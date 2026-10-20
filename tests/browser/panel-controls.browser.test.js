@@ -289,8 +289,8 @@ test('live-vägen skriver till state utan att bygga om vyn', { skip }, async () 
 const TEXTFALT = [
   { namn: 'Egen text', typ: 'templateCustomText', kontroll: 'ctwText', nyckel: 'customText',
     skriv: 'Hej alla' },
-  { namn: 'Follower Spotlight · namn', typ: 'templateFollowerAlert', kontroll: 'followName',
-    nyckel: 'followName', skriv: 'Hej alla' },
+  { namn: 'Follower Spotlight · rubrik', typ: 'templateFollowerAlert', kontroll: 'followLabel',
+    nyckel: 'followLabel', skriv: 'Hej alla' },
   { namn: 'Follower Spotlight · meddelande', typ: 'templateFollowerAlert', kontroll: 'followMessage',
     nyckel: 'followMessage', skriv: 'Hej alla' },
   // KONTROLLEN. Samma panel som Egen text, men bunden av den delade live-vagen. Ett talfalt, sa

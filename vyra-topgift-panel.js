@@ -22,22 +22,15 @@
   //   * Höjd i Top Gift (höjden följer innehållet), och "Töm widget" i royal och fokus.
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Användarnamn och Coins syns i editorn men ersätts av den
-  // största gåvan i sändningen; de är därför exempeldata (sektion 1), och Innehåll säger med en
-  // LIVE-rad vad som kommer från sändningen. Profilbild och gåvobild väljs med mediaväljaren
-  // (vyra-mediaval.js); de gamla sökvägsfälten tas bort.
+  // LIVEDATA. Innehåll säger med en LIVE-rad vad som kommer från sändningen. Panelen har varken
+  // exempeldata (Användarnamn, Mynt, Töm exempeldata) eller bildväljare för profilbild och gåvobild
+  // (David 2026-10-20): ▶ Testa widget spelar vyra-exempeldata.js, och renderaren ritar sin
+  // automatiska reserv tills den första gåvan kommer. Sparade fält ligger kvar i state.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const PROFIL = 'assets/images/test-profile.svg';
-  const GAVA = 'assets/gifts/events/0001_Rose.png';
   const NAMN = { neon: 'Design 1', royal: 'Design 2', fokus: 'Design 3' };
-
-  const profilbild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'profileImage', etikett: 'Profilbild innan första gåvan',
-    reserv: PROFIL, reservText: 'Automatisk – ersätts av givarens profilbild när en gåva kommer' };
-  const gavobild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'giftImage', etikett: 'Gåvobild innan första gåvan',
-    reserv: GAVA, reservText: 'Automatisk – ersätts av gåvan när en gåva kommer' };
 
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
@@ -51,10 +44,6 @@
   function topGift(tema) {
     const neon = tema === 'neon', royal = tema === 'royal';
     const kontroller = [
-      // 1 · Exempeldata
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Användarnamn', legacyId: '#pfTopGiftName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Mynt', legacyId: '#pfTopGiftCoins' },
-      ...(neon ? [{ kalla: 'exempel', typ: 'knapp', id: 'vyraTomWidget', legacyId: '#vyraTomWidget', etikett: 'Töm exempeldata' }] : []),
       // 2 · Innehåll
       { sektion: 2, typ: 'kryss', falt: 'showGift', etikett: 'Visa gåva', legacyId: '#universalShowGift' },
       { sektion: 2, typ: 'kryss', falt: 'showProfile', etikett: 'Visa profilbild', legacyId: '#universalShowProfile' },
@@ -80,8 +69,6 @@
       // Design 1 ritar avatarramen runt profilbilden (mätt); i 2 och 3 gör den ingenting.
       ...(neon ? [{ sektion: 5, typ: 'knapp', id: 'profilram', legacyId: '.gaf-frame-group .pro-frame-picker', etikett: 'Profilram' }] : []),
       { sektion: 5, typ: 'tal', falt: 'topGiftGlow', etikett: 'Ljus', enhet: '%', legacyId: '#pfTopGiftGlow' },
-      profilbild,
-      gavobild,
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation
       { sektion: 6, typ: 'std-entre', utan: neon ? [] : ['varaktighet'] },
@@ -98,7 +85,7 @@
       katalognyckel: () => 'catalog:topgift:premium:' + tema,
       test: 'topgift',
       // Den gamla testknappen och sökvägsfälten. Raderna ligger i parkerade grupper; själva fälten tas bort.
-      ersatter: ['#pfTestTopGift', '#pfTopGiftProfile', '#pfTopGiftGift'],
+      ersatter: ['#pfTestTopGift', '#pfTopGiftProfile', '#pfTopGiftGift', '#vyraTomWidget'],
       arv: ['highlight', 'text', 'fontFamily'],
       kontroller,
       utseendeFalt: ['accent', 'accent2', 'tgdRam', 'tgdBildram', 'profileFrame', 'topGiftGlow', 'giftSize', 'dataSize',
@@ -128,8 +115,6 @@
     ersatter: ['.ws-tabs', '#tcAvatar'],
     arv: ['highlight', 'text', 'fontFamily'],
     kontroller: [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tcName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Mynt', legacyId: '#tcValue' },
       { sektion: 2, typ: 'kryss', falt: 'showGift', etikett: 'Visa gåva' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från sändningen: namn, profilbild och mynt för den som gett mest.' },
       { sektion: 3, typ: 'std-position' },
@@ -138,8 +123,6 @@
       { sektion: 4, typ: 'std-text', utan: ['vtFont'] },
       { sektion: 5, typ: 'farg', falt: 'accent', etikett: 'Accentfärg', legacyId: '#tcAccent', arv: 'highlight' },
       { sektion: 5, typ: 'tal', falt: 'opacity', etikett: 'Opacitet', enhet: '%', legacyId: '#wsOpacity' },
-      profilbild,
-      Object.assign({}, gavobild, { om: medGava }),
       { sektion: 5, typ: 'std-bakgrund' },
       { sektion: 6, typ: 'std-entre', utan: ['varaktighet'] },
       { sektion: 6, typ: 'tal', falt: 'topGiftFlipSpeed', etikett: 'Växlingshastighet', enhet: '×', min: 0.5, max: 2, steg: 0.1, standard: 1, om: medGava },

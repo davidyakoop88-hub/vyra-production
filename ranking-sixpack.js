@@ -183,7 +183,7 @@
     // påhittade personer, och live-zero-state.js nollar varje rad med ett demonamn genom att skriva
     // om hela <em> med textContent — det hade tagit ikonen. Livedatan fyller raderna via skrivTal().
     const nolla = iOverlay() && !prov;
-    const foto = esc((typeof VyraSafe !== 'undefined' && VyraSafe.url) ? VyraSafe.url(w.profileImage, 'assets/images/test-profile.svg') : (w.profileImage || 'assets/images/test-profile.svg'));
+    const foto = esc((typeof VyraSafe !== 'undefined' && VyraSafe.url) ? VyraSafe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), 'assets/images/test-profile.svg') : ((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage) || 'assets/images/test-profile.svg'));
     const ikon = IKONER[w.type];
     const n = antal(w);
     const ram = profilram(w);

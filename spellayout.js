@@ -266,7 +266,7 @@
     const demo = typeof topLikePeople !== 'undefined' && Array.isArray(topLikePeople) ? topLikePeople : [];
     // Overlay ritar nolläget direkt: publiken ska aldrig se påhittade personer (live-zero-state.js).
     const nolla = iOverlay();
-    const foto = esc(sakerUrl(w.profileImage, 'assets/images/test-profile.svg'));
+    const foto = esc(sakerUrl((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), 'assets/images/test-profile.svg'));
     // ANTAL PLATSER, 1–10 (Davids beslut 2026-10-16), ur samma reglage som de andra listorna
     // (likeCount, "Antal profiler"). Konsten har fem numrerade platser, så listan byggs av block:
     //   block 1 — plats 1–5, konsten som den är
@@ -315,8 +315,8 @@
       // text utanför en ram är inte tillåten.
       + (g.rubrik ? `<div class="spel-gifter-rubrik" style="${pct(g.rubrik)};font-size:${Math.min(7.4, cqw(g.bild, g.rubrik[3], .55))}cqw">${esc(w.templateTitle || 'TOP GIFTER')}</div>` : '')
       + `<div class="spel-flip" style="${pct(g.foto)}">`
-      + `<div class="vyra-profile-face"><img src="${esc(sakerUrl(w.profileImage, 'assets/images/test-profile.svg'))}" alt=""></div>`
-      + `<div class="vyra-gift-face"><img src="${esc(sakerUrl(w.giftImage, 'assets/gifts/events/0001_Rose.png'))}" alt=""></div></div>`
+      + `<div class="vyra-profile-face"><img src="${esc(sakerUrl((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), 'assets/images/test-profile.svg'))}" alt=""></div>`
+      + `<div class="vyra-gift-face"><img src="${esc(sakerUrl((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.giftImage), 'assets/gifts/events/0001_Rose.png'))}" alt=""></div></div>`
       + kopia(g, w, namn, varde)
       + '</div>' + handtag(w) + '</div>';
   }

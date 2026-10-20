@@ -421,7 +421,6 @@
   // ingenting — flytten görs i ett svep efteråt, bara där ordningen inte redan stämmer.
   function planera(w, R, panel) {
     const plan = new Map();
-    const exempel = [];
     const arvRader = [];
     const lagg = (nr, rad) => { if (!rad) return; if (!plan.has(nr)) plan.set(nr, []); if (!plan.get(nr).includes(rad)) plan.get(nr).push(rad); };
 
@@ -438,8 +437,10 @@
 
     R.kontroller.forEach((k, i) => {
       if (k.om && !sant(k.om, w)) return;
-      const nr = k.kalla === 'exempel' ? 1 : k.sektion;
-      const mal = k.kalla === 'exempel' ? (rad => { if (rad && !exempel.includes(rad)) exempel.push(rad); }) : (rad => lagg(nr, rad));
+      // Inget exempeldatablock (David 2026-10-20): registret avvisar kalla 'exempel', och ▶ Testa widget
+      // spelar vyra-exempeldata.js.
+      const nr = k.sektion;
+      const mal = rad => lagg(nr, rad);
 
       if (STD[k.typ]) {
         const utan = new Set(k.utan || []);
@@ -484,18 +485,6 @@
     }
     for (const [k, rad] of arvRader) markeraArv(rad, !!w.inheritBrandKit && arv.includes(k.arv));
 
-    if (exempel.length) {
-      let grupp = befintligByggd(panel, 'exempeldata');
-      if (!grupp) {
-        grupp = document.createElement('div');
-        grupp.className = 'pr-exempel';
-        byggd(grupp, 'exempeldata');
-        grupp.innerHTML = '<h5>Exempeldata för test och förhandsvisning</h5>'
-          + '<small>Visas bara i editorn och i testet. I sändningen ersätts det av TikTok.</small>';
-      }
-      lagg(1, grupp);
-      plan.set('exempel', exempel);
-    }
     return plan;
   }
 
@@ -515,7 +504,7 @@
   }
 
   // ---- Stil för det ramen själv bygger ---------------------------------------------------------
-  // Knappar, LIVE-raden, exempeldatan och arvet. En gång per sida, bara när en ram faktiskt byggs.
+  // Knappar, LIVE-raden och arvet. En gång per sida, bara när en ram faktiskt byggs.
   function stil() {
     if (document.getElementById('vyra-panelram-stil')) return;
     const st = document.createElement('style');
@@ -526,8 +515,6 @@
       '.properties #pr-testspel{width:100%;background:linear-gradient(120deg,#b13cff,#7c4dff);border-color:transparent}',
       '.properties #pr-testspel[aria-pressed="true"]{background:#3a1030;border-color:#ff5c8a}',
       '.properties .pr-tidslinje li{opacity:.55;font-size:12px}',
-      '.properties .pr-exempel{display:grid;gap:6px;margin-top:10px;padding:10px;border:1px dashed var(--line,#4b2b58);border-radius:10px}',
-      '.properties .pr-exempel h5{margin:0;font-size:12px}.properties .pr-exempel small{opacity:.75}',
       '.properties .pr-live-rad{display:flex;gap:8px;align-items:flex-start;font-size:12px;opacity:.9;margin-top:6px}',
       '.properties .pr-live{flex:0 0 auto;padding:1px 6px;border-radius:5px;background:#ff2d55;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em}',
       '.properties .pr-arv{display:grid;gap:3px;margin-top:8px}.properties .pr-arv small,.properties .pr-fran-schema{opacity:.75;font-size:11px}',
@@ -569,11 +556,6 @@
       if (sek.dataset.wsTab) delete sek.dataset.wsTab;
       if (sek.style.display) sek.style.removeProperty('display');
       sektioner.push(sek);
-    }
-    const exempelGrupp = panel.querySelector('[data-pr-kontroll="exempeldata"]');
-    if (exempelGrupp && plan.has('exempel')) {
-      const fast = [...exempelGrupp.querySelectorAll(':scope > h5, :scope > small')];
-      if (ordna(exempelGrupp, plan.get('exempel'), fast, kropp)) flyttat = true;
     }
 
     // Gamla grupper parkeras hela; gamla testknappar tas bort.

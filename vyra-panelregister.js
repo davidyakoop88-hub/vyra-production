@@ -46,7 +46,9 @@
   const KONTROLLTYPER = Object.freeze(['text', 'tal', 'val', 'kryss', 'farg', 'media', 'knapp']);
   // Gemensamma block (spec 1.5). Innehållet i varje block definieras i vyra-panelram.js.
   const STD = Object.freeze(['std-position', 'std-storlek', 'std-text', 'std-bakgrund', 'std-entre', 'std-aterstall']);
-  const KALLOR = Object.freeze(['egen', 'exempel', 'live']);
+  // 'exempel' finns inte längre (David 2026-10-20): ingen panel har ett exempeldatablock. ▶ Testa widget
+  // spelar vyra-exempeldata.js, och en post som ändå deklarerar exempeldata avvisas här.
+  const KALLOR = Object.freeze(['egen', 'live']);
   const MEDIETYPER = Object.freeze(['bild', 'video', 'gava']);
   const ARV = Object.freeze(['highlight', 'secondary', 'text', 'background', 'fontFamily']);
 
@@ -77,8 +79,7 @@
       if (!k || typeof k !== 'object') { fel.push(`${namn}: inte ett objekt`); return; }
       const std = STD.includes(k.typ);
       if (!std && !KONTROLLTYPER.includes(k.typ)) fel.push(`${namn}: okänd typ "${k.typ}"`);
-      // Exempeldata hamnar alltid i sektion 1, så sektionen får utelämnas där.
-      const sektion = k.kalla === 'exempel' && k.sektion === undefined ? 1 : k.sektion;
+      const sektion = k.sektion;
       if (!(Number.isInteger(sektion) && sektion >= 1 && sektion <= 7)) fel.push(`${namn}: sektion måste vara 1–7`);
       if (k.kalla !== undefined && !KALLOR.includes(k.kalla)) fel.push(`${namn}: okänd kalla "${k.kalla}"`);
       if (k.arv !== undefined && !ARV.includes(k.arv)) fel.push(`${namn}: okänt arv "${k.arv}"`);

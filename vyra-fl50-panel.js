@@ -21,8 +21,11 @@
   //
   // BORTTAGET UR PANELEN (fälten ligger kvar i state):
   //   * Lagnamn (#) — renderas aldrig: .fl50-team är display:none i alla fyra mallarna (fan-level-50.css),
-  //   * textrutan "namn|profilbild-url" — ersatt av deltagarlistan: en rad per deltagare med namn, Ta bort och
-  //     en mediaväljare för bilden (sökvägen syns aldrig), och Lägg till namn för namn utan att hämta.
+  //   * textrutan "namn|profilbild-url" — ersatt av deltagarlistan: en rad per deltagare med namn och Ta bort,
+  //     och Lägg till namn för namn utan att hämta,
+  //   * bildväljaren per deltagare (David 2026-10-20: ingen widget väljer profilbild i panelen). Bilden
+  //     kommer från TikTok när deltagaren hämtas; annars ritas standardbilden. En egen bild som redan är
+  //     sparad på en deltagare ligger kvar i state men ritas inte (fan-level-50.js, vyraReservbild).
   //
   // FÄRGARV erbjuds inte (spec 4.2): widgeten har inget färgfält, kortmallarna är fasta bilder.
 
@@ -33,7 +36,6 @@
     'textOutlineWidth', 'textOutlineColor'];
   const DESIGNNAMN = { alla: 'alla designer', royal: 'Fly Love', zeus: 'Zeus', ornen: 'Örnen', lejon: 'Lejonkungen' };
   const arBand = w => !!w && w.fanl50Mode === 'band';
-  const FALLBACK = 'assets/images/test-profile.svg';
 
   // ---- 1. Registerposten (spec 5.9) ---------------------------------------------------------------
   R.definiera({
@@ -45,8 +47,7 @@
     kontroller: [
       // 2 · Innehåll: vilka som visas.
       { sektion: 2, typ: 'val', falt: 'fanl50Source', etikett: 'Källa', legacyId: '#fl50Source' },
-      // Inmatningen (Hämta från TikTok, Lägg till namn), statusraden och en rad per deltagare. Bilden på varje
-      // rad blir en mediaväljare i omslaget sist i filen.
+      // Inmatningen (Hämta från TikTok, Lägg till namn), statusraden och en rad per deltagare (namn och Ta bort).
       { sektion: 2, typ: 'knapp', id: 'fl50Deltagare', etikett: 'Deltagare', legacyId: '#fl50Deltagare' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Fans som når Fan Level 50 i sändningen läggs till av sig själva, med namn och profilbild från TikTok.' },
       // 3 · Storlek och placering. Renderaren sätter z-index, så Lager verkar. Höjden följer bredden (kortets format).
@@ -122,9 +123,8 @@
 
   // ---- Bind-omslaget ----------------------------------------------------------------------------------
   //
-  // Varje deltagarrad har en platshållare för bilden (data-fl50-bild, fan-level-50.js). I den nya panelen blir
-  // den en mediaväljare: Välj bild sparar en egen bild på deltagaren, Använd automatisk tar bort den (då visas
-  // standardbilden). Sökvägen syns aldrig. En profilbild som hämtats från TikTok säger det på statusraden.
+  // Varje deltagarrad har en platshållare för bilden (data-fl50-bild, fan-level-50.js). I den nya panelen döljs
+  // den: ingen widget väljer profilbild i panelen (David 2026-10-20). Raden är namnet och Ta bort.
   function stil() {
     if (document.getElementById('vyra-fl50-panel-stil')) return;
     const s = document.createElement('style');
@@ -135,38 +135,11 @@
       '.properties [data-panelram-sektion] .fl50-chips{display:grid;gap:8px;margin-top:0}',
       '.properties [data-panelram-sektion] .fl50-rad{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:8px;border-radius:10px}',
       '.properties [data-panelram-sektion] .fl50-rad .fl50-rad-namn{min-width:0;width:100%;box-sizing:border-box}',
-      '.properties [data-panelram-sektion] .fl50-rad .fl50-rad-bild{grid-column:1/-1;order:3}',
+      '.properties [data-panelram-sektion] .fl50-rad .fl50-rad-bild{display:none!important}',
       '.properties [data-panelram-sektion] .fl50-rad .fl50-chip-x{min-height:0!important;width:30px;height:30px;padding:5px!important}',
       '.properties [data-panelram-sektion] .fl50-rad .fl50-chip-x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}',
     ].join('');
     (document.head || document.documentElement).append(s);
-  }
-
-  const manual = w => (Array.isArray(w.fanl50Manual) ? w.fanl50Manual : []);
-  function fyllBilder(w) {
-    const M = window.VyraMediaval;
-    if (!M || typeof M.falt !== 'function') return;
-    document.querySelectorAll('.properties [data-panelram-sektion] [data-fl50-bild]').forEach(ruta => {
-      if (ruta.querySelector('.vyra-mediaval')) return;
-      const i = Number(ruta.getAttribute('data-fl50-bild'));
-      const m = manual(w)[i];
-      if (!m) return;
-      const nod = M.falt({
-        w, falt: 'fanl50Manual-' + i, typ: 'bild', etikett: 'Bild för ' + (m.name || 'deltagaren'),
-        reserv: FALLBACK, reservText: 'Ingen egen bild – standardbilden visas',
-        las: x => { const d = manual(x)[i]; return d ? d.avatar || '' : ''; },
-        skriv: (x, v) => {
-          const lista = manual(x).slice();
-          if (!lista[i]) return;
-          const d = Object.assign({}, lista[i], { avatar: v });
-          delete d.hamtad;                                  // en egen bild är inte längre den hämtade
-          lista[i] = d;
-          x.fanl50Manual = lista;
-        },
-        status: (x, v) => { const d = manual(x)[i]; return d && d.hamtad && v && d.avatar === v ? 'Profilbild hämtad från TikTok' : null; },
-      });
-      if (nod) { ruta.textContent = ''; ruta.append(nod); }
-    });
   }
 
   function efterBind() {
@@ -175,7 +148,6 @@
     const w = typeof liveWidget === 'function' && typeof selected !== 'undefined' ? liveWidget(selected) : null;
     if (!w || w.type !== 'templateFanLevel50' || !P || !P.ager || !P.ager(w)) return;
     stil();
-    fyllBilder(w);
   }
   if (typeof bind === 'function') {
     const foregaende = bind;

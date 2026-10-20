@@ -30,7 +30,7 @@ test('playground-familjerna ritar testavataren, aldrig en bokstav', () => {
 });
 
 test('Last X faller tillbaka på samma bild i stället för initialen', () => {
-  assert.match(las('last-x-alerts.js'), /const profileImage = remembered\?\.avatar \|\| w\.profileImage \|\| TESTAVATAR;/);
+  assert.match(las('last-x-alerts.js'), /const profileImage = remembered\?\.avatar \|\| \(typeof window\.vyraReservbild === 'function' \? window\.vyraReservbild : v => v\)\(w\.profileImage\) \|\| TESTAVATAR;/);
 });
 
 test('ingen klientfil pekar längre på den gamla PNG:n som profilreserv', () => {
@@ -42,11 +42,11 @@ test('ingen klientfil pekar längre på den gamla PNG:n som profilreserv', () =>
 
 test('cachebustarna höjdes med filerna', () => {
   const media = las('media.js'), html = las('studio.html');
-  assert.match(media, /const version='20261020-20'/, 'premiumbunten (premium-final, runtime-controls)');
+  assert.match(media, /const version='20261020-23'/, 'premiumbunten (premium-final, runtime-controls)');
   assert.match(media, /playground-widgets\.js\?v=20261020-20/);
   assert.match(media, /playground-widgets\.css\?v=20261020-20/, 'streak-pillens siffra');
   assert.match(las('playground-widgets.css'), /\.stk-pill b\{[^}]*font:800 44px\/1 var\(--font\)\}/);
-  assert.match(media, /last-x-alerts\.js\?v=20261020-12/);  // 20261020-9: svenska standardmeddelanden
+  assert.match(media, /last-x-alerts\.js\?v=20261020-23/);  // 20261020-9: svenska standardmeddelanden
   assert.match(media, /gift-fireworks\.js\?v=20261019-1/);  // 20261019-1: fwSpelaPa (PR 12)
-  assert.match(html, /media\.js\?v=20261020-21/);
+  assert.match(html, /media\.js\?v=20261020-23/);
 });
