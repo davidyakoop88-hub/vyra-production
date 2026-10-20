@@ -68,7 +68,25 @@
   // där adressen skrivs in — inte först efteråt. Se tests/registrering-epost-fore-tiktok.test.js.
   const epostkrav = kort.querySelector('[data-login-epostkrav]');
   const flikar = kort.querySelectorAll('[data-login-flik]');
+  const losenFalt = form.querySelector('#loginPassword');
+  const losenKrav = kort.querySelector('[data-login-losenkrav]');
+  const villkor = kort.querySelector('[data-login-villkor]');
   let lage = 'login';
+
+  // Visa/dölj lösenord. Texten ("Visa") och namnet ("Visa lösenord") står still och aria-pressed
+  // bär läget — en text som byter till "Dölj" skulle inte längre finnas i knappens namn, och då
+  // hittar röststyrning den inte (WCAG 2.5.3). Läget syns på knappens fyllning i styles.css.
+  // Fältet döljs igen före varje skick, så inget klartextlösenord ligger kvar under dörren.
+  const visaKnapp = kort.querySelector('[data-login-visa]');
+  function visaLosen(pa) {
+    if (!visaKnapp) return;
+    losenFalt.type = pa ? 'text' : 'password';
+    visaKnapp.setAttribute('aria-pressed', pa ? 'true' : 'false');
+  }
+  if (visaKnapp) visaKnapp.onclick = e => {
+    e.preventDefault();
+    visaLosen(losenFalt.type === 'password');
+  };
 
   async function api(path, body) {
     const csrf = sessionStorage.getItem('vyra-csrf');
@@ -83,23 +101,119 @@
     return d;
   }
 
+  // FLIKARNA ÄR FLIKAR ÄVEN FÖR DEN SOM INTE SER DEM (granskningen 2026-10-17, F17/F18).
+  // Rollen tab lovar tre saker: aria-selected följer den valda fliken, panelen namnges av den,
+  // och bara den valda fliken nås med Tab — de andra med piltangenterna (roving tabindex).
+  // Tidigare bytte bara klassen, så skärmläsaren sa "Logga in, vald" medan Skapa konto visades.
   function bytLage(nytt) {
     lage = nytt;
-    flikar.forEach(f => f.classList.toggle('active', f.dataset.loginFlik === lage));
+    flikar.forEach(f => {
+      const vald = f.dataset.loginFlik === lage;
+      f.classList.toggle('active', vald);
+      f.setAttribute('aria-selected', vald ? 'true' : 'false');
+      f.tabIndex = vald ? 0 : -1;
+      if (vald && f.id) form.setAttribute('aria-labelledby', f.id);
+    });
     namnFalt.hidden = lage !== 'register';
     if (epostkrav) epostkrav.hidden = lage !== 'register';
+    // Villkor och integritet intill Skapa konto (F21) — de låg bara i sidfoten. Ingen kryssruta:
+    // servern kräver ingen acceptans i API:t, så raden informerar och länkar, den grindar inte.
+    if (villkor) villkor.hidden = lage !== 'register';
+    // Lösenordets golv sägs INNAN det kan bli fel (F19) — bara när ett lösenord väljs.
+    if (losenKrav) {
+      losenKrav.hidden = lage !== 'register';
+      if (lage === 'register') losenFalt.setAttribute('aria-describedby', losenKrav.id);
+      else losenFalt.removeAttribute('aria-describedby');
+    }
     namnFalt.querySelector('input').required = lage === 'register';
     form.querySelector('#loginPassword').autocomplete =
       lage === 'login' ? 'current-password' : 'new-password';
     knapp.querySelector('b').textContent = lage === 'login' ? 'Logga in' : 'Skapa konto';
     felrad.textContent = '';
   }
-  flikar.forEach(f => { f.onclick = () => bytLage(f.dataset.loginFlik) });
+  // En flik visar alltid sitt formulär — också från glömt-steget, där formuläret annars låg dolt
+  // och ett klick på fliken inte syntes alls.
+  function visaFlik(namn) {
+    const glomtSteg = kort.querySelector('[data-login-forgot]');
+    if (glomtSteg && !glomtSteg.hidden) { glomtSteg.hidden = true; form.hidden = false }
+    bytLage(namn);
+  }
+  flikar.forEach(f => { f.onclick = () => visaFlik(f.dataset.loginFlik) });
+
+  // Piltangenter, Home och End — automatisk aktivering, som i WAI-ARIA:s flikmönster. Två flikar
+  // och inget dyrt bakom bytet, så fokus och val följs åt.
+  const flikrad = kort.querySelector('[data-login-flikrad]');
+  if (flikrad) flikrad.addEventListener('keydown', e => {
+    const lista = [...flikar];
+    const nu = lista.indexOf(e.target);
+    if (nu < 0) return;
+    const nasta = { ArrowRight: nu + 1, ArrowLeft: nu - 1, Home: 0, End: lista.length - 1 }[e.key];
+    if (nasta === undefined) return;
+    e.preventDefault();
+    const mal = lista[(nasta + lista.length) % lista.length];
+    visaFlik(mal.dataset.loginFlik);
+    mal.focus();
+  });
 
   // Tvåstegsläget byter kortets formulär mot kodfältet — samma dramaturgi som gaten.
+  //
+  // F22 (granskningen 2026-10-17): rutan hade bara kodfält och Bekräfta. Nu finns tre vägar till:
+  //   · återställningskod som EGET läge — bokstäver och bindestreck, inte sifferbordet
+  //   · Avbryt och byt konto — stänger den halva sessionen med /api/auth/logout, precis som gatens
+  //     "Avbryt och logga ut" i auth-client.js. Utan anropet låg en ej verifierad session kvar.
+  //   · hjälp för den som förlorat både appen och koderna (supporten, från kontots adress)
+  // Servern tar båda kodtyperna i samma fält ({code}), så API:t är oförändrat.
+  const mfa = kort.querySelector('[data-login-mfa]');
+  const mfaKod = mfa.querySelector('#loginMfaCode');
+  const mfaEtikett = mfa.querySelector('[data-login-mfa-etikett]');
+  const mfaText = mfa.querySelector('[data-login-mfa-text]');
+  const reservKnapp = mfa.querySelector('[data-login-reserv]');
+  const MFA_LAGEN = {
+    app: { etikett: 'Säkerhetskod', inputmode: 'numeric', autocomplete: 'one-time-code',
+      text: mfaText ? mfaText.textContent : '', knapp: 'Använd en återställningskod' },
+    reserv: { etikett: 'Återställningskod', inputmode: 'text', autocomplete: 'off',
+      text: 'Ange en av återställningskoderna du sparade när tvåstegsverifieringen slogs på. Varje kod fungerar en gång.',
+      knapp: 'Använd koden från appen' },
+  };
+  function mfaLage(namn) {
+    const l = MFA_LAGEN[namn];
+    mfa.dataset.lage = namn;
+    if (mfaEtikett) mfaEtikett.textContent = l.etikett;
+    if (mfaText) mfaText.textContent = l.text;
+    if (reservKnapp) reservKnapp.textContent = l.knapp;
+    mfaKod.setAttribute('inputmode', l.inputmode);
+    mfaKod.setAttribute('autocomplete', l.autocomplete);
+    mfaKod.setAttribute('autocapitalize', namn === 'reserv' ? 'characters' : 'off');
+    mfaKod.value = '';
+    mfa.querySelector('#loginMfaError').textContent = '';
+  }
+  if (reservKnapp) reservKnapp.onclick = () => {
+    mfaLage(mfa.dataset.lage === 'reserv' ? 'app' : 'reserv');
+    mfaKod.focus();
+  };
+  const avbrytKnapp = mfa.querySelector('[data-login-mfa-avbryt]');
+  if (avbrytKnapp) avbrytKnapp.onclick = async () => {
+    avbrytKnapp.disabled = true;
+    // Fail-open åt rätt håll: misslyckas utloggningen ska besökaren ändå komma tillbaka till
+    // formuläret, och tokenen för den avbrutna sessionen ska ändå bort ur fliken.
+    try { await api('/api/auth/logout', {}) } catch (_) { /* sessionen dör av sig själv */ }
+    sessionStorage.removeItem('vyra-csrf');
+    mfaLage('app');
+    mfa.hidden = true;
+    form.hidden = false;
+    if (flikrad) flikrad.hidden = false;
+    avbrytKnapp.disabled = false;
+    knapp.disabled = false;
+    losenFalt.value = '';
+    bytLage('login');
+    form.querySelector('#loginEmail').focus();
+  };
+
   function mfaSteg() {
     form.hidden = true;
-    const mfa = kort.querySelector('[data-login-mfa]');
+    // Flikarna betyder ingenting mitt i en inloggning — vägen ut är Avbryt och byt konto.
+    if (flikrad) flikrad.hidden = true;
+    mfaLage('app');
     mfa.hidden = false;
     const kodForm = mfa.querySelector('form');
     kodForm.onsubmit = async e => {
@@ -122,17 +236,26 @@
   // själva återställningen är redan byggd och landar i studio.html?reset-password, där
   // auth-security.js:s recover() tar vid. Samma svarstext oavsett om kontot finns.
   const glomt = kort.querySelector('[data-login-forgot]');
+  const glomtText = glomt.querySelector('.login-mfa-text');
+  const glomtTextFran = glomtText.textContent;
   kort.querySelector('[data-login-glomt]').onclick = e => {
     e.preventDefault();
     form.hidden = true;
     glomt.hidden = false;
+    // Andra varvet ska se ut som det första: efter ett skickat mejl låg formuläret kvar dolt.
+    glomtText.textContent = glomtTextFran;
+    glomt.querySelector('form').hidden = false;
+    glomt.querySelector('#loginForgotError').textContent = '';
     glomt.querySelector('#loginForgotEmail').value = form.querySelector('#loginEmail').value;
     glomt.querySelector('#loginForgotEmail').focus();
   };
+  // "Tillbaka till inloggningen" betyder inloggningen — även när besökaren kom från Skapa konto
+  // (F20). Tidigare visades bara formuläret igen, i det läge det råkade stå i.
   kort.querySelector('[data-login-tillbaka]').onclick = () => {
     glomt.hidden = true;
     form.hidden = false;
-    felrad.textContent = '';
+    bytLage('login');
+    form.querySelector('#loginEmail').focus();
   };
   glomt.querySelector('form').onsubmit = async e => {
     e.preventDefault();
@@ -159,6 +282,7 @@
       password: form.querySelector('#loginPassword').value,
     };
     if (lage === 'register') payload.displayName = form.querySelector('#loginName').value;
+    visaLosen(false);
     knapp.disabled = true;
     felrad.textContent = '';
     try {

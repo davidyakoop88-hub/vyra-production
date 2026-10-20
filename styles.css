@@ -776,20 +776,42 @@ main,.mini-sidfot{position:relative;z-index:1}
 
 /* Kortet lyfts ur floden sa det inte trycker bilden ur mitten. Vid smalare fonster far det ga
    tillbaka i floden — annars lagger det sig OVANPA mobilen, och det ar samre an att vara osnyggt. */
-@media (min-width:1120px){
+/* EGNA KOLUMNER, INTE DELAD YTA (granskningen 2026-10-17, F30). Kortet lyftes ur floden redan vid
+   1120 px, men rubriken ar 900 px bred och centrerad: vid 1145 lag registreringskortet over
+   "TikTok Live" och underrubriken, och prisraden lag over kortets knapp (uppmatt i alla fyra
+   lagen). Tva regler galler nu tillsammans:
+     1. Kortet lyfts ur floden forst nar det FINNS en kolumn at det: fran 1360 px.
+     2. Da krymper rubrikytan sa att den aldrig nar in i kortets kolumn — kortets vanstra kant +
+        bredd + 28 px luft, speglat pa bada sidor sa rubriken forblir centrerad i vyn.
+     3. Kortet centreras i HELA heron, inte i bildraden. Bildraden ar kortare an kortet, sa ett
+        kort centrerat pa den stack ned i sidfoten vid 1366 x 768 i lage Skapa konto (uppmatt).
+        Heron slutar dar sidfoten borjar, sa kortet kan inte langre na den. Darfor ar
+        .hero-botten statisk har — da ar heron kortets innehallande block.
+   Under 1360 px bredd eller 700 px hojd star kortet i floden bredvid bilden (regeln efter den
+   har): da finns ingen plats at en egen kolumn, och rullning ar battre an overlapp. */
+@media (min-width:1360px) and (min-height:700px){
+  .hero-botten{position:static}
   .hero-botten .login-kort{position:absolute;left:clamp(16px,2.5vw,44px);top:50%;
     transform:translateY(-50%);margin:0}
+  .hero-topp{max-width:min(900px,calc(100vw - 2 * (clamp(16px,2.5vw,44px) + 344px + 28px)))}
+}
+/* I floden bredvid bilden: gavobanan svavar upp till ~170 px utanfor scenens ruta, sa luften
+   mellan kort och scen ar banans, inte en kanslosak. */
+@media (min-width:981px) and (max-width:1359px),(min-width:981px) and (max-height:699px){
+  .hero-botten{gap:clamp(150px,15vw,190px)}
 }
 
 /* Korta fonster: prisraden ar sidans sista rad och maste synas utan rullning. Uppmatt vid 768 px
    slutade den pa y=780 forsta forsoket. Mobilen och kortet ger vika, aldrig raden. */
+/* Luften mellan underrubriken och bilden ar minst 16 px (F30: uppmatt 9 px vid 768 och 15 vid
+   900 — illustrationens overkant nuddade texten). */
 @media (max-height:1000px){
-  .hero-botten{margin-top:12px}
+  .hero-botten{margin-top:20px}
   .hero-botten .login-kort{padding:18px 20px;border-radius:18px}
   .hero-botten .hero-mobil{width:min(196px,24vw)}
 }
 @media (max-height:820px){
-  .hero-botten{margin-top:6px}
+  .hero-botten{margin-top:18px}
   .hero-botten .login-kort{padding:14px 18px}
   .hero-botten .hero-mobil{width:min(168px,20vw)}
 }
@@ -864,4 +886,64 @@ main,.mini-sidfot{position:relative;z-index:1}
 @media (prefers-reduced-motion:reduce){
   .login-dorr{display:none}
   .login-valkommen{animation:none;opacity:1;position:static;margin-top:10px}
+}
+
+/* ================================================================================================
+   GRANSKNINGEN 2026-10-17 — INLOGGNINGSKORTET OCH PRISRADEN (F19, F21, F22, F28, F29).
+
+   Sist i filen med flit, samma skal som blocken ovan: storlekarna har ska vinna over de aldre
+   reglerna (bland dem @media(max-width:800px) som satte social-proof till 10,5 px), och ett
+   intilliggande blockklipp far inte kunna radera dem tyst. Vaktas av
+   tests/browser/framsida-konto-yta.browser.test.js.
+   ================================================================================================ */
+
+/* F29 · LASBAR FINSTILT. 10,5–12 px bar etiketter, hjalprader och fornyelsevillkoret. Golvet ar
+   13 px for allt i kortet och prisraden; villkoret som kvalificerar "3 dagar gratis" far 14 px och
+   den ljusare dampade fargen, sa det inte ar det minst lasbara pa sidan. */
+.login-kort label{font-size:13px;letter-spacing:.02em}
+.login-kort #loginError,.login-kort #loginMfaError{font-size:13px}
+.login-kort .login-epostkrav{font-size:13px}
+.login-mfa-text{font-size:13.5px}
+.login-fin{font-size:13px}
+.price-fineprint{font-size:14px;color:var(--muted)}
+.hero-pris b span{font-size:15px}
+.social-proof,.trust{font-size:13px}
+
+/* F28 · KLICKYTOR. WCAG 2.2 · 2.5.8 kraver 24 x 24 px; "Glomt losenord?" var 14 px hog,
+   butikslanken 16 och sidfotens lankar 15. Padding och min-height, aldrig storre text an ovan. */
+.login-glomt-rad{justify-content:space-between;align-items:center;gap:10px;margin-top:-4px}
+.login-glomt-rad button{margin-left:auto;display:inline-flex;align-items:center;min-height:24px;
+  padding:4px 2px;font-size:13px}
+.login-tillbaka{display:block;min-height:32px;font-size:13px}
+.mini-sidfot a{display:inline-flex;align-items:center;min-height:24px;padding:0 2px}
+.trust-hamta{display:inline-flex;align-items:center;min-height:24px}
+
+/* F19 · losenordets golv syns fore inmatning, och losenordet kan visas. */
+.login-hjalp{font-size:13px;line-height:1.4;color:var(--muted)}
+.login-losen{position:relative;display:block}
+.login-losen input{width:100%;padding-right:68px}
+.login-visa{position:absolute;right:6px;top:50%;transform:translateY(-50%);min-height:28px;
+  min-width:44px;padding:0 10px;border:1px solid #3a2848;border-radius:8px;background:#1a1226;
+  color:#d9c7e6;font:600 13px var(--font-body);letter-spacing:0;cursor:pointer;transition:.15s}
+.login-visa:hover{color:#fff;border-color:#5a4270}
+.login-visa[aria-pressed="true"]{background:#a855f733;border-color:var(--violet-light);color:#fff}
+
+/* F21 · villkor och integritet intill Skapa konto. */
+.login-villkor{margin:0;font-size:13px;line-height:1.45;color:var(--muted);text-align:left}
+.login-villkor a,.login-mfa-hjalp a{color:#d7c2f5;text-decoration:underline;text-underline-offset:2px}
+.login-villkor a:hover,.login-mfa-hjalp a:hover{color:#fff}
+
+/* F22 · tvastegsrutans vagar: reservkod, avbryt, hjalp. */
+.login-mfa-val{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;margin-top:12px}
+.login-lank{display:inline-flex;align-items:center;min-height:28px;padding:4px 2px;background:none;
+  border:0;cursor:pointer;font:600 13px var(--font-body);color:#c3a8e8;text-align:left}
+.login-lank:hover{color:#fff;text-decoration:underline}
+.login-lank:disabled{opacity:.6;cursor:default}
+.login-mfa-hjalp{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--muted);text-align:left}
+
+/* Mobil: kortets knappar far 44 px — tummen, inte muspekaren. */
+@media (max-width:760px){
+  .login-flikar button,.login-glomt-rad button,.login-tillbaka,.login-lank{min-height:44px}
+  .login-kort input{min-height:50px}
+  .login-visa{min-height:44px}
 }
