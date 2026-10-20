@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Slutgranskningen: nollägen, Goal Pro-text, Heart Me-glöd, Social Goal, Top Streak-vila, Last-X svenska",
+  "motiv": "Slutgranskningens andra omgång, Guardian/Fan/Gifter på sin plats, ranking i nolläge, utan bildväljare, Gift Campaign-flikar",
   "nycklar": 162,
   "filter": null,
-  "tid": "2026-10-20T10:17:26.676Z"
+  "tid": "2026-10-20T21:20:22.806Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -175,51 +175,51 @@
    "fyllnad": 100
   },
   "catalog:heartgoal:citrus": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:classic": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:dark": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:emerald": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:frost": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:galaxy": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:golden": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:ice": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:midnight": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:neon": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:ocean": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:sakura": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:lastx:badge": {
@@ -335,7 +335,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:signal-orbit": {
-   "matt": "230x206",
+   "matt": "230x231",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:prism-core:landscape": {
@@ -363,75 +363,75 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
-   "matt": "117x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:voltage": {
-   "matt": "107x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
-   "matt": "117x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:voltage": {
-   "matt": "107x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:toplike:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:toplike:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
-   "matt": "117x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:toplike:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:toplike:voltage": {
-   "matt": "107x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-orbit:circle": {
