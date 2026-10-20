@@ -180,7 +180,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
   // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
   // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
-  assert.match(studio, /studio\.css\?v=20261020-20/);
+  assert.match(studio, /studio\.css\?v=20261020-21/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
