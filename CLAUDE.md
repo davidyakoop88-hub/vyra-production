@@ -71,7 +71,7 @@ antas vara ett fel i koden.
 ```bash
 npm test                    # alla node-tester i roten            (~4 min)
 npm run test:browser        # jsdom/browser-tester                (~42 min, se nedan)
-npm run test:browser:skarva -- 1 4   # bara del 1 av 4 — det CI kör, ~10 min
+npm run test:browser:skarva -- 1 6   # bara del 1 av 6 — det CI kör, ~25 min
 npm run test:skript         # scripts/test/ — källvakter mot server/index.js m.fl.
 npm run test:ci             # kontrakt + fuzz + allt
 npm run karta               # regenerera docs/katalogkarta.md
@@ -107,7 +107,7 @@ snabba sviterna, där de flesta fel fångas, låg **bakom** båda: ett stavfel i
 sjuttio minuter att få veta om.
 
 Därför kör `test-client` numera som **tre parallella jobb**: node-sviterna svarar på ~4 min,
-`test-client-webblasare` skarvar `test:browser` i fyra delar (`scripts/browser-skarva.js`, packade
+`test-client-webblasare` skarvar `test:browser` i sex delar (fyra fram till 2026-10-20, då delarna slog i 45-minutersgränsen) (`scripts/browser-skarva.js`, packade
 efter uppmätt vikt i `tests/browser-tider.json`), och `test-visuell` kör pixelvakten odelad — den
 har nolltolerans och tål inte att bilderna jämförs på flera maskiner. Väggklockan är ~10 min i
 stället för 70. `tests/browser-skarvning.test.js` vaktar att delarna täcker katalogen exakt en gång.
