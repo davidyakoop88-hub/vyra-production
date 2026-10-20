@@ -360,7 +360,9 @@
       '.latonskningar header{display:flex;align-items:center;gap:8px}',
       '.latonskningar header i{font-style:normal;font-size:18px}',
       '.latonskningar header b{font-size:13px;letter-spacing:.18em;font-weight:900;color:var(--lat);flex:1}',
-      '.latonskningar header small{font-size:10px;letter-spacing:.08em;opacity:.6;text-transform:uppercase}',
+      // Källetiketten (YOUTUBE/SPOTIFY) ärvde studio.css:s gråa small-färg och fick opacity .6 ovanpå: nästan
+      // osynlig mot kortet (slutgranskning B-031). Egen ljus färg, så den läses men står kvar som etikett.
+      '.latonskningar header small{font-size:10px;letter-spacing:.08em;color:#ece6f3;opacity:.82;text-transform:uppercase}',
       '.latonskningar .lat-nu{display:flex;gap:10px;align-items:center}',
       '.latonskningar .lat-video{width:128px;height:72px;flex:none;border-radius:10px;background:#000 linear-gradient(135deg,color-mix(in srgb,var(--lat),#000 60%),#000);box-shadow:inset 0 0 0 1px #ffffff22}',
       '.latonskningar .lat-nu-text{display:flex;flex-direction:column;min-width:0}',

@@ -205,7 +205,9 @@
         "vyra-fl50-panel.js",
         "vyra-glove-panel.js",
         "vyra-lager.js",
-        "vyra-egen-panel.js"
+        "vyra-egen-panel.js",
+        "vyra-talformat.js",
+        "vyra-effekt-vila.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",

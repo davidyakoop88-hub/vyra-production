@@ -263,6 +263,11 @@
     if (!el.disabled) el.disabled = true;
     el.readOnly = true;
     el.title = 'Fast bredd i den här modellen (' + FAST_BREDD + ' px före Storlek)';
+    // Hjälpraden hamnade sist i sektionen, efter Lager, tre rader under fältet den förklarar
+    // (slutgranskning B-027). Den flyttas till raden direkt under Bredd.
+    const info = document.querySelector('.properties #prFastBredd');
+    const breddRad = el.closest('label');
+    if (info && breddRad && breddRad.nextElementSibling !== info) breddRad.after(info);
   }
 
   function stil() {

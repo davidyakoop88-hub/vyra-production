@@ -49,7 +49,7 @@
     const gift = VyraSafe.url(w.giftImage, 'assets/gifts/events/0001_Rose.png');
     // TVA LAGEN UTAN TITTARE, TVA OLIKA BILDER - MED FLIT (samma som Top Gift):
     //   - DEMOVARDEN, dvs fabrikens '@StreamQueen'/18 eller createCleanStreaks 'MAYA'/18, ar det
-    //     man designar mot i editorn. I overlay renderas de som tomt namn och '×0 STREAK' - ingen
+    //     man designar mot i editorn. I overlay renderas de som 'Ingen streak än' utan tal (B-018) - ingen
     //     pahittad person (live-zero-state.js:s regel, som inte nar Clean Flips markup). Det ar
     //     ocksa den bild referensvakten fotograferar: fabrikens widget, synligt nollad.
     //   - TOMD widget (falten borttagna av "Tom widget" eller live:start) doljs helt i overlay -
@@ -68,18 +68,23 @@
     // for Top Streak. Samma varden skrivs darfor har, i samma form som media.js:973.
     const overlay = iOverlay();
     const demo = overlay && arDemo(w);
-    const name = demo ? '' : VyraSafe.text(w.dataName, 'MAYA');
+    // VILAN I SÄNDNINGEN (slutgranskning B-018, 2026-10-20). Demonollningen ritade förut tomt namn och
+    // '×0 STREAK' - en nolla som såg ut som ett riktigt resultat. Nu står 'Ingen streak än' där namnet
+    // står (samma vila som Top Streak Flip) och talraden är dold tills den första gåvan skrivs:
+    // skrivProfilNod i gift-event-images.js tar bort data-streak-vila när den skriver talet.
+    const name = demo ? 'Ingen streak än' : VyraSafe.text(w.dataName, 'MAYA');
+    const vila = demo ? ' data-streak-vila style="display:none"' : '';
     const value = demo ? '0' : VyraSafe.text(w.dataValue, overlay ? '0' : '18');
     const width = Math.max(150, Number(w.width) || 220);
     const dold = w.hidden ? 'display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;' : '';
     // Top Streak · Design 1–3 (topstreak-designer.js) ritas med samma demonollning, döljning och rot-stil.
     const D = window.VyraStreakDesigner;
-    if (D && D.har(w)) return D.html(w, { name, value, profile, gift, dold, valt: selected === w.id });
+    if (D && D.har(w)) return D.html(w, { name, value, vila, profile, gift, dold, valt: selected === w.id });
     // ÄRV FÄRGSCHEMA (panelspecifikationen 4.2): Accentfärgen tar färgschemats accent med media.js bk(),
     // som de andra familjerna. Utan arv — eller där bk() saknas (proven som laddar filen ensam) — är det
     // widgetens egen accent som förut.
     const accent = typeof bk === 'function' ? bk(w, w.accent, 'highlight', '#ffc94d') : (w.accent || '#ffc94d');
-    return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${accent};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
+    return `<div class="widget vyra-streak approved-streak${w.hidden?' widget-hidden':''}${selected===w.id?' selected':''}" data-id="${w.id}" style="${dold}left:${w.x||0}px;top:${w.y||0}px;width:${width}px;opacity:${(w.opacity??100)/100};z-index:${w.layer||1};--streak:${accent};--flip-duration:${Math.max(4,Number(w.streakFlipSeconds)||8)}s;zoom:${w.widgetScale||1}"><div class="streak-flip"><div class="streak-gift-face"><img src="${gift}" alt=""></div><div class="streak-profile-face"><img src="${profile}" alt=""></div></div><div class="approved-streak-copy"><strong>${name}</strong><em${vila}>×<b>${value}</b> STREAK</em></div>${selected===w.id?'<span class="resize-handle">↘</span>':''}</div>`;
   }
 
   function approvedStreakProps(w) {
