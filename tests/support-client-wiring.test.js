@@ -77,9 +77,10 @@ test('support-client binder mot sin egen knapp, inte wishlists', () => {
 
 // ---- 4. felrapporteringen -----------------------------------------------------------------------
 
-test('felrapporteringen aktiveras nar filen laddas', () => {
-  // Den sitter pa modulnivan med flit: den ska fanga fel aven for en anvandare som aldrig oppnar
-  // supportvyn. Flyttas den in i show() rapporteras ingenting forran nagon klickar.
+test('felfangsten aktiveras nar filen laddas', () => {
+  // Den sitter pa modulnivan med flit: den ska fanga fel aven innan nagon oppnar supportvyn, sa
+  // att det finns nagot att bifoga nar anvandaren val skriver ett arende. Fangsten SKICKAR inget
+  // - se testerna nedan.
   for (const handelse of ['error', 'unhandledrejection']) {
     assert.match(KLIENT, new RegExp(`addEventListener\\('${handelse}'`),
       `${handelse} fangas inte upp`);
@@ -92,14 +93,116 @@ test('felrapporten gar till endpointen servern faktiskt har', () => {
     'klienten postar till en rutt servern inte har');
 });
 
-test('samma fel rapporteras inte om och om igen', () => {
-  // En trasig render kan kasta i varje bildruta. Utan avduplicering blir det tusentals rader i
-  // client_error_reports for ett enda fel.
-  assert.match(KLIENT, /sessionStorage/, 'ingen minnesbild av vad som redan rapporterats');
-  assert.match(KLIENT, /sent\.has\(key\)/, 'ingen kontroll mot det som redan skickats');
+test('samma fel samlas inte om och om igen', () => {
+  // En trasig render kan kasta i varje bildruta. Utan avduplicering och tak blir det tusentals
+  // rader i client_error_reports for ett enda fel nar de val bifogas.
+  assert.match(KLIENT, /seen\.has\(key\)/, 'ingen kontroll mot det som redan fangats');
+  assert.match(KLIENT, /MAX_CAPTURED=\d+/, 'inget tak for hur manga fel som samlas');
 });
 
-test('inget rapporteras for en utloggad besokare', () => {
+// ---- 4b. integriteten: inget skickas utan anvandarens val (fynd 2026-10-20) ----------------------
+//
+// Supportvyn lovar "Tekniska detaljer fran appen skickas bara om du kryssar i rutan". Fore
+// 2026-10-20 postade filen varje fangat fel till /api/client-errors direkt, for varje inloggad
+// anvandare, utan att nagon valt det - medan texten sa motsatsen. Testerna korer filen pa riktigt i
+// en minimal sandlada och raknar natanropen.
+
+const vm = require('vm');
+
+function sandlada() {
+  const lyssnare = {}, anrop = [], element = {};
+  const el = sel => element[sel] || (element[sel] = {
+    textContent: '', innerHTML: '', classList: { toggle() {} }, dataset: {},
+    querySelector: s => el(s), reset() {}, set onclick(f) { this._click = f; }, get onclick() { return this._click; },
+  });
+  const document = {
+    documentElement: {}, head: { append() {} }, body: { append() {} },
+    querySelector: el, querySelectorAll: () => [],
+  };
+  const window = {
+    addEventListener: (typ, f) => { (lyssnare[typ] = lyssnare[typ] || []).push(f); },
+    VyraAuth: {
+      currentUser: () => ({ id: 'u1', email: 'a@exempel.se' }),
+      api: async (url, opt = {}) => {
+        anrop.push({ url, method: opt.method || 'GET', body: opt.body });
+        if (url === '/api/support/tickets' && opt.method === 'POST') return { ok: true, ticket: { id: 't-1' } };
+        if (url === '/api/support/tickets') return { ok: true, tickets: [] };
+        return { ok: true };
+      },
+    },
+    toast() {},
+  };
+  const ctx = {
+    window, document, sessionStorage: { getItem: () => null, setItem() {} },
+    MutationObserver: class { observe() {} }, FormData: class {}, console,
+  };
+  vm.runInNewContext(KLIENT, ctx);
+  const kasta = (meddelande) => (lyssnare.error || []).forEach(f => f({
+    message: meddelande, filename: 'https://vyra.example/studio.js', error: { stack: 'Error: ' + meddelande },
+  }));
+  return { ctx, window, element, lyssnare, anrop, kasta, el };
+}
+
+const felrapporter = anrop => anrop.filter(a => a.url === '/api/client-errors');
+
+test('ett fangat fel skickas INTE automatiskt till servern', async () => {
+  const s = sandlada();
+  s.kasta('trasig render');
+  (s.lyssnare.unhandledrejection || []).forEach(f => f({ reason: new Error('avvisat lofte') }));
+  await new Promise(r => setTimeout(r, 0));
+  assert.deepEqual(felrapporter(s.anrop), [],
+    'klientfel postades till /api/client-errors utan att anvandaren valt att bifoga tekniska detaljer');
+});
+
+function skickaArende(s, faltdata) {
+  s.ctx.FormData = class { constructor() { return Object.entries(faltdata); } };
+  s.el('[data-extra="support"]').onclick();
+  const form = s.el('.support-form form');
+  return form.onsubmit({ preventDefault() {} });
+}
+
+test('ett arende utan ikryssad ruta skickar inga tekniska detaljer', async () => {
+  const s = sandlada();
+  s.kasta('trasig render');
+  await skickaArende(s, { category: 'technical', subject: 'Det krasar', message: 'Beskrivning av felet' });
+  const arende = s.anrop.find(a => a.url === '/api/support/tickets' && a.method === 'POST');
+  assert.ok(arende, 'arendet skickades inte');
+  assert.equal(JSON.parse(arende.body).attachTech, undefined, 'kryssrutans falt ska inte till arendet');
+  assert.deepEqual(felrapporter(s.anrop), [], 'tekniska detaljer skickades utan anvandarens val');
+});
+
+test('ett arende med ikryssad ruta bifogar de fangade felen, kopplade till arendet', async () => {
+  const s = sandlada();
+  s.kasta('trasig render');
+  s.kasta('trasig render');
+  s.kasta('annat fel');
+  await skickaArende(s, { category: 'technical', subject: 'Det krasar', message: 'Beskrivning av felet', attachTech: 'on' });
+  const skickat = felrapporter(s.anrop).map(a => JSON.parse(a.body));
+  assert.deepEqual(skickat.map(r => r.message), ['trasig render', 'annat fel'], 'fel ska avdupliceras');
+  for (const r of skickat) {
+    assert.match(r.context, /\|arende:t-1$/, 'felet gick inte att koppla till arendet');
+    assert.equal(r.owner, undefined, 'den interna kontomarkeringen ska inte skickas');
+    assert.deepEqual(Object.keys(r).sort(), ['context', 'message', 'source', 'stack'],
+      'bara de falt servern redan tar emot');
+  }
+});
+
+test('fel fangade under ett annat konto bifogas aldrig', async () => {
+  const s = sandlada();
+  s.kasta('fel hos konto A');
+  s.window.VyraAuth.currentUser = () => ({ id: 'u2' });
+  await skickaArende(s, { category: 'technical', subject: 'Det krasar', message: 'Beskrivning av felet', attachTech: 'on' });
+  assert.deepEqual(felrapporter(s.anrop), [], 'konto A:s fel skickades i konto B:s arende');
+});
+
+test('supportvyn beskriver rutan, och den ar av som standard', () => {
+  assert.match(KLIENT, /<input type="checkbox" name="attachTech">/, 'ingen kryssruta, eller ikryssad som standard');
+  assert.match(KLIENT, /Bifoga tekniska detaljer/);
+  assert.match(KLIENT, /skickas bara om du kryssar i rutan/);
+  assert.doesNotMatch(KLIENT, /bifogas inte utan ditt val/, 'den gamla texten lovade nagot koden inte holl');
+});
+
+test('inget skickas for en utloggad besokare', () => {
   assert.match(KLIENT, /VyraAuth\?\.currentUser\?\.\(\)/,
     'en utloggad besokare skulle posta fel till en endpoint som kraver session');
 });

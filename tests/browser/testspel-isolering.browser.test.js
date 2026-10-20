@@ -345,7 +345,7 @@ for (const design of ['card', 'royal']) {
       assert.match(k.klass, /\blast-x-active\b/, 'fasmaskinen tände klonen');
       assert.equal(k.rubrik, 'SENASTE GÅVOGIVARE');
       assert.equal(k.namn, 'Alex', 'exempelnamnet för en gåva');
-      assert.equal(k.meddelande, 'SENT CROWN ×5', 'exempelgåvan');
+      assert.equal(k.meddelande, 'SKICKADE CROWN ×5', 'exempelgåvan');
       assert.match(k.profil || '', /test-profile\.svg/);
       const dold = await page.evaluate(() => getComputedStyle(document.querySelector('.canvas [data-id="prov-a"]:not([data-testspel-klon])')).visibility);
       assert.equal(dold, 'hidden', 'den riktiga noden är dold medan klonen spelar');
@@ -378,7 +378,7 @@ for (const design of ['card', 'royal']) {
       const k2 = await lastxKlon(page);
       assert.equal(k2.rubrik, 'SENASTE LIKER');
       assert.equal(k2.namn, 'Mia');
-      assert.equal(k2.meddelande, 'SENT 50 LIKES');
+      assert.equal(k2.meddelande, 'SKICKADE 50 LIKES');
 
       // render() mitt i testet tar bort klonen.
       await page.evaluate(() => render());

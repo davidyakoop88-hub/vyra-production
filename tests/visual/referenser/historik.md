@@ -486,3 +486,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Playground-sandlåda (ctx i renderaren)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 162
+
+## 2026-10-20 — 162 referenser skrivna
+
+- **Motiv:** Last-X standardtexter på svenska
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 162

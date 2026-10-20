@@ -1,6 +1,17 @@
 /* playground-widgets.js - Top Gifter Podium, Top Streak Flip och Goal Pro (godkända i widget-playgrounden 2026-10).
    Portad kod + adapter mot VYRA:s wh/props/bind/routeLiveBattleEvent (samma recept som gift-bubbles.js).
-   Genereras av playgroundens vyra-port/build_port.py - redigera i playgrounden, inte här. */
+   REDIGERAS HÄR sedan 2026-10-19 (PR 11, #662). Filen genererades förut av playgroundens
+   vyra-port/build_port.py, som inte finns i det här repot - men den är inte längre en ren port och får
+   INTE skrivas över med en ny körning av porten. Det som skiljer den från playgroundens port:
+     - sandlådan: sandlada() och window.VyraPlayground.sandlada, plus ctx-parametern (egen S och egen
+       STATE) som ▶ Testa widget spelar sin klon i, så att sändningens session aldrig rörs;
+     - testraden (Skicka gåva / Combo ×10 / Likes ×50 / Följ / Dela / Kommentar / Nollställ - knapparna
+       med pgtest-attributet)
+       är borttagen ur panelen - den körde pgTest() → feed() i sändningens session S.
+   En ny port skulle ta bort sandlådan och föra tillbaka testraden. Ändringar från playgrounden förs in
+   för hand. Prov som fångar en återgång: tests/playground-huvud.test.js (källvakt: sandlada finns,
+   panelen saknar testradens attribut), tests/browser/testspel-isolering.browser.test.js (pg-delen) och
+   tests/browser/pg-livevag.browser.test.js. */
 (function(){
 'use strict';
 const PGD=window.VYRA_PG;if(!PGD||typeof wh!=='function')return;
