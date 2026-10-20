@@ -81,6 +81,8 @@
         "tests/browser/storlek-matning.browser.test.js",
         "tests/browser/framsida-logo.browser.test.js",
         "tests/browser/login-slapp-in.browser.test.js",
+        "tests/framsida-konto-granskning.test.js",
+        "tests/browser/framsida-konto-yta.browser.test.js",
         "tests/oversikt-en-sanning.test.js",
         "tests/browser/verktygsrad-overlapp.browser.test.js",
         "tests/browser/extravy-sen-render.browser.test.js",
