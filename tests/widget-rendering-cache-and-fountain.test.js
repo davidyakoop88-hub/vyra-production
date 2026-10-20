@@ -203,7 +203,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261020-24/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261020-23/);
+  // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
+  assert.match(studio, /gift-event-images\.js\?v=20261020-26/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -442,8 +443,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
-  // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan.
-  assert.match(media, /action-event-advanced\.js\?v=20261014-nya-gavor/, 'action-event-advanced.js cachebustades inte for nya gavor');
+  // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
+  // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog).
+  assert.match(media, /action-event-advanced\.js\?v=20261020-26/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }

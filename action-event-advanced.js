@@ -111,6 +111,8 @@
     const alla=[...lardda,...rummet,...moln,...manifest].map(g=>nyaNamn.has(g.name.toLowerCase())?{...g,ny:true}:g);
     return [...alla.filter(g=>g.ny),...alla.filter(g=>!g.ny)];
   }
+  // Samma katalog läses av Gift Campaigns gåvoval (vyra-kampanj-gavoval.js): en lista, ett ställe.
+  window.VyraGavokatalog={lista:gavolistan};
   function openTriggerGiftPicker(input){
     const gammal=document.querySelector('.gift-picker-modal');
     if(gammal)gammal.remove();

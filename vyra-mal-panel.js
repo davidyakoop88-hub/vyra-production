@@ -24,9 +24,8 @@
   //   * Ljus i målen verkar (goal-motion.css räknade med '62%' i en skuggradie, som var ogiltig),
   //   * Antal (talets färg) i Heart Me verkar (studio.css:169 satte color:#fff på talet),
   //   * +1 Test och Testa 100 % (Social Goal) är ersatta av ▶ Testa widget. Kampanjens sökvägsfält för
-  //     gåvobilden och gåvoväljaren är borta (David 2026-10-20: ingen widget väljer gåvobild i panelen):
-  //     gåvan anges med sitt namn, och bilden kommer från sändningen när en sådan gåva skickas (platsens
-  //     standardbild innan dess). En redan sparad bild ligger kvar i state,
+  //     gåvobilden är borta; gåvan väljs i flikraden 1, 2, 3 … (vyra-kampanj-gavoval.js) ur Action & Events
+  //     gåvokatalog — bild, namn och mynt — och namnet och målet står under fliken,
   //   * Nu (kampanjens räknare per gåva) står inte i panelen: den räknas upp live (gift-event-images.js)
   //     och en LIVE-rad säger det. Fältet ligger kvar i state,
   //   * BAKGRUND visas inte: alla tre är genomskinliga motiv.
@@ -164,16 +163,15 @@
   const antalGavor = w => Math.min(6, Math.max(1, +(w && w.giftCount) || 4));
   const ljudPa = w => !!(w && w.campaignSound);
 
+  // Gåvorna väljs i en flikrad, en flik per gåva (vyra-kampanj-gavoval.js): Gåva (bild, namn och mynt ur
+  // Action & Events gåvokatalog), Namn och Mål för den valda fliken. Elementet byggs i en dold grupp av
+  // den filens props-omslag och flyttas hit med legacyId. Det ersätter raderna "Gåva N: namn" och
+  // "Gåva N: mål" — fälten (giftName<i>, giftTarget<i>, giftImage<i>) är desamma.
+  //
+  // UTTALAT UNDANTAG från "ingen panel väljer gåvobild" (tests/utan-bildvaljare.test.js): gåvan är
+  // kampanjens innehåll — vilken gåva som räknas — inte en reservbild innan första gåvan.
   function gavoKontroller() {
-    const ut = [];
-    for (let i = 0; i < 6; i++) {
-      const om = w => antalGavor(w) > i;
-      ut.push(
-        { sektion: 2, typ: 'text', falt: 'giftName' + i, etikett: `Gåva ${i + 1}: namn`, legacyId: '#giftName' + i, om },
-        { sektion: 2, typ: 'tal', falt: 'giftTarget' + i, etikett: `Gåva ${i + 1}: mål`, legacyId: '#giftTarget' + i, om },
-      );
-    }
-    return ut;
+    return [{ sektion: 2, typ: 'text', falt: 'gcGavoflikar', legacyId: '#gcGavoflikar' }];
   }
 
   function kampanj(tema, orient) {

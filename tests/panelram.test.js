@@ -309,7 +309,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const ranking = plats('vyra-ranking-panel.js', '20261020-23');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
-  const mal = plats('vyra-mal-panel.js', '20261020-23');  // 20261020-14: cirkelns rubrik är en rad, inte ett fält (B-005)
+  const mal = plats('vyra-mal-panel.js', '20261020-26');  // 20261020-26: Gift Campaigns gåvor i en flikrad (vyra-kampanj-gavoval.js)
+  const gavoval = plats('vyra-kampanj-gavoval.js', '20261020-26');
+  assert.ok(gavoval > mal && gavoval < ordning, 'Gift Campaigns gåvoval laddas efter målens poster, före panelordningen');
   assert.ok(mal > reg && mal > testspel && mal < ordning, 'målens poster laddas efter registret och testmotorn, före panelordningen');
   // Top Streaks poster (vyra-streak-panel.js, PR 10) på samma sätt.
   const streak = plats('vyra-streak-panel.js', '20261020-23');

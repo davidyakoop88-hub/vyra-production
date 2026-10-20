@@ -37,6 +37,7 @@
     "alert-livevag.browser.test.js": 75,
     "mvp-livevag.browser.test.js": 20,
     "ranking-livevag.browser.test.js": 27,
+    "kampanj-gavoval.browser.test.js": 15,
     "mal-livevag.browser.test.js": 45,
     "streak-livevag.browser.test.js": 36,
     "pg-livevag.browser.test.js": 46,

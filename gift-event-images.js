@@ -546,7 +546,9 @@
         // An unnamed incoming gift keys to '' and would otherwise match every empty slot at once.
         var incoming = key(giftName);
         for (var index = 0; incoming && index < slots.length; index += 1) {
-          if (key(slots[index].name) !== incoming) continue;
+          // Gåvan som valts i panelens gåvoval (vyra-kampanj-gavoval.js) räknas även när visningsnamnet
+          // ändrats efteråt. Utan något val är det namnet som förut.
+          if (key(widget['giftMatch' + index] || slots[index].name) !== incoming) continue;
           var amount = Number(detail.count == null ? 1 : detail.count);
           if (!Number.isFinite(amount) || amount <= 0) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];

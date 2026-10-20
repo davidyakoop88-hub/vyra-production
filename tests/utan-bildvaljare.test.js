@@ -14,6 +14,12 @@
 // Kvar ska mediaväljaren för widgetens EGET innehåll vara: Egen bild och Egen video, och video per
 // nivå i Fan Level Up (byggs i vyra-alert-panel.js, inte som registerkontroll).
 //
+// UTTALAT UNDANTAG: GIFT CAMPAIGNS GÅVOVAL. David samma kväll: "nej vi ska gåva och namn för den" och
+// "tycka på nr 1 väljer man gift sen kommer nr två". Kampanjens gåvor ÄR dess innehåll — vilka gåvor
+// som räknas — inte en reservbild innan första gåvan. Den väljs i en flikrad (vyra-kampanj-gavoval.js)
+// ur Action & Events gåvokatalog och står i registret som EN kontroll, 'gcGavoflikar' — aldrig som en
+// mediaväljare och aldrig med en sökväg.
+//
 // Renderarnas sida: en egen bild som redan är sparad (data:/blob:, en uppladdning i molnets
 // mediabibliotek) ignoreras av vyraReservbild i media.js, så att den automatiska reserven ritas för
 // alla. Livedata och paketerade assets passerar orörda.
@@ -124,4 +130,24 @@ test('Top Gift med en sparad egen profil- och gåvobild ritar den automatiska re
   // Livedata (en TikTok-bild) ritas som förut.
   const live = 'https://p16-sign-va.tiktokcdn.com/avt/abc.jpeg';
   assert.ok(h.window.wh(Object.assign({}, w, { profileImage: live })).includes(live));
+});
+
+test('undantaget: Gift Campaign väljer sina gåvor i flikraden, ur Action & Events gåvokatalog', () => {
+  const R = register();
+  const kampanj = R.poster().filter(p => p.typ === 'templateGiftCampaign');
+  assert.equal(kampanj.length, 6, 'tre designer × två orienteringar');
+  for (const p of kampanj) {
+    const k = p.kontroller.filter(x => x.falt === 'gcGavoflikar');
+    assert.equal(k.length, 1, 'en flikrad per post');
+    assert.equal(k[0].sektion, 2, 'i Innehåll');
+    assert.equal(k[0].legacyId, '#gcGavoflikar');
+    assert.ok(!p.kontroller.some(x => x.typ === 'media'), 'ingen mediaväljare');
+    assert.ok(!p.kontroller.some(x => /^giftName\d|^giftTarget\d|^giftImage\d/.test(String(x.falt || ''))),
+      'de gamla raderna "Gåva N: namn"/"Gåva N: mål" ersätts av flikarna');
+  }
+  const val = las('vyra-kampanj-gavoval.js');
+  assert.match(val, /window\.VyraGavokatalog/, 'listan läser Action & Events katalog');
+  assert.match(las('action-event-advanced.js'), /window\.VyraGavokatalog=\{lista:gavolistan\}/, 'samma gavolistan() som eventdialogens gåvoväljare');
+  // Fälten är renderarens: namn och bild skrivs dit renderaren läser (media.js campaignItems).
+  for (const f of ["'giftName' + i", "'giftImage' + i", "'giftMatch' + i", "'giftTarget' + i"]) assert.ok(val.includes(f), f);
 });

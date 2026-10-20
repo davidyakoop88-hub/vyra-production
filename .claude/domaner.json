@@ -202,6 +202,7 @@
         "vyra-mvp-panel.js",
         "vyra-ranking-panel.js",
         "vyra-mal-panel.js",
+        "vyra-kampanj-gavoval.js",
         "vyra-streak-panel.js",
         "vyra-playground-panel.js",
         "vyra-fyrverkeri-panel.js",
