@@ -54,3 +54,7 @@
 .tom-handling:hover{border-color:#7a3f96;background:#251230;color:#fff}
 /* C-030: "Saknar du konto? Skapa ett" var 18 px hog. */
 .auth-gate #authSwitch{min-height:40px;padding:8px}
+
+/* Kontrollgranskning C, andra omgången (N-C-012): den tomma felraden (min-height 16 px) gav en lucka
+   på 42 px mellan lösenordsfältet och "Glömt lösenord?". Den tar plats först när det finns ett fel. */
+.auth-gate #authError:empty{display:none}

@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
   <link rel="stylesheet" href="design-system.css?v=20261020-1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
-  <link rel="stylesheet" href="auth-client.css?v=20261020-1">
-  <link rel="stylesheet" href="auth-security.css?v=20261020-1">
+  <link rel="stylesheet" href="auth-client.css?v=20261020-19">
+  <link rel="stylesheet" href="auth-security.css?v=20261020-19">
   <link rel="stylesheet" href="cloud-sync.css?v=20261020-1">
   <link rel="stylesheet" href="billing-client.css?v=20261020-6">
   <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
@@ -65,7 +65,7 @@
     <header>
       <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title">God kväll, Streamer</h1></div>
       <div class="head-actions">
-        <button id="openBrandKit" type="button" title="Sätt Highlight/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det">🎨 Färgschema</button>
+        <button id="openBrandKit" type="button" title="Sätt Accentfärg/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det">🎨 Färgschema</button>
         <button class="connect connection"><i></i><span>Anslut TikTok</span></button>
         <button id="openOverlay" hidden aria-hidden="true"></button>
       </div>
@@ -103,9 +103,9 @@
     <button class="bx" id="brandKitClose" type="button" aria-label="Stäng"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <i class="tiktok">🎨</i>
     <h2>Färgschema</h2>
-    <p>Sätt Bakgrund, Highlight, Text, Sekundär text och Typsnitt en gång. Widgets med "Ärv färgschema" ikryssat använder de här värdena istället för sina egna.</p>
+    <p>Sätt Bakgrund, Accentfärg, Text, Sekundär text och Typsnitt en gång. Widgets med "Ärv färgschema" ikryssat använder de här värdena istället för sina egna.</p>
     <label>Bakgrund<input id="bkBackground" type="color"></label>
-    <label>Highlight<input id="bkHighlight" type="color"></label>
+    <label>Accentfärg<input id="bkHighlight" type="color"></label>
     <label>Text<input id="bkText" type="color"></label>
     <label>Sekundär text<input id="bkSecondaryText" type="color"></label>
     <label>Typsnitt<select id="bkFontFamily">
@@ -121,19 +121,19 @@
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
-  <script src="auth-client.js?v=20261020-2"></script>
+  <script src="auth-client.js?v=20261020-19"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
        verifieringsmailet. Bada monterar via MutationObserver / auth-handelser. -->
   <script src="vyra-losenordsstyrka.js?v=1"></script>
-  <script src="auth-security.js?v=20261020-1"></script>
+  <script src="auth-security.js?v=20261020-19"></script>
   <!-- Trial-onboarding. Monterar pa vyra-entitlement-ok, som entitlement-gate.js redan
        avfyrar och ingen lyssnade pa. Maste alltsa ligga FORE den. -->
   <script src="vyra-trial-onboarding.js?v=1"></script>
   <script src="entitlement-gate.js?v=20260728-1"></script>
   <script src="desktop-profile.js?v=20260724-1"></script>
   <script src="studio.js?v=20261010-1"></script>
-  <script src="layout-format.js?v=20260726-freeze-fix"></script>
+  <script src="layout-format.js?v=20261020-19"></script>
   <script src="stage-background.js?v=2"></script>
   <!-- Angra/gor om: wrappar render for baslinjesynk och monterar sina knappar efter
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
@@ -163,7 +163,7 @@
   <script src="toplike-design.js?v=20260924-pension"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260916-facit"></script>
-  <script src="media.js?v=20261020-20"></script>
+  <script src="media.js?v=20261020-21"></script>
   <link rel="stylesheet" href="topcoins-v2.css?v=20261020-12">
   <script src="topcoins-v2.js?v=20261020-12"></script>
   <!-- Top Points fyra designer. EFTER media.js: modulen lindar wh/props/bind som media.js definierar,
@@ -242,7 +242,7 @@
   <script src="overlay-access.js?v=20261018-1"></script>
   <!-- Sist: exporterar/importerar hela Studio-state som JSON mellan datorer. Ritar inget i
        overlay-läge, och rör ingen annan fil. -->
-  <script src="vyra-state-sync.js?v=1"></script>
+  <script src="vyra-state-sync.js?v=20261020-19"></script>
   <link rel="stylesheet" href="approved-rankings.css?v=20260920-3">
   <link rel="stylesheet" href="topstreak-designer.css?v=20261017-1">
   <script src="topstreak-designer.js?v=20261020-15"></script>
