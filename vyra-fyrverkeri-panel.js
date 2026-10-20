@@ -27,8 +27,8 @@
   //     Textfärg och Namneffekt för namnet i duken — med frö mätt med verkan,
   //   * BAKGRUND visas inte: effekterna är transparenta, Ta bort bakgrund gjorde ingenting och Färg la en
   //     fylld ruta över effekten,
-  //   * Höjd och Lås proportioner visas inte (höjden följer bredden), och Lager inte (wh() sätter inget
-  //     z-index för de tre). Bredd är skrivskyddad: storleken ändras med Storlek och handtagen,
+  //   * Höjd och Lås proportioner visas inte (höjden följer bredden). Lager visas: vyra-lager.js skriver
+  //     z-index = lagret på lådan (PR 16). Bredd är skrivskyddad: storleken ändras med Storlek och handtagen,
   //   * Position (Överst/Mitten/Nederst) i Gift Fireworks är en dubblett av Y och är borta,
   //   * reservbildens textfält i Gift Bubbles är en mediaväljare (Egen reservgåva), utan sökväg.
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
@@ -44,7 +44,7 @@
   const temanamn = tema => {
     try { const t = window.VyraWidgets.variants('giftfireworks.theme')[tema]; return t ? t.label : ''; } catch (_) { return ''; }
   };
-  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] };
+  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] };
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const anonyma = legacyId => ({ sektion: 2, typ: 'kryss', falt: legacyId.slice(1), etikett: 'Exkludera anonyma tittare', legacyId });

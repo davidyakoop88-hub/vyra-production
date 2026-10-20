@@ -18,8 +18,7 @@
   //
   // BARA KONTROLLER SOM GÖR NÅGOT (granskningen, scratchpad panel-fynd.json, och
   // tests/browser/panel-krav.browser.test.js):
-  //   * Lager visas inte: ingen av renderarna sätter z-index (två överlappande widgetar byter varken
-  //     ordning eller z-index), spec 1.5,
+  //   * Lager verkar: vyra-lager.js skriver z-index = lagret på den yttre lådan (PR 16),
   //   * Nivåtext i Gifter Level Up syns aldrig (den skrivs till .gifter-level-badge span, som ingen
   //     modell visar) och är borta. I Fan Level Up visas den i nivåpillen — men inte i Welcome Ribbon,
   //     vars banderoll är ett fast "FAN LEVEL 12" (referensen, tests/browser/fan-level-referens),
@@ -104,7 +103,7 @@
       { sektion: 2, typ: 'kryss', falt: 'autoTrigger', etikett: 'Visa automatiskt vid en nivåhöjning', legacyId: '#fanAutoTrigger' },
       { sektion: 2, typ: 'tal', falt: 'minLevel', etikett: 'Minsta nivå', legacyId: '#fanMinLevel' },
       // 3 · Storlek och placering
-      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       ...(fastBredd('templateFanLevel', modell) ? [fastBreddRad] : []),
       // 4 · Text
       typsnitt(true),
@@ -153,7 +152,7 @@
       narDenVisas,
       { sektion: 2, typ: 'kryss', falt: 'autoTrigger', etikett: 'Visa automatiskt vid en nivåhöjning', legacyId: '#gifterAutoTrigger' },
       { sektion: 2, typ: 'tal', falt: 'minLevel', etikett: 'Minsta nivå', legacyId: '#gifterMinLevel' },
-      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       ...(fastBredd('templateGifterLevel', modell) ? [fastBreddRad] : []),
       typsnitt(true),
       { sektion: 4, typ: 'std-text', utan: ['vtFont'] },
@@ -199,7 +198,7 @@
       { sektion: 2, typ: 'text', falt: 'followLabel', etikett: 'Rubrik', legacyId: '#followLabel' },
       { sektion: 2, typ: 'text', falt: 'followMessage', etikett: 'Text under', legacyId: '#followMessage' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från TikTok: namn och profilbild för den nya följaren.' },
-      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager', 'storlek'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'storlek'] },
       // SKALA flyttas HEL, inte bara reglaget: gift-fireworks.js binder #followScale med en referens
       // till sin egen grupp (size.querySelector('b')), och ett utflyttat reglage kastade vid första
       // dragningen. Gruppens rubrik göms och etiketten heter Storlek (svenska() nedan).
@@ -237,7 +236,7 @@
         { sektion: 2, typ: 'text', falt: 'guardianCustomText', etikett: 'Egen text', legacyId: '#geCustomText' },
         { sektion: 2, typ: 'kryss', falt: 'guardianShowUsername', etikett: 'Visa användarnamnet', legacyId: '#geShowUsername' },
         { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från TikTok: Guardians namn och profilbild.' },
-        { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] },
+        { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
         typsnitt(false),
         { sektion: 4, typ: 'std-text', utan: guld ? ['vtFont'] : ['vtFont', ...SKUGGA] },
         { sektion: 5, typ: 'val', falt: 'guardianModel', etikett: 'Modell', legacyId: '#geModel' },

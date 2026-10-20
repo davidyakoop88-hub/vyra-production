@@ -102,14 +102,17 @@
   root.addEventListener('vyra-live-session', () => { if (typeof render === 'function') render(); });
   const DOLJ = 'display:none!important;';
 
-  function fanLevel50Html(w) {
-    const list = members(w);
+  // `lista` ges bara av ▶ Testa widget (provHtml nedan): exempeldeltagarna pa klonen, fran forsta kortet.
+  function fanLevel50Html(w, lista) {
+    const list = lista || members(w);
     const dold = !list.length;
     const mode = w.fanl50Mode === 'band' ? 'band' : 'slideshow';
     let inner;
     if (mode === 'band') {
       const cards = list.map((m, i) => cardHtml(w, m, i + 1)).join('');
       inner = `<div class="fl50-track">${cards}${cards}</div>`;
+    } else if (lista) {
+      inner = list.length ? cardHtml(w, list[0], 1) : '';
     } else {
       // Klampen skrivs tillbaka: krymper listan (remove/clear) visade ritningen kort 0 men swap()
       // raknade vidare fran det gamla indexet och visade samma kort ett varv till.
@@ -135,23 +138,26 @@
     const interval = num(w.fanl50Interval, 6, 2, 60);
     const manual = manualOf(w);
     const manualLines = manual.map(m => m.avatar ? `${m.name}|${m.avatar}` : String(m.name || '')).join('\n');
+    // En rad per deltagare: bild, namn (går att skriva om) och Ta bort. I den nya panelen
+    // (vyra-fl50-panel.js) blir bilden en mediaväljare; namnet och Ta bort binds här nedan.
     const chipsHtml = manual.length
-      ? manual.map((m, i) => `<span class="fl50-chip"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""><b>${safe.text(m.name, 'FAN')}</b><button type="button" class="fl50-chip-x vw-ik vw-ik--radera vw-ik--trang" data-fl50-del="${i}" title="Ta bort" aria-label="Ta bort ${safe.text(m.name, 'FAN')}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/></svg></button></span>`).join('')
-      : '<small class="fl50-chips-tom">Inga taggade än — lägg till en användare ovan.</small>';
+      ? manual.map((m, i) => `<div class="fl50-chip fl50-rad" data-fl50-rad="${i}"><span class="fl50-rad-bild" data-fl50-bild="${i}"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></span><input class="fl50-rad-namn" data-fl50-namn="${i}" id="fl50Namn${i}" value="${safe.text(m.name, 'FAN')}" aria-label="Namn på deltagare ${i + 1}" spellcheck="false"><button type="button" class="fl50-chip-x vw-ik vw-ik--radera vw-ik--trang" id="fl50Del${i}" data-fl50-del="${i}" title="Ta bort" aria-label="Ta bort ${safe.text(m.name, 'FAN')}"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/></svg></button></div>`).join('')
+      : '<small class="fl50-chips-tom">Inga deltagare i listan än. Skriv ett namn ovan.</small>';
     const opt = (val, cur, label) => `<option value="${val}"${cur === val ? ' selected' : ''}>${label}</option>`;
     return `<h3>FAN LEVEL 50</h3><div class="template-badge">MILSTOLPE · LIVE + MANUELL</div>
       <div hidden><input id="pt" value="${safe.text(w.title, 'Fan Level 50')}"><input id="pv" value=""></div>
       <div class="property-group"><h4>VISNING</h4>
         <label>Design<select id="fl50Design">${opt(ALLA, w.fanl50Design, 'Alla designer (växlar)')}${Object.entries(DESIGNS).map(([k, label]) => opt(k, w.fanl50Design, label)).join('')}</select></label>
         <label>Läge<select id="fl50Mode">${opt('slideshow', w.fanl50Mode || 'slideshow', 'Slideshow')}${opt('band', w.fanl50Mode, 'Rullande band')}</select></label>
-        <label class="range-label">Bytestid <b>${interval} sek</b><input id="fl50Interval" type="range" min="2" max="20" value="${interval}"></label>
-        <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Auto + manuell')}${opt('auto', w.fanl50Source, 'Bara auto (live)')}${opt('manual', w.fanl50Source, 'Bara manuell')}</select></label>
+        <label class="range-label">Bytestid <b>${interval} s</b><input id="fl50Interval" type="range" min="2" max="20" value="${interval}"></label>
+        <label>Källa<select id="fl50Source">${opt('both', w.fanl50Source || 'both', 'Live och deltagarlistan')}${opt('auto', w.fanl50Source, 'Bara live')}${opt('manual', w.fanl50Source, 'Bara deltagarlistan')}</select></label>
         <label>Lagnamn (#)<input id="fl50Team" value="${safe.text(w.fanl50Team, 'FANCLUB')}"></label>
       </div>
       <div class="property-group"><h4>LÄGG TILL ANVÄNDARE <span class="fl50-count">${manual.length}</span></h4>
-        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2, @namn3 …" spellcheck="false"><button id="fl50AddBtn" type="button">Hämta</button></div>
-        <small id="fl50AddStatus">Skriv ett eller flera @användarnamn (separera med komma eller mellanslag). Namn + profilbild hämtas — tagga hur många du vill.</small>
-        <div id="fl50Chips" class="fl50-chips">${chipsHtml}</div></div>
+        <div class="fl50-deltagare" id="fl50Deltagare">
+        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2, @namn3 …" spellcheck="false" aria-label="Användarnamn att lägga till"><button id="fl50AddBtn" type="button">Hämta från TikTok</button><button id="fl50AddNamn" type="button">Lägg till namn</button></div>
+        <small id="fl50AddStatus">Skriv ett eller flera @användarnamn (separera med komma eller mellanslag). Hämta från TikTok hämtar namn och profilbild; Lägg till namn lägger till namnen som de är.</small>
+        <div id="fl50Chips" class="fl50-chips">${chipsHtml}</div></div></div>
       <details class="property-group"><summary class="fl50-summary">Redigera listan som text</summary>
         <small>En per rad: <code>namn</code> eller <code>namn|profilbild-url</code></small>
         <textarea id="fl50Manual" rows="4" spellcheck="false">${safe.text(manualLines, '')}</textarea></details>
@@ -174,7 +180,10 @@
     on('#fl50Design', el => { el.onchange = e => { w.fanl50Design = e.target.value; save(); render(); }; });
     on('#fl50Mode', el => { el.value = w.fanl50Mode || 'slideshow'; el.onchange = e => { w.fanl50Mode = e.target.value; save(); render(); }; });
     on('#fl50Source', el => { el.value = w.fanl50Source || 'both'; el.onchange = e => { w.fanl50Source = e.target.value; save(); render(); }; });
-    on('#fl50Interval', el => { el.oninput = e => { w.fanl50Interval = +e.target.value; const b = el.parentElement.querySelector('b'); if (b) b.textContent = (+e.target.value) + ' sek'; }; el.onchange = e => { w.fanl50Interval = +e.target.value; save(); }; });
+    // Bytestiden styr också bandets fart (--fl50-speed i rotens stil, fan-level-50.css): skriv den på noden
+    // medan reglaget dras och rita om vid change — förut syntes en ny fart i bandet först vid nästa omritning.
+    const ritaOm = () => { if (typeof vyraRenderKeepingPanel === 'function') vyraRenderKeepingPanel(); else render(); };
+    on('#fl50Interval', el => { el.oninput = e => { w.fanl50Interval = +e.target.value; const b = el.parentElement.querySelector('b'); if (b) b.textContent = (+e.target.value) + ' s'; const nod = document.querySelector(`.canvas [data-id="${cssEsc(w.id)}"]`); if (nod) nod.style.setProperty('--fl50-speed', num(w.fanl50Interval, 6, 2, 60) + 's'); }; el.onchange = e => { w.fanl50Interval = +e.target.value; save(); ritaOm(); }; });
     on('#fl50Team', el => { el.onchange = e => { w.fanl50Team = e.target.value; save(); render(); }; });
     on('#fl50Manual', el => {
       el.onchange = e => {
@@ -205,7 +214,7 @@
             const d = await r.json().catch(() => ({}));
             if (!r.ok || !d || !d.ok) throw new Error((d && d.error) || 'kunde inte hämta');
             if (!lista.some(m => String(m && m.name || '').toLowerCase() === String(d.nickname).toLowerCase())) {
-              lista.push({ name: d.nickname, avatar: d.avatar || '' }); lagt++;
+              lista.push({ name: d.nickname, avatar: d.avatar || '', hamtad: true }); lagt++;
             }
           } catch (_) { fel.push('@' + n); }
         }
@@ -221,6 +230,34 @@
         const i = Number(x.getAttribute('data-fl50-del'));
         const lista = Array.isArray(w.fanl50Manual) ? w.fanl50Manual.slice() : [];
         if (i >= 0 && i < lista.length) { lista.splice(i, 1); w.fanl50Manual = lista; save(); render(); }
+      };
+    });
+    // Lägg till namn: samma inmatning som Hämta, men utan servern — namnen läggs till som de är (det
+    // textrutan "namn|profilbild-url" gjorde förut). Bilden väljs sedan per rad.
+    on('#fl50AddNamn', btn => {
+      btn.onclick = () => {
+        const inp = document.querySelector('#fl50AddUser'), stat = document.querySelector('#fl50AddStatus');
+        const lista = manualOf(w).slice();
+        const finns = new Set(lista.map(m => String(m && m.name || '').toLowerCase()));
+        let lagt = 0;
+        String(inp && inp.value || '').split(/[\s,]+/).forEach(bit => {
+          const n = bit.trim().replace(/^@/, ''); const k = n.toLowerCase();
+          if (n && !finns.has(k)) { finns.add(k); lista.push({ name: n, avatar: '' }); lagt++; }
+        });
+        if (!lagt) { if (stat) stat.textContent = 'Skriv minst ett namn som inte redan finns i listan.'; return; }
+        w.fanl50Manual = lista; save(); render();
+      };
+    });
+    // Namnet på en rad går att skriva om. Ett tomt namn ångras (raden tas bort med Ta bort).
+    document.querySelectorAll('[data-fl50-namn]').forEach(inp => {
+      inp.onchange = () => {
+        const i = Number(inp.getAttribute('data-fl50-namn'));
+        const lista = manualOf(w).slice();
+        const namn = String(inp.value || '').trim();
+        if (!(i >= 0 && i < lista.length)) return;
+        if (!namn || namn === lista[i].name) { inp.value = lista[i].name || ''; return; }
+        lista[i] = Object.assign({}, lista[i], { name: namn });
+        w.fanl50Manual = lista; save(); render();
       };
     });
   };
@@ -265,26 +302,31 @@
       lastSwap.set(w.id, now);
       let i = (idx.get(w.id) || 0) + 1; if (i >= list.length) i = 0; idx.set(w.id, i);
       const card = box.querySelector('.fl50-card'); if (!card) return;
-      const m = list[i];
-      card.classList.add('fl50-out');
-      root.setTimeout(() => {
-        // 'alla': nasta fan far nasta mall — byt bild och mallklass (geometrin hanger pa klassen).
-        const design = designFor(w, i + 1);
-        if (!card.classList.contains('fl50-design-' + design)) {
-          NYCKLAR.forEach(k => card.classList.remove('fl50-design-' + k)); card.classList.add('fl50-design-' + design);
-          const art = card.querySelector('.fl50-art'); if (art) art.src = ART[design].art;
-        }
-        const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
-        const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); nm.parentElement.style.setProperty('--fl50-nm-ks', namnFaktor(m.name, 8)); }
-        const teamText = safe.text(m.team || w.fanl50Team || '');
-        const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';
-        const rk = card.querySelector('.fl50-rank'); if (rk) rk.textContent = '#' + (i + 1);
-        card.classList.remove('fl50-out'); card.classList.add('fl50-in');
-        root.setTimeout(() => card.classList.remove('fl50-in'), 520);
-      }, 420);
+      bytKort(card, w, list[i], i, (f, ms) => root.setTimeout(f, ms));
     });
   }
   root.setInterval(swap, 1000);
+
+  // Ett kortbyte pa ett givet kort: tona ut, byt foto/namn/lag/mall, tona in. swap() ovan anropar den for
+  // widgetarna i state; ▶ Testa widget for klonens kort, med testmotorns vaktade timer som `tid`.
+  function bytKort(card, w, m, i, tid) {
+    card.classList.add('fl50-out');
+    tid(() => {
+      // 'alla': nasta fan far nasta mall — byt bild och mallklass (geometrin hanger pa klassen).
+      const design = designFor(w, i + 1);
+      if (!card.classList.contains('fl50-design-' + design)) {
+        NYCKLAR.forEach(k => card.classList.remove('fl50-design-' + k)); card.classList.add('fl50-design-' + design);
+        const art = card.querySelector('.fl50-art'); if (art) art.src = ART[design].art;
+      }
+      const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
+      const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); nm.parentElement.style.setProperty('--fl50-nm-ks', namnFaktor(m.name, 8)); }
+      const teamText = safe.text(m.team || w.fanl50Team || '');
+      const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';
+      const rk = card.querySelector('.fl50-rank'); if (rk) rk.textContent = '#' + (i + 1);
+      card.classList.remove('fl50-out'); card.classList.add('fl50-in');
+      tid(() => card.classList.remove('fl50-in'), 520);
+    }, 420);
+  }
 
   // ---- publikt API for sessionen ----------------------------------------------------------------
   let renderTimer = null;
@@ -293,6 +335,12 @@
     roster: () => auto.slice(),
     members,
     namnFaktor,
+    // ▶ Testa widget (vyra-fl50-panel.js): kortens HTML med en given lista, och ett kortbyte pa ett givet
+    // kort. Inget av dem laser eller skriver rostern, layouten eller natet. glom(id) tar bort det
+    // slideshowen eventuellt minns for klonens id.
+    provHtml: (w, lista) => fanLevel50Html(w, Array.isArray(lista) ? lista : []),
+    bytKort,
+    glom(id) { idx.delete(id); lastSwap.delete(id); },
     addAuto(m) {
       const namn = String(m && m.name || '').trim(); if (!namn) return;
       const av = String(m.avatar || ''), team = String(m.team || '');

@@ -28,7 +28,7 @@
   // BARA KONTROLLER SOM GÖR NÅGOT (granskningen, scratchpad panel-fynd.json, och
   // tests/browser/panel-krav.browser.test.js):
   //   * Storlek (pgg_storlek) och Position (pgg_placering) är dubbletter av Storlek/Bredd och Y — borta,
-  //   * Lager visas inte: pg-skalet sätter inget z-index (spec 1.5, rättas i en egen PR),
+  //   * Lager visas: pg-skalet skriver inget z-index själv, så vyra-lager.js gör det (PR 16),
   //   * Höjd och Lås proportioner visas inte: höjden följer bredden, och låset hade ingen verkan,
   //   * Ramlager på avatar och Namneffekt finns bara i podiet. I Top Streak Flip byter de bara ett
   //     data-attribut, och i Goal Pro träffar ingen stilregel något (ingen .fxbox, inget .nm) — inte ens
@@ -66,7 +66,7 @@
 
   // Gemensamma rader.
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
-  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] };
+  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] };
   const textfarg = { sektion: 4, typ: 'farg', falt: 'pg.text', etikett: 'Textfärg', legacyId: '#pgg_text', arv: 'text' };
   const typsnitt = { sektion: 4, typ: 'val', falt: 'pg.font', etikett: 'Typsnitt', legacyId: '#pgg_font', arv: 'fontFamily' };
   // Paletten och Färg 1/2 i en rad. Raden har sin egen rubrik (Färgpalett), så ramen skriver ingen etikett.

@@ -22,8 +22,8 @@
   // tests/browser/panel-krav.browser.test.js):
   //   * Inträdeseffekt och Varaktighet visas inte: MVP-entrén i sändningen var densamma med Ingen och
   //     med Poppa in (firandets egen entré driver allt),
-  //   * Lager visas inte: renderaren sätter inget z-index (uppmätt "auto" för två widgetar med lager
-  //     5 och 1, alla tre grupperna),
+  //   * Lager visas: renderaren skriver inget z-index själv (uppmätt "auto" före PR 16), så vyra-lager.js
+  //     skriver z-index = lagret på lådan, alla tre grupperna,
   //   * Poäng, Poängsymbol och Poängstorlek finns bara där poängen ritas — i de klassiska stilarna,
   //     och där bara när Visa poäng är på. Ramarna och firandena ritar aldrig poängen,
   //   * Färg 1, Färg 2 och Ärv färgschema bara i de klassiska: ramarna och firandena är fasta bilder
@@ -95,7 +95,7 @@
   const fastBild = { sektion: 5, typ: 'text', falt: 'prMvpFast', legacyId: '#prMvpFast' };
   const bakgrund = { sektion: 5, typ: 'std-bakgrund', om: harEgenBakgrund };
   const visningstid = { sektion: 6, typ: 'tal', falt: 'mvpDuration', etikett: 'Visningstid', enhet: 's', legacyId: '#mvpDuration' };
-  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] };
+  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] };
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
   const LIVE_POANG = 'Hämtas från TikTok när en battle avgörs: MVP:ns namn, poäng och profilbild. I lagmatcher kan MVP:n vara en medvärds tittare.';

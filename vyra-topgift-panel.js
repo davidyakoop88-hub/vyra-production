@@ -16,7 +16,7 @@
   // (en kontroll ändrades, widgetens DOM, stil och bild jämfördes) och provas om av
   // tests/browser/panel-krav.browser.test.js. Det som mättes utan verkan är borta:
   //   * Varaktighet i royal, fokus och Signal Orbit (entrén har sin egen längd där),
-  //   * Lager i royal och fokus (rot() i topgift-designer.js sätter ingen z-index), kryssrutan Rubrik och Växlingshastighet i royal och fokus,
+  //   * kryssrutan Rubrik och Växlingshastighet i royal och fokus (Lager finns i alla: vyra-lager.js skriver z-index, PR 16),
   //   * AVATAR-RAM i royal, fokus och Signal Orbit, POSITION · TEXTELEMENT och LIVE-DATA i
   //     Signal Orbit, Textstorlek % där Textstorlek i px redan finns,
   //   * Höjd i Top Gift (höjden följer innehållet), och "Töm widget" i royal och fokus.
@@ -63,7 +63,7 @@
       { sektion: 2, typ: 'kryss', falt: 'showDataValue', etikett: 'Visa värde', legacyId: '#universalShowValue' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från sändningen: namn, profilbild, gåva och värde för den största gåvan hittills.' },
       // 3 · Storlek och placering
-      { sektion: 3, typ: 'std-position', utan: neon ? ['hojd', 'las'] : ['hojd', 'las', 'lager'] },
+      { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       { sektion: 3, typ: 'tal', falt: 'giftSize', etikett: 'Bildstorlek (profil och gåva)', enhet: 'px', legacyId: '#pfTopGiftSize' },
       // 4 · Text
       { sektion: 4, typ: 'val', falt: 'textFont', etikett: 'Typsnitt', legacyId: '#vtFont', arv: 'fontFamily' },

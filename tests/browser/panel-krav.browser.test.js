@@ -8,9 +8,9 @@
 // Top Streak: Clean Flip och Design 1–3 (vyra-streak-panel.js), playgroundfamiljerna Top Gifter Podium, Top
 // Streak Flip och Goal Pro (vyra-playground-panel.js) och fyrverkerierna Gift Fireworks, Heart Fireworks och Gift
 // Bubbles (vyra-fyrverkeri-panel.js) och fontänerna och gåvoburken: Like Fountain klassisk och Portal och Gift Jar
-// (vyra-fontan-panel.js) — kräver provet
-// att panelen
-//   * har sektionerna i ordningen 1–7, med ▶ Testa widget först,
+// (vyra-fontan-panel.js) och Fan Level 50 och Glove Snipe (vyra-fl50-panel.js, vyra-glove-panel.js) och Egen text
+// (vyra-egen-panel.js) — kräver provet att panelen
+//   * har sektionerna i ordningen 1–7, med ▶ Testa widget först (utom där det inte finns något att spela),
 //   * inte har någon tom sektion,
 //   * inte har någon etikett två gånger,
 //   * inte visar någon text som matchar /assets\/|\.png|\.svg|URL/ (inte heller i fältvärden),
@@ -237,7 +237,33 @@ const FONTAN_MODELLER = [
     effekt: m === 'dragon', minKontroller: 8, aterstall: { utseende: 'jarModel', innehall: 'jarCapacity' },
     tidsstyrt: Object.fromEntries(['jarCapacity', 'jarAutoReset', 'pr-jarTom'].map(id => [id, FONTAN_SPELAR])) })),
 ];
+// FAN LEVEL 50 OCH GLOVE SNIPE (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14). Fan Level 50 är en modell med
+// fyra kortmallar; effekten per kontroll mäts för den. Inmatningen till deltagarlistan (användarnamnet, Hämta från
+// TikTok och Lägg till namn) gör ingenting förrän ett namn skrivits — utan namn står widgeten still, vilket provet
+// kräver; med namn provas de i fl50-glove-livevag.browser.test.js (Hämta mot en uppsnappad /api/tiktok-profile).
+// Källa mäts med en deltagare i listan (FORUTS): utan någon ser "Live och deltagarlistan" och "Bara live" likadana ut
+// (båda visar editorns exempelfans).
+//
+// Glove Snipe: de fem paketen (Video FX · hela paketet), två poster (WebM med Snipe, MP4 utan). Panelkraven gäller alla
+// fem; effekten mäts för ett WebM- och ett MP4-paket. Klippen spelas bara vid en händelse och provas i
+// fl50-glove-livevag; i vila är widgeten affischbilden. Paketet har inga utseendefält (färgerna verkar inte, se
+// vyra-glove-panel.js), så det har ingen Återställ utseende — provet kräver att knappen saknas.
+const FL50_INMATNING = 'verkar först när ett namn skrivits — provas i fl50-glove-livevag.browser.test.js';
+const FL50_MODELLER = [
+  { namn: 'Fan Level 50', nyckel: 'catalog:fanlevel50:royal', effekt: true, minKontroller: 8, aterstall: { utseende: 'fanl50Design', innehall: 'fanl50Source' },
+    tidsstyrt: { fl50AddUser: FL50_INMATNING, fl50AddBtn: FL50_INMATNING, fl50AddNamn: FL50_INMATNING } },
+];
+const GLOVE_MODELLER = ['koiPearl', 'masquerade', 'pinkPrincess', 'royalRuby', 'cloudFox'].map(p => ({ namn: 'Glove Snipe · ' + p,
+  nyckel: 'catalog:glovesnipe:' + p + ':pack:2', effekt: p === 'koiPearl' || p === 'pinkPrincess', minKontroller: 4, aterstall: null }));
+// EGEN TEXT (vyra-egen-panel.js, PR 16). Widgeten har ingen händelse att spela, så posten har inget test och panelen
+// ingen sektion 1 — provet kräver det (utanTest). Skuggfärgen mäts med en skugga (FORUTS).
+const EGEN_MODELLER = [
+  { namn: 'Egen text', nyckel: 'catalog:custom:text', utanTest: true, aterstall: { utseende: 'textColor', innehall: 'customText' } },
+];
 const MODELLER = [
+  ...EGEN_MODELLER,
+  ...FL50_MODELLER,
+  ...GLOVE_MODELLER,
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
   { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL },
@@ -266,7 +292,8 @@ const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk
 // webbläsare är det samma text — mätningen hade då berott på maskinens språk.
-const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' } };
+const FORUTS = { vtShadowColor: { textShadowBlur: 10 }, vtOutlineColor: { textOutlineWidth: 3 }, geLang: { guardianLang: 'en' },
+  fl50Source: { fanl50Manual: [{ name: 'Deltagare', avatar: '' }] }, ctwShadowColor: { textShadowBlur: 10 } };
 
 let server, browser, bas;
 const skip = hoppaOver();
@@ -434,7 +461,16 @@ function skiljer(a, b, brus) {
   return (a.html !== b.html && !brus.html) || stil || a.rect !== b.rect || (a.txt !== b.txt && !brus.txt) || a.imgs !== b.imgs;
 }
 
-for (const m of MODELLER) {
+// DELAD I FYRA (2026-10-20). Med 171 modeller tog filen över 45 minuter i CI, alltså hela
+// test-client-webblasare-jobbets gräns, och en enda fil kan inte skarvas av scripts/browser-skarva.js.
+// Den här filen kör del 1; panel-krav-2/3/4.browser.test.js sätter PANEL_KRAV_DEL och läser in den.
+// Modellerna fördelas på index (var fjärde), så varje del får en blandning av tunga och lätta familjer,
+// och varje modell provas i exakt en del. Proven som inte gäller en enskild modell körs bara i del 1.
+const DEL = (process.env.PANEL_KRAV_DEL || '1/4').split('/').map(Number);
+const MINA = MODELLER.filter((m, i) => i % DEL[1] === DEL[0] - 1);
+const testOvrig = DEL[0] === 1 ? test : () => {};
+
+for (const m of MINA) {
   test(`panelkraven: ${m.namn}`, { skip, timeout: 400000 }, async () => {
     const fel = [];
     const page = await oppna(m.nyckel, fel);
@@ -443,10 +479,14 @@ for (const m of MODELLER) {
 
       // Ordningen 1–7 och ▶ Testa widget först.
       const nr = s.sektioner.map(x => x.nr);
-      assert.equal(nr[0], 1, 'sektion 1 kommer först');
+      if (m.utanTest) {
+        // Inget att spela: ingen sektion 1 och ingen ▶ Testa widget.
+        assert.ok(!nr.includes(1), 'en modell utan test har ingen sektion 1');
+        assert.equal(s.forstaISektion1, undefined, 'en modell utan test har ingen ▶ Testa widget');
+      } else assert.equal(nr[0], 1, 'sektion 1 kommer först');
       assert.deepEqual(nr, [...nr].sort((a, b) => a - b), 'sektionerna står i ordningen 1–7');
       assert.equal(new Set(nr).size, nr.length, 'ingen sektion två gånger');
-      assert.equal(s.forstaISektion1, 'pr-testspel', '▶ Testa widget är det första i sektion 1');
+      if (!m.utanTest) assert.equal(s.forstaISektion1, 'pr-testspel', '▶ Testa widget är det första i sektion 1');
       // Ingen tom sektion.
       for (const x of s.sektioner) assert.ok(x.synligaRader > 0, `sektion ${x.nr} är tom`);
       // Ingen etikett två gånger.
@@ -540,6 +580,11 @@ for (const m of MODELLER) {
 
       // Återställ utseende: utseendet tillbaka, innehåll och placering kvar.
       await aterstall(page, orig);
+      if (m.aterstall === null) {
+        assert.equal(await page.$('#pr-aterstall-utseende'), null, 'ingen Återställ utseende utan utseendefält');
+        assert.deepEqual(fel, [], 'inga sidfel');
+        return;
+      }
       const fa = m.aterstall;
       const las7 = () => page.evaluate(f => { const w = liveWidget('krav'); return { accent: w[f.utseende], x: w.x, namn: w[f.innehall] }; }, fa);
       const fore7 = await las7();
@@ -560,7 +605,7 @@ for (const m of MODELLER) {
   });
 }
 
-test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { skip, timeout: 120000 }, async () => {
+testOvrig('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   try {
@@ -585,7 +630,7 @@ test('en modell utan registerpost får ingen ramsektion och ingen arvsruta', { s
 // Battle MVP (spec 5.18): Poäng (exempeldata) och Poängsymbol hör till poängen och visas bara när Visa
 // poäng är på — i de klassiska stilarna, de enda som ritar poängen. Med poängen på gäller panelkraven
 // fortfarande (enheter, inga dubbla etiketter), och båda fälten syns i widgeten.
-test('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:inferno', fel);
   try {
@@ -608,7 +653,7 @@ test('Battle MVP: Poäng och Poängsymbol visas bara när Visa poäng är på', 
 
 // Battle MVP: samma bakgrundsregel som Last-X — ingen grupp för en ny widget (det finns ingen bakgrund
 // att ta bort), men en sparad widget med egen bakgrund (ritas bakom motivet) behåller den.
-test('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:celebration:coronation', fel);
   try {
@@ -626,7 +671,7 @@ test('Battle MVP: en sparad widget med egen bakgrund behåller bakgrundsgruppen,
 // Battle MVP: Stil-listan har ramarna, så att en ram går att välja tillbaka (förut raderade ett stilval
 // mvpFrame och ramen fanns inte i listan). Ett ramval sätter mvpFrame och ger ramens panel; ett
 // stilval tar bort ramen igen.
-test('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillbaka', { skip, timeout: 120000 }, async () => {
+testOvrig('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillbaka', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:battlemvp:inferno', fel);
   try {
@@ -660,7 +705,7 @@ test('Battle MVP: ramarna finns i Stil-listan och går att välja fram och tillb
 
 // Last-X visar inte BAKGRUND för en ny widget (spec 5.17), men en sparad widget som redan har en egen
 // bakgrund (widget-background.js ritar den bakom kortet) måste kunna ändra och ta bort den.
-test('Last-X: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
+testOvrig('Last-X: en sparad widget med egen bakgrund behåller bakgrundsgruppen, en ny har den inte', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna('catalog:lastx:card', fel);
   try {
