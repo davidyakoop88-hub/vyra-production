@@ -29,7 +29,7 @@
   //   * TEXT visas inte i någon av dem: klassiska fontänen har inget textblad utom ♥-glyferna, och där skalade
   //     Textstorlek samma sak som Hjärtstorlek; Portal och Gift Jar ritar allt på duk (utanText),
   //   * BAKGRUND visas inte (transparenta effekter), Höjd och Lås proportioner inte (höjden följer Flyghöjd,
-  //     respektive bredden), Lager inte (wh() sätter inget z-index — PR 16),
+  //     respektive bredden). Lager visas: vyra-lager.js skriver z-index = lagret på lådan (PR 16),
   //   * klassisk: Glöd, Guldfärg, Avatar-glöd, Glas-opacitet och Orbit-hastighet styr CSS-variabler som bara läses
   //     av element renderaren inte längre bygger (.lf-avatar, .lf-ring, .lf-orbit, .lf-label) — uppmätt 0 noder
   //     med ändrad stil. Antal orbit-hjärtan lägger bara fler hjärtan i samma ström: en dubblett av Max antal
@@ -44,7 +44,7 @@
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las', 'lager'] };
+  const position = { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] };
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const arPortal = w => !!w && w.fountainDesign === 'portal';

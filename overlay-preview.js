@@ -693,7 +693,33 @@ function owgWatchForLateCards(gallery) {
   owgSectionObserver.observe(gallery, { childList: true, subtree: true });
 }
 
+// VIDEO FX-PAKETET I PREVIEWYTAN (granskning 2026-10-17 F07: "Koi-paketets forhandsvisning blir
+// svart"). Paketwidgeten vilar slackt — visibility:hidden tills den ar vald pa duken eller ett
+// klipp spelar — och affischen visas bara nar ett spelande klipp fastnat (battle-pack-images.css).
+// I previewytan ar den varken vald eller spelande, sa ytan blev bara bakgrund.
+//
+// Har, och BARA har, tands den med paketets egna klasser: pack-active gor den synlig och
+// pack-stilla lagger affischen (klippets .jpg) ovanpa. Klippet spelas sedan i loop och affischen
+// tas bort forst nar videon faktiskt visar rutor. Kan videon inte avkodas (Koi Pearl ar H.264-MP4,
+// som inte alla webblasare har) star affischen kvar. Duken och overlayn ritar egna noder ur wh()
+// och ror aldrig de har klasserna, sa paketet i sandningen spelas precis som forut.
+function owgVackPaketPreview() {
+  document.querySelectorAll('.overlay-live-preview-stage .battle-pack-full').forEach(nod => {
+    if (nod.dataset.owgPreview) return;
+    nod.dataset.owgPreview = '1';
+    nod.classList.add('pack-active', 'pack-stilla');
+    const v = nod.querySelector('video.pack-fx-video');
+    if (!v) return;
+    const affisch = () => nod.classList.add('pack-stilla');
+    v.muted = true; v.loop = true; v.preload = 'auto';
+    v.addEventListener('timeupdate', () => { if (!v.error && v.currentTime > 0) nod.classList.remove('pack-stilla'); });
+    v.addEventListener('error', affisch);
+    try { const p = v.play(); if (p && typeof p.catch === 'function') p.catch(affisch); } catch (_) { affisch(); }
+  });
+}
+
 function bindOverlayPreview() {
+  owgVackPaketPreview();
   styleOverlayCatalogCards();
   // Galleriet byggs om vid varje render(), sa bevakningen satts upp pa nytt harifran. Den gamla
   // kopplas ner inuti funktionen.
@@ -809,11 +835,23 @@ render = function () {
   // brings the (by-then-visible) Overlay view back in sync in one go.
   if (owgConfigureWidgetId) { renderConfigureModal(); return; }
   if (view === 'overlay') {
+    // Soktexten overlever en omritning AV Overlay (granskning 2026-10-17 F08). Forhandsvisa,
+    // paketpreview och Lagg till anropar render(), som bygger om hela vyn — sokrutan blev tom och
+    // katalogen ofiltrerad. Bara en ruta som redan star i Overlay-vyn lases av: ett byte hit fran
+    // en annan vy har ingen sadan ruta och borjar darfor tomt, som forut.
+    const forraSok = document.querySelector('#view .overlay-widget-gallery .widget-search');
+    const sokText = forraSok ? forraSok.value : '';
     $('#view').innerHTML = overlayPreviewHtml();
     $('#title').textContent = 'Overlay';
     // Bada sorterna, av samma skal som go() i studio.js: ett vy-byte maste slacka extra-knapparna.
     document.querySelectorAll('[data-view],[data-extra]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     bind();
+    if (sokText) {
+      const sok = document.querySelector('#view .overlay-widget-gallery .widget-search');
+      // input-handelsen gar genom samma filter som ett tangenttryck (media.js), sa katalogen
+      // filtreras med exakt samma regler — inklusive kort som kommer in sent.
+      if (sok) { sok.value = sokText; sok.dispatchEvent(new Event('input', { bubbles: true })); }
+    }
     return;
   }
   overlayPreviewRender();

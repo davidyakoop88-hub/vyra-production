@@ -10,3 +10,8 @@
 .agency-test-contact-links a:hover{border-color:#b46fff;background:#29163b;transform:translateY(-1px)}
 @media(max-width:850px){.agency-test-info{grid-template-columns:1fr}.agency-test-contact-links{display:grid}.agency-test-contact-links a{text-align:center}}
 
+/* Testlagets kontaktvagar ar forhandsvisning, inte lankar (granskning 2026-10-17 F38): samma form som
+   lankarna hade, men dampad, utan hover och utan pekare. */
+.agency-test-contact-links .agency-test-contact-link{padding:10px 12px;border:1px dashed #4a3460;border-radius:10px;background:#140d1d;color:#bfb0cf;font-size:10px;font-weight:700;cursor:default;user-select:text}
+.agency-test-contact-links .agency-test-contact-note{flex-basis:100%;color:#9f92ac;font-size:9px;letter-spacing:.02em}
+@media(max-width:850px){.agency-test-contact-links .agency-test-contact-link{text-align:center}}

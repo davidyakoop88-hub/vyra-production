@@ -51,7 +51,8 @@
         "vyra-extravy-vakt.js",
         "vyra-panelram.js",
         "vyra-testspel.js",
-        "fargschema-prov.js"
+        "fargschema-prov.js",
+        "vyra-sidbyte.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -88,7 +89,11 @@
         "tests/testspel-motor.test.js",
         "tests/browser/testspel-isolering.browser.test.js",
         "tests/browser/panel-krav.browser.test.js",
-        "tests/browser/fargschema-provbild.browser.test.js"
+        "tests/browser/fargschema-provbild.browser.test.js",
+        "tests/browser/panel-krav-2.browser.test.js",
+        "tests/browser/panel-krav-3.browser.test.js",
+        "tests/browser/panel-krav-4.browser.test.js",
+        "tests/browser/sidbyte-borjar-overst.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -186,7 +191,11 @@
         "vyra-streak-panel.js",
         "vyra-playground-panel.js",
         "vyra-fyrverkeri-panel.js",
-        "vyra-fontan-panel.js"
+        "vyra-fontan-panel.js",
+        "vyra-fl50-panel.js",
+        "vyra-glove-panel.js",
+        "vyra-lager.js",
+        "vyra-egen-panel.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -201,6 +210,8 @@
         "tests/browser/mal-livevag.browser.test.js",
         "tests/browser/streak-livevag.browser.test.js",
         "tests/browser/fontan-livevag.browser.test.js",
+        "tests/browser/fl50-glove-livevag.browser.test.js",
+        "tests/browser/lager-tva-widgetar.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
         "tests/like-fountain-portal.test.js",
@@ -281,7 +292,8 @@
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js",
         "tests/korsfilskopplingar.test.js",
-        "tests/browser/spotify-kommandon.browser.test.js"
+        "tests/browser/spotify-kommandon.browser.test.js",
+        "tests/browser/widgetsok-alla-paket.browser.test.js"
       ],
       "matning": [
         {
@@ -342,7 +354,8 @@
         "tests/browser/sidhuvud-knappar.browser.test.js",
         "tests/browser/sidomeny-bredd.browser.test.js",
         "tests/browser/overlaylank-synlig.browser.test.js",
-        "tests/browser/overlay-passform.browser.test.js"
+        "tests/browser/overlay-passform.browser.test.js",
+        "tests/browser/agency-test-detalj.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -367,7 +380,8 @@
         "action-master.js",
         "vyra-masterval.js",
         "vyra-tal.js",
-        "points-system.js"
+        "points-system.js",
+        "ae-dialog.js"
       ],
       "tester": [
         "tests/action-widget-routing.test.js",
@@ -381,7 +395,8 @@
         "tests/action-tts-rost.test.js",
         "tests/browser/alert-egen-placering.browser.test.js",
         "scripts/test/event-gifts.test.js",
-        "tests/action-avancerade-val.test.js"
+        "tests/action-avancerade-val.test.js",
+        "tests/browser/ae-dialog-fokus.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -424,7 +439,9 @@
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
         "tests/browser/overlay-dolda-widgetar.browser.test.js",
-        "tests/browser/katalog-forhandsbild-storlek.browser.test.js"
+        "tests/browser/katalog-forhandsbild-storlek.browser.test.js",
+        "tests/browser/forhandsvisning-behaller-sokning.browser.test.js",
+        "tests/browser/paketpreview-affisch.browser.test.js"
       ],
       "matning": [
         {
