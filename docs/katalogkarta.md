@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `9818797`
+Commit: `7d2eb4a`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -43,9 +43,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
+| FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
-| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -53,11 +53,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
-| Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
-| Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
-| Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
-| Royal Ruby · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
-| Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-08-03 | — |
+| Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Royal Ruby · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -133,7 +133,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fan Level 50 | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-09-29 | [#549](https://github.com/davidyakoop88-hub/vyra-production/pull/549) |
+| Fan Level 50 | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### FIREWORKS & BUBBLES · 8 DESIGNER
 
@@ -152,9 +152,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Text | `catalog:custom:text` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
-| Video | `catalog:custom:video` | ✓ | ✓ | 2026-08-05 | [#83](https://github.com/davidyakoop88-hub/vyra-production/pull/83) |
+| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
@@ -253,31 +253,31 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Koi Pearl Lagoon · hela paketet | `catalog:glovesnipe:koiPearl:pack:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Koi Pearl Lagoon · hela paketet | `catalog:glovesnipe:koiPearl:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Masquerade Ball · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Masquerade Ball · hela paketet | `catalog:glovesnipe:masquerade:pack:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Masquerade Ball · hela paketet | `catalog:glovesnipe:masquerade:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Pink Princess · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Pink Princess · hela paketet | `catalog:glovesnipe:pinkPrincess:pack:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Pink Princess · hela paketet | `catalog:glovesnipe:pinkPrincess:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Royal Ruby · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Royal Ruby · hela paketet | `catalog:glovesnipe:royalRuby:pack:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Royal Ruby · hela paketet | `catalog:glovesnipe:royalRuby:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Cloud Fox · VIDEO FX
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Cloud Fox · hela paketet | `catalog:glovesnipe:cloudFox:pack:2` | — ⚠️ | ✓ | 2026-08-03 | — |
+| Cloud Fox · hela paketet | `catalog:glovesnipe:cloudFox:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### NEW FOLLOWER ALERT · 3 TEMAN
 
