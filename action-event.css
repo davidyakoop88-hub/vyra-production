@@ -276,3 +276,7 @@
 .vyra-action-alert.has-avatar{flex-wrap:wrap}
 .vyra-action-alert .vaa-user,.vyra-action-alert .vaa-text{min-width:0;overflow-wrap:anywhere}
 .vyra-action-alert.en-rad .vaa-user,.vyra-action-alert.en-rad .vaa-text{overflow-wrap:normal}
+/* `hidden` måste vinna över `.ae-modal input[type=number]{display:block}` ovan (0,2,1 mot
+   webbläsarens [hidden] 0,1,0). Utan den här raden syntes poängrutornas antal i Ny Action fast
+   "Lägg till/Ta bort poäng" inte var ikryssat. Vaktas av tests/browser/ae-poang-antal-dolt. */
+.ae-modal input[hidden]{display:none}

@@ -1,0 +1,30 @@
+/* landing-floede.css — "Från widget till OBS i tre steg" och provperiodens villkor på framsidan.
+
+   Granskning 2026-10-17:
+     F31  Landningen visade effekter och en streambild men inte vägen från widget till OBS, och
+          Desktop-kravet syntes inte före inloggning.
+     F32  "3 dagar gratis" och "15 USD/månad" stod utan förklaring av när dagarna börjar, att
+          betalningen godkänns hos PayPal, och att skatt och valutaväxling kan tillkomma.
+
+   Egen fil i stället för ett tillägg i styles.css: sektionen ligger under heron och rör varken
+   inloggningskortet eller prisraden, och styles.css ändras parallellt av inloggningsarbetet. */
+.floede{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:56px 20px 48px;text-align:center;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
+/* Bakgrunden går kant i kant och täcker tubes-canvasen (position:fixed, z-index 0) — utan den
+   lyste ljusstrimmorna rakt genom rubriken på mobil. */
+.floede>h2{margin:0 0 6px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text)}
+.floede>p.floede-ingress{margin:0 auto 26px;max-width:620px;color:var(--muted);font-size:14px;line-height:1.6}
+.floede-steg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0;padding:0;list-style:none;text-align:left}
+.floede-steg li{padding:18px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel)}
+.floede-steg b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--violet);color:#fff;font-size:13px}
+.floede-steg h3{margin:12px 0 6px;font:700 16px/1.25 var(--font-display);color:var(--text)}
+.floede-steg p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.floede-desktop{margin:18px auto 0;max-width:720px;color:var(--muted-dim);font-size:13px;line-height:1.6}
+.floede-desktop b{color:var(--text)}
+.floede-prov{margin:30px auto 0;max-width:720px;padding:18px 22px;border:1px solid var(--line);border-radius:var(--radius-lg);background:var(--panel);text-align:left}
+.floede-prov h3{margin:0 0 8px;font:700 16px/1.25 var(--font-display);color:var(--text)}
+.floede-prov ul{margin:0;padding-left:18px;color:var(--muted);font-size:13px;line-height:1.6}
+.floede-prov li{margin:4px 0}
+.floede-prov b{color:var(--text)}
+.floede a{color:var(--violet-light)}
+.trust-floede{color:#c9a9f5;font-weight:700;text-decoration:none;border-bottom:1px solid #a855f766}
+@media(max-width:760px){.floede-steg{grid-template-columns:1fr}.floede{padding-top:40px}}

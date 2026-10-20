@@ -36,6 +36,7 @@
         "landing-tubes.js",
         "landing-login.js",
         "landing-mobil.js",
+        "landing-floede.css",
         "index.html",
         "vyra-zoom.js",
         "vyra-snapp.js",
@@ -91,7 +92,11 @@
         "tests/browser/panel-krav-2.browser.test.js",
         "tests/browser/panel-krav-3.browser.test.js",
         "tests/browser/panel-krav-4.browser.test.js",
-        "tests/browser/sidbyte-borjar-overst.browser.test.js"
+        "tests/browser/sidbyte-borjar-overst.browser.test.js",
+        "tests/browser/guide-pekar-ratt.browser.test.js",
+        "tests/browser/driftstatus-delar.browser.test.js",
+        "tests/browser/landning-floede-provperiod.browser.test.js",
+        "tests/varumarke-ett-namn.test.js"
       ],
       "matning": [],
       "risker": [
@@ -392,7 +397,8 @@
         "tests/action-tts-rost.test.js",
         "tests/browser/alert-egen-placering.browser.test.js",
         "scripts/test/event-gifts.test.js",
-        "tests/browser/ae-dialog-fokus.browser.test.js"
+        "tests/browser/ae-dialog-fokus.browser.test.js",
+        "tests/browser/ae-poang-antal-dolt.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -720,7 +726,8 @@
         "server/test/login-protection.test.js",
         "server/test/session-device.test.js",
         "server/test/account-data.test.js",
-        "server/test/support.test.js"
+        "server/test/support.test.js",
+        "tests/browser/support-vad-hander-sedan.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -746,7 +753,8 @@
         "tests/beta-alla-konton.test.js",
         "tests/browser/trial-onboarding.browser.test.js",
         "server/test/billing.test.js",
-        "server/test/prenumerationsfalt.test.js"
+        "server/test/prenumerationsfalt.test.js",
+        "tests/browser/billing-aktivt-abonnemang.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -815,7 +823,8 @@
         "server/test/streamdeck.test.js",
         "tests/tts-livestatus.test.js",
         "tests/paus-indikator.test.js",
-        "tests/tts-rostkort-bredd.test.js"
+        "tests/tts-rostkort-bredd.test.js",
+        "tests/browser/streamdeck-tva-vagar.browser.test.js"
       ],
       "matning": [],
       "risker": [

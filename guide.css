@@ -30,7 +30,8 @@
 .guide-faq-item summary::before{content:'▸';color:#ef8cff;transition:transform .15s ease}
 .guide-faq-item[open] summary::before{transform:rotate(90deg)}
 .guide-faq-item summary::-webkit-details-marker{display:none}
-.guide-faq-item p{margin:8px 0 0 18px;color:#c7b8cc;font-size:12px;line-height:1.6}
+.guide-faq-item p,.guide-faq-svar{margin:8px 0 0 18px;color:#c7b8cc;font-size:12px;line-height:1.6}
+.guide-faq-svar ul{margin:6px 0 0;padding-left:18px}.guide-faq-svar li{margin:4px 0}.guide-faq-svar b{color:#fff}
 
 @media(max-width:900px){.guide-steps{grid-template-columns:1fr}}
 
@@ -41,3 +42,6 @@
 .guide-feature-handling:hover{background:#3a1f47}
 .guide-feature-handling[aria-disabled="true"]{color:#a996b3;cursor:not-allowed}
 .guide-feature-where{display:block}
+/* F26: platsen ar en knapp till menyvalet nar ett sadant finns. */
+button.guide-feature-where{padding:0;border:0;background:none;font:inherit;font-size:10.5px;color:#c9a6d6;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+button.guide-feature-where:hover,button.guide-feature-where:focus-visible{color:#f0c8ff}
