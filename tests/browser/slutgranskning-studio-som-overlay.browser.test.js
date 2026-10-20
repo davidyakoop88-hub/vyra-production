@@ -97,7 +97,7 @@ test('A-003: en rankingrad utan namn har ingen tom namnyta i overlay (Voltage, B
     'catalog:ranking:templateTopCoins:voltage', 'catalog:ranking:templateTopPoints:basic-v2']) {
     await bygg(overlay, n);
     const o = await overlay.evaluate(s => [...document.querySelectorAll(s + ' .toplike-row')].map(r => ({
-      namn: r.querySelector('strong')?.textContent || '', syns: getComputedStyle(r.querySelector('.rk6-namn')).display !== 'none' })), rot);
+      namn: r.querySelector('strong')?.textContent || '', syns: (cs => cs.display !== 'none' && cs.visibility !== 'hidden')(getComputedStyle(r.querySelector('.rk6-namn'))) })), rot);
     assert.ok(o.length >= 1, `${n}: raderna finns`);
     for (const r of o) assert.ok(r.namn !== '' || !r.syns, `${n}: tomt namn men namnytan syns`);
     await bygg(studio, n);
