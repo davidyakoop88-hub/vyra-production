@@ -426,7 +426,8 @@
     "guardianLang": "auto",
     "guardianShowUsername": true,
     "guardianCustomText": "",
-    "guardianUsername": "@Guardian"
+    "guardianUsername": "@Guardian",
+    "guardianPlacering": "absolut"
   },
   "catalog:guardianemblem:2": {
     "type": "templateGuardianEmblem",
@@ -439,7 +440,8 @@
     "guardianLang": "auto",
     "guardianShowUsername": true,
     "guardianCustomText": "",
-    "guardianUsername": "@Guardian"
+    "guardianUsername": "@Guardian",
+    "guardianPlacering": "absolut"
   },
   "catalog:guardianemblem:3": {
     "type": "templateGuardianEmblem",
@@ -452,7 +454,8 @@
     "guardianLang": "auto",
     "guardianShowUsername": true,
     "guardianCustomText": "",
-    "guardianUsername": "@Guardian"
+    "guardianUsername": "@Guardian",
+    "guardianPlacering": "absolut"
   },
   "catalog:guardianemblem:4": {
     "type": "templateGuardianEmblem",
@@ -465,7 +468,8 @@
     "guardianLang": "auto",
     "guardianShowUsername": true,
     "guardianCustomText": "",
-    "guardianUsername": "@Guardian"
+    "guardianUsername": "@Guardian",
+    "guardianPlacering": "absolut"
   },
   "catalog:giftjar:lion": {
     "type": "templateGiftJar",

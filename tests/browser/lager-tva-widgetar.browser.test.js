@@ -20,8 +20,9 @@
 // (fanSpelaPa, gifterSpelaPa, followerSpelaPa, guardianSpelaPa, mvpSpelaPa, VyraBattlePaket.spelaPa), så att båda
 // lådorna spelar samtidigt och kön inte väntar 6–8 s mellan stegen. Last-X tänds med sin trigger (den köas inte).
 //
-// GUARDIAN EMBLEM har position:relative (guardian-emblem.css), så två emblem på samma x/y ligger under varandra i
-// flödet. Provet flyttar B tills lådorna överlappar — lagret avgör sedan ordningen precis som för de andra.
+// LÅDOR I FLÖDET (Fan Level heartbeat, Gifter Level orbitlevel) ligger inte på sin x/y, så två på samma x/y hamnar
+// under varandra. Provet flyttar B tills lådorna överlappar — lagret avgör sedan ordningen precis som för de andra.
+// Guardian Emblem låg i flödet fram till 2026-10-20 (position:relative i guardian-emblem.css); nu står den absolut.
 //
 // DOLDA WIDGETAR rörs inte: en dold widget med lager får sitt z-index men förblir osynlig (overlay-dolda.js).
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -178,7 +179,7 @@ async function bygg(sida, nyckel) {
     state.widgets.push(a, b); render();
   }, nyckel);
   await sida.waitForTimeout(400);
-  // Lådor som inte ligger på sin x/y (Guardian Emblem: position:relative) flyttas tills de överlappar.
+  // Lådor som inte ligger på sin x/y (lådor i flödet, se filhuvudet) flyttas tills de överlappar.
   if (await sida.evaluate(() => window.__lagerOverlapp()) < 0.5) {
     await sida.evaluate(async () => {
       const b = state.widgets.find(w => w.id === 'lagB');

@@ -85,6 +85,73 @@
       section.append(knapp);
     });
   };
+  // ---- PLATSEN: sparade emblem står kvar där de syntes (2026-10-20) ----------------------------
+  //
+  // guardian-emblem.css gav förut lådan `position:relative`, så emblemet låg i flödet i stället för
+  // absolut på sin x/y. Ensam i duken (det vanliga) blev det samma plats — uppmätt: x/y exakt, både
+  // i studion och overlayn. Men låg en annan låda i flödet FÖRE den (ett andra emblem, Fan Level
+  // heartbeat, Gifter Level orbitlevel) sköts emblemet ned med den lådans höjd. Nu när lådan är
+  // absolut hade ett sådant emblem hoppat upp.
+  //
+  // Migreringen MÄTER i stället för att räkna: varje omigrerat emblem i duken ritas en gång med det
+  // gamla `position:relative` inline, rektangeln läses, inline-värdet tas bort och rektangeln läses
+  // igen. Skillnaden räknas om till dukens enheter (mätt genom att flytta lådan 100 enheter, så
+  // zoom och dukens skala följer med) och läggs på x/y. Markeringen `guardianPlacering:'absolut'`
+  // stoppar varje senare mätning; nya emblem får den redan i fabriken. Som vyra-rotation.js
+  // migrera(): ingen egen save(), varje läsare migrerar likadant ur samma sparade värde, och nästa
+  // vanliga sparning skriver resultatet. En dold (display:none) eller ej ritad låda mäts inte.
+  const PLACERING = 'absolut';
+  const nodFor = w => document.querySelector(`.canvas [data-id="${String(w.id).replace(/["\\]/g, '\\$&')}"]:not([data-testspel-klon])`);
+  function migreraPlats() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return 0;
+    const omigrerade = state.widgets.map(w => w && w.type === 'templateGuardianEmblem' && w.guardianPlacering !== PLACERING ? [w, nodFor(w)] : null)
+      .filter(p => p && p[1]);
+    // En projektion kan byta statens objekt mot det SPARADE (omigrerade) värdet utan att rita om
+    // (samma lucka som vyra-rotation.js beskriver). Noden bär då redan resultatet: samma utgångsläge
+    // ger samma svar, så det skrivs tillbaka utan ny mätning — en ny mätning på den redan flyttade
+    // noden hade gett noll och lämnat x/y gamla under en låda som står någon annanstans.
+    const lista = omigrerade.filter(([w, el]) => {
+      const minne = el.dataset.gePlats ? el.dataset.gePlats.split(',').map(Number) : null;
+      if (!minne || minne[0] !== Number(w.x) || minne[1] !== Number(w.y)) return el.getClientRects().length > 0;
+      w.x = minne[2]; w.y = minne[3]; w.guardianPlacering = PLACERING;
+      return false;
+    });
+    if (!lista.length) return 0;
+    // Alla på en gång med det gamla läget: de låg i flödet tillsammans, så de knuffade varandra.
+    lista.forEach(([, el]) => el.style.setProperty('position', 'relative'));
+    const fore = lista.map(([, el]) => el.getBoundingClientRect());
+    lista.forEach(([, el]) => el.style.removeProperty('position'));
+    let flyttade = 0;
+    lista.forEach(([w, el], i) => {
+      const efter = el.getBoundingClientRect();
+      const dx = fore[i].left - efter.left, dy = fore[i].top - efter.top;
+      el.dataset.gePlats = [Number(w.x) || 0, Number(w.y) || 0].join(',');
+      if (Math.abs(dx) >= 0.5 || Math.abs(dy) >= 0.5) {
+        const x0 = Number(w.x) || 0, y0 = Number(w.y) || 0;
+        el.style.left = (x0 + 100) + 'px'; el.style.top = (y0 + 100) + 'px';
+        const prov = el.getBoundingClientRect();
+        const kx = (prov.left - efter.left) / 100 || 1, ky = (prov.top - efter.top) / 100 || 1;
+        const runda = v => Math.round(v * 10) / 10;
+        w.x = runda(x0 + dx / kx); w.y = runda(y0 + dy / ky);
+        flyttade += 1;
+      }
+      el.dataset.gePlats += ',' + w.x + ',' + w.y;
+      el.style.left = w.x + 'px'; el.style.top = w.y + 'px';
+      w.guardianPlacering = PLACERING;
+    });
+    return flyttade;
+  }
+  root.VyraGuardianModels.migreraPlats = migreraPlats;
+  root.VyraGuardianModels.PLACERING = PLACERING;
+  const platsBind = bind;
+  bind = function () {
+    platsBind();
+    if (view === 'editor' || view === 'overlay') migreraPlats();
+  };
+  addEventListener('vyra-session-state', migreraPlats);
+  addEventListener('vyra-session-state-saved', migreraPlats);
+  migreraPlats();
+
   // Sparade modeller kan redan ha målats innan det sena skriptet anländer.
   // Katalogens load-lyssnare binder om, men den byter inte ut en redan ritad canvas.
   if (state.widgets.some(w => w.type === 'templateGuardianEmblem' && modell(w) !== 'classic')) {

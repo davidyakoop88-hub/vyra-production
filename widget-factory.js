@@ -500,7 +500,10 @@
       title: 'Guardian Emblem', guardianStep: Number(v.step),
       // 'auto' som default: en streamer som inte rort valet ska fa sitt eget sprak, inte vart.
       guardianLang: 'auto', guardianShowUsername: true, guardianCustomText: '',
-      guardianUsername: '@Guardian'
+      guardianUsername: '@Guardian',
+      // Lådan står absolut på x/y. Utan markeringen mäter guardian-emblem-models.js om var ett
+      // sparat emblem syntes när CSS:en lade det i flödet (före 2026-10-20) och flyttar x/y dit.
+      guardianPlacering: 'absolut'
     }),
     'guardianemblem.model': v => Object.assign(BUILD['guardianemblem.step']({step:4}), {
       guardianModel: v.model,

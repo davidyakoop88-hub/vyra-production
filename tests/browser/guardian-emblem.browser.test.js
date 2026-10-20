@@ -497,3 +497,165 @@ for (const [lage, beskrivning] of LADDLAGEN) {
     });
   }
 }
+
+// ================================================================================================
+// G-PLATS — EMBLEMET STÅR PÅ SIN x/y, OCH ▶ TESTA SPELAR DÄR (2026-10-20)
+//
+// Davids ord: "guardian ska spela upp ... och nu man placera den upp och när man testar den flyttar
+// på sig". guardian-emblem.css gav lådan `position:relative`, och filen laddas efter studio.css, så
+// den vann över `.widget{position:absolute}`: emblemet låg i FLÖDET. ▶ Testa monterar klonen som
+// syskon efter den riktiga noden med samma left/top — och i flödet hamnade klonen en hel
+// emblemhöjd längre ned. Uppmätt före rättningen: riktig y 0, klon y 570 i en 768 hög duk.
+// Duken har paint-containment, så av entrén syntes bara överkanten längst ned: testet "spelade
+// inte". Samma flöde sköt ned ett emblem i sändningen när en annan flödeslåda (Fan Level
+// heartbeat) låg före det.
+//
+// Måtten är rektanglar i dukens egna enheter (skärmpixlar delat med dukens skala), ±1.
+// ================================================================================================
+const GP_MATARE = `window.__gpRekt = sel => {
+  const duk = document.querySelector('.canvas'), c = duk.getBoundingClientRect(), s = c.width / duk.offsetWidth;
+  const n = document.querySelector(sel); if (!n) return null;
+  const b = n.getBoundingClientRect();
+  // Synlig andel: duken klipper (contain:paint), så det som hamnar utanför syns inte.
+  const sx = Math.max(0, Math.min(b.right, c.right) - Math.max(b.left, c.left));
+  const sy = Math.max(0, Math.min(b.bottom, c.bottom) - Math.max(b.top, c.top));
+  return { x: +((b.left - c.left) / s).toFixed(1), y: +((b.top - c.top) / s).toFixed(1),
+    w: +(b.width / s).toFixed(1), h: +(b.height / s).toFixed(1), synlig: +((sx * sy) / (b.width * b.height || 1)).toFixed(3) };
+}; true`;
+const GP_RIKTIG = '.canvas [data-id="gp"]:not([data-testspel-klon])', GP_KLON = '.canvas [data-testspel-klon]';
+const narLika = (a, b, vad) => {
+  assert.ok(a && b, `${vad}: rektangel saknas (${JSON.stringify(a)} / ${JSON.stringify(b)})`);
+  for (const k of ['x', 'y', 'w', 'h']) assert.ok(Math.abs(a[k] - b[k]) <= 1, `${vad}: ${k} ${a[k]} mot ${b[k]} — ${JSON.stringify(a)} / ${JSON.stringify(b)}`);
+};
+// y = 0 (överkanten), 40 och mitt på duken. Höjden 570 i en 768 hög duk ger mitten (768-570)/2.
+const GP_LAGEN = [0, 40, 99];
+const GP_MODELLER = [['Blå kristall', 'catalog:guardianemblem:model:sapphire'], ['Grön aura', 'catalog:guardianemblem:model:emerald'], ['Guld · Krona', 'catalog:guardianemblem:3']];
+
+test('G-PLATS (studio): ▶ Testa spelar entrén på exakt samma plats som emblemet står, och den syns', { skip, timeout: 180000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, locale: 'sv-SE' });
+  const fel = []; page.on('pageerror', e => fel.push(String(e && e.message || e)));
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell') && !!window.VyraTestspel && !!window.VyraGuardianModels, null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await page.waitForTimeout(400);
+    await page.evaluate(GP_MATARE);
+    for (const [namn, nyckel] of GP_MODELLER) {
+      for (const y of GP_LAGEN) {
+        const vad = `${namn} vid y=${y}`;
+        await page.evaluate(([n, y]) => {
+          state.widgets.length = 0;
+          // En granne i layouten, så klonen inte är dukens enda andra barn.
+          const g = VyraWidgets.create('catalog:toplike:voltage'); g.id = 'gp-granne'; g.x = 10; g.y = 640; state.widgets.push(g);
+          const w = VyraWidgets.create(n); w.id = 'gp'; w.x = 16; w.y = y; w.guardianLang = 'sv'; state.widgets.push(w);
+          selected = 'gp'; save(); render();
+        }, [nyckel, y]);
+        await page.waitForFunction(() => !!document.querySelector('#pr-testspel'), null, { timeout: 15000, polling: 100 });
+        await page.waitForTimeout(300);
+        const fore = await page.evaluate(s => window.__gpRekt(s), GP_RIKTIG);
+        narLika(fore, { x: 16, y, w: fore.w, h: fore.h }, `${vad}: emblemet står på sin x/y före ▶`);
+        await page.click('#pr-testspel');
+        await page.waitForTimeout(250);
+        const t0 = await page.evaluate(s => {
+          const k = document.querySelector(s);
+          const anim = k ? [k, ...k.querySelectorAll('*')].flatMap(n => n.getAnimations()) : [];
+          return { klass: k ? k.className : '', spelar: anim.filter(a => a.playState === 'running').length };
+        }, GP_KLON);
+        await page.waitForTimeout(900);
+        const under = await page.evaluate(([r, k]) => ({ riktig: window.__gpRekt(r), klon: window.__gpRekt(k),
+          klass: (document.querySelector(k) || {}).className || '' }), [GP_RIKTIG, GP_KLON]);
+        narLika(under.riktig, fore, `${vad}: den riktiga noden flyttade sig under ▶`);
+        narLika(under.klon, fore, `${vad}: klonen spelar inte där emblemet står`);
+        assert.ok(under.klon.synlig > 0.99, `${vad}: bara ${Math.round(under.klon.synlig * 100)} % av klonen syns i duken — entrén spelar utanför bild`);
+        // Entrén SPELAR: fasklockan gick vidare och animationerna löper.
+        assert.match(t0.klass, /\bge-fas-ljus\b/, `${vad}: entrén startade inte i ljusfasen (${t0.klass})`);
+        assert.match(under.klass, /\bge-fas-oppna\b/, `${vad}: fasklockan gick inte vidare till öppningen (${under.klass})`);
+        assert.ok(t0.spelar > 0, `${vad}: inga animationer löper på klonen`);
+        await page.click('#pr-testspel');
+        await page.waitForTimeout(250);
+        narLika(await page.evaluate(s => window.__gpRekt(s), GP_RIKTIG), fore, `${vad}: emblemet står kvar efter ■`);
+        assert.equal(await page.$(GP_KLON), null, `${vad}: klonen ligger kvar efter ■`);
+      }
+    }
+    assert.deepEqual(fel, [], 'runtimefel i studion');
+  } finally { await page.close() }
+});
+
+test('G-PLATS (overlay): emblemet står på sin x/y i vila och under en riktig Guardian-entré, även efter en flödeslåda', { skip, timeout: 180000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1400, height: 1000 }, locale: 'sv-SE' });
+  const fel = []; page.on('pageerror', e => fel.push(String(e && e.message || e)));
+  try {
+    await page.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!window.VyraGuardianModels && !!window.VyraGuardian && !!window.VyraAlertQueue, null, { timeout: 30000 });
+    await page.evaluate(GP_MATARE);
+    let n = 0;
+    for (const [namn, nyckel] of GP_MODELLER) {
+      for (const y of GP_LAGEN) {
+        const vad = `${namn} vid y=${y}`;
+        await page.evaluate(([nk, y]) => {
+          // Fan Level heartbeat ligger i flödet (uppmätt 2026-10-20) och står FÖRE emblemet i listan.
+          const f = VyraWidgets.create('catalog:fanlevel:layout:heartbeat'); f.id = 'gp-fan'; f.x = 20; f.y = 600;
+          const w = VyraWidgets.create(nk); w.id = 'gp'; w.x = 16; w.y = y; w.guardianLang = 'sv';
+          state.widgets = [f, w]; selected = null; render();
+          window.VyraGuardian.glom();
+        }, [nyckel, y]);
+        await page.waitForTimeout(200);
+        const vila = await page.evaluate(s => window.__gpRekt(s), GP_RIKTIG);
+        narLika(vila, { x: 16, y, w: vila.w, h: vila.h }, `${vad}: emblemet står inte på sin x/y i sändningen`);
+        // Livevägen tar en hel visning (6,7 s) per entré, så den körs för en modell i alla tre lägen.
+        if (nyckel !== GP_MODELLER[0][1]) continue;
+        n += 1;
+        await page.evaluate(i => window.routeLiveBattleEvent({ type: 'guardian', username: '@Plats' + i }), n);
+        await page.waitForFunction(s => document.querySelector(s).classList.contains('ge-fas-hyllning'), GP_RIKTIG, { timeout: 12000, polling: 50 });
+        narLika(await page.evaluate(s => window.__gpRekt(s), GP_RIKTIG), vila, `${vad}: emblemet flyttade sig när en Guardian kom in`);
+        assert.match(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), /rgba\(0, 0, 0, 0\)|transparent/, 'overlayn är genomskinlig');
+        await page.waitForFunction(s => !document.querySelector(s).classList.contains('ge-active'), GP_RIKTIG, { timeout: 12000, polling: 50 });
+      }
+    }
+    assert.deepEqual(fel, [], 'runtimefel i overlayn');
+  } finally { await page.close() }
+});
+
+test('G-PLATS (sparade emblem): ett emblem som flödet sköt ned står kvar där det syntes, i studio och overlay', { skip, timeout: 120000 }, async () => {
+  // Det gamla läget återskapas med en stilregel som ger emblemen `position:relative` igen. Först
+  // mäts var de syntes då, sedan ritas samma SPARADE layout (utan markeringen guardianPlacering)
+  // med dagens CSS. Två emblem och en Fan Level heartbeat i flödet, två emblem med zoom.
+  const LAYOUT = () => {
+    const mk = (n, id, x, y, extra) => { const w = VyraWidgets.create(n); delete w.guardianPlacering; return Object.assign(w, { id, x, y }, extra || {}); };
+    return [mk('catalog:fanlevel:layout:heartbeat', 'fan', 20, 30), mk('catalog:guardianemblem:model:sapphire', 'g1', 16, 40),
+      mk('catalog:guardianemblem:model:emerald', 'g2', 30, 10, { widgetScale: 0.5 }), mk('catalog:guardianemblem:4', 'g3', 280, 49, { widgetScale: 0.35 })];
+  };
+  for (const [lage, url] of [['studio', 'studio.html?open=layout'], ['overlay', 'studio.html?overlay=1']]) {
+    const page = await browser.newPage({ viewport: { width: 1600, height: 1000 }, locale: 'sv-SE' });
+    const fel = []; page.on('pageerror', e => fel.push(String(e && e.message || e)));
+    try {
+      await page.goto(`${bas}/${url}`, { waitUntil: 'load' });
+      await page.waitForFunction(() => !!window.VyraGuardianModels && !!window.VyraAlertQueue, null, { timeout: 30000 });
+      await page.waitForTimeout(2500);
+      await page.evaluate(GP_MATARE);
+      const matt = () => page.evaluate(() => ['g1', 'g2', 'g3'].map(id => window.__gpRekt(`.canvas [data-id="${id}"]`)));
+      await page.evaluate(L => {
+        const stil = document.createElement('style'); stil.id = 'gp-gammalt';
+        stil.textContent = '.canvas .guardian-emblem{position:relative!important}'; document.head.append(stil);
+        state.widgets = (new Function('return (' + L + ')()'))(); selected = null; render();
+      }, LAYOUT.toString());
+      const gammalt = await matt();
+      // Kontrollmätning: flödet sköt verkligen ned emblemen, annars bevisar provet ingenting.
+      assert.ok(gammalt[0].y > 40 + 50, `kontrollmätning (${lage}): Fan Level sköt inte ned emblemet (${JSON.stringify(gammalt[0])})`);
+      await page.evaluate(L => {
+        document.getElementById('gp-gammalt').remove();
+        state.widgets = (new Function('return (' + L + ')()'))(); selected = null; render();
+      }, LAYOUT.toString());
+      await page.waitForTimeout(300);
+      const nu = await matt();
+      gammalt.forEach((g, i) => narLika(nu[i], g, `${lage}: g${i + 1} syns inte där det syntes före rättningen`));
+      const markerade = await page.evaluate(() => state.widgets.filter(w => w.type === 'templateGuardianEmblem').map(w => w.guardianPlacering));
+      assert.deepEqual(markerade, ['absolut', 'absolut', 'absolut'], `${lage}: markeringen sattes inte`);
+      // En ny omritning flyttar ingenting en gång till.
+      await page.evaluate(() => render());
+      (await matt()).forEach((g, i) => narLika(g, nu[i], `${lage}: g${i + 1} flyttades igen vid nästa omritning`));
+      assert.deepEqual(fel, [], `runtimefel i ${lage}`);
+    } finally { await page.close() }
+  }
+});

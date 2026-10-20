@@ -201,7 +201,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261020-20/);
+  assert.match(studio, /widget-factory\.js\?v=20261020-22/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261020-15/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
@@ -328,7 +328,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
-  assert.match(studio, /guardian-emblem\.css\?v=20260819-2/);
+  assert.match(studio, /guardian-emblem\.css\?v=20261020-22/);
   assert.match(studio, /guardian-emblem-fas\.js\?v=20261018-1/);
   // SAMMANSLAGNINGEN 2026-08-20 (Stigningen mot main): studio.css och media.js andrades av
   // BADA grenarna, sa bada far strangen 20260820-3. Grenen andrade dessutom
@@ -386,7 +386,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
   // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
-  assert.match(media, /const version='20261020-20'/);
+  assert.match(media, /const version='20261020-22'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
