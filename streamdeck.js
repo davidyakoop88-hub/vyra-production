@@ -202,9 +202,12 @@
     var ljud = (typeof saSounds === 'function' ? saSounds() : []).map(function (x) { return x.name; });
     var widgets = ((typeof state !== 'undefined' && state && state.widgets) || []).map(function (w) { return w.title || w.templateTitle; });
     var desktop = viaDesktop();
-    vy.innerHTML = '<section class="card sd-sida-head"><div><h2><i class="sd-rutnat"></i>Stream Deck</h2><p>Styr VYRA från din Elgato Stream Deck — Actions, ljud, uppläsning, musik, OBS-scener, timers och widgetar.</p></div>'
-      + '<span class="sd-status' + (desktop ? ' sd-ok' : '') + '">' + (desktop ? 'Ansluten via VYRA Desktop' : 'Kräver VYRA Desktop') + '</span></section>'
-      + '<section class="card sd-sida"><header><h3>Kom igång</h3><p>Pluginet följer med VYRA Desktop och installeras av sig självt.</p></header><div class="sd-kolumner"><div>'
+    // Granskning 2026-10-17 F16: sidhuvudet sa "Kräver VYRA Desktop" medan molnsektionen längre ned
+    // sa "helt utan Desktop". Båda vägarna finns (lokal via Desktop, moln via parkopplingskod från
+    // #538), så sidan beskriver dem nu som två alternativ och huvudet kräver ingen av dem.
+    vy.innerHTML = '<section class="card sd-sida-head"><div><h2><i class="sd-rutnat"></i>Stream Deck</h2><p>Styr VYRA från din Elgato Stream Deck — Actions, ljud, uppläsning, musik, OBS-scener, timers och widgetar. Två sätt att ansluta: <b>lokalt via VYRA Desktop</b> eller <b>via molnet</b> med en parkopplingskod.</p></div>'
+      + '<span class="sd-status' + (desktop ? ' sd-ok' : '') + '">' + (desktop ? 'Ansluten via VYRA Desktop' : 'Webbläsare · anslut via molnet eller Desktop') + '</span></section>'
+      + '<section class="card sd-sida"><header><h3>Alternativ 1 — lokalt via VYRA Desktop</h3><p>Pluginet följer med VYRA Desktop och installeras av sig självt. Knapptrycken går direkt till appen på datorn.</p></header><div class="sd-kolumner"><div>'
       + '<ol class="sd-stegen"><li><b>Installera VYRA Desktop</b><span>Pluginet läggs på plats i Stream Deck när appen startar. Utan appen: ladda ner pluginet nedan.</span></li>'
       + '<li><b>Öppna Stream Deck</b><span>Kategorin <b>VYRA</b> finns i listan till höger i Stream Deck-appen.</span></li>'
       + '<li><b>Dra en VYRA-knapp till en tangent</b><span>Fyll i namnet i rutan under — namnen finns att kopiera längst ner på den här sidan.</span></li></ol>'
@@ -215,7 +218,7 @@
       + '<div class="sd-enhet"><b>' + (desktop ? 'VYRA Desktop är igång' : 'Den här sidan är öppen i webbläsaren') + '</b><span>'
       + (desktop ? 'Knapparna på din Stream Deck når VYRA via appen på den här datorn.' : 'Knapparna når VYRA via VYRA Desktop på datorn där Stream Deck sitter — eller via molnet med en parkopplingskod nedan, helt utan Desktop.')
       + '</span><small id="sdSenast">' + saker(beskriv(senaste)) + '</small></div></section>'
-      + '<section class="card sd-sida"><header><h3>Molnet — utan VYRA Desktop</h3><p>Kör du inte VYRA Desktop på datorn där Stream Deck sitter? Generera en kod och skriv in den i pluginets ruta <b>VYRA-molnet</b>. Då når knapparna VYRA direkt via molnet.</p></header>'
+      + '<section class="card sd-sida"><header><h3>Alternativ 2 — via molnet, utan VYRA Desktop</h3><p>Kör du inte VYRA Desktop på datorn där Stream Deck sitter? Generera en kod och skriv in den i pluginets ruta <b>VYRA-molnet</b>. Då når knapparna VYRA direkt via molnet.</p></header>'
       + '<div class="sd-kolumner"><div><button type="button" class="sd-primar" id="sdGenerera">Generera parkopplingskod</button><div class="sd-kodruta" id="sdKodruta"></div></div>'
       + '<div><h4 class="sd-rubrik">PARKOPPLADE ENHETER</h4><div id="sdEnheter" class="sd-enheter"><p>Laddar …</p></div></div></div></section>'
       + '<section class="card sd-sida"><header><h3>Namn att använda</h3><p>Klicka för att kopiera, och klistra in i knappens ruta i Stream Deck.</p></header><div class="sd-namn">'
