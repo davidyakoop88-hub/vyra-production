@@ -1235,7 +1235,14 @@ for (const m of PG_ISOLERING) {
         await page.waitForTimeout(1800);
         const k = await vanta('100%', 3000);
         assert.equal(k.mal, '100%', 'målet är nått på klonen');
-        assert.equal(k.malKlart, true, 'MÅL NÅTT spelar på klonen');
+        // Firandet väntar sedan slutgranskningen (B-008) tills räkneverket faktiskt visar 100 %,
+        // så det kommer en stund efter att procenten nåtts. Vänta in det, med tak.
+        let klar = k.malKlart;
+        for (const slut = Date.now() + 3000; !klar && Date.now() < slut;) {
+          await page.waitForTimeout(100);
+          klar = (await pgKlon(page)).malKlart;
+        }
+        assert.equal(klar, true, 'MÅL NÅTT spelar på klonen');
       }
       lika(fore, await pgBild(page), 'efter förloppet');
 
