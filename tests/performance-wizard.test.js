@@ -12,7 +12,7 @@ function api(widgets=[]){
 }
 test('Performance Wizard är kopplad till Studio',()=>{
   assert.match(html,/data-extra="performanceWizard"/);
-  assert.match(html,/performance-wizard\.js\?v=20260919-1/);
+  assert.match(html,/performance-wizard\.js\?v=20261020-1/);
   assert.match(html,/performance-wizard\.css\?v=20260919-1/);
   assert.match(html,/performance-runtime\.js\?v=20260919-1/);
 });

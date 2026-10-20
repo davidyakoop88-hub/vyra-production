@@ -25,3 +25,31 @@
 /* Bannern hor aldrig hemma i OBS-utgangen. auth-security.js skapar den inte i overlay-lage; regeln
    ar andra lasen om nagot annat skulle lagga dit den. */
 html.overlay-output .verification-banner{display:none!important}
+
+/* Stangkrysset i de stangbara dialogerna (auth-security.js stangbar(), slutgranskning C-002/C-003). */
+.security-modal section{position:relative}
+.security-modal .security-stang{position:absolute;top:14px;right:14px;width:36px;height:36px;padding:0;border-radius:10px;background:transparent;color:#b9a6c4;font-size:22px;font-weight:600;line-height:1}
+.security-modal .security-stang:hover,.security-modal .security-stang:focus-visible{background:#24142e;color:#fff}
+
+/* Logga ut (auth-security.js addLogout(), slutgranskning C-004): en knapp i kontofoten och en rad i
+   Installningar. Knappen i foten ar 32x32 - storre an kravets 24 px - och ligger sist i raden. */
+.aside-bottom .user{display:flex;align-items:center;gap:9px}
+.aside-bottom .user>span{flex:1;min-width:0}
+.aside-bottom .user .logga-ut-fot{flex:none;display:grid;place-items:center;width:32px;height:32px;margin-left:auto;padding:0;border:1px solid rgba(177,60,255,.22);border-radius:9px;background:transparent;color:#b9a6c4;cursor:pointer}
+.aside-bottom .user .logga-ut-fot svg{width:16px;height:16px}
+.aside-bottom .user .logga-ut-fot:hover,.aside-bottom .user .logga-ut-fot:focus-visible{background:#24142e;color:#fff;border-color:rgba(204,77,255,.5)}
+aside.collapsed .user{flex-direction:column}
+aside.collapsed .user .logga-ut-fot{margin-left:0}
+.logout-settings{display:flex;align-items:center;gap:20px;margin-top:24px;padding:18px;border:1px solid #432451;border-radius:14px;background:#0d0612}
+.logout-settings div{display:grid;gap:5px;flex:1}
+.logout-settings small{color:#a996b3}
+.logout-settings .logga-ut{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border:0;border-radius:10px;background:#2a1633;color:#e7dbea;font-weight:800;cursor:pointer;white-space:nowrap}
+.logout-settings .logga-ut svg{width:16px;height:16px}
+.logout-settings .logga-ut:hover,.logout-settings .logga-ut:focus-visible{background:#3a1f47;color:#fff}
+@media(max-width:600px){.logout-settings{align-items:stretch;flex-direction:column}}
+/* C-030: lankarna under Data och integritet var 15 px hoga. */
+.privacy-settings nav a{display:inline-flex;align-items:center;min-height:32px}
+/* Glomt losenord? i inloggningsgaten ritades som en lila primarknapp bredvid Logga in - .auth-gate button
+   vann over .forgot-password. Den ar en lank (upptackt vid slutgranskningens fore/efter-bilder 2026-10-20). */
+.auth-gate .forgot-password{background:transparent!important;border:0!important;box-shadow:none!important;color:#d76cff!important;padding:4px 0!important;min-height:32px;font-weight:600}
+.auth-gate .forgot-password:hover,.auth-gate .forgot-password:focus-visible{color:#f0c8ff!important;text-decoration:underline}

@@ -7,10 +7,10 @@
   <link rel="stylesheet" href="design-tokens.css?v=1">
   <link rel="stylesheet" href="studio.css?v=20261020-3">
   <link rel="stylesheet" href="guardian-emblem.css?v=20260819-2">
-  <link rel="stylesheet" href="design-system.css?v=1">
+  <link rel="stylesheet" href="design-system.css?v=20261020-1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
-  <link rel="stylesheet" href="auth-client.css?v=20261017-epost">
-  <link rel="stylesheet" href="auth-security.css?v=20261017-bannerplats">
+  <link rel="stylesheet" href="auth-client.css?v=20261020-1">
+  <link rel="stylesheet" href="auth-security.css?v=20261020-1">
   <link rel="stylesheet" href="cloud-sync.css?v=20261020-1">
   <link rel="stylesheet" href="billing-client.css?v=20261020-6">
   <link rel="stylesheet" href="entitlement-gate.css?v=20260724-1">
@@ -51,7 +51,7 @@
         <span class="nav-section-label">Insikter</span>
         <button data-extra="liveControl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>LIVE-kontroll</span></button>
         <button data-view="analytics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg><span>Statistik</span></button>
-        <button data-extra="performanceWizard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12 19 5"/><path d="M16 5h3v3"/><path d="M7 16h10"/></svg><span>Performance Wizard</span></button>
+        <button data-extra="performanceWizard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12 19 5"/><path d="M16 5h3v3"/><path d="M7 16h10"/></svg><span>Prestandakontroll</span></button>
         <button data-extra="agencies"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V7l6-4 6 4v14"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9 14h.01"/><path d="M15 14h.01"/></svg><span>Agencies <small>TEST</small></span></button>
       </div>
     </nav>
@@ -121,12 +121,12 @@
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
-  <script src="auth-client.js?v=20261020-1"></script>
+  <script src="auth-client.js?v=20261020-2"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
        verifieringsmailet. Bada monterar via MutationObserver / auth-handelser. -->
   <script src="vyra-losenordsstyrka.js?v=1"></script>
-  <script src="auth-security.js?v=20261017-bannerplats"></script>
+  <script src="auth-security.js?v=20261020-1"></script>
   <!-- Trial-onboarding. Monterar pa vyra-entitlement-ok, som entitlement-gate.js redan
        avfyrar och ingen lyssnade pa. Maste alltsa ligga FORE den. -->
   <script src="vyra-trial-onboarding.js?v=1"></script>
@@ -139,7 +139,7 @@
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
   <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
   <script src="spotify-client.js?v=20260927-ko"></script>
-  <script src="extras.js?v=20261020-2"></script>
+  <script src="extras.js?v=20261020-3"></script>
   <!-- Vakt: ett sent render() skriver aldrig over en aktiv extra-vy (F08). Lagger sig ytterst
        i render-kedjan sjalv (vid load och vid klick pa en extra-knapp), sa platsen ar inte kritisk. -->
   <script src="vyra-extravy-vakt.js?v=20261018-1"></script>
@@ -148,7 +148,7 @@
   <link rel="stylesheet" href="agency-test-v3.css?v=20261020-1">
   <script src="agency-test.js?v=20261020-1"></script>
   <link rel="stylesheet" href="performance-wizard.css?v=20260919-1">
-  <script src="performance-wizard.js?v=20260919-1"></script>
+  <script src="performance-wizard.js?v=20261020-1"></script>
   <link rel="stylesheet" href="performance-runtime.css?v=20260919-1">
   <script src="performance-runtime.js?v=20260919-1"></script>
   <link rel="stylesheet" href="statistics-live.css?v=20261020-2">
@@ -163,7 +163,7 @@
   <script src="toplike-design.js?v=20260924-pension"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260916-facit"></script>
-  <script src="media.js?v=20261020-17"></script>
+  <script src="media.js?v=20261020-18"></script>
   <link rel="stylesheet" href="topcoins-v2.css?v=20261020-12">
   <script src="topcoins-v2.js?v=20261020-12"></script>
   <!-- Top Points fyra designer. EFTER media.js: modulen lindar wh/props/bind som media.js definierar,
@@ -183,7 +183,7 @@
   <script src="layout-safe.js?v=20261010-1"></script>
   <script src="cloud-sync.js?v=20261020-1"></script>
   <script src="cloud-media.js?v=20260807-panel"></script>
-  <script src="billing-client.js?v=20261020-6"></script>
+  <script src="billing-client.js?v=20261020-7"></script>
   <!-- H-falt + proportionslas. Skarvar in i den RENDERADE panelen, inte i props-strangen:
        fyra av panelbyggarna laddas dynamiskt av media.js och lagger alltid sina props-wrappar
        utanpa de statiska skriptens. Se filens huvudkommentar. -->
@@ -201,7 +201,7 @@
   <script src="vyra-rotation.js?v=20261019-1"></script>
   <!-- Vagen till skrivbordsappen. Delegerad lyssnare pa document, sa aven vyer som ritas om
        och tomma tillstand kan bara [data-ladda-desktop]. Se filens huvudkommentar. -->
-  <script src="vyra-desktop.js?v=20260903-butik"></script>
+  <script src="vyra-desktop.js?v=20261020-1"></script>
   <!-- Handlingar i de tomma tillstanden. Syskon till [data-tom], aldrig barn — rostvakten
        jamfor nodens text exakt. Se filens huvudkommentar. -->
   <script src="vyra-tomma-handlingar.js?v=2"></script>

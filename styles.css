@@ -947,3 +947,5 @@ main,.mini-sidfot{position:relative;z-index:1}
   .login-kort input{min-height:50px}
   .login-visa{min-height:44px}
 }
+/* Slutgranskning 2026-10-20 C-023: den tomma felraden gav en extra lucka i rutnatet (Skapa konto). */
+.login-kort #loginError:empty{display:none}

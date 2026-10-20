@@ -1863,3 +1863,85 @@ html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(-
 #brandKitModal .bk-aterstall{padding:10px 14px;border:1px solid var(--border-subtle);border-radius:var(--radius-sm);background:var(--surface-2);color:var(--text-primary);font-weight:650;cursor:pointer}
 #brandKitModal .bk-aterstall:hover{border-color:var(--border-active)}
 #brandKitModal .bk-aterstall:focus-visible{outline:2px solid var(--accent-purple);outline-offset:2px}
+
+/* Automationer (vyra-automationer.js, slutgranskning 2026-10-20 C-005): tomt lage, radknappar och dialogen. */
+.flows-tom{display:grid;justify-items:start;gap:10px;padding:28px}
+.flows-tom b{font-size:16px;color:var(--text-primary)}
+.flows-tom p{margin:0;max-width:56ch;color:var(--text-secondary);line-height:1.5}
+.flow-row{grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr) auto}
+.flow-row .node small{font-size:11px;color:var(--text-secondary)}
+.flow-knappar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.flow-knappar button{min-height:32px;border:1px solid #303440;border-radius:var(--radius-sm);background:#151820;color:#c9c2db;padding:6px 12px;cursor:pointer}
+.flow-knappar .flow-ta-bort{color:#ff9cb2}
+#flowModal{position:fixed}
+#flowModal>#flowModalClose{position:absolute;right:12px;top:10px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;width:32px;height:32px;padding:0;margin:0;border:1.5px solid currentColor;border-radius:50%;background:none;color:#c9c2db;cursor:pointer}
+#flowModal>#flowModalClose svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+#flowModal>#flowModalClose:hover{background:#2a1633}
+#flowModal p{color:var(--text-secondary)}
+#flowModal .flow-fel{color:#ff9cb2;font-size:13px;margin:4px 0 0;text-align:left}
+#flowModal .flow-dialog-knappar{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+#flowModal .flow-dialog-knappar button{padding:10px 16px;border-radius:var(--radius-sm);cursor:pointer}
+#flowModal .flow-dialog-knappar .ghost{border:1px solid var(--border-subtle);background:var(--surface-2);color:var(--text-primary)}
+@media(max-width:767px){.flow-row{grid-template-columns:1fr;gap:8px}.flow-row .arrow{display:none}.flow-knappar{justify-content:flex-start}}
+
+/* Slutgranskning 2026-10-20 C-029: kommandoradernas undertext och knappar var 8 px. */
+.command small,.member small,.action-item small{font-size:11px;color:#9a93a8}
+.command button,.member button,.action-item button{font-size:12px;min-height:30px;padding:6px 10px;cursor:pointer}
+/* C-036: YouTubes felstatus i samma grona farg som ett lyckat lage. Bara "fungerar" ar gront. */
+#ytStatus[data-yt-status]:not([data-yt-status="fungerar"]){color:#f0b36a}
+/* C-008 / C-016: Chatbot, YouTube och Spotify vid smal skarm (390 px). */
+@media(max-width:767px){
+.form-row{grid-template-columns:minmax(0,1fr)}
+.form-row>*{min-width:0}
+.command,.member,.action-item{grid-template-columns:34px minmax(0,1fr) auto auto;gap:8px}
+.command>span:nth-of-type(2),.member>span:nth-of-type(2),.action-item>span:nth-of-type(2){grid-column:2/-1;grid-row:2;overflow-wrap:anywhere}
+.command>i,.member>i,.action-item>i{grid-column:1;grid-row:1}.command>span:first-of-type,.member>span:first-of-type,.action-item>span:first-of-type{grid-column:2;grid-row:1;min-width:0}.command>button,.member>button,.action-item>button{grid-row:1;grid-column:3}.command>button+button,.member>button+button,.action-item>button+button{grid-column:4}
+.music-rules,.member-stats{grid-template-columns:minmax(0,1fr)}
+.spotify-connect{flex-wrap:wrap}
+.spotify-connect span{min-width:0;flex:1 1 160px}
+.spotify-connect button{flex:1 1 100%}
+}
+/* C-009: forstoringsglaset lag over platshallaren - .overlay-widget-gallery .widget-search (padding 12px) vann over .search-input input. */
+.overlay-widget-gallery .search-input .widget-search{padding-left:38px}
+/* C-010: katalogkorten vid 390 px - rankinggruppen hade tre kort per rad och knapparna klipptes. */
+@media(max-width:767px){.overlay-widget-gallery .widget-catalog .rk6-katalog .rk6-grupp{grid-template-columns:minmax(0,1fr)}.overlay-widget-gallery .widget-catalog section>button,.overlay-widget-gallery .widget-catalog section>div>button{flex:1 1 100%}.overlay-widget-gallery .widget-catalog button .owg-action-row{flex-wrap:wrap}}
+/* C-012: tre toppkort hade padding 0 (rubriken lag kant i kant med ramen) - alla andra kort har ~18-20 px. */
+#view .card.statistics-head,#view .card.stream-time-card,#view .card.spel-sida-head{padding:20px 22px}
+/* C-014: Stream Deck-huvudet tryckte ihop inledningen till ~110 px bredvid markeringen vid 390 px. */
+@media(max-width:767px){#view .sd-sida-head{flex-direction:column;align-items:flex-start}#view .sd-sida-head>div{min-width:0}}
+@media(max-width:767px){#view .sd-rutor{grid-template-columns:repeat(2,minmax(0,1fr))}#view .sd-ruta{min-width:0;overflow-wrap:anywhere}}
+/* C-015: Avancerat i Action & Event - tva spalter med fasta minsta bredder stack ut till x=418 vid 390 px. */
+@media(max-width:767px){#view .ae-grid{grid-template-columns:minmax(0,1fr)}#view .ae-grid>label{min-width:0}#view .ae-grid input,#view .ae-grid select{max-width:100%;box-sizing:border-box}}
+/* C-017: lagerlistan var for smal for sin text - "LIVE-LAGER" avstavades, raknaren brots pa tre rader och
+   lagrets status klipptes till "Kvar i lager ...". Rubriken staplas (knappen under), statusen ar kort
+   ("Synlig"/"Dold", media.js; ogat visar samma sak) och kolumnen ar bredare, se slutet av filen. */
+html:not(.overlay-output) .editor-shell .live-layer-panel header{flex-direction:column;align-items:stretch;gap:6px}
+html:not(.overlay-output) .editor-shell .live-layer-panel header b{white-space:nowrap}
+html:not(.overlay-output) .editor-shell .live-layer-panel header button{align-self:flex-start}
+/* C-021: Handelsers tomma rader sag ut som en laddning som aldrig blev klar. De ar platshallare for
+   var historiken hamnar, inte en laddning: de tonar ut nedat och ar dampade. */
+.tom-lista{opacity:.5;-webkit-mask-image:linear-gradient(#000 0%,transparent 95%);mask-image:linear-gradient(#000 0%,transparent 95%)}
+/* C-030: for sma klickytor (< 24 px) - guidens platsknappar, Angra/Gor om och OBS-testet. */
+button.guide-feature-where{min-height:28px;padding:4px 0}
+[data-angra],[data-gor-om]{min-height:28px}
+#aoiTest{min-height:32px}
+/* C-033: pilen i "Driftstatus" hamnade ensam pa rad tva. C-034: bara "Hantera abonnemang" brots. */
+.support-status{white-space:nowrap}
+.settings-page .vb-settings button{white-space:nowrap;flex:none}
+/* C-034: Installningar hade en annan aktiv markering (vansterlist) an alla andra vyer (helram). */
+aside .aside-bottom>button[data-view="settings"].active{background:linear-gradient(145deg,rgba(177,60,255,.24),rgba(120,40,200,.08))!important;border:1px solid rgba(200,120,255,.4)!important;border-radius:12px!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 26px rgba(177,60,255,.16),0 0 0 1px rgba(177,60,255,.12),0 10px 28px rgba(150,50,220,.26)!important}
+/* C-035: TTS-faltens etiketter stod olika vid 390 px - nagra bredvid faltet, andra ovanfor. */
+@media(max-width:767px){#view .tts-fields>label>select,#view .tts-fields>label>input:not([type=checkbox]):not([type=radio]){display:block;width:100%;box-sizing:border-box;margin-top:6px}}
+/* C-032: Vip-kortets titel klipptes ("X2 B...") av knappen som lag ovanpa samma rad vid 390 px. */
+@media(max-width:767px){.media-info{padding-right:11px}.media-info .use-media{position:static;align-self:flex-start;margin-top:8px}}
+/* C-029: 7-9 px text i mediakorten. */
+.media-info b{font-size:12px}.media-info small{font-size:11px;color:#9a8fa6}
+/* C-017: lagerkolumnen far 30 px till (34 px under 1100 px) sa namn och status ryms utan att klippas och
+   raden halls under 70 px. Duken (minmax(0,1fr)) tar mellanskillnaden. */
+body:has(.editor-shell) .editor-shell{grid-template-columns:240px minmax(0,1fr) 300px}
+@media(max-width:1100px){body:has(.editor-shell) .editor-shell{grid-template-columns:210px minmax(0,1fr) 260px}}
+/* C-022: i Anslut TikTok stod hjalptexten bredvid knappen och brots konstigt, och "Anslut konto" var en
+   liten lila knapp utan samma form som "Verifiera med TikTok". Knapparna far en egen rad och samma form. */
+#connectModal>#verifieraTikTok{display:block;margin:12px auto 0}
+#connectModal>small{display:block;margin-top:8px;color:#b9a6c4;font-size:12px;line-height:1.4}
+#connectModal #connectNow,#connectModal #anslutNu{display:block;margin:12px auto 0;min-height:40px;padding:10px 18px;border-radius:10px;font-weight:700}

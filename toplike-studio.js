@@ -313,7 +313,7 @@
 
     const liveMetric = w.liveMetric || (w.type === 'templateTopCoins' ? 'coins' : 'likes');
     const dateRange = w.dateRange || 'stream';
-    const DATE_RANGES = [['stream', 'Denna stream'], ['today', 'Idag'], ['week', 'Denna vecka'], ['month', 'Denna månad'], ['year', 'Detta år'], ['all', 'Alltid']];
+    const DATE_RANGES = [['stream', 'Denna stream'], ['today', 'Idag'], ['week', 'Denna vecka'], ['month', 'Denna månad'], ['year', 'Detta år'], ['all', 'All tid']];
     out = out.replace(
       '<div class="property-group"><h4>DESIGN',
       `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Mynt från gåvor</option><option value="points"${liveMetric === 'points' ? ' selected' : ''}>Poäng (Actions & Events)</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
