@@ -801,8 +801,10 @@
   // to markup rather than hidden afterwards: a hidden widget is still built, still animated, and
   // still in the DOM for anything that queries it.
   //
-  // `hidden` stays a separate concept. It is the streamer's own eye toggle on a layout widget, and a
-  // standalone instance the streamer has hidden must still open on its own link.
+  // `hidden` stays a separate concept from placement: it decides whether a widget is DRAWN, not
+  // whether it is SELECTED. A hidden standalone instance is still selected for its own link (so the
+  // link resolves instead of showing the missing-widget view), but it is never drawn — dold betyder
+  // dold, also on its own link (beslut 2026-10-18; overlay-dolda.js enforces it after every renderer).
   function selectForRender(widgets, options) {
     const list = Array.isArray(widgets) ? widgets : [];
     const wanted = options && options.widgetId ? String(options.widgetId) : '';
