@@ -26,12 +26,55 @@
   let session=0,pendingChoice=null,tickTimer=null;
   const META=()=>metaKey(workspace.id),QUEUE=()=>queueKey(workspace.id);
   function read(key,fallback=null){try{return JSON.parse(localStorage.getItem(key))}catch{return fallback}}
+  // ---- F03: VAD SERVERN BEKRÄFTAT OCH VAD DEN INTE SETT ÄN (granskningen 2026-10-18) -----------
+  //
+  // Editorn visade X=100 medan serverutgången — den OBS läser — stod kvar på X=20, och raden sade
+  // först "Sparat i molnet ✓ · sparat 17:18" fast klockslaget var den LOKALA sparningen. Tre saker
+  // följer härifrån:
+  //   bekraftadVid  när servern senast bekräftade att den har samma layout som den här datorn
+  //                 (sätts av setStatus('synced'), det enda läget där det är sant)
+  //   obekraftade   varje ögonblicksbild som skickats men inte fått svar. Kom PUT:en fram men
+  //                 svaret inte (nätet föll, fliken somnade) bär nästa PUT den gamla versionen och
+  //                 får 409 — en "synkkonflikt" mot sig själv med en enda flik. Se forklara().
+  //   skrivningar   räknas upp vid varje PUT, så att följaren kan se att en egen skrivning hann
+  //                 starta medan den väntade på listan.
+  let bekraftadVid=null,obekraftade=[],skrivningar=0;
+  // Postgres JSONB sorterar om nycklarna, så serverns kopia och den skickade är aldrig samma
+  // sträng. Jämförelsen görs på innehållet: nycklarna sorterade, savedAt bortlämnad (den är olika
+  // i varje skickning) och storage bara när den bär något.
+  function kanon(v){if(Array.isArray(v))return'['+v.map(kanon).join(',')+']';if(v&&typeof v==='object')return'{'+Object.keys(v).filter(k=>v[k]!==undefined).sort().map(k=>JSON.stringify(k)+':'+kanon(v[k])).join(',')+'}';return JSON.stringify(v===undefined?null:v)}
+  function innehall(state){if(!state||typeof state!=='object')return null;const{__vyraCloud:m,...rest}=state;const s=m&&m.storage&&typeof m.storage==='object'&&Object.keys(m.storage).length?m.storage:null;return kanon(s?{...rest,__storage:s}:rest)}
+  // Hur många widgetar (plus en för övriga inställningar) skiljer den här datorn från det servern
+  // bekräftat. Det är talet användaren behöver: "2 ändringar syns inte i OBS än". Antalet
+  // sparningar vore fel mått — en enda dragning sparar många gånger.
+  let diffMinne={a:null,b:null,n:0};
+  function skillnad(fore,efter){
+    if(!efter||!Array.isArray(efter.widgets))return 1;
+    if(!fore||!Array.isArray(fore.widgets))return Math.max(1,efter.widgets.length);
+    const f=new Map(fore.widgets.map(w=>[w&&w.id,kanon(w)])),e=new Map(efter.widgets.map(w=>[w&&w.id,kanon(w)]));
+    let n=0;e.forEach((v,id)=>{if(f.get(id)!==v)n++});f.forEach((_,id)=>{if(!e.has(id))n++});
+    const{widgets:_f,...fr}=fore,{widgets:_e,...er}=efter;if(kanon(fr)!==kanon(er))n++;
+    return n}
+  function antalOsynkade(){
+    if(!workspace||!initialized)return 0;
+    const nu=localStorage.getItem('vyra-state');
+    if(nu==null||nu===lastLocal)return 0;
+    if(diffMinne.a===lastLocal&&diffMinne.b===nu)return diffMinne.n;
+    let n;try{n=skillnad(lastLocal==null?null:JSON.parse(lastLocal),JSON.parse(nu))}catch{n=1}
+    diffMinne={a:lastLocal,b:nu,n};return n}
+  const andringar=n=>n===1?'1 ändring':`${n} ändringar`;
   function payload(){const state=read('vyra-state');if(!state||!Array.isArray(state.widgets))return null;const storage={};EXTRA.forEach(k=>{const v=localStorage.getItem(k);if(v!=null)storage[k]=v});return{...state,__vyraCloud:{schema:1,storage,savedAt:Date.now()}}}
   // Molnlayouten projiceras av agaren: den tar laset, skriver markoren, nycklarna och kor
   // cacherna, och mutera globala state-objektet in-place. Utan det kunde tva flikar committa
   // varsin layout och den forlorande rulla tillbaka ovanpa vinnaren.
   async function apply(remote){if(!remote||!Array.isArray(remote.widgets))throw new Error('Online-layouten ar ogiltig');const data={...remote},meta=data.__vyraCloud;delete data.__vyraCloud;const extras={};Object.entries(meta?.storage||{}).forEach(([k,v])=>{if(EXTRA.includes(k)&&typeof v==='string')extras[k]=v});const token=root.VyraSessionState.beginProjection();const out=await root.VyraSessionState.projectActive(token,{mode:'studio-committed',workspaceId:workspace&&workspace.id,overlayId:overlay&&overlay.id,state:data,extras});if(!out.ok)throw new Error('Sessionen kunde inte projiceras');lastLocal=localStorage.getItem('vyra-state');root.render?.()}
-  const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',verifiering:'Verifiera din e-post för att spara i molnet',conflict:'Synkkonflikt',local:'Lokalt läge'};
+  const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',verifiering:'Verifiera din e-post för att spara i molnet',conflict:'Synkkonflikt',utloggad:'Du är utloggad',local:'Lokalt läge'};
+  // UTGÅNGEN SESSION ÄR INTE ETT AVBROTT. Servern svarar 401 på en skrivning när sessionen gått ut —
+  // eller när CSRF-token roterats bort av ett annat /api/auth/me (en annan flik, skrivbordsappen).
+  // Båda gick tidigare till offline-grenen: "Ingen kontakt med molnet" och en synk som aldrig kom
+  // tillbaka av sig själv. Rotationen botas tyst (fornyaSession()); en riktigt utgången session
+  // får en egen rad och en knapp, och ändringarna skickas när inloggningen är klar.
+  const UTLOGGAD_NOTE='Sessionen har gått ut. Dina ändringar finns kvar på den här datorn, men OBS hämtar layouten från servern och ser dem inte förrän du loggat in igen. De skickas direkt efter inloggningen.';
   // Konsekvensen, inte tillstandet. "Offline" i sig forklarar inte varfor OBS ser gammalt ut, och
   // da felsoker man widgeten i stallet for anslutningen — precis det som hant.
   const OFFLINE_NOTE='Dina ändringar finns kvar på den här datorn, men OBS hämtar layouten från servern och ser dem inte förrän synken är tillbaka.';
@@ -45,24 +88,61 @@
   const VERIFIERING_NOTE='Ändringarna sparas på den här datorn. OBS-länken skapas när du öppnat länken i verifieringsmejlet och laddat om sidan.';
   const epostkrav=e=>!!(e&&e.emailVerificationRequired);
   let statusText=STATUS_TEXT.local;
-  function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];paint();offlineNote()}
+  function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];if(next==='synced')bekraftadVid=Date.now();paint();offlineNote()}
   // Tidpunkten for senaste LYCKADE skrivning, satt av agarens egen signal nedan. Visas som
   // suffix pa statusen i stallet for som eget element: .cloud-status ager redan fragan
   // "ar det sparat?", och tva element for samma svar ar dubbelkontrollen Etapp 3 tog bort.
   let sparatVid=null;
   const klockan=ms=>new Date(ms).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
-  function paint(){document.querySelectorAll('.cloud-status').forEach(el=>{el.dataset.state=status;if(sparatVid){el.dataset.sparatVid=String(sparatVid)}else{delete el.dataset.sparatVid}const span=el.querySelector('span');if(span)span.textContent=sparatVid?`${statusText} · sparat ${klockan(sparatVid)}`:statusText})}
+  // I molnläge är klockslaget SERVERNS bekräftelse, inte den lokala sparningen: "Sparat i molnet ✓ ·
+  // sparat 17:18" när 17:18 bara var disken är exakt den optimism granskningen fångade (F03).
+  // Lokalt läge har ingen server, och där är den lokala sparningen hela sanningen.
+  // data-sparat-vid bär fortfarande den lokala sparningen (maskinläsbar, autospar-provet).
+  function paint(){
+    const moln=!!(workspace&&initialized),n=moln?antalOsynkade():0;
+    // 'synced' med väntande ändringar är inte synkat: en ny ändring hann komma medan förra
+    // skickningen var ute. Raden får inte säga "syns i OBS" då.
+    const lage=status==='synced'&&n>0?'vantar':status;
+    let text;
+    if(!moln)text=sparatVid?`${statusText} · sparat ${klockan(sparatVid)}`:statusText;
+    else if(n>0)text=`${lage==='vantar'?'Väntar på att skicka':statusText} · ${andringar(n)} syns inte i OBS än`;
+    else if(status==='synced')text=`${statusText} · syns i OBS${bekraftadVid?' · '+klockan(bekraftadVid):''}`;
+    else text=statusText;
+    const titel=!moln?'':`OBS visar serverns version${overlay&&overlay.version!=null?' (v'+overlay.version+')':''}${bekraftadVid?', senast bekräftad kl. '+klockan(bekraftadVid):''}. `
+      +(n>0?`Den här datorn har ${andringar(n)} som servern inte bekräftat än.`:'Den här datorn och servern är överens.');
+    // Skriver bara det som ändrats: paint() körs varje sekund från tickern, och andra moduler
+    // lyssnar på DOM-mutationer.
+    const satt=(el,k,v)=>{if(v==null){if(k in el.dataset)delete el.dataset[k]}else if(el.dataset[k]!==v)el.dataset[k]=v};
+    document.querySelectorAll('.cloud-status').forEach(el=>{satt(el,'state',lage);
+      satt(el,'sparatVid',sparatVid?String(sparatVid):null);
+      satt(el,'osynkade',moln?String(n):null);
+      satt(el,'bekraftadVid',moln&&bekraftadVid?String(bekraftadVid):null);
+      satt(el,'serverVersion',moln&&overlay&&overlay.version!=null?String(overlay.version):null);
+      if(el.title!==titel)el.title=titel;
+      const span=el.querySelector('span');if(span&&span.textContent!==text)span.textContent=text})}
   // Agaren annonserar varje lyckad skrivning (session-state.js). Autosparet syns darmed aven i
   // lokalt lage, dar molnstatusen aldrig nar 'synced' — det ar precis det laget en oinloggad
   // anvandare ser, och det som fick Spara-knappen att verka nodvandig.
-  root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();paint()});
+  // Samma signal markerar en osynkad ändring DIREKT (F03), i stället för när tickern hunnit se den
+  // och debouncen gått — fram till dess sade raden "Sparat i molnet ✓" om något servern inte sett.
+  root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();paint();offlineNote()});
+  let noteHtml=null;
   function offlineNote(){
     const bar=document.querySelector('.overlay-link-bar');
     let note=document.querySelector('.cs-offline-note');
-    if(status!=='offline'&&status!=='verifiering'){note?.remove();return}
+    if(status!=='offline'&&status!=='verifiering'&&status!=='utloggad'){note?.remove();noteHtml=null;return}
     if(!bar)return;
-    if(!note){note=document.createElement('div');note.className='cs-offline-note';document.body.append(note)}
-    note.innerHTML=status==='verifiering'?'<b>Verifiera din e-post</b><span>'+VERIFIERING_NOTE+'</span>':'<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+'</span>';
+    if(!note){note=document.createElement('div');note.className='cs-offline-note';document.body.append(note);noteHtml=null}
+    const n=antalOsynkade(),tillagg=(n>0?` ${andringar(n)} syns inte i OBS än.`:'')+(bekraftadVid?` Senast bekräftat av servern kl. ${klockan(bekraftadVid)}.`:'');
+    const html=status==='verifiering'?'<b>Verifiera din e-post</b><span>'+VERIFIERING_NOTE+'</span>'
+      :status==='utloggad'?'<b>Du är utloggad</b><span>'+UTLOGGAD_NOTE+tillagg+'</span><button type="button" class="primary" data-cs-logga-in>Logga in igen</button>'
+      :'<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+tillagg+'</span>';
+    // Skrivs bara om när texten faktiskt ändrats: anropas vid varje sparning, och en knapp som
+    // byts ut mitt i ett klick tappar klicket.
+    if(html===noteHtml&&note.innerHTML)return;
+    noteHtml=html;note.innerHTML=html;if(note.dataset)note.dataset.lage=status;
+    const knapp=note.querySelector&&note.querySelector('[data-cs-logga-in]');
+    if(knapp)knapp.onclick=()=>{root.VyraAuth?.showGate?.('login')};
   }
   // Var en tom stubb. setStatus() skrev till document.querySelectorAll('.cloud-status') och det
   // fanns inget sadant element pa sidan — ingen skapade det. Hela statusmaskinen raknade ut ratt
@@ -95,7 +175,10 @@
   // i den här sessionen (flaggas av layer-delete i media.js). En tom layout från t.ex. en
   // nyinloggad enhet utan lokal historik stoppas annars av serverns 409 emptyBlocked och
   // hamnar i den vanliga konfliktdialogen istället för att tyst nolla molnet.
-  async function push(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const skickad=localStorage.getItem('vyra-state');const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true&&data.widgets.length===0;const tappade=root.__vyraUserRemovedWidget===true;
+  async function skicka(){if(!workspace||!overlay||syncing||!root.VyraSessionState.canPush())return{ok:false,status:0,reason:'busy'};const mine=session;const skickad=localStorage.getItem('vyra-state');const data=payload();if(!data)return{ok:false,status:0,reason:'no-state'};syncing=true;skrivningar++;
+    // Minns ögonblicksbilden tills servern svarat. Se forklara().
+    const forsok={raw:skickad,innehall:innehall(data),version:overlay.version,emptied:false,tappade:false};obekraftade.push(forsok);if(obekraftade.length>20)obekraftade.shift();
+    setStatus('saving');try{const emptied=root.__vyraUserEmptiedWidgets===true&&data.widgets.length===0;const tappade=root.__vyraUserRemovedWidget===true;forsok.emptied=emptied;forsok.tappade=tappade;
       // Har anvandaren lagt tillbaka widgets ar avsikten "jag tomde layouten" inaktuell och
       // raderas direkt. Annars kunde en gammal avsikt ligga kvar och tillata en senare tomning
       // som ingen bett om.
@@ -103,7 +186,42 @@
       // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
       // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
       // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
-      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e.status===409){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;obekraftade=[];localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e&&e.status===409){/* F03: en 409 kan vara VÅR EGEN skrivning, vars svar aldrig kom fram. Den förklaras innan någon konflikt visas. */if(mine===session){let remote=null;try{remote=await getRemote(overlay.id)}catch{}if(mine===session&&forklara(remote))return{ok:true,reason:'egen-skrivning'}}if(mine!==session)return{ok:false,status:0,reason:'superseded'};localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(e&&e.status===401){/* Avgörs av push(): förnyad CSRF eller utgången session. Statusen lämnas åt den. */localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;return{ok:false,status:401,reason:'auth'}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+  // push() är skicka() plus beslutet om en 401. Första 401:an försöker förnya CSRF-token: servern
+  // svarar 401 'Inte inloggad' också när token roterats av ett annat GET /api/auth/me (en annan flik,
+  // skrivbordsappen, "Jag har verifierat"-knappen), och då lever sessionen. Bara när /api/auth/me
+  // självt nekar — eller den nya token också nekas — är sessionen verkligen ute.
+  async function push(){
+    const mine=session;let r=await skicka();
+    if(!r||r.reason!=='auth')return r;
+    if(mine!==session)return{ok:false,status:0,reason:'superseded'};
+    if(await fornyaSession()&&mine===session){r=await skicka();if(!r||r.reason!=='auth')return r}
+    if(mine!==session)return{ok:false,status:0,reason:'superseded'};
+    hanteraUtloggad();return r}
+  // auth-client.js sparar själv den nya CSRF-token när /api/auth/me svarar (den äger nyckeln).
+  async function fornyaSession(){try{const me=await call('/api/auth/me');return!!(me&&me.user)}catch{return false}}
+  function hanteraUtloggad(){clearTimeout(timer);timer=null;setStatus('utloggad')}
+  // FÖRKLARA EN NYARE SERVERVERSION INNAN DEN KALLAS KONFLIKT. Konflikten i granskningen uppstod
+  // med en enda Studio-flik. Två vägar dit utan någon annan skribent, båda reproducerade i
+  // tests/cloud-sync-synkstatus.test.js:
+  //   1. PUT:en kom fram men svaret inte. overlay.version stod kvar, nästa PUT fick 409, och
+  //      banderollen sade "Layouten ändrades på en annan dator" — om vår egen skrivning.
+  //   2. Följaren läste listan medan en egen PUT var ute; den såg version+1 innan PUT-svaret
+  //      hunnit flytta fram overlay.version, och sin egen osparade ändring som "osynkad".
+  // Har servern exakt det innehåll som den här datorn har nu — eller som den skickade och inte fick
+  // svar på — är det ingen konflikt. Versionen tas över och det som återstår skickas. Allt annat
+  // (en annan enhet, krympvakten, serverns kampanjnollställning) går till banderollen som förut.
+  function forklara(remote){
+    if(!remote||!remote.state||!overlay||(remote.id!=null&&remote.id!==overlay.id))return false;
+    const k=innehall(remote.state),nu=localStorage.getItem('vyra-state');let raw,traff=null;
+    if(k===innehall(payload()))raw=nu;
+    else{traff=obekraftade.find(f=>f.innehall===k&&Number(remote.version)>Number(f.version));if(!traff)return false;raw=traff.raw}
+    // Avsikten att radera förbrukades av skrivningen som faktiskt landade.
+    if(traff&&traff.emptied)delete root.__vyraUserEmptiedWidgets;if(traff&&traff.tappade)delete root.__vyraUserRemovedWidget;
+    overlay=remote;obekraftade=[];lastLocal=raw;
+    if(nu!==lastLocal){koadLokal=nu;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule()}
+    else{koadLokal=null;localStorage.removeItem(QUEUE());saveMeta();setStatus('synced')}
+    return true}
   function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);/* lastLocal maste folja med: utan det sag tickern den nyss hamtade layouten som en LOKAL andring och skickade molnets egen layout tillbaka till molnet (uppmatt 2026-10-10: PUT 200 sju sekunder efter varje Online-klick). */lastLocal=localStorage.getItem('vyra-state');saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
@@ -176,7 +294,23 @@
           workspaceId:workspace.id,overlayId:overlay.id,state:parked.state,extras:parked.extras||{},
           reason:'backup-restored'});
         if(mine!==session)return;
-        if(out.ok){localStorage.removeItem(backupKey(workspace.id));lastLocal=localStorage.getItem('vyra-state');saveMeta();setStatus('synced')}
+        if(out.ok){localStorage.removeItem(backupKey(workspace.id));
+          // F03: ÅTERLÄMNAD ÄR INTE SAMMA SAK SOM SYNKAD. Grenen sade alltid 'synced' och stämplade det
+          // parkerade arbetet som bekräftat — också när det var ändringar servern aldrig fått (en
+          // utloggning medan synken låg nere, en session som gick ut). Editorn visade X=100,
+          // serverutgången X=20, och raden "Sparat i molnet ✓". Nu jämförs innehållet:
+          const nu=localStorage.getItem('vyra-state'),k=innehall(overlay.state);
+          let bekraftat=null;try{bekraftat=ownsLocal&&meta.lastLocal!=null?innehall(JSON.parse(meta.lastLocal)):null}catch{}
+          if(k===innehall(payload())){lastLocal=nu;saveMeta();setStatus('synced')}
+          // Inget nytt sedan senaste bekräftelsen, men molnet har gått vidare (annan enhet): samma
+          // beslut som grenen meta.version < molnets nedan — molnets version tas in.
+          else if(bekraftat!=null&&bekraftat===innehall(parked.state)){await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')}
+          // Osynkat arbete och molnet står still sedan sist: det skickas, med meta-versionen, så att
+          // servern svarar 409 om någon annan hunnit skriva.
+          else if(ownsLocal&&Number(meta.version)>=Number(overlay.version)){lastLocal=meta.lastLocal??null;koadLokal=nu;
+            localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('saving');skickaNu=true}
+          // Osynkat arbete OCH ett moln som gått vidare: användaren väljer.
+          else{lastLocal=nu;setStatus('conflict');showConflict()}}
         // Misslyckas aterlamningen behalls backupen och molnets layout skrivs INTE in. Tidigare
         // ersattes det parkerade arbetet tyst av molnet — anvandaren sag bara "synced" och att
         // widgetarna var borta. Nasta initialize forsoker igen, sa lange backupen ligger kvar.
@@ -204,7 +338,17 @@
       }else if(!ownsLocal||!local?.widgets?.length){
         await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')
       }else if(meta&&Number(meta.version)<Number(overlay.version)&&localStorage.getItem('vyra-state')!==meta.lastLocal){
-        setStatus('conflict');showConflict()
+        // F03: molnet är nyare och lokalt har osynkat — men är det NÅGON ANNANS skrivning? Har
+        // molnet exakt den här datorns innehåll, eller det som låg i kön (skickat, svaret aldrig
+        // framme, sidan omladdad), är det vår egen version. Då tas den över i stället för att
+        // banderollen frågar användaren om hen vill behålla sin egen ändring mot sig själv.
+        const ko=read(QUEUE()),k=innehall(overlay.state),lika=k===innehall(local);
+        if(lika||(ko&&ko.state&&innehall(ko.state)===k)){
+          await apply(local);if(mine!==session)return;
+          if(lika){lastLocal=localStorage.getItem('vyra-state');koadLokal=null;localStorage.removeItem(QUEUE());saveMeta();setStatus('synced')}
+          else{lastLocal=meta.lastLocal??null;koadLokal=localStorage.getItem('vyra-state');
+            localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('saving');skickaNu=true}
+        }else{setStatus('conflict');showConflict()}
       }else if(meta&&Number(meta.version)<Number(overlay.version)){
         await apply(overlay.state);if(mine!==session)return;saveMeta();setStatus('synced')
       }else{
@@ -247,12 +391,24 @@
   function resetSession(){session+=1;clearTimeout(timer);timer=null;if(tickTimer){clearInterval(tickTimer);tickTimer=null}if(foljTimer){clearInterval(foljTimer);foljTimer=null}foljer=false;
     if(pendingChoice){const resolve=pendingChoice;pendingChoice=null;resolve('aborted')}
     document.querySelector('.cs-modal')?.remove();document.querySelector('.cs-conflict')?.remove();
-    workspace=null;overlay=null;lastLocal=null;syncing=false;initialized=false;setStatus('local')}
+    workspace=null;overlay=null;lastLocal=null;syncing=false;initialized=false;obekraftade=[];bekraftadVid=null;setStatus('local')}
   root.VyraSessionState?.registerTeardown?.('cloud-sync',resetSession);
   addEventListener('vyra-session-ended',resetSession);
   let authHanterad=false;
   addEventListener('vyra-auth-local',()=>{authHanterad=true;root.VyraSessionState.projectLocalSession()});
-  addEventListener('vyra-auth-ready',e=>{authHanterad=true;initialize(e.detail)});
+  addEventListener('vyra-auth-ready',e=>{authHanterad=true;if(initialized&&workspace){ateruppta(e.detail);return}initialize(e.detail)});
+  // NY INLOGGNING MITT I EN SESSION (F03). auth-client.js visar inloggningsrutan ovanpå studion —
+  // "Logga in igen" ovan, eller när /api/auth/me nekar — och avfyrar vyra-auth-ready när den är
+  // klar. initialize() gör ingenting en andra gång, så tidigare låg den osynkade ändringen kvar
+  // tills nästa omladdning. Nu skickas den direkt. Är det ett ANNAT konto som loggat in rivs den
+  // gamla sessionen som vid en vanlig utloggning (parkerar arbetet under sitt eget workspace)
+  // innan det nya kontot initieras — A:s layout får aldrig skickas till B:s overlay.
+  function ateruppta(detail){
+    const ws=detail&&detail.workspaces&&detail.workspaces[0];if(!ws)return;
+    if(ws.id!==workspace.id){const ss=root.VyraSessionState;
+      Promise.resolve(ss&&ss.beginLogout?ss.beginLogout():resetSession()).catch(()=>{}).then(()=>{if(initialized)resetSession();initialize(detail)});return}
+    if(status==='utloggad'||status==='offline'||read(QUEUE())||localStorage.getItem('vyra-state')!==lastLocal){
+      setStatus('saving');push().then(r=>{if(r&&r.reason==='busy')schedule()}).catch(()=>{})}}
   setTimeout(()=>{
     if(authHanterad)return;
     authHanterad=true;
@@ -281,23 +437,26 @@
   async function foljMolnet(){
     if(foljer||!workspace||!overlay||!initialized||syncing||pendingChoice)return{ok:false,reason:'upptagen'};
     if(document.querySelector('.cs-conflict'))return{ok:false,reason:'konflikt-visas'};
-    const mine=session;foljer=true;
+    const mine=session,skrivFore=skrivningar;foljer=true;
     try{
       const items=(await list()).overlays||[];if(mine!==session)return{ok:false,reason:'superseded'};
+      if(syncing||skrivningar!==skrivFore)return{ok:false,reason:'upptagen'};
+      // Listan svarade: sessionen lever. Var raden 'utloggad' har någon loggat in igen (en annan flik) — skicka.
+      if(status==='utloggad'){setStatus('saving');push().then(r=>{if(r&&r.reason==='busy')schedule()}).catch(()=>{});return{ok:true,reason:'inloggad-igen'}}
       const remote=items.find(x=>x.id===overlay.id);
       if(!remote||!(Number(remote.version)>Number(overlay.version)))return{ok:true,reason:'lika'};
       const osynkat=localStorage.getItem('vyra-state')!==lastLocal||!!read(QUEUE());
-      if(osynkat){setStatus('conflict');showConflict();return{ok:true,reason:'konflikt'}}
+      if(osynkat){let hamtad=null;try{hamtad=await getRemote(overlay.id)}catch{}if(mine!==session)return{ok:false,reason:'superseded'};if(syncing||skrivningar!==skrivFore)return{ok:false,reason:'upptagen'};if(forklara(hamtad))return{ok:true,reason:'egen-skrivning'};setStatus('conflict');showConflict();return{ok:true,reason:'konflikt'}}
       const hamtad=await getRemote(overlay.id);if(mine!==session)return{ok:false,reason:'superseded'};
       overlay=hamtad;await apply(overlay.state);if(mine!==session)return{ok:false,reason:'superseded'};
       lastLocal=localStorage.getItem('vyra-state');koadLokal=null;localStorage.removeItem(QUEUE());saveMeta();setStatus('synced');
       root.toast?.('Layouten uppdaterades från en annan enhet');
       return{ok:true,reason:'hamtad',version:overlay.version};
-    }catch(e){return{ok:false,reason:'fel',error:e&&e.message}}
+    }catch(e){/* En GET kräver ingen CSRF: 401 här är en utgången session, inget annat. */if(e&&e.status===401&&mine===session&&status!=='utloggad')hanteraUtloggad();return{ok:false,reason:'fel',error:e&&e.message}}
     finally{foljer=false}
   }
   function startFoljare(){if(foljTimer)return;foljTimer=setInterval(()=>{if(document.hidden)return;foljMolnet()},FOLJ_MS)}
-  function startTicker(){startFoljare();if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}},1000)}
+  function startTicker(){startFoljare();if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;if(status==='utloggad'||status==='conflict'){paint();return}const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}paint()},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
   // Mountningen far INTE hanga pa initialize() eller startTicker(): bada kraver ett workspace, och
