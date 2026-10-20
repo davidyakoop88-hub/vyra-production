@@ -52,7 +52,9 @@
         "vyra-panelram.js",
         "vyra-testspel.js",
         "fargschema-prov.js",
-        "vyra-sidbyte.js"
+        "vyra-sidbyte.js",
+        "vyra-mobil.js",
+        "vyra-mobil.css"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -95,7 +97,8 @@
         "tests/browser/panel-krav-2.browser.test.js",
         "tests/browser/panel-krav-3.browser.test.js",
         "tests/browser/panel-krav-4.browser.test.js",
-        "tests/browser/sidbyte-borjar-overst.browser.test.js"
+        "tests/browser/sidbyte-borjar-overst.browser.test.js",
+        "tests/browser/studio-mobil.browser.test.js"
       ],
       "matning": [],
       "risker": [
