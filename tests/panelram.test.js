@@ -306,7 +306,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const ranking = plats('vyra-ranking-panel.js', '20261019-2');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
-  const mal = plats('vyra-mal-panel.js', '20261019-2');
+  const mal = plats('vyra-mal-panel.js', '20261020-14');  // 20261020-14: cirkelns rubrik är en rad, inte ett fält (B-005)
   assert.ok(mal > reg && mal > testspel && mal < ordning, 'målens poster laddas efter registret och testmotorn, före panelordningen');
   // Top Streaks poster (vyra-streak-panel.js, PR 10) på samma sätt.
   const streak = plats('vyra-streak-panel.js', '20261019-1');
@@ -321,7 +321,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const fontan = plats('vyra-fontan-panel.js', '20261019-2');
   assert.ok(fontan > reg && fontan > testspel && fontan < ordning, 'fontänernas och gåvoburkens poster laddas efter registret och testmotorn, före panelordningen');
   // Fan Level 50:s och Glove Snipe-paketens poster (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14) på samma sätt.
-  const fl50 = plats('vyra-fl50-panel.js', '20261019-1'), glove = plats('vyra-glove-panel.js', '20261019-2');
+  const fl50 = plats('vyra-fl50-panel.js', '20261019-1'), glove = plats('vyra-glove-panel.js', '20261020-14');  // 20261020-14: raden om avvecklade paket (B-001)
   assert.ok(fl50 > reg && fl50 > testspel && fl50 < ordning, 'Fan Level 50:s post laddas efter registret och testmotorn, före panelordningen');
   assert.ok(glove > reg && glove > testspel && glove < ordning, 'Glove Snipe-paketens poster laddas efter registret och testmotorn, före panelordningen');
   // Egen texts post (vyra-egen-panel.js, PR 16) på samma sätt. 20261019-2 för de tio familjefilerna ovan: Lager visas

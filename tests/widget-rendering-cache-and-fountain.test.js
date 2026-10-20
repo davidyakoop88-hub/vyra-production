@@ -386,7 +386,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
   // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
-  assert.match(media, /const version='20261020-6'/);
+  assert.match(media, /const version='20261020-14'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -466,7 +466,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
-  assert.match(media, /custom-widgets\.js\?v=20261018-1/);
+  assert.match(media, /custom-widgets\.js\?v=20261020-14/);
   // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
   // Classics och panelen ar ororda och behaller sina tidigare versioner.
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-

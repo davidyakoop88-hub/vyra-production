@@ -65,7 +65,7 @@ test('nolltraff doljer VIDEO FX-paketen och visar Inga widgets hittades med Rens
   const page = await overlayKatalog();
   try {
     const fore = await page.evaluate(matKatalog);
-    assert.ok(fore.namn.some(n => /Koi Pearl/.test(n)), 'provet mater inget: Koi Pearl-paketet finns inte i katalogen');
+    assert.ok(fore.namn.some(n => /Pink Princess/.test(n)), 'provet mater inget: Pink Princess-paketet finns inte i katalogen');
     assert.equal(fore.tom, null, 'nolltraffslaget syns utan sokning');
 
     await sok(page, 'xyz-granskning-ingen');
@@ -90,10 +90,12 @@ test('nolltraff doljer VIDEO FX-paketen och visar Inga widgets hittades med Rens
 test('sokningen traffar paketen som vilket kort som helst', { skip, timeout: 120000 }, async () => {
   const page = await overlayKatalog();
   try {
-    await sok(page, 'koi pearl');
+    // Koi Pearl Lagoon och Masquerade Ball ar avvecklade (slutgranskning B-001/B-002): de finns inte i
+    // katalogen alls, sa sokningen provas pa Pink Princess.
+    await sok(page, 'pink princess');
     const m = await page.evaluate(matKatalog);
-    assert.ok(m.namn.some(n => /Koi Pearl Lagoon/.test(n)), 'Koi Pearl Lagoon hittas inte');
-    assert.ok(!m.namn.some(n => /Masquerade|Cloud Fox|Pink Princess|Royal Ruby/.test(n)), 'orelaterade paket star kvar: ' + m.namn.join(', '));
+    assert.ok(m.namn.some(n => /Pink Princess/.test(n)), 'Pink Princess hittas inte');
+    assert.ok(!m.namn.some(n => /Koi Pearl|Masquerade|Cloud Fox|Royal Ruby/.test(n)), 'orelaterade paket star kvar: ' + m.namn.join(', '));
     assert.equal(m.tom, null);
   } finally { await page.close(); }
 });
