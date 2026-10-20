@@ -326,7 +326,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   assert.ok(glove > reg && glove > testspel && glove < ordning, 'Glove Snipe-paketens poster laddas efter registret och testmotorn, före panelordningen');
   // Egen texts post (vyra-egen-panel.js, PR 16) på samma sätt. 20261019-2 för de tio familjefilerna ovan: Lager visas
   // igen (PR 16, vyra-lager.js skriver z-index = lagret på lådan).
-  const egen = plats('vyra-egen-panel.js', '20261019-1');
+  const egen = plats('vyra-egen-panel.js', '20261020-14');  // 20261020-14: Egen bild/video, Låtönskningar och Skattkistan i ramen (B-013)
   assert.ok(egen > reg && egen > testspel && egen < ordning, 'Egen texts post laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska

@@ -201,7 +201,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261018-13/);
+  assert.match(studio, /widget-factory\.js\?v=20261020-14/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   assert.match(studio, /gift-event-images\.js\?v=20261019-1/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.

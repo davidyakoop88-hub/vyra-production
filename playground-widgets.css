@@ -538,3 +538,5 @@
 
 /* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
 .pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
+/* B-009: nollställningen hoppar staplar och text samtidigt — inga övergångar under ett ögonblick. */
+.pgw .gv.nollst *,.pgw .gv.nollst *::before,.pgw .gv.nollst *::after{transition:none!important}

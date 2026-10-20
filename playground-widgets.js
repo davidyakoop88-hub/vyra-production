@@ -293,7 +293,14 @@ W.goalvar={name:"Mål-varianter",
       q(".v").forEach(e=>e.textContent=fmt(sv)+" / "+fmt(T));q(".pc").forEach(e=>e.textContent=pc);
       q(".n,.mk").forEach(e=>e.textContent=fmt(sv));paintRing();paintGauge();paintSteps();paintBar6();bx1&&bx1.paint();bx2&&bx2.paint();q(".t").forEach(e=>e.textContent=fmt(T));paintFrame();
     }
-    function loop(){shown+=(val-shown)*.14;if(Math.abs(val-shown)<.6)shown=val;paintText();raf=shown===val?0:requestAnimationFrame(loop)}
+    // MÅL NÅTT FÖRST NÄR RÄKNEVERKET ÄR FRAMME (slutgranskning B-008/B-009, 2026-10-20). Skylten tonade in i samma
+    // stund som värdet passerade målet, medan siffran fortfarande räknade upp från 81 %; och vid nollställningen
+    // sa texten "0 % av 2 500" medan staplarna gled tillbaka från 100 % i sin övergång. Nu firas målet när siffran
+    // når fram, och nollställningen hoppar staplar och text samtidigt (övergångarna av under ett ögonblick).
+    let firaNar=false;
+    function fira(){firaNar=false;box.classList.add("done");confetti();
+      setTimeout(()=>{box.classList.add("nollst");box.classList.remove("done","near","full");level++;st.level=level;val=0;st.val=0;shown=0;busy=false;lastP=0;refresh();paintText();void box.offsetWidth;requestAnimationFrame(()=>requestAnimationFrame(()=>box.classList.remove("nollst")))},2300/O().speed)}
+    function loop(){shown+=(val-shown)*.14;if(Math.abs(val-shown)<.6)shown=val;paintText();raf=shown===val?0:requestAnimationFrame(loop);if(!raf&&firaNar)fira()}
     function refresh(){
       const T=tgt(),p=Math.min(1,val/T);
       q(".f:not(.nof)").forEach(e=>e.style.width=(p*100)+"%");q(".s9mark").forEach(e=>e.style.bottom=(p*100)+"%");q(".fv").forEach(e=>e.style.height=(p*100)+"%");
@@ -479,8 +486,7 @@ W.goalvar={name:"Mål-varianter",
       [.25,.5,.75].forEach(m=>{if(p0<m&&p1>=m&&p1<1)toast(REWARD[m])});
       box.classList.toggle("near",p1>=.9&&p1<1);
       refresh();
-      if(val>=tgt()&&!busy){busy=true;box.classList.add("done");confetti();
-        setTimeout(()=>{box.classList.remove("done","near","full");level++;st.level=level;val=0;st.val=0;shown=0;busy=false;lastP=0;refresh()},2300/O().speed)}
+      if(val>=tgt()&&!busy){busy=true;firaNar=true;if(!raf)fira()}
     }
     return{refresh(){refresh()},event(e){const m=GMET[O().x.metric]||GMET.coins;
       if(e.type==="reset"){val=0;st.val=0;st.level=1;shown=0;level=1;busy=false;refresh()}

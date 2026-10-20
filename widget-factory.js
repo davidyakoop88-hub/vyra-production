@@ -463,7 +463,7 @@
       // tal som DESIGNS i goal-motion.js, så katalogknapp och fabrik ger samma widget.
       ...(v.model === 'heart-tower' ? { width: 100 } : {}),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
-      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
+      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWER GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49c8ff',4:'#4d8dff','pulse-rail':'#b629ff','pulse-tower':'#b629ff','prism-core':'#38d9ff','prism-spine':'#38d9ff','signal-ribbon':'#ff3d91','heart-column':'#ff3d91'})[v.model] || '#b629ff',
       goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#d9f6ff',4:'#67dcff','pulse-rail':'#20d9ff','pulse-tower':'#20d9ff','prism-core':'#8768ff','prism-spine':'#8768ff','signal-ribbon':'#ff765e','heart-column':'#ff765e'})[v.model] || '#20d9ff'

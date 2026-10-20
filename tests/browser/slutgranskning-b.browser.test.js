@@ -152,3 +152,56 @@ test('B-007: Heart Me-glöden sitter på ett omslutande element, inte på det kl
     assert.equal(m.omslagKlipp, 'none', 'omslaget är också klippt');
   } finally { await page.close(); }
 });
+
+// MEDEL: Social Goal Mål/Startvärde utan server (premium-final.js bindGoalControl).
+test('B-010: Mål och Startvärde som inte kan sparas säger det med en rad under fältet', { skip, timeout: 120000 }, async () => {
+  const page = await studio();
+  try {
+    await valj(page, 'catalog:socialgoal:followers:crown-rail:landscape');
+    for (const id of ['#pfGoalTarget', '#pfGoalCurrent']) {
+      await page.evaluate(id => { const el = document.querySelector('.properties ' + id); el.value = '1234'; el.dispatchEvent(new Event('change', { bubbles: true })); }, id);
+      await page.waitForTimeout(400);
+      const m = await page.evaluate(id => { const el = document.querySelector('.properties ' + id); const rad = (el.closest('label') || el.parentElement).querySelector('.pr-goal-status');
+        return { varde: el.value, rad: rad && rad.getClientRects().length ? rad.textContent : null }; }, id);
+      assert.notEqual(m.varde, '1234', 'provet mäter inget: värdet sparades');
+      assert.match(m.rad || '', /logga in|servern/, id + ': fältet hoppade tillbaka utan besked');
+    }
+  } finally { await page.close(); }
+});
+
+// MEDEL: Goal Pro (playground-widgets.js W.goalvar).
+test('B-008/B-009: Goal Pro firar först när siffran når 100 %, och nollställningen hoppar staplar och text samtidigt', { skip, timeout: 120000 }, async () => {
+  const page = await overlay();
+  try {
+    await iOverlay(page, 'catalog:pggoal:1');
+    await page.waitForFunction(() => !!document.querySelector('[data-id="prov"] .gv .gv1 .pc'), null, { timeout: 15000, polling: 100 });
+    const m = await page.evaluate(async () => {
+      const P = window.VyraPlaygroundWidgets, gv = document.querySelector('[data-id="prov"] .gv');
+      const pc = () => document.querySelector('[data-id="prov"] .gv1 .pc').textContent;
+      P.feed({ type: 'gift', username: 'a', giftName: 'A', coins: 1620, repeatCount: 1, __test: true });
+      await new Promise(r => setTimeout(r, 1500));
+      const fore = pc();
+      P.feed({ type: 'gift', username: 'b', giftName: 'B', coins: 400, repeatCount: 1, __test: true });
+      // Direkt efter: siffran har inte hunnit fram, skylten får inte synas.
+      const direkt = { done: gv.classList.contains('done'), pc: pc() };
+      let vidFirande = null;
+      for (let i = 0; i < 100 && !vidFirande; i++) { await new Promise(r => setTimeout(r, 30)); if (gv.classList.contains('done')) vidFirande = pc(); }
+      // Nollställningen: första bildrutan efter att skylten tagits bort.
+      let efter = null;
+      for (let i = 0; i < 400 && !efter && vidFirande; i++) {
+        await new Promise(r => requestAnimationFrame(r));
+        if (!gv.classList.contains('done')) {
+          const f = document.querySelector('[data-id="prov"] .gv1 .gv1b .f');
+          efter = { pc: pc(), bredd: f ? f.getBoundingClientRect().width / f.parentElement.getBoundingClientRect().width : null };
+        }
+      }
+      return { fore, direkt, vidFirande, efter };
+    });
+    assert.match(m.fore, /^8\d%$/, 'provet mäter inget: värdet nådde inte 81 %: ' + m.fore);
+    assert.equal(m.direkt.done, false, `MÅL NÅTT! syntes medan siffran visade ${m.direkt.pc}`);
+    assert.equal(m.vidFirande, '100%', 'skylten kom innan siffran nått 100 %: ' + m.vidFirande);
+    assert.ok(m.efter, 'målet nollställdes aldrig');
+    assert.equal(m.efter.pc, '0%');
+    assert.ok(m.efter.bredd == null || m.efter.bredd < 0.05, `stapeln står kvar på ${Math.round(m.efter.bredd * 100)} % medan texten säger 0 %`);
+  } finally { await page.close(); }
+});
