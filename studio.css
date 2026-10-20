@@ -1906,3 +1906,21 @@ html:not(.overlay-output) .editor-shell .live-layer-list article .layer-select b
 html:not(.vy-mobil):not(.overlay-output) .editor-shell .live-layer-list article{display:flex!important;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:4px}
 html:not(.vy-mobil):not(.overlay-output) .editor-shell .live-layer-list article>.layer-select{flex:1 1 100%;min-width:0}
 html:not(.vy-mobil):not(.overlay-output) .editor-shell .live-layer-list article>button:not(.layer-select){flex:0 0 auto;min-width:28px;height:28px!important;min-height:0!important;align-self:center}
+/* C-021: Handelsers tomma rader sag ut som en laddning som aldrig blev klar. De ar platshallare for
+   var historiken hamnar, inte en laddning: de tonar ut nedat och ar dampade. */
+.tom-lista{opacity:.5;-webkit-mask-image:linear-gradient(#000 0%,transparent 95%);mask-image:linear-gradient(#000 0%,transparent 95%)}
+/* C-030: for sma klickytor (< 24 px) - guidens platsknappar, Angra/Gor om och OBS-testet. */
+button.guide-feature-where{min-height:28px;padding:4px 0}
+[data-angra],[data-gor-om]{min-height:28px}
+#aoiTest{min-height:32px}
+/* C-033: pilen i "Driftstatus" hamnade ensam pa rad tva. C-034: bara "Hantera abonnemang" brots. */
+.support-status{white-space:nowrap}
+.settings-page .vb-settings button{white-space:nowrap;flex:none}
+/* C-034: Installningar hade en annan aktiv markering (vansterlist) an alla andra vyer (helram). */
+aside .aside-bottom>button[data-view="settings"].active{background:linear-gradient(145deg,rgba(177,60,255,.24),rgba(120,40,200,.08))!important;border:1px solid rgba(200,120,255,.4)!important;border-radius:12px!important;color:#fff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 0 26px rgba(177,60,255,.16),0 0 0 1px rgba(177,60,255,.12),0 10px 28px rgba(150,50,220,.26)!important}
+/* C-035: TTS-faltens etiketter stod olika vid 390 px - nagra bredvid faltet, andra ovanfor. */
+@media(max-width:767px){#view .tts-fields>label>select,#view .tts-fields>label>input:not([type=checkbox]):not([type=radio]){display:block;width:100%;box-sizing:border-box;margin-top:6px}}
+/* C-032: Vip-kortets titel klipptes ("X2 B...") av knappen som lag ovanpa samma rad vid 390 px. */
+@media(max-width:767px){.media-info{padding-right:11px}.media-info .use-media{position:static;align-self:flex-start;margin-top:8px}}
+/* C-029: 7-9 px text i mediakorten. */
+.media-info b{font-size:12px}.media-info small{font-size:11px;color:#9a8fa6}

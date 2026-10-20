@@ -47,3 +47,5 @@ aside.collapsed .user .logga-ut-fot{margin-left:0}
 .logout-settings .logga-ut svg{width:16px;height:16px}
 .logout-settings .logga-ut:hover,.logout-settings .logga-ut:focus-visible{background:#3a1f47;color:#fff}
 @media(max-width:600px){.logout-settings{align-items:stretch;flex-direction:column}}
+/* C-030: lankarna under Data och integritet var 15 px hoga. */
+.privacy-settings nav a{display:inline-flex;align-items:center;min-height:32px}

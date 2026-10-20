@@ -88,6 +88,16 @@
     visaLosen(losenFalt.type === 'password');
   };
 
+  function lasbartFel(status, fel) {
+    const text = typeof fel === 'string' ? fel.trim() : '';
+    const tekniskt = !text || /^[a-z0-9_.\-]+$/.test(text) ||
+      /^(unauthorized|forbidden|not found|too many requests|bad gateway|service unavailable|internal server error|gateway timeout|serverfel)$/i.test(text);
+    if (!tekniskt) return text;
+    if (status === 429) return 'För många försök. Vänta en stund och försök igen.';
+    if (status >= 500) return 'Servern svarade inte. Försök igen om en stund.';
+    return 'Det gick inte just nu. Försök igen om en stund.';
+  }
+
   async function api(path, body) {
     const csrf = sessionStorage.getItem('vyra-csrf');
     const r = await fetch(path, {
@@ -97,7 +107,10 @@
       body: JSON.stringify(body),
     });
     const d = await r.json().catch(() => ({ ok: false, error: 'Serverfel' }));
-    if (!r.ok) throw new Error(d.error || 'Serverfel');
+    // Ett tekniskt felord från en proxy eller gräns ("unauthorized", "rate_limited") ska aldrig stå
+    // ordagrant i rutan (slutgranskning 2026-10-20 C-024). Serverns egna meddelanden är meningar på
+    // svenska och går igenom som de är; ett ensamt maskinord ersätts med en svensk mening.
+    if (!r.ok) throw new Error(lasbartFel(r.status, d.error));
     return d;
   }
 
@@ -119,6 +132,10 @@
     // Villkor och integritet intill Skapa konto (F21) — de låg bara i sidfoten. Ingen kryssruta:
     // servern kräver ingen acceptans i API:t, så raden informerar och länkar, den grindar inte.
     if (villkor) villkor.hidden = lage !== 'register';
+    // Glömt lösenord? hör till inloggningen, inte till ett konto som ännu inte finns (slutgranskning
+    // 2026-10-20 C-023).
+    const glomtKnapp = kort.querySelector('[data-login-glomt]');
+    if (glomtKnapp) glomtKnapp.hidden = lage === 'register';
     // Lösenordets golv sägs INNAN det kan bli fel (F19) — bara när ett lösenord väljs.
     if (losenKrav) {
       losenKrav.hidden = lage !== 'register';
