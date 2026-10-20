@@ -521,7 +521,7 @@ body:has(.editor-shell){grid-template-columns:var(--meny-bredd) minmax(0,1fr);he
 
 body:has(.editor-shell)>main{height:calc(100vh - var(--verifiering-hojd,0px));min-height:0;overflow:hidden;padding-bottom:0!important}
 body:has(.editor-shell) main>header{height:58px;padding:0 16px}
-body:has(.editor-shell) header h1{font-size:17px;margin:2px 0}
+body:has(.editor-shell) main>header h1{font-size:17px;margin:2px 0}
 body:has(.editor-shell) #view{width:100%;max-width:none;height:calc(100vh - 58px - var(--verifiering-hojd,0px));padding:10px 10px 78px;overflow:hidden}
 body:has(.editor-shell) .editor-shell{grid-template-columns:210px minmax(0,1fr) 300px;width:100%;height:100%;min-height:0;border-radius:9px}
 body:has(.editor-shell) .elements,
@@ -1945,3 +1945,48 @@ body:has(.editor-shell) .editor-shell{grid-template-columns:240px minmax(0,1fr) 
 #connectModal>#verifieraTikTok{display:block;margin:12px auto 0}
 #connectModal>small{display:block;margin-top:8px;color:#b9a6c4;font-size:12px;line-height:1.4}
 #connectModal #connectNow,#connectModal #anslutNu{display:block;margin:12px auto 0;min-height:40px;padding:10px 18px;border-radius:10px;font-weight:700}
+
+/* ---- Kontrollgranskning C, andra omgången (2026-10-20, N-C-001 ... N-C-011) ---- */
+/* N-C-001: förstoringsglaset satt 8 px för lågt. Sökfältets margin-bottom låg INNE i den relativt
+   positionerade omslutningen (.search-input), så ikonens top:50% räknades mot 56 px i stället för 40.
+   Marginalen flyttas till omslutningen. */
+.overlay-widget-gallery .search-input .widget-search{margin-bottom:0}
+.overlay-widget-gallery .search-input{margin-bottom:16px}
+/* N-C-002: vid 390 px var rankingkortet 185 px brett i en 300 px yta och vänsterställt. Familjeytan
+   är en flexrad och korten hade flex:0 1 auto - de får hela raden. */
+@media(max-width:767px){.overlay-widget-gallery .widget-catalog .rk6-katalog>.rk6-grupp{flex:1 1 100%;width:100%;box-sizing:border-box}.overlay-widget-gallery .widget-catalog button .owg-action-row .owg-copylink{flex:none}}
+/* N-C-003: den bredare lagerkolumnen (C-017) gjorde mittkolumnen 322 px vid 1024 och verktygsraden
+   bröts på 5 rader. Under 1100 px får egenskapspanelen 220 px (samma som grundregeln, rad 30) i stället
+   för 260, och lagerkolumnen behåller sina 210 så att "Top Likes / Synlig" fortfarande ryms. Under
+   1300 px visar Dator-knappen bara "16:9" som Mobil-knappen visar "9:16" - upplösningen står kvar i
+   knappens title och i länkpanelens "Källa". Uppmätt: 1024 5 -> 3 rader, 1280 3 -> 2 rader, 1440 2. */
+@media(max-width:1100px){body:has(.editor-shell) .editor-shell{grid-template-columns:210px minmax(0,1fr) 220px}}
+@media(max-width:1300px){.layout-format-picker .lf-upplosning{display:none}}
+/* N-C-005 / N-C-006: Inställningarnas kort kom från sju filer med var sin marginal (16-24 px), inre
+   marginal (16/18 px) och undertext (8 eller 10,8 px). Ett mönster för alla: 16 px mellan korten,
+   18 px inre marginal, 12 px undertext. På mobil ligger knappen under texten i alla kort. */
+.settings-page>.vb-settings,.settings-page>.logout-settings,.settings-page>.mfa-settings,.settings-page>.desktop-nedladdning,.settings-page>.session-settings,.settings-page>.security-events,.settings-page>.privacy-settings,.settings-page>#vyra-state-sync{margin-top:16px;padding:18px;border:1px solid #432451;border-radius:14px;background:#0d0612;box-sizing:border-box}
+.settings-page>.vb-settings b,.settings-page>.logout-settings b,.settings-page>.mfa-settings b,.settings-page>.desktop-nedladdning b,.settings-page>.session-settings header b,.settings-page>.security-events header b,.settings-page>.privacy-settings header b,.settings-page>#vyra-state-sync>span>b{font-size:13px}
+.settings-page>.vb-settings small,.settings-page>.logout-settings small,.settings-page>.mfa-settings small,.settings-page>.desktop-nedladdning small,.settings-page>.session-settings small,.settings-page>.security-events small,.settings-page>.privacy-settings small,.settings-page>#vyra-state-sync small{font-size:12px;line-height:1.45;color:#a996b3}
+.settings-page>.vb-settings small b{font-size:inherit}
+.settings-page>.session-settings .session-list:empty{display:none}
+@media(min-width:768px){.settings-page>#vyra-state-sync>span{flex:1;min-width:0}.settings-page>#vyra-state-sync .vss-row{flex:none}}
+.settings-page>.privacy-settings .privacy-actions{flex-wrap:wrap}
+.settings-page>.privacy-settings .privacy-actions>*{white-space:nowrap}
+@media(max-width:767px){
+.settings-page>.vb-settings,.settings-page>.logout-settings,.settings-page>.mfa-settings,.settings-page>#vyra-state-sync,.settings-page>.session-settings>header{flex-direction:column;align-items:stretch;gap:12px}
+.settings-page>.vb-settings>button,.settings-page>.logout-settings>button,.settings-page>.session-settings>header>button{align-self:flex-start}
+}
+/* N-C-007: knapparna Aktiv/Ändra/Ta bort låg kant i kant med Handling-rutan. */
+.flow-row{column-gap:14px}
+.flow-knappar .flow-bekrafta-text{flex-basis:100%;margin:0;text-align:right;font-size:12px;color:#ffb3c1}
+.flow-knappar .flow-bekrafta{border-color:#b72850;background:#b72850;color:#fff}
+@media(max-width:767px){.flow-knappar .flow-bekrafta-text{text-align:left}}
+/* N-C-011: "Typsnitt" stod bredvid sitt fält medan färgerna har etiketten ovanför. */
+#brandKitModal label:has(>select){display:grid}
+#brandKitModal label>select{width:100%;margin-top:8px;box-sizing:border-box}
+/* N-C-012: inloggningsgatens rubrik var 17 px via layout.html (studio.html?open=layout) och 25 px annars.
+   Editorns regel för sidrubriken gällde varje "header h1" på sidan, även gatens; den är nu avgränsad
+   till main>header (rad 524). */
+/* C-021 (rest): Händelsers tomma läge ritar inga skelettrader längre (vyra-vyord.js); regeln ovan finns
+   kvar för säkerhets skull om filen inte laddas. */

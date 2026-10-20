@@ -81,7 +81,7 @@ const EJ_LOPANDE={paused:1,suspended:1};
 function byggLiveTillstand(d,{lage='webb',online=null,aktivSession=null}={}){
   const c=(d&&d.connection)||{},st=String(c.state||'idle');
   const konto=String(c.username||'').replace(/^@/,'').trim()||null,at=konto?' · @'+konto:'';
-  let connector='väntar',connectorText='Väntar på connector',text=konto?'TikTok-konto sparat'+at:'Anslut TikTok',klass='';
+  let connector='väntar',connectorText='Väntar på anslutning',text=konto?'TikTok-konto sparat'+at:'Anslut TikTok',klass='';
   const ansluten=()=>{connector='ansluten';connectorText='Ansluten';text='Ansluten till LIVE'+at};
   if(lage==='webb'){
     // Molnets connected:true är ett SPARAT konto, inte en anslutning. Först när servern har

@@ -69,7 +69,9 @@ test('C-005: Automationer har ett tomt läge, och "Ny automation" öppnar en dia
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => document.querySelector('#flowModal').open), false, 'Esc stängde inte dialogen');
 
+    // Ta bort frågar först i raden (N-C-007), sedan tas raden bort.
     await page.click('[data-flow-ta-bort="0"]');
+    await page.click('[data-flow-bekrafta="0"]');
     await page.waitForTimeout(300);
     assert.equal(await page.evaluate(() => state.flows.length), 0, 'Ta bort fungerar inte');
     assert.ok(await page.$('[data-flows-tom]'));

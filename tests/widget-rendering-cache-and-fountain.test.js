@@ -180,7 +180,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
   // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
   // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
-  assert.match(studio, /studio\.css\?v=20261020-4/);
+  assert.match(studio, /studio\.css\?v=20261020-19/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -449,7 +449,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261018-klocka/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261020-19/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
