@@ -13,7 +13,7 @@ window.VyraPremiumHome = home = function () {
   return `<div class="oversikt-sken" aria-hidden="true"><i></i><i></i><i></i></div>
   <section class="home-welcome">
     <div>
-      <span class="eyebrow">VYRA LIVE-KOMMANDOCENTRAL</span>
+      <span class="eyebrow">VYRA · KOMMANDOCENTRAL</span>
       <h2>Din live är redo att <em>glänsa.</em></h2>
       <p>Bygg din overlay och anslut en riktig TikTok LIVE i VYRA Desktop.</p>
     </div>
@@ -103,10 +103,11 @@ window.VyraPremiumHome = home = function () {
       </article>
       <article>
         <b class="sd-nr">2</b>
-        <h4>Öppna VYRA Desktop</h4>
+        <h4>Öppna VYRA Desktop — eller hämta pluginet</h4>
         <p>Pluginet följer med appen och läggs på plats automatiskt vid start — även om du
            installerade Stream Deck efteråt. Starta om Stream Deck en gång, så dyker
-           <b>VYRA</b> upp bland åtgärderna.</p>
+           <b>VYRA</b> upp bland åtgärderna. Utan Desktop: ladda ner pluginet på sidan
+           <b>Stream Deck</b> och skriv in en parkopplingskod därifrån.</p>
       </article>
       <article>
         <b class="sd-nr">3</b>
@@ -125,7 +126,9 @@ window.VyraPremiumHome = home = function () {
     <div class="sd-krav">
       <h4>Tre saker måste vara på plats när du trycker</h4>
       <ul>
-        <li><b>VYRA Desktop igång.</b> Knappen pratar med appen på din egen dator — inget går via internet.</li>
+        <li><b>VYRA Desktop igång — eller molnkoden inlagd.</b> Med Desktop pratar knappen med appen på
+            din egen dator, utan omväg via internet. Utan Desktop går trycket via molnet med en
+            parkopplingskod från sidan <b>Stream Deck</b>.</li>
         <li><b>OBS-källan öppen</b> för scenen. Actions spelas i overlay-utgången, inte i Studion.
             Trycker du med bara Studion framme händer ingenting, och det är med flit.</li>
         <li><b>Eventet aktivt.</b> Av/på sitter på Eventet, inte på Actionen — samma Action kan

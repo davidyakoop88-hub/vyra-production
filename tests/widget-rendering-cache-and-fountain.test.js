@@ -385,7 +385,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // gift-supernova-panel.
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
-  assert.match(media, /const version='20261019-3'/);
+  // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
+  assert.match(media, /const version='20261020-6'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -410,7 +411,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   //
   // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
-  assert.match(media, /sound-alerts\.js\?v=20260923-library/, 'sound-alerts.js cachebustades inte');
+  // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
+  assert.match(media, /sound-alerts\.js\?v=20261020-6/, 'sound-alerts.js cachebustades inte');
   for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
@@ -456,7 +458,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
-  assert.match(media, /action-event\.css\?v=20261020-2/, 'action-event.css cachebustades inte for F35');
+  // ... och 2026-10-20 `.ae-modal input[hidden]` så poängrutorna i Ny Action döljs (granskning).
+  assert.match(media, /action-event\.css\?v=20261020-6/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');

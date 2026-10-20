@@ -218,7 +218,10 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // in en fjarde mellan heron och logotyperna. Den togs bort igen 2026-09-24 — kedjan bakom den
     // publicerade aldrig ett enda event. Ordningen lases i stallet for antalet, sa att en del som
     // byter plats eller en ny som smyger in syns i diffen.
-    assert.deepEqual(m.delar, ['hero', 'logos', 'premium', 'mini-sidfot'],
+    // 2026-10-20 (granskning F31/F32): "Från widget till OBS i tre steg" + provperiodens villkor
+    // ligger direkt under heron, med avsikt — arbetsflödet ska synas före inloggning. Vaktas av
+    // landning-floede-provperiod.browser.test.js.
+    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'logos', 'premium', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

@@ -226,7 +226,9 @@ test('tabellerna finns i schemat', () => {
 test('anvandarens egna texter skrivs som text, inte som HTML', () => {
   // Amne och kategori kommer tillbaka fran servern och ritas i "Mina arenden".
   assert.match(KLIENT, /esc\(ticket\.subject\)/, 'arendets amne skrivs oescapat');
-  assert.match(KLIENT, /esc\(ticket\.category\)/);
+  // Kategorin visas med sitt svenska namn när servern skickar en känd nyckel (granskning F40),
+  // men går fortfarande genom esc() — även reservvägen med den råa nyckeln.
+  assert.match(KLIENT, /esc\((?:TYP\[ticket\.category\]\|\|)?ticket\.category\)/);
 });
 
 // ---- 6. wishlist ar pensionerad -----------------------------------------------------------------

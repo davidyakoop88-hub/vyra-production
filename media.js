@@ -1452,8 +1452,8 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261020-2'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-2','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261010-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261010-2';document.body.append(js)});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-2','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261010-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-6';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20261019-3';document.body.append(js)});
@@ -1480,7 +1480,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20261012-diamonds';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261020-2';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261017-epostforst';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=20261020-6';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261020-6';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
    .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
@@ -1538,7 +1538,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20261018-1';document.body.append(js)});
 
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20260923-library';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261020-6';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261020-2';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
@@ -1786,7 +1786,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261019-3';
+  const version='20261020-6';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

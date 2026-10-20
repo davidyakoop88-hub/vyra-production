@@ -11,7 +11,11 @@ Du ager Studio Core: skalet som allt annat hangs in i.
 
 `node scripts/domaner.js filer studio-core` ger den exakta listan. Karnan ar
 `studio.html`, `studio.js`, `studio.css`, `app.js`, plus layout-, zoom-, snapp-, historik-,
-proportions- och tomma-tillstand-filerna samt `guide.js` och `operations.html`.
+proportions- och tomma-tillstand-filerna samt `guide.js` och `operations.html`. Den publika sidan
+(`index.html`, `landing-*.js`, `landing-floede.css`) och driftstatus (`status.html`,
+`status-client.js`) ligger ocksa har. Guidens platsangivelser ar knappar till riktiga menyval
+(`data-guide-nav`) och vaktas av `tests/browser/guide-pekar-ratt.browser.test.js`; produktnamnet
+i synlig text ar VYRA (`tests/varumarke-ett-namn.test.js`).
 
 ## Sa jobbar du
 
