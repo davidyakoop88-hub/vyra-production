@@ -1907,7 +1907,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 
 // Färgschemats provbild, färgkoder, kontrastvarning och återställning (granskning 2026-10-17 F37).
 // Bygger bara på #brandKitModal i studio.html; ritar ingenting i overlay-läget.
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fargschema-prov.js?v=20261020-2';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fargschema-prov.js?v=20261020-3';document.body.append(js)});
 // Lager betyder lager, oavsett vilken renderare som ritade widgeten: z-index = w.layer||1 pa den
 // yttre ladan, samma regel som styledWh. Beror inte pa ordningen, se vyra-lager.js.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-lager.js?v=20261019-1';document.body.append(js)});

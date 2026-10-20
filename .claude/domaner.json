@@ -741,7 +741,8 @@
         "server/test/session-device.test.js",
         "server/test/account-data.test.js",
         "server/test/support.test.js",
-        "tests/browser/support-vad-hander-sedan.browser.test.js"
+        "tests/browser/support-vad-hander-sedan.browser.test.js",
+        "tests/browser/slutgranskning-c-hoga.browser.test.js"
       ],
       "matning": [],
       "risker": [

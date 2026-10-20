@@ -125,7 +125,25 @@
     varning.textContent = problem.length ? problem.join(' ') + ' Välj ljusare text eller mörkare bakgrund.' : '';
   }
 
+  // FÄRGSCHEMAT UTAN SPARAT FÄRGSCHEMA (slutgranskning 2026-10-20 C-001). openBrandKitDialog i
+  // studio.js läser state.brandKit.background utan reserv, och standardvärdet sätts bara för helt
+  // ny lokal state (session-state.js). Molnstate och äldre layouter saknar ofta brandKit, och då
+  // gjorde knappen ingenting utom att kasta. Lyssnaren nedan körs i fångstfasen, alltså FÖRE
+  // knappens egen onclick, och fyller i det som saknas: hela standarden om brandKit saknas, annars
+  // bara de enskilda fält som saknas. Ett befintligt värde skrivs aldrig över, och ingenting sparas
+  // förrän man trycker Spara färgschema.
+  function sakraFargschema() {
+    let s; try { s = typeof state !== 'undefined' ? state : null } catch (_) { s = null }
+    if (!s || typeof s !== 'object') return;
+    const kit = s.brandKit;
+    if (!kit || typeof kit !== 'object' || Array.isArray(kit)) { s.brandKit = { ...STANDARD }; return }
+    for (const nyckel of Object.keys(STANDARD)) if (kit[nyckel] == null) kit[nyckel] = STANDARD[nyckel];
+  }
+  document.addEventListener('click', e => {
+    if (e.target && e.target.closest && e.target.closest('#openBrandKit')) sakraFargschema();
+  }, true);
+
   function start() { const d = document.querySelector('#brandKitModal'); if (d) bygg(d) }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
-  root.VyraFargschemaProv = { uppdatera: () => { const d = document.querySelector('#brandKitModal'); if (d) uppdatera(d) }, kontrast };
+  root.VyraFargschemaProv = { sakra: sakraFargschema, uppdatera: () => { const d = document.querySelector('#brandKitModal'); if (d) uppdatera(d) }, kontrast };
 })(typeof window !== 'undefined' ? window : globalThis);
