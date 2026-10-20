@@ -233,16 +233,18 @@ jobs:
   # att utfallet andras — vilket ar precis vad den visuella vakten INTE tal, och skalet till att
   # test-visuell nedan ar ett enda jobb.
   #
-  # fail-fast: false — en fallande del ska inte avbryta de andra tre. Halva varden i att skarva ar
+  # fail-fast: false — en fallande del ska inte avbryta de andra fem. Halva varden i att skarva ar
   # att fa ALLA fel i samma korning i stallet for det forsta.
   test-client-webblasare:
     runs-on: ubuntu-latest
-    # Uppmatt: hela sviten 57 min 44 s pa en runner. En fjardedel ar ~15 min; 45 ar 3x det.
+    # Uppmatt: hela sviten 57 min 44 s pa en runner (2026-09-23). Efter panelarbetet 2026-10-20 tog
+    # var och en av fyra delar 37-45 min och del 4 slog i 45-minutersgransen (#670). Sex delar ger
+    # ~25 min var; 45 ar fortfarande taket.
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        del: [1, 2, 3, 4]
+        del: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -252,8 +254,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
 
-      - name: 'Lackage · riktig webblasare (del ${{ matrix.del }} av 4)'
-        run: npm run test:browser:skarva -- ${{ matrix.del }} 4
+      - name: 'Lackage · riktig webblasare (del ${{ matrix.del }} av 6)'
+        run: npm run test:browser:skarva -- ${{ matrix.del }} 6
 
   # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
   #
