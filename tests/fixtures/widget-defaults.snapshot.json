@@ -169,7 +169,8 @@
     "fanMessage": "Fan level up!",
     "fanTheme": "gold",
     "fanColor": "#ff8a20",
-    "fanLight": "#ffd36b"
+    "fanLight": "#ffd36b",
+    "levelPlacering": "absolut"
   },
   "catalog:gifterlevel:profile": {
     "type": "templateGifterLevel",
@@ -184,7 +185,8 @@
     "gifterMessage": "NY NIVÅ UPPLÅST",
     "gifterLayout": "profile",
     "gifterColor": "#9965ff",
-    "gifterLight": "#e2d6ff"
+    "gifterLight": "#e2d6ff",
+    "levelPlacering": "absolut"
   },
   "catalog:followeralert": {
     "type": "templateFollowerAlert",

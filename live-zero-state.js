@@ -71,14 +71,30 @@
     setText(el, zeroNumberText(el.textContent));
   }
 
+  // THE ZERO ROW TAKES THE DEMO ROW'S SPACE (2026-10-20). The ranking boxes size to their content,
+  // so an empty name and a bare "0" made the overlay box smaller than the same widget in Layout —
+  // Basic v2 186x478 against 232x497, Voltage 135 against 196 wide, and every design a line shorter
+  // — and it grew the moment the first like arrived. The shipped text is kept in a data attribute
+  // and ranking-sixpack.css draws it INVISIBLE in a pseudo-element (`visibility:hidden`), which is
+  // not part of textContent: nothing is shown, no invented person, but the box keeps its size.
+  function reserve(el, attr, value) {
+    if (el && value && typeof el.setAttribute === 'function' && el.getAttribute(attr) !== value) el.setAttribute(attr, value);
+  }
   function zeroRankingRows(root) {
     root.querySelectorAll('.toplike-row').forEach(row => {
       const name = row.querySelector('strong');
       if (!name || !isDemoName(name.textContent)) return;   // real data already painted — leave it
+      reserve(name, 'data-noll-plats', name.textContent);
       setText(name, ZERO_NAME);
       const handle = row.querySelector('small');
+      if (handle) reserve(handle, 'data-noll-plats', handle.textContent);
       setText(handle, '');
-      zeroValue(row.querySelector('em'));
+      const value = row.querySelector('em');
+      if (value && /\d/.test(value.textContent || '')) {
+        const sista = value.lastChild;
+        reserve(value, 'data-noll-plats', (sista && sista.nodeType === 3 ? sista.nodeValue : value.textContent).trim());
+      }
+      zeroValue(value);
     });
   }
 

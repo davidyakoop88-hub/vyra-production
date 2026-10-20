@@ -444,8 +444,21 @@
         // value back still counts as a DOM mutation, which would wake the observer that called us
         // and spin forever". Samma regel galler har.
         const satt = (el, varde) => { if (el && el.textContent !== varde) el.textContent = varde };
+        // NOLLRADEN TAR DEMORADENS PLATS (2026-10-20): texten som töms sparas i data-noll-plats och
+        // ritas osynligt av ranking-sixpack.css, så lådan är lika stor i OBS som i Layout. Samma
+        // regel som zeroRankingRows() i live-zero-state.js.
+        const reservera = (el, varde) => {
+          varde = String(varde || '').trim();
+          if (el && varde && typeof el.setAttribute === 'function' && !/^\D*0$/.test(varde) && el.getAttribute('data-noll-plats') !== varde) el.setAttribute('data-noll-plats', varde);
+        };
         rows.forEach(row => {
           const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
+          if (strong) reservera(strong, strong.textContent);
+          if (small) reservera(small, small.textContent);
+          if (em && /\d/.test(em.textContent || '')) {
+            const sista = em.lastChild;
+            reservera(em, sista && sista.nodeType === 3 && em.firstElementChild ? sista.nodeValue : em.textContent);
+          }
           satt(strong, '');
           satt(small, '');
           if (em) skrivTal(em, '0', true);

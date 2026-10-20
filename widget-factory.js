@@ -472,13 +472,17 @@
     'fanlevel.theme': v => ({
       type: 'templateFanLevel', x: 100, y: 80, width: 260, title: 'Fan Level Up',
       fanHeadline: 'LEVEL UP', fanLevelLabel: 'FAN LEVEL', fanLevel: 12, fanName: 'HeartRiser',
-      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light
+      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light,
+      // Lådan står absolut på x/y. Utan markeringen mäter guardian-emblem-models.js (migreraPlats)
+      // om en sparad heartbeat låg i flödet (före 2026-10-20) och flyttar x/y dit den syntes.
+      levelPlacering: 'absolut'
     }),
     'fanlevel.layout': v => ({
       type: 'templateFanLevel', x: 100, y: 80, width: v.layout === 'heartbeat' || v.layout === 'duo' ? 300 : 260,
       title: 'Fan Level Up', fanHeadline: 'FAN LEVEL UP', fanLevelLabel: 'LV.', fanLevel: 12,
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
-      fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout
+      fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout,
+      levelPlacering: 'absolut'
     }),
     // Fan Level 50-tavlan. Rostern (vilka fans som natt niva 50) lever i minnet och kommer fran
     // fan-level-50-session.js; fanl50Manual ar den handtaggade listan som SPARAS. fanl50Source
@@ -513,7 +517,9 @@
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
       gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
-      gifterColor: '#9965ff', gifterLight: '#e2d6ff'
+      gifterColor: '#9965ff', gifterLight: '#e2d6ff',
+      // Se fanlevel.theme: orbitlevel låg i flödet före 2026-10-20.
+      levelPlacering: 'absolut'
     }),
     // Med tema i nyckeln satts followTheme + temats farg (samma som panelens temaval skriver).
     // Basnyckeln ger exakt det gamla objektet, utan followTheme — snapshotprovet jamfor det.

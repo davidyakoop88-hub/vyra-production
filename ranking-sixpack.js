@@ -211,14 +211,18 @@
       const person = demo[i] || ['', ''];
       const namn = p ? esc(p.namn) : nolla ? '' : esc(person[0]);
       const varde = p ? esc(p.varde) : nolla ? '0' : esc(person[1] || '0');
+      // NOLLRADEN TAR DEMORADENS PLATS (2026-10-20): i nolläget bär namnet och värdet demotexten i
+      // data-noll-plats, och ranking-sixpack.css ritar den OSYNLIG — lådan blir lika stor i OBS som i
+      // Layout och växer inte när första händelsen kommer. Ingenting syns och textContent är tomt.
+      const plats = t => !p && nolla && t ? ` data-noll-plats="${esc(t)}"` : '';
       const bild = p && p.bild ? esc(p.bild) : foto;
       const krona = (id === 'voltage' && i === 0) || (id === 'prism-horizontal' && i < 3) ? `<i class="rk6-krona">${KRONA}</i>` : '';
       const ordning = d.riktning === 'podium' ? PODIUM.indexOf(i) : i;
       html += `<div class="toplike-row rank-${i + 1}"${p ? ` data-prov="${esc(p.namn)}"` : ''} style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning}">`
         + `<i class="rk6-av"${avStil ? ` style="${avStil}"` : ''}><i class="rk6-ring"></i><i class="rk6-karna"><i class="rk6-glod"></i>`
         + `<img src="${bild}" alt="">${ram}${krona}<b class="rk6-rang"${rangStil}><i>${i + 1}</i></b></i></i>`
-        + `<span class="rk6-namn"${namnStil ? ` style="${namnStil}"` : ''}><strong${textfarg ? ` style="${textfarg}"` : ''}>${namn}</strong><small></small><i class="rk6-led"></i></span>`
-        + `<em${vardeStil ? ` style="${vardeStil}"` : ''}><i class="rk6-ikon">${ikon}</i> ${varde}</em>`
+        + `<span class="rk6-namn"${namnStil ? ` style="${namnStil}"` : ''}><strong${textfarg ? ` style="${textfarg}"` : ''}${plats(person[0])}>${namn}</strong><small></small><i class="rk6-led"></i></span>`
+        + `<em${vardeStil ? ` style="${vardeStil}"` : ''}${plats(person[1])}><i class="rk6-ikon">${ikon}</i> ${varde}</em>`
         + '</div>';
     }
     return html;

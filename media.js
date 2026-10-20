@@ -1483,11 +1483,11 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra
 Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261020-20';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261020-24';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-zero-state.js?v=20261020-12';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-zero-state.js?v=20261020-24';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='stream-time-analytics.js?v=20261012-diamonds';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-timers.js?v=20260916-facit';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260916-facit';document.body.append(js)});
@@ -1800,7 +1800,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261020-22';
+  const version='20261020-24';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

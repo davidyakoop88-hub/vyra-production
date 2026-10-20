@@ -594,7 +594,8 @@ test('G-PLATS (overlay): emblemet står på sin x/y i vila och under en riktig G
       for (const y of GP_LAGEN) {
         const vad = `${namn} vid y=${y}`;
         await page.evaluate(([nk, y]) => {
-          // Fan Level heartbeat ligger i flödet (uppmätt 2026-10-20) och står FÖRE emblemet i listan.
+          // Fan Level heartbeat låg i flödet till 2026-10-20 (studio.css, widget-pa-sin-plats.browser.test.js)
+          // och står FÖRE emblemet i listan — en granne som förut knuffade ned emblemet.
           const f = VyraWidgets.create('catalog:fanlevel:layout:heartbeat'); f.id = 'gp-fan'; f.x = 20; f.y = 600;
           const w = VyraWidgets.create(nk); w.id = 'gp'; w.x = 16; w.y = y; w.guardianLang = 'sv';
           state.widgets = [f, w]; selected = null; render();
@@ -622,7 +623,7 @@ test('G-PLATS (sparade emblem): ett emblem som flödet sköt ned står kvar där
   // mäts var de syntes då, sedan ritas samma SPARADE layout (utan markeringen guardianPlacering)
   // med dagens CSS. Två emblem och en Fan Level heartbeat i flödet, två emblem med zoom.
   const LAYOUT = () => {
-    const mk = (n, id, x, y, extra) => { const w = VyraWidgets.create(n); delete w.guardianPlacering; return Object.assign(w, { id, x, y }, extra || {}); };
+    const mk = (n, id, x, y, extra) => { const w = VyraWidgets.create(n); delete w.guardianPlacering; delete w.levelPlacering; return Object.assign(w, { id, x, y }, extra || {}); };
     return [mk('catalog:fanlevel:layout:heartbeat', 'fan', 20, 30), mk('catalog:guardianemblem:model:sapphire', 'g1', 16, 40),
       mk('catalog:guardianemblem:model:emerald', 'g2', 30, 10, { widgetScale: 0.5 }), mk('catalog:guardianemblem:4', 'g3', 280, 49, { widgetScale: 0.35 })];
   };
@@ -637,7 +638,7 @@ test('G-PLATS (sparade emblem): ett emblem som flödet sköt ned står kvar där
       const matt = () => page.evaluate(() => ['g1', 'g2', 'g3'].map(id => window.__gpRekt(`.canvas [data-id="${id}"]`)));
       await page.evaluate(L => {
         const stil = document.createElement('style'); stil.id = 'gp-gammalt';
-        stil.textContent = '.canvas .guardian-emblem{position:relative!important}'; document.head.append(stil);
+        stil.textContent = '.canvas :is(.guardian-emblem,.fan-layout-heartbeat.fan-level-up){position:relative!important}'; document.head.append(stil);
         state.widgets = (new Function('return (' + L + ')()'))(); selected = null; render();
       }, LAYOUT.toString());
       const gammalt = await matt();
