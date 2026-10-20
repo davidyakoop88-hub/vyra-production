@@ -287,7 +287,7 @@ const ENHET = /(px|%|ms|×|°|s|st|mynt)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
 // exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor), och
 // Top Streaks exempelstreak (antalet gåvor i combon).
-const RENA_ANTAL = /^(Lager|Coins|Nivå|Minsta nivå|Videons nivå|Poäng|Mål|Startvärde|Gåva \d: mål|Streak)$/;
+const RENA_ANTAL = /^(Lager|Mynt|Coins|Nivå|Minsta nivå|Videons nivå|Poäng|Mål|Startvärde|Gåva \d: mål|Streak)$/;
 const PAUS = '*,*::before,*::after{animation-duration:0.001s!important;animation-delay:0s!important;animation-iteration-count:1!important;transition:none!important;caret-color:transparent!important}';
 // Förutsättningar för beroende kontroller (granskningens FORUTS).
 // Guardians Språk mäts från engelska: provet byter "Följ webbläsaren" mot Svenska, och i en svensk

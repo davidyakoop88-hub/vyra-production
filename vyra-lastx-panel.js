@@ -109,7 +109,7 @@
         // Färgtemat verkar bara med en typ och när ingen egen accent eller arv tar över (accentFor).
         { sektion: 5, typ: 'val', falt: 'followTheme', etikett: 'Färgtema', legacyId: '#followTheme',
           om: w => enTyp(w) && !w.inheritBrandKit && !w.followColor },
-        { sektion: 5, typ: 'farg', falt: 'followColor', etikett: 'Egen accent', legacyId: '#followColor', arv: 'highlight' },
+        { sektion: 5, typ: 'farg', falt: 'followColor', etikett: 'Accentfärg', legacyId: '#followColor', arv: 'highlight' },
         { sektion: 5, typ: 'knapp', id: 'lastXTemafarg', etikett: 'Använd färgtemat i stället',
           om: w => enTyp(w) && !w.inheritBrandKit && !!w.followColor,
           klick: w => {
@@ -124,8 +124,8 @@
       // widget-background.js ritar en vald färg bakom kortet (tests/browser/bakgrundsgrupp), så en
       // sparad widget med bakgrund måste fortfarande kunna ändra eller ta bort den.
       { sektion: 5, typ: 'std-bakgrund', om: harEgenBakgrund },
-      // 6 · Animation — utgången speglar intron, så det finns inget eget utgångsval.
-      { sektion: 6, typ: 'val', falt: 'lastXEntrance', etikett: 'Intro', legacyId: '#lastXEntrance' },
+      // 6 · Animation — utgången speglar inträdet, så det finns inget eget utgångsval.
+      { sektion: 6, typ: 'val', falt: 'lastXEntrance', etikett: 'Inträdeseffekt', legacyId: '#lastXEntrance' },
       // 7 · Återställ utseende
       { sektion: 7, typ: 'std-aterstall' },
     ];

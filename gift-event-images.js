@@ -165,7 +165,10 @@
       gift: '.vyra-gift-face img',
       profile: '.vyra-profile-face img',
       name: '.topgift-copy strong, .tgf-plate strong',
-      value: '.topgift-copy em, .tgf-plate em'
+      value: '.topgift-copy em, .tgf-plate em',
+      // Design 1 har myntet som ett <i> forst i <em>; utan flaggan rev skrivningen det (A-001,
+      // slutgranskningen 2026-10-20). Designer utan <i> tar den vanliga vagen.
+      ikon: true
     },
     templateTopStreak: {
       root: '.vyra-streak',
@@ -285,8 +288,8 @@
       profileImage: ex.profil ? bild(ex.profil) : '',
       name: ex.namn || '',
       // Livevägen skriver gåvans värde som det kommer (live-leaderboard.js); Signal Orbit visar
-      // det som renderaren gör, med tusentalsavgränsning och COINS.
-      amount: orbit ? Math.round(coins).toLocaleString('sv-SE') + ' COINS' : coins
+      // det som renderaren gör, med tusentalsavgränsning. Enheten (MYNT) ritas av topcoins-v2.css.
+      amount: orbit ? Math.round(coins).toLocaleString('sv-SE') : coins
     });
     if (nod.classList) {
       nod.classList.remove('play', 'record');

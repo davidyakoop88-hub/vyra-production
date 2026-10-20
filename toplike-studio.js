@@ -316,7 +316,7 @@
     const DATE_RANGES = [['stream', 'Denna stream'], ['today', 'Idag'], ['week', 'Denna vecka'], ['month', 'Denna månad'], ['year', 'Detta år'], ['all', 'Alltid']];
     out = out.replace(
       '<div class="property-group"><h4>DESIGN',
-      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Gåv-coins</option><option value="points"${liveMetric === 'points' ? ' selected' : ''}>Poäng (Actions & Events)</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
+      `<div class="property-group"><h4>LIVE-DATA</h4><label><input id="wsLiveData" type="checkbox" ${w.useLiveData === false ? '' : 'checked'}> Visa riktig aktivitet (inte demo-namn)</label><label>Rangordna efter<select id="wsLiveMetric" ${w.useLiveData === false ? 'disabled' : ''}><option value="likes"${liveMetric === 'likes' ? ' selected' : ''}>Likes</option><option value="coins"${liveMetric === 'coins' ? ' selected' : ''}>Mynt från gåvor</option><option value="points"${liveMetric === 'points' ? ' selected' : ''}>Poäng (Actions & Events)</option></select></label><label>Period<select id="wsDateRange" ${w.useLiveData === false ? 'disabled' : ''}>${DATE_RANGES.map(([id, name]) => `<option value="${id}"${dateRange === id ? ' selected' : ''}>${name}</option>`).join('')}</select></label></div><div class="property-group"><h4>DESIGN`
     );
 
     const skin = SKIN_IDS.has(w.skin) ? w.skin : 'clean-bar';
@@ -468,6 +468,10 @@
   window.vyraBuildFramePicker = function (w) {
     const gender = w.frameGenderTab === 'girls' ? 'girls' : 'boys';
     const current = w.profileFrame || 'none';
+    // BARA RIKTIGA RAMAR I VÄLJAREN (slutgranskningen 2026-10-20, A-008). De 19 ramarna med en SVG i
+    // stället för en PNG (Bronze, Flame, Heroic … Wings) är enkla ringar märkta "platshållare" och såg
+    // oavslutade ut. De visas inte längre som val. En widget som redan har en av dem vald behåller den:
+    // rutan visas (aktiv, märkt) så att valet syns och går att byta, och ramen ritas som förut.
     const swatch = ([id, name, file, ext]) => `<button type="button" data-ws-frame="${id}" class="ws-frame-swatch${current === id ? ' active' : ''}${ext === 'svg' ? ' placeholder' : ''}"><img src="assets/images/profile-frames/${file}.${ext}" alt=""><b>${name}</b>${ext === 'svg' ? '<small>platshållare</small>' : ''}</button>`;
     // INGEN EGEN RUBRIK HÄR (2026-09-09). Väljaren bodde tidigare i ett `<span>AVATAR-RAMAR · VÄLJ
     // RAM</span>`, som blev en dubblett i gift-alert-frames.js:s grupp — den har redan
@@ -481,7 +485,7 @@
       </div>
       <div class="ws-frame-grid">
         <button type="button" data-ws-frame="none" class="ws-frame-swatch${current === 'none' ? ' active' : ''}"><i>×</i><b>Ingen</b></button>
-        ${FRAMES[gender].map(swatch).join('')}
+        ${FRAMES[gender].filter(([id, , , ext]) => ext !== 'svg' || id === current).map(swatch).join('')}
       </div>`;
   };
 

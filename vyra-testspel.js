@@ -468,7 +468,7 @@
     const typer = p.a.typer;
     const valdTyp = typer ? (typval.get(w.id) || typer[0][0]) : null;
     rot.innerHTML = `<button type="button" id="pr-testspel" aria-pressed="false">▶ Testa widget</button>`
-      + (typer ? `<label>${esc(p.a.typEtikett)}<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
+      + (typer ? `<label class="pr-testspel-typ" style="margin-top:10px">${esc(p.a.typEtikett)}<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
       + `<ol class="pr-tidslinje" aria-label="Testets förlopp" style="display:flex;gap:10px;list-style:none;margin:6px 0 0;padding:0">`
       + `<li data-fas="entre">Entré</li><li data-fas="visning">Visning</li><li data-fas="utgang">Utgång</li></ol>`;
     rot.querySelector('#pr-testspel').onclick = () => {

@@ -50,7 +50,12 @@
     // 'V44 999 12 300'. Editorn behaller demodatan - den ar vad man designar mot.
     const overlay = new URLSearchParams(location.search).has('overlay');
     const name = overlay ? '' : text(w.dataName, 'MAYA');
-    const value = overlay ? '0' : number(w.dataValue ?? 44999) + ' COINS';
+    // ENHETEN RITAS AV CSS:EN, INTE I TEXTEN (slutgranskningen 2026-10-20, A-002/A-011). Texten var
+    // '44 999 COINS' i editorn men bara '0' i overlay, och livevägarna (skrivTal, ▶ Testa) skriver
+    // bara talet — så ordet försvann i sändningen och testet visade '1 COINS'. Nu bär <em> bara talet
+    // och ' MYNT' kommer från topcoins-v2.css (.tc-copy em::after), som " mynt" i Top Gift · Design 3:
+    // samma enhet i editorn, i nolläget, i testet och live. Svenska, och "mynt" är samma i singular.
+    const value = overlay ? '0' : number(w.dataValue ?? 44999);
     const particles = design === 'halo'
       ? `<i class="tc-coin tc-c1">${mynt()}</i><i class="tc-coin tc-c2">${mynt()}</i><i class="tc-coin tc-c3">${mynt()}</i><i class="tc-spark tc-s1"></i><i class="tc-spark tc-s2"></i>`
       : SIXPACK.has(design)
@@ -86,7 +91,7 @@
     const design = designId(w), meta = DESIGNS[design];
     const designChoice = Object.entries(DESIGNS).map(([id, m]) =>
       `<button type="button" data-tc-design="${id}" class="${design === id ? 'active' : ''}">${m.label}</button>`).join('');
-    return `<h3>TOP COINS · ${meta.label.toUpperCase()}</h3><div class="template-badge">EN LEDARE · UTAN PLACERINGSTAL</div><div hidden><input id="pt" value="${text(w.title, 'Top Coins')}"><input id="pv" value="${text(w.dataValue, '44999')}"></div><div class="property-group"><h4>INNEHÅLL</h4><label>Namn<input id="tcName" value="${text(w.dataName, 'MAYA')}"></label><label>Coins<input id="tcValue" type="number" min="0" value="${Number(w.dataValue) || 44999}"></label><label>Profilbild<input id="tcAvatar" value="${avatar(w)}"></label></div><div class="property-group"><h4>DESIGN</h4><div class="topcoins-design-choice">${designChoice}</div><label>Accent<input id="tcAccent" type="color" value="${w.accent || meta.accent}"></label><div class="switch-row one"><label><input id="tcMotion" type="checkbox" ${w.topCoinsMotion === false ? '' : 'checked'}> Rörelse</label><label><input id="tcBackground" type="checkbox" ${w.showBackground === true ? 'checked' : ''}> Bakgrund</label></div></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" min="150" max="500" value="${w.width || meta.width}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
+    return `<h3>TOP COINS · ${meta.label.toUpperCase()}</h3><div class="template-badge">EN LEDARE · UTAN PLACERINGSTAL</div><div hidden><input id="pt" value="${text(w.title, 'Top Coins')}"><input id="pv" value="${text(w.dataValue, '44999')}"></div><div class="property-group"><h4>INNEHÅLL</h4><label>Namn<input id="tcName" value="${text(w.dataName, 'MAYA')}"></label><label>Mynt<input id="tcValue" type="number" min="0" value="${Number(w.dataValue) || 44999}"></label><label>Profilbild<input id="tcAvatar" value="${avatar(w)}"></label></div><div class="property-group"><h4>DESIGN</h4><div class="topcoins-design-choice">${designChoice}</div><label>Accent<input id="tcAccent" type="color" value="${w.accent || meta.accent}"></label><div class="switch-row one"><label><input id="tcMotion" type="checkbox" ${w.topCoinsMotion === false ? '' : 'checked'}> Rörelse</label><label><input id="tcBackground" type="checkbox" ${w.showBackground === true ? 'checked' : ''}> Bakgrund</label></div></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" min="150" max="500" value="${w.width || meta.width}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
   };
 
   function createTopCoins(design) {

@@ -88,14 +88,14 @@
 
   const LIVE = {
     templateTopLike: 'Listan kommer från TikTok: namn, profilbild och likes för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
-    templateTopCoins: 'Listan kommer från TikTok: namn, profilbild och coins för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
-    templateTopPoints: 'Listan kommer från sändningen: namn och poäng ur dina Actions & Events (eller likes/coins, efter Rangordna efter).',
+    templateTopCoins: 'Listan kommer från TikTok: namn, profilbild och mynt för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
+    templateTopPoints: 'Listan kommer från sändningen: namn och poäng ur dina Actions & Events (eller likes/mynt, efter Rangordna efter).',
   };
 
   function exempel(typ) {
     if (typ === 'templateTopCoins') return [
       { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tcName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Coins', legacyId: '#tcValue' },
+      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Mynt', legacyId: '#tcValue' },
     ];
     if (typ === 'templateTopPoints') return [
       { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tpName' },
@@ -159,7 +159,7 @@
       { sektion: 6, typ: 'std-entre' },
       { sektion: 6, typ: 'kryss', falt: 'rankingCycle', etikett: 'Växla mellan listor', legacyId: '#rankingCycle' },
       { sektion: 6, typ: 'kryss', falt: 'cycleLikes', etikett: 'Lista: likes', legacyId: '#cycleLikes', om: cykel },
-      { sektion: 6, typ: 'kryss', falt: 'cycleCoins', etikett: 'Lista: coins', legacyId: '#cycleCoins', om: cykel },
+      { sektion: 6, typ: 'kryss', falt: 'cycleCoins', etikett: 'Lista: mynt', legacyId: '#cycleCoins', om: cykel },
       { sektion: 6, typ: 'kryss', falt: 'cyclePoints', etikett: 'Lista: poäng', legacyId: '#cyclePoints', om: cykel },
       { sektion: 6, typ: 'tal', falt: 'cycleSeconds', etikett: 'Tid per lista', enhet: 's', legacyId: '#cycleSeconds', om: cykel },
       // 7 · Återställ utseende
@@ -236,7 +236,7 @@
     if (!/id="rankingCycle"/.test(html)) {
       delar.push(kryss('rankingCycle', !!w.rankingCycle, 'Växla mellan listor'),
         kryss('cycleLikes', w.cycleLikes !== false, 'Lista: likes'),
-        kryss('cycleCoins', w.cycleCoins !== false, 'Lista: coins'),
+        kryss('cycleCoins', w.cycleCoins !== false, 'Lista: mynt'),
         kryss('cyclePoints', w.cyclePoints !== false, 'Lista: poäng'),
         `<label class="range-label">Tid per lista <b>${w.cycleSeconds || 4} s</b><input id="cycleSeconds" type="range" min="2" max="15" value="${w.cycleSeconds || 4}"></label>`);
     }

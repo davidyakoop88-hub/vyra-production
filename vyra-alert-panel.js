@@ -426,13 +426,17 @@
     if (v) { try { v.pause(); } catch (_) {} v.removeAttribute('src'); }
   }
   const nivaAv = (v, standard) => Math.max(1, Math.min(50, Math.round(Number(v)) || standard));
+  // Namnet i testet skrivs som i vilan: fanNamnHtml/gifterNamnHtml i media.js sätter @ framför
+  // widgetens namn, så testet visade "HeartRiser" medan vilan och overlayn visade "@HeartRiser"
+  // (slutgranskningen 2026-10-20, A-014).
+  const medAt = n => { const s = String(n || '').trim(); return s && s[0] !== '@' ? '@' + s : s; };
 
   if (!(T.harAdapter && T.harAdapter('fanlevel'))) T.registrera('fanlevel', {
     spela(nod, k, ex, ctl) {
       if (typeof window.fanSpelaPa !== 'function') throw new Error('media.js saknar fanSpelaPa');
       textgrupp(nod, k);
       const till = nivaAv(k.fanLevel, ex.niva.till);
-      window.fanSpelaPa(nod, k, { name: k.fanName || ex.namn, level: till, fromLevel: Math.max(1, till - 1), isTeamMember: true }, klocka(ctl));
+      window.fanSpelaPa(nod, k, { name: medAt(k.fanName || ex.namn), level: till, fromLevel: Math.max(1, till - 1), isTeamMember: true }, klocka(ctl));
       const F = window.VyraFanFas;
       if (F && typeof F.spela === 'function') F.spela(nod);
       const entre = Math.max(fasTotal(F, nod), entreMs(k));
@@ -451,7 +455,7 @@
       if (typeof window.gifterSpelaPa !== 'function') throw new Error('media.js saknar gifterSpelaPa');
       textgrupp(nod, k);
       const till = nivaAv(k.gifterLevel, ex.niva.till);
-      window.gifterSpelaPa(nod, k, { name: k.gifterName || ex.namn, level: till, fromLevel: Math.max(1, till - 1) }, klocka(ctl));
+      window.gifterSpelaPa(nod, k, { name: medAt(k.gifterName || ex.namn), level: till, fromLevel: Math.max(1, till - 1) }, klocka(ctl));
       const F = window.VyraGifterFas;
       if (F && typeof F.spela === 'function') F.spela(nod);
       // Nivåbytet (gifterTransform, 1250 ms) hör till entrén i alla modeller.

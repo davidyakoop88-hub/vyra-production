@@ -53,6 +53,24 @@
     return /\d/.test(raw) ? prefix + ZERO_NUM : raw;
   }
 
+  // ZERO THE NUMBER, NOT THE ICON (slutgranskningen 2026-10-20, A-001). Top Gift · Design 1 and the
+  // Top Coins family draw their coin as an <i> element first in the value: `<em><i>…svg…</i> 44 999</em>`.
+  // setText() replaces every child, so the overlay showed a bare "0" with the coin gone while the
+  // editor showed "◉ 44 999". Same rule as skrivTal() in live-leaderboard.js and the patch in
+  // gift-event-images.js: with an <i> first, only the text node after it is written.
+  function zeroValue(el) {
+    if (!el || !/\d/.test(el.textContent || '')) return;
+    const ikon = el.firstElementChild;
+    if (ikon && ikon.tagName === 'I') {
+      const text = ' ' + ZERO_NUM;
+      const sista = el.lastChild;
+      if (sista && sista.nodeType === 3) { if (sista.nodeValue !== text) sista.nodeValue = text; }
+      else el.appendChild(document.createTextNode(text));
+      return;
+    }
+    setText(el, zeroNumberText(el.textContent));
+  }
+
   function zeroRankingRows(root) {
     root.querySelectorAll('.toplike-row').forEach(row => {
       const name = row.querySelector('strong');
@@ -60,8 +78,7 @@
       setText(name, ZERO_NAME);
       const handle = row.querySelector('small');
       setText(handle, '');
-      const value = row.querySelector('em');
-      if (value) setText(value, zeroNumberText(value.textContent));
+      zeroValue(row.querySelector('em'));
     });
   }
 
@@ -87,9 +104,7 @@
         const nameEl = widget.querySelector(name);
         if (!nameEl || !isDemoName(nameEl.textContent)) return;  // real data — hands off
         setText(nameEl, ZERO_NAME);
-        values.forEach(sel => widget.querySelectorAll(sel).forEach(el => {
-          if (/\d/.test(el.textContent || '')) setText(el, zeroNumberText(el.textContent));
-        }));
+        values.forEach(sel => widget.querySelectorAll(sel).forEach(zeroValue));
       });
     });
   }

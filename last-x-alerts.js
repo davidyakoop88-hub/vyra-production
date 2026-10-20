@@ -64,8 +64,8 @@
   };
   const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'roll', 'fade'];
   const ENTRANCE_LABEL = {
-    'slide-left': 'Slider in från vänster', 'slide-right': 'Slider in från höger',
-    pop: 'Zoomar in', roll: 'Rullar in', fade: 'Tonar in'
+    'slide-left': 'Glid in från vänster', 'slide-right': 'Glid in från höger',
+    pop: 'Zooma in', roll: 'Rulla in', fade: 'Tona in'
   };
   // Outron är intron baklänges — .last-x-leaving går tillbaka till entréns egen vilotransform.
   // Därför finns ingen outroINSTÄLLNING: varje val här bär sin egen utgång i CSS:en.
@@ -241,7 +241,7 @@
         <label>Design<select id="lastXDesign">${Object.entries(DESIGNS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
       </div>
       <div class="property-group"><h4>ANIMATION</h4>
-        <label>Intro — hur rutan kommer in<select id="lastXEntrance">
+        <label>Inträdeseffekt<select id="lastXEntrance">
           ${ENTRANCES.map(e => `<option value="${e}">${ENTRANCE_LABEL[e]}</option>`).join('')}
         </select></label>
         <p class="last-x-type-hint">Outron speglar intron: när tiden tar slut ${ENTRANCE_OUTRO[entranceOf(w)]} rutan igen. Därför finns inget eget outro-val.</p>
@@ -252,7 +252,7 @@
       </div>
       <div class="property-group"><h4>ACCENTFÄRG</h4>
         <label class="last-x-type-check"><input type="checkbox" id="inheritBrandKit"${w.inheritBrandKit ? ' checked' : ''}><span>Ärv globalt färgschema (🎨 Färgschema-knappen ovan)</span></label>
-        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || accentFor(Object.assign({}, w, { inheritBrandKit: false }), typeKey)}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
+        <label>Accentfärg (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || accentFor(Object.assign({}, w, { inheritBrandKit: false }), typeKey)}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
       </div>
       <div class="property-group"><h4>INNEHÅLL (förhandsvisning)</h4>
         <label>Rubrik<input id="followLabel" value="${w.followLabel || TYPES[typeKey].label}" ${multi ? 'disabled' : ''}></label>

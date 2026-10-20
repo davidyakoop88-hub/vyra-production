@@ -298,7 +298,12 @@
     // Tecknet framfor siffran ar designens (◉ i neon, inget i royal/fokus dar CSS ritar det), sa
     // det behalls — samma regel som patchen i gift-event-images.js, och samma tal, annars skriver
     // de tva skrivarna olika text i samma nod.
+    // Design 1 (premium neon) ritar myntet som ett <i> forst i <em> (ranking-sixpack.js enkelLasbar):
+    // da skrivs bara textnoden efter det, som i skrivTal nedan — textContent rev myntet vid forsta
+    // gavan (slutgranskningen 2026-10-20, A-001).
     el.querySelectorAll(topGiftValjare('value')).forEach(n => {
+      const ikon = n.firstElementChild;
+      if (ikon && ikon.tagName === 'I') { skrivTal(n, tg.value, true); return; }
       const text = String(n.textContent || '').match(/^\D*/)[0] + tg.value;
       if (n.textContent !== text) n.textContent = text;
     });

@@ -290,20 +290,20 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // 20261019-3 (mediaväljaren): opts.status — Fan Level 50:s deltagarrader säger "Profilbild hämtad från TikTok" (PR 14).
   const reg = plats('vyra-panelregister.js', '20261019-4'), ram = plats('vyra-panelram.js', '20261019-3');
   const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-3');
-  const testspel = plats('vyra-testspel.js', '20261019-2'), topgift = plats('vyra-topgift-panel.js', '20261019-2');
+  const testspel = plats('vyra-testspel.js', '20261020-12'), topgift = plats('vyra-topgift-panel.js', '20261020-12');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
-  const lastx = plats('vyra-lastx-panel.js', '20261019-2');
+  const lastx = plats('vyra-lastx-panel.js', '20261020-12');
   assert.ok(lastx > reg && lastx > testspel && lastx < ordning, 'Last-X:s poster laddas efter registret och testmotorn, före panelordningen');
   // Alertfamiljernas poster (vyra-alert-panel.js, PR 6) på samma sätt.
-  const alert = plats('vyra-alert-panel.js', '20261019-2');
+  const alert = plats('vyra-alert-panel.js', '20261020-12');
   assert.ok(alert > reg && alert > testspel && alert < ordning, 'alertfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
   // Battle MVP:s poster (vyra-mvp-panel.js, PR 7) på samma sätt.
   const mvp = plats('vyra-mvp-panel.js', '20261019-2');
   assert.ok(mvp > reg && mvp > testspel && mvp < ordning, 'Battle MVP:s poster laddas efter registret och testmotorn, före panelordningen');
   // Rankingens poster (vyra-ranking-panel.js, PR 8) på samma sätt.
-  const ranking = plats('vyra-ranking-panel.js', '20261019-2');
+  const ranking = plats('vyra-ranking-panel.js', '20261020-12');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
   const mal = plats('vyra-mal-panel.js', '20261019-2');

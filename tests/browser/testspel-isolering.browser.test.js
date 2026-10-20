@@ -195,7 +195,8 @@ for (const m of MODELLER) {
       assert.ok(k, 'klonen finns i duken');
       assert.equal(k.id, 'prov-a__prov');
       assert.match(k.namn, /Alex/, 'exempelgivaren står på klonen');
-      assert.match(k.varde, m.nyckel.includes('templateTopCoins') ? /1 COINS/ : /\b1$/, 'gåvans värde står på klonen');
+      // Signal Orbits enhet (MYNT) ritas av topcoins-v2.css, så texten bär bara talet (A-011).
+      assert.match(k.varde, /\b1$/, 'gåvans värde står på klonen');
       assert.match(k.klass, /\brecord\b/, 'rekordpulsen startade på klonen');
       assert.match(k.klass, /\bplay\b/, 'flippen startade på klonen');
       assert.match(k.profil || '', /test-profile\.svg/, 'exempelprofilen');
@@ -228,7 +229,7 @@ for (const m of MODELLER) {
       assert.deepEqual(s3.faser, faser1, 'omspelningen har samma faser');
       await page.waitForTimeout(s3.faser.entre + 900);
       const k2 = await klonInfo(page);
-      assert.match(k2.varde, m.nyckel.includes('templateTopCoins') ? /29\s999 COINS/ : /29999$/, 'Lion ger sitt värde');
+      assert.match(k2.varde, m.nyckel.includes('templateTopCoins') ? /29\s999$/ : /29999$/, 'Lion ger sitt värde');
 
       // render() mitt i testet tar bort klonen.
       await page.evaluate(() => render());
@@ -437,9 +438,9 @@ test('lastx: ett test som får gå klart passerar entré → visning → utgång
 // en omritning eller när testet gått klart.
 const ALERTFAMILJER = [
   { namn: 'Fan Level Up · hero', nyckel: 'catalog:fanlevel:layout:hero', adapter: 'fanlevel', aktiv: 'fan-active',
-    rester: /\bfan-(active|exit|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: 'HeartRiser', nivaSel: '.fan-level-pill', nivaVantad: /11\s*→\s*12/ },
+    rester: /\bfan-(active|exit|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@HeartRiser', nivaSel: '.fan-level-pill', nivaVantad: /11\s*→\s*12/ },
   { namn: 'Gifter Level Up · number', nyckel: 'catalog:gifterlevel:number', adapter: 'gifterlevel', aktiv: 'gifter-active',
-    rester: /\bgifter-(active|exit|xform-[a-z]+|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: 'ThunderGifter', nivaSel: '.gifter-big-level', nivaVantad: /^1[45]$/ },
+    rester: /\bgifter-(active|exit|xform-[a-z]+|fas-[a-z]+)\b|playing-level-video/, namnSel: 'h3', namnVantat: '@ThunderGifter', nivaSel: '.gifter-big-level', nivaVantad: /^1[45]$/ },
   { namn: 'Follower Spotlight · ocean', nyckel: 'catalog:followeralert:ocean', adapter: 'follower', aktiv: 'follow-active',
     rester: /\bfollow-active\b/, namnSel: 'h2', namnVantat: 'Aurora Vale' },
   { namn: 'Guardian Emblem · Krona', nyckel: 'catalog:guardianemblem:3', adapter: 'guardian', aktiv: 'ge-active',

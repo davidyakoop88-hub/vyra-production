@@ -180,7 +180,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
   // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
   // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
-  assert.match(studio, /studio\.css\?v=20261020-2/);
+  assert.match(studio, /studio\.css\?v=20261020-3/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -203,7 +203,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261018-13/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261019-1/);
+  assert.match(studio, /gift-event-images\.js\?v=20261020-12/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -351,7 +351,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
   // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);   // 20261011-1: kryssrutor + ws-anim-specificitet
-  assert.match(media, /toplike-studio\.js\?v=20261019-3/);
+  assert.match(media, /toplike-studio\.js\?v=20261020-12/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20261019-1/);

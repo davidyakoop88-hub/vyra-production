@@ -7,7 +7,10 @@ aside{border-right:1px solid var(--line);padding:14px 11px;display:flex;flex-dir
    utan den har. Arbetsytan ar dold i overlay-utdata, sa banderollen kan inte na sandningen. */
 .workarea [data-grans-raknare]{display:block;width:calc(100% - 24px);margin:12px 12px 0;padding:9px 12px;border:1px solid #ff5b7f;border-radius:8px;background:#2a0d18;color:#ff9db5;font:700 10px Manrope;letter-spacing:.04em;text-align:left;cursor:pointer}
 .workarea [data-grans-raknare]:hover{background:#3d1222;color:#ffd0dc}
-html.overlay-output [data-grans-raknare]{display:none!important}.editor-toolbar{height:42px;background:#0d0f15e8;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;padding:8px 12px}.editor-toolbar button{background:#141720;border:1px solid #272b36;color:#c7cad3;border-radius:5px;font-size:9px}.canvas{width:432px;height:768px;margin:28px auto;position:relative;box-shadow:0 0 0 1px #313541}.widget{position:absolute;min-width:150px;padding:12px;border:1px solid #7359ea;background:#11121bd9;border-radius:9px;cursor:move}.widget.selected{outline:1px dashed #9f89ff;outline-offset:4px}.widget b{display:block;font-size:12px}.widget span{color:#a8abb5;font-size:8px}.bar{height:5px;background:#2b2e39;margin-top:9px}.bar i{display:block;width:74%;height:100%;background:var(--purple)}.properties label{display:block;border-top:1px solid #1e212a;padding:13px 0;color:#858a97;font-size:8px}.properties input{float:right;width:90px;background:#151821;border:1px solid #292d39;color:#fff;padding:5px}.delete{width:100%;padding:9px;border:1px solid #6f3542;background:#241218;color:#df7289}.flow-head{display:flex;justify-content:space-between;align-items:center}.primary{border:0;background:var(--purple);color:white;border-radius:7px;padding:10px 14px}.flows{display:grid;gap:10px}.flow-row{display:grid;grid-template-columns:1fr 60px 1fr 120px;align-items:center;padding:15px}.node{border:1px solid #303440;background:#13161d;border-radius:8px;padding:13px}.node small{display:block;color:#747986;font-size:8px}.arrow{text-align:center;color:#6350bd}.flow-row>button{border:1px solid #303440;background:#151820;color:#aaa;padding:8px}.events-table{width:100%;border-collapse:collapse}.events-table th,.events-table td{text-align:left;padding:13px;border-bottom:1px solid var(--line);font-size:9px}.events-table th{color:#686d79}.pill{padding:4px 7px;border-radius:10px;background:#18251f;color:#5edda6}.analytics-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}.big-chart,.rank,.settings-page{padding:20px}.big-chart svg{width:100%;height:280px}.rank li{padding:12px;border-bottom:1px solid var(--line)}.rank li b{float:right;color:#a995ff}.settings-page{max-width:700px}/* Flex i stallet for float. Floaten gav 353-399px glapp mellan etikett och falt, lat harlinjen
+html.overlay-output [data-grans-raknare]{display:none!important}.editor-toolbar{height:42px;background:#0d0f15e8;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;padding:8px 12px}.editor-toolbar button{background:#141720;border:1px solid #272b36;color:#c7cad3;border-radius:5px;font-size:9px}.canvas{width:432px;height:768px;margin:28px auto;position:relative;box-shadow:0 0 0 1px #313541}.widget{position:absolute;min-width:150px;padding:12px;border:1px solid #7359ea;background:#11121bd9;border-radius:9px;cursor:move}.widget.selected{outline:1px dashed #9f89ff;outline-offset:4px}.widget b{display:block;font-size:12px}.widget span{color:#a8abb5;font-size:8px}/* Goal Pro och podiet (.pgw, playground-widgets.css) är ritade utan den här standarden: deras
+   spans ärver storlek och färg från raden de står i. Utan återställningen blev "GIFT-MÅL" och målet
+   efter "av" 8 px före widgetens skalning, alltså ~3 px på skärmen, i studion OCH i overlay (B-004).
+   Specificiteten (0,2,1) slår raden ovan men förlorar mot varje egen .pgw-regel, som laddas senare. */.widget .pgw span{font-size:inherit;color:inherit}.bar{height:5px;background:#2b2e39;margin-top:9px}.bar i{display:block;width:74%;height:100%;background:var(--purple)}.properties label{display:block;border-top:1px solid #1e212a;padding:13px 0;color:#858a97;font-size:8px}.properties input{float:right;width:90px;background:#151821;border:1px solid #292d39;color:#fff;padding:5px}.delete{width:100%;padding:9px;border:1px solid #6f3542;background:#241218;color:#df7289}.flow-head{display:flex;justify-content:space-between;align-items:center}.primary{border:0;background:var(--purple);color:white;border-radius:7px;padding:10px 14px}.flows{display:grid;gap:10px}.flow-row{display:grid;grid-template-columns:1fr 60px 1fr 120px;align-items:center;padding:15px}.node{border:1px solid #303440;background:#13161d;border-radius:8px;padding:13px}.node small{display:block;color:#747986;font-size:8px}.arrow{text-align:center;color:#6350bd}.flow-row>button{border:1px solid #303440;background:#151820;color:#aaa;padding:8px}.events-table{width:100%;border-collapse:collapse}.events-table th,.events-table td{text-align:left;padding:13px;border-bottom:1px solid var(--line);font-size:9px}.events-table th{color:#686d79}.pill{padding:4px 7px;border-radius:10px;background:#18251f;color:#5edda6}.analytics-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}.big-chart,.rank,.settings-page{padding:20px}.big-chart svg{width:100%;height:280px}.rank li{padding:12px;border-bottom:1px solid var(--line)}.rank li b{float:right;color:#a995ff}.settings-page{max-width:700px}/* Flex i stallet for float. Floaten gav 353-399px glapp mellan etikett och falt, lat harlinjen
    (pa den fullbreda labeln) lopa 16px forbi faltets hogerkant, och tog faltet ur flodet sa
    Spara-knappen klistrades mot raden ovan. padding-x ar 0 med flit: da slutar border-bottom
    exakt dar faltet slutar. */
@@ -741,6 +744,16 @@ html.overlay-output .widget{
   box-shadow:none!important;
   backdrop-filter:none!important;
   -webkit-backdrop-filter:none!important;
+}
+/* Familjer som ritar hela sin yta själva och aldrig räknat med redigeringslådan: i studion fick de
+   ändå kant, glöd och (Fan Level 50) en mörk kortbakgrund som inte finns i sändningen (slutgranskningen
+   2026-10-20, B-017). Samma återställning som raden ovan, bara för dem — markeringen för vald widget är
+   en outline och står kvar. Egen text/bild/video behåller lådan med flit: en tom platshållare utan kant
+   går inte att hitta på duken. */
+html:not(.overlay-output) .widget:is(.like-fountain-portal,.latonskningar,.skattkista,.fan-level-50,.guardian-emblem,.last-x-widget){
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
 }
 
 /* Fan Level Up / Gifter Level Up "video per nivå" (media.js's playLevelVideo) — a per-level video
@@ -1753,12 +1766,15 @@ html:not(.overlay-output) .editor-shell .vy-kontroll button{font-size:12px}
 html:not(.overlay-output) .editor-shell [data-zoom-niva]{font-size:12px;color:#c8bcd2}
 html:not(.overlay-output) .editor-shell .scenbakgrund-kontroll .sb-oppna{font-size:12.5px}
 html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(--ed-muted)}
-/* widget-etikett pa duken (endast editor-preview). Inte inne i playground-widgetarna (.pgw):
-   där krympte regeln podiets blocksiffror och Goal Pros textfält till 11 px i studion, medan
-   OBS-utgången visade dem i rätt storlek (2026-10-17). Inte heller Follower Alerts etikett
-   ("NEW FOLLOWER", .follow-label>span): 11 px i Layout mot 8 px i sändningen gjorde kortet 4 px högre
-   i studion än i OBS (storleksmätningen 2026-10-19, followeralert:gold). */
-html:not(.overlay-output) .editor-shell .widget span:not(.pgw span):not(.follow-label>span){font-size:11px;color:#b4a6c0}
+/* WIDGETENS TEXT RITAS LIKADANT I STUDION SOM I SÄNDNINGEN (slutgranskningen 2026-10-20, A-005–A-007).
+   Här stod en regel från #542 (Läsbar Layout-editor, 2026-09-28) som höjde varje <span> i en widget på
+   duken till 11 px #b4a6c0, "endast editorn". Avsikten var de gamla 8 px-etiketterna, men varje span i
+   en widget är widgetinnehåll som också sänds, så regeln gjorde bara studion olik OBS: Fan Level Ups
+   band fick lila 11 px på orange (kontrast 1,1:1) mot vit 15 px i sändningen, Fan Level 50:s namn lila
+   11 px mot guld 14,8 px, hjärtat lila i stället för rosa. Uppmätt över alla 173 katalognycklar: 83
+   textelement skilde studio från overlay på grund av regeln, och inget av dem var studio-chrome.
+   Undantagen (.pgw, .follow-label) som lades till 2026-10-17 och 2026-10-19 var samma fel upptäckt
+   familj för familj. Regeln är borttagen; studions egna paneler har sina egna storlekar. */
 
 /* LIKE FOUNTAIN · LIKES SOM SLÄPPER HJÄRTAN (2026-10-05). I OBS visas bara hjärtan som en like
    släppt; förhandsströmmen är mallen de klonas ur. Ett släppt hjärta spelar EN gång. */
