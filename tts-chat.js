@@ -352,8 +352,11 @@
       // i och sparningen glomd, annars ser det ut som att kryssrutan inte fungerar.
       const ikryssad = !!document.querySelector('#ttsEnabled')?.checked;
       return { klass: 'av', text: 'Avstängd',
-        detalj: ikryssad ? 'Kryssrutan är i men inte sparad — tryck Spara inställningar.'
-                         : 'Kryssa i Aktiverad och tryck Spara för att läsa upp chatten.' };
+        // F34 (granskning 2026-10-17): orden ska vara kontrollernas egna. Det finns ingen
+        // kryssruta "Aktiverad" och ingen knapp "Spara inställningar" — reglaget heter "TTS av"
+        // och knappen "Spara TTS-inställningar" (tests/tts-instruktion-ord.test.js).
+        detalj: ikryssad ? 'Reglaget är på men inte sparat — tryck ”Spara TTS-inställningar”.'
+                         : 'Slå på reglaget ”TTS av” och tryck ”Spara TTS-inställningar” för att läsa upp chatten.' };
     }
     // Pausen far sitt EGET besked. "Väntar på chatt" vore ett lofte som inte kan hallas: under
     // en paus kommer det ingen chatt, och det ar inte ett fel. Laget lases ur samma element som
@@ -472,8 +475,13 @@
     // och i det vanligaste laget (ingen live ansluten) kommer inget event alls, sa den hade
     // statt tom precis nar den behovdes som mest. Uppmatt i riktig Chrome.
     malaTtsStatus();
-    // Kryssrutan Aktiverad andrar laget direkt, inte forst nar nasta chattrad kommer.
-    root.querySelector('#ttsEnabled')?.addEventListener('change', () => setTimeout(malaTtsStatus, 0));
+    // Reglaget andrar laget direkt, inte forst nar nasta chattrad kommer. Etiketten foljer med
+    // (F34): annars stod det "TTS av" bredvid ett paslaget reglage tills panelen ritades om.
+    root.querySelector('#ttsEnabled')?.addEventListener('change', e => {
+      const etikett = e.target.closest('.tts-power')?.querySelector('b');
+      if (etikett) etikett.textContent = e.target.checked ? 'TTS aktiv' : 'TTS av';
+      setTimeout(malaTtsStatus, 0);
+    });
 
     async function refreshVoiceOptions() {
       const s = getSettings();

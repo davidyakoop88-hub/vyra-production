@@ -1452,7 +1452,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261018-1','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-2','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261010-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-6';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1479,7 +1479,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260916-facit';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20261012-diamonds';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20260923-workspace';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261020-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=20261020-6';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261020-6';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
@@ -1511,7 +1511,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261017-p1granskning';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261018-state';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261020-2';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261020-2';document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
@@ -1540,7 +1540,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261020-6';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261020-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261020-2';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1905,6 +1905,9 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261018-1';document.body.append(js)});
 
+// Färgschemats provbild, färgkoder, kontrastvarning och återställning (granskning 2026-10-17 F37).
+// Bygger bara på #brandKitModal i studio.html; ritar ingenting i overlay-läget.
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fargschema-prov.js?v=20261020-2';document.body.append(js)});
 // Lager betyder lager, oavsett vilken renderare som ritade widgeten: z-index = w.layer||1 pa den
 // yttre ladan, samma regel som styledWh. Beror inte pa ordningen, se vyra-lager.js.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra-lager.js?v=20261019-1';document.body.append(js)});

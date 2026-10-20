@@ -52,6 +52,7 @@
         "vyra-extravy-vakt.js",
         "vyra-panelram.js",
         "vyra-testspel.js",
+        "fargschema-prov.js",
         "vyra-sidbyte.js"
       ],
       "tester": [
@@ -81,6 +82,8 @@
         "tests/browser/storlek-matning.browser.test.js",
         "tests/browser/framsida-logo.browser.test.js",
         "tests/browser/login-slapp-in.browser.test.js",
+        "tests/framsida-konto-granskning.test.js",
+        "tests/browser/framsida-konto-yta.browser.test.js",
         "tests/oversikt-en-sanning.test.js",
         "tests/browser/verktygsrad-overlapp.browser.test.js",
         "tests/browser/extravy-sen-render.browser.test.js",
@@ -89,6 +92,7 @@
         "tests/testspel-motor.test.js",
         "tests/browser/testspel-isolering.browser.test.js",
         "tests/browser/panel-krav.browser.test.js",
+        "tests/browser/fargschema-provbild.browser.test.js",
         "tests/browser/panel-krav-2.browser.test.js",
         "tests/browser/panel-krav-3.browser.test.js",
         "tests/browser/panel-krav-4.browser.test.js",
@@ -295,6 +299,7 @@
         "tests/browser/obs-lank-lyssnare.browser.test.js",
         "tests/gift-supernova-panel.test.js",
         "tests/korsfilskopplingar.test.js",
+        "tests/browser/spotify-kommandon.browser.test.js",
         "tests/browser/widgetsok-alla-paket.browser.test.js"
       ],
       "matning": [
@@ -398,7 +403,9 @@
         "tests/browser/alert-egen-placering.browser.test.js",
         "scripts/test/event-gifts.test.js",
         "tests/browser/ae-dialog-fokus.browser.test.js",
-        "tests/browser/ae-poang-antal-dolt.browser.test.js"
+        "tests/browser/ae-poang-antal-dolt.browser.test.js",
+        "tests/action-avancerade-val.test.js",
+        "tests/browser/ae-dialog-fokus.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -441,6 +448,7 @@
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
         "tests/browser/overlay-dolda-widgetar.browser.test.js",
+        "tests/browser/katalog-forhandsbild-storlek.browser.test.js",
         "tests/browser/forhandsvisning-behaller-sokning.browser.test.js",
         "tests/browser/paketpreview-affisch.browser.test.js"
       ],
@@ -496,7 +504,8 @@
         "tests/live-control-state.test.js",
         "tests/live-tillstand.test.js",
         "tests/servertid-klocka.test.js",
-        "tests/top-gift-strikt-rekord.test.js"
+        "tests/top-gift-strikt-rekord.test.js",
+        "tests/live-control-prestanda.test.js"
       ],
       "e2e": [
         "tests/e2e/live-scenarios.spec.js"
@@ -754,7 +763,8 @@
         "tests/browser/trial-onboarding.browser.test.js",
         "server/test/billing.test.js",
         "server/test/prenumerationsfalt.test.js",
-        "tests/browser/billing-aktivt-abonnemang.browser.test.js"
+        "tests/browser/billing-aktivt-abonnemang.browser.test.js",
+        "tests/browser/abonnemang-kontroller.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -824,7 +834,8 @@
         "tests/tts-livestatus.test.js",
         "tests/paus-indikator.test.js",
         "tests/tts-rostkort-bredd.test.js",
-        "tests/browser/streamdeck-tva-vagar.browser.test.js"
+        "tests/browser/streamdeck-tva-vagar.browser.test.js",
+        "tests/tts-instruktion-ord.test.js"
       ],
       "matning": [],
       "risker": [
@@ -1038,7 +1049,8 @@
       "tester": [
         "tests/latency-probe.test.js",
         "tests/ci-artifact-budget.test.js",
-        "tests/browser/laddningskapplopning.browser.test.js"
+        "tests/browser/laddningskapplopning.browser.test.js",
+        "tests/statistics-diagram-lasbart.test.js"
       ],
       "matning": [
         {
