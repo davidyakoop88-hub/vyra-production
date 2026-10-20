@@ -25,7 +25,7 @@
 // en av sina designer (goal-motion.js modelFor, gift-campaign-aura.js theme), så även en äldre sparad
 // widget får målpanelen, och Heart Me har bara sina tolv teman. De tre typerna provas därför av
 // panel-krav.browser.test.js, och GOLVET nedan är antalet typer som fortfarande har en modell utan post:
-// 20 till och med PR 8, 17 sedan PR 9, 16 sedan PR 10, 13 sedan PR 11, 11 sedan PR 12, 9 sedan PR 13, 8 sedan PR 14, 7 sedan PR 16. Det sjunker med varje familj som
+// 20 till och med PR 8, 17 sedan PR 9, 16 sedan PR 10, 13 sedan PR 11, 11 sedan PR 12, 9 sedan PR 13, 8 sedan PR 14, 7 sedan PR 16, 3 sedan slutgranskning B (Egen bild/video, Låtönskningar och Skattkistan fick poster 2026-10-20). Det sjunker med varje familj som
 // flyttar in i ramen.
 //
 // TOP STREAK (PR 10) har inte heller någon modell utan post: approved-rankings.js ritar varje Top Streak, och
@@ -49,8 +49,8 @@
 // Glove Snipe (en widget per klipp, inte "hela paketet") har ingen post och ska behålla dagens panel; den är en RESERV
 // (catalog:glovesnipe:koiPearl:boost:2).
 //
-// EGEN TEXT (PR 16) har en post (vyra-egen-panel.js) och provas av panel-krav. Egen bild och Egen video har ingen post
-// än (mediaväljaren och renderaren behöver mötas, se vyra-egen-panel.js) och provas fortfarande här.
+// EGEN TEXT (PR 16) har en post (vyra-egen-panel.js) och provas av panel-krav. Egen bild och Egen video, Låtönskningar
+// och Skattkistan fick poster i slutgranskning B (2026-10-20) och provas inte längre här.
 //
 // FAMILJERNA RÄKNAS FRAM UR KATALOGEN, inte ur en handskriven lista: varje katalognyckel i
 // docs/katalogkarta.md byggs med fabriken, och den första nyckeln per widgettyp får representera
@@ -182,7 +182,7 @@ async function panelerna(lista, { utanRam }) {
 
 test('panelens DOM är identisk med och utan ramen, en modell per familj', { skip, timeout: 600000 }, async () => {
   const lista = familjer();
-  assert.ok(lista.length >= 7, `bara ${lista.length} familjer räknades fram ur katalogen`);
+  assert.ok(lista.length >= 3, `bara ${lista.length} familjer räknades fram ur katalogen`);
 
   const utan = await panelerna(lista, { utanRam: true });
   const med = await panelerna(lista, { utanRam: false });
