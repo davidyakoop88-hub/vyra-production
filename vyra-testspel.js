@@ -402,6 +402,11 @@
   function startaTidslinje(s) {
     const { entre, visning, utgang } = s.faser;
     const vid = (ms, fn) => s.motor.push(setTimeout(() => { if (spel === s) fn(); }, ms));
+    // Ett steg på 0 ms (Social Goal har ingen entré) visas inte i tidslinjen: förut stod "Entré"
+    // där fast inget spelades (slutgranskning B-033). Förloppet i motorn är detsamma som förut.
+    document.querySelectorAll('[data-testspel] .pr-tidslinje li').forEach(li => {
+      li.style.display = s.faser[li.dataset.fas] === 0 ? 'none' : '';
+    });
     visaFas(s, 'entre');
     vid(entre, () => visaFas(s, 'visning'));
     vid(entre + visning, () => visaFas(s, 'utgang'));
@@ -467,8 +472,11 @@
     rot.dataset.testspelWidget = String(w.id);
     const typer = p.a.typer;
     const valdTyp = typer ? (typval.get(w.id) || typer[0][0]) : null;
-    rot.innerHTML = `<button type="button" id="pr-testspel" aria-pressed="false">▶ Testa widget</button>`
-      + (typer ? `<label class="pr-testspel-typ" style="margin-top:10px">${esc(p.a.typEtikett)}<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
+    // Typväljaren (t.ex. "Antal gåvor") står FÖRE knappen med luft under sig: man väljer vad som ska
+    // spelas och trycker sedan. Förut låg den kant i kant under knappen och mellan knappen och
+    // tidslinjen, som hör till knappen (slutgranskning B-026).
+    rot.innerHTML = (typer ? `<label class="pr-testspel-typ" style="margin:0 0 10px">${esc(p.a.typEtikett)}<select id="pr-testspel-typ">${typer.map(([v, t]) => `<option value="${esc(v)}"${String(v) === String(valdTyp) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>` : '')
+      + `<button type="button" id="pr-testspel" aria-pressed="false">▶ Testa widget</button>`
       + `<ol class="pr-tidslinje" aria-label="Testets förlopp" style="display:flex;gap:10px;list-style:none;margin:6px 0 0;padding:0">`
       + `<li data-fas="entre">Entré</li><li data-fas="visning">Visning</li><li data-fas="utgang">Utgång</li></ol>`;
     rot.querySelector('#pr-testspel').onclick = () => {

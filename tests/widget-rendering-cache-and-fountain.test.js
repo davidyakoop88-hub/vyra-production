@@ -203,7 +203,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   assert.match(studio, /widget-factory\.js\?v=20261020-14/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261020-12/);
+  assert.match(studio, /gift-event-images\.js\?v=20261020-15/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -386,7 +386,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
   // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
-  assert.match(media, /const version='20261020-14'/);
+  assert.match(media, /const version='20261020-15'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla

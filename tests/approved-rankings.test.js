@@ -60,12 +60,12 @@ test('central retirement guard loads last with its own cache version', () => {
   // 20261011-1: tomDesignGrupp() — DESIGN-rubriken utan kontroller tas bort (panelen utan glapp).
   // 20261019-1: Ärv färgschema (accenten via bk()), streakSpelaPa för ▶ Testa widget och Clean Flips döda
   // reglage bort (topstreak-designer.js rensa) — Top Streak i panelramen, PR 10.
-  assert.match(html, /approved-rankings\.js\?v=20261019-1/);
-  assert.ok(html.indexOf('approved-rankings.js?v=20261019-1') > html.indexOf('vyra-state-sync.js'));
+  assert.match(html, /approved-rankings\.js\?v=20261020-15/);
+  assert.ok(html.indexOf('approved-rankings.js?v=20261020-15') > html.indexOf('vyra-state-sync.js'));
   // vyra-tom-widget.js 20260922-1: regeln om osynliga tomma widgetar galler alla sex familjer,
   // inte bara Top Gift och Top Streak. Ordningen ar oforandrad och det ar den provet vaktar.
   assert.ok(html.indexOf('vyra-tom-widget.js?v=20261011-1') > -1
-    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261019-1'),
+    && html.indexOf('vyra-tom-widget.js?v=20261011-1') < html.indexOf('approved-rankings.js?v=20261020-15'),
     'vyra-tom-widget.js ska laddas fore approved-rankings.js (doljOmTom laser window.VyraTomWidget)');
 });
 
@@ -94,13 +94,16 @@ function cleanRad(w, widget) {
     em: rot.querySelector('.approved-streak-copy em'), b: rot.querySelector('.approved-streak-copy em b') };
 }
 
-test('Clean Flip i overlay: fabrikens demoperson blir ett synligt nollage, ett riktigt rekord visas', () => {
+test('Clean Flip i overlay: fabrikens demoperson blir vilan "Ingen streak än", ett riktigt rekord visas', () => {
   // Fabriken bakar in '@StreamQueen'/18 (widget-factory.js) och createCleanStreak 'MAYA'/18.
   // Uppmatt 2026-09-20 i den visuella riggen: overlayen visade "@StreamQueen x18 STREAK".
   for (const demo of ['@StreamQueen', 'MAYA', 'maya', undefined]) {
     const r = cleanRad(riggClean(true), { id: 's1', type: 'templateTopStreak', dataName: demo, dataValue: 18 });
-    assert.equal(r.strong.textContent, '', `demonamnet ${demo} ska inte na sandningen`);
-    assert.equal(r.em.textContent, '×0 STREAK', 'nollaget ar synligt, inte dolt');
+    // Slutgranskning B-018 (2026-10-20): '×0 STREAK' sag ut som ett riktigt resultat. Vilan sager i stallet
+    // 'Ingen streak än' dar namnet star, och talraden ar dold tills forsta gavan skriver talet.
+    assert.equal(r.strong.textContent, 'Ingen streak än', `demonamnet ${demo} ska inte na sandningen`);
+    assert.equal(r.em.style.display, 'none', 'talraden ar dold i vilan - ingen nolla i sandningen');
+    assert.ok(r.em.hasAttribute('data-streak-vila'), 'vilan ar markerad sa att livepatchen kan visa raden');
     assert.equal(r.b && r.b.textContent, '0', 'talet ligger i ett eget <b> for livepatchen');
     assert.doesNotMatch(r.rot.getAttribute('style') || '', /display:\s*none/, 'ingen dold widget - livepatchen kan inte avsloja den');
   }
@@ -120,7 +123,7 @@ test('Clean Flip i overlay: en TOMD widget doljs (Davids beslut 2026-09-09), dem
   const tomd = w.eval('wh')({ id: 's1', type: 'templateTopStreak' });
   assert.match(tomd, /style="display:none!important;/, 'tomd Clean Flip ska doljas i overlay');
   const demo = w.eval('wh')({ id: 's1', type: 'templateTopStreak', dataName: '@StreamQueen', dataValue: 18 });
-  assert.doesNotMatch(demo, /display:none/, 'fabrikens demovarden ar inte "tomt" - de renderas synligt nollade');
+  assert.doesNotMatch(demo.match(/^<div[^>]*>/)[0], /display:none/, 'fabrikens demovarden ar inte "tomt" - widgeten syns, med vilan Ingen streak än');
   const editor = riggClean(false).eval('wh')({ id: 's1', type: 'templateTopStreak' });
   assert.doesNotMatch(editor, /display:none/, 'i editorn syns aven en tomd widget - annars gar den inte att placera');
 });
@@ -166,6 +169,34 @@ test('hela kedjan: tomd Clean Flip doljs, forsta gavan visar "wpwer17 ×3 STREAK
   assert.equal(el.style.display, '', 'doljningen ska vara borta efter forsta gavan');
 });
 
+test('hela kedjan: vilan "Ingen streak än" blir "wpwer17 ×3 STREAK" vid forsta gavan (B-018)', async () => {
+  const dom = new JSDOM('<!doctype html><body><div class="canvas"></div></body>',
+    { url: 'http://localhost/studio.html?overlay=1', runScripts: 'outside-only' });
+  const w = dom.window;
+  w.eval(`var wh=()=>'',props=()=>'',bind=()=>{},selected=null,view='overlay',state={widgets:[]},
+    save=()=>{},render=()=>{},toast=()=>{},liveWidget=id=>state.widgets.find(x=>x.id===id),
+    VYRA_OVERLAY=true,
+    VyraSafe={text:(v,f)=>(v==null||v==='')?f:String(v),url:(v,f)=>v||f},
+    VyraWidgets={create:()=>({id:'ny'}),isStandalone:()=>false};`);
+  w.eval(tomJs); w.eval(giftJs); w.eval(js);
+  w.dispatchEvent(new w.Event('load'));
+  const widget = { id: 's1', type: 'templateTopStreak', dataName: '@StreamQueen', dataValue: 18 };
+  w.eval('state').widgets.push(widget);
+  const box = w.document.querySelector('.canvas');
+  box.innerHTML = w.eval('wh')(widget);
+  const el = box.querySelector('[data-id="s1"]');
+  const em = () => el.querySelector('.approved-streak-copy em');
+  assert.equal(el.querySelector('.approved-streak-copy strong').textContent, 'Ingen streak än');
+  assert.equal(em().style.display, 'none', 'ingen "×0 STREAK" i vilan');
+  w.dispatchEvent(new w.CustomEvent('vyra-live-event', { detail: {
+    type: 'gift', giftName: 'Rose', username: 'wpwer17', coins: 30, count: 3, profileImage: 'https://cdn/p.jpg', giftImage: 'assets/gifts/rose.png' } }));
+  await new Promise(r => setTimeout(r, 40));
+  assert.equal(el.querySelector('.approved-streak-copy strong').textContent, 'wpwer17');
+  assert.equal(em().textContent, '×3 STREAK');
+  assert.equal(em().style.display, '', 'talraden visas när talet skrivs');
+  assert.equal(em().hasAttribute('data-streak-vila'), false);
+});
+
 test('Clean Flip ritar w.hidden, opacitet och lager - wh-overriden nar aldrig media.js:s wrappers', () => {
   const w = riggClean(false);
   const dold = w.eval('wh')({ id: 's1', type: 'templateTopStreak', hidden: true });
@@ -182,7 +213,7 @@ test('en riktig tittare som heter Maya blankas inte - giftName skiljer demo fran
   // om igen. gift-event-images.js satter giftName pa varje rekord; fabriken lamnar faltet tomt.
   const w = riggClean(true);
   const demo = cleanRad(w, { id: 's1', type: 'templateTopStreak', dataName: 'MAYA', dataValue: 18 });
-  assert.equal(demo.strong.textContent, '', 'fabrikens demoperson ska inte na sandningen');
+  assert.equal(demo.strong.textContent, 'Ingen streak än', 'fabrikens demoperson ska inte na sandningen');
 
   const riktig = cleanRad(w, { id: 's1', type: 'templateTopStreak', dataName: 'Maya', dataValue: 12, giftName: 'Rose' });
   assert.equal(riktig.strong.textContent, 'Maya', 'en riktig tittare som heter Maya ska synas');

@@ -345,7 +345,11 @@
     sek.dataset.sektion = String(nr);
     sek.dataset.panelramSektion = String(nr);
     if (ALLTID_OPPNA.has(nr)) {
-      sek.innerHTML = `<h4>${esc(rubrik)}</h4>`;
+      // Sektion 1:s rubrik "▶ Testa widget" upprepade knappen "▶ Testa widget" direkt under sig
+      // (slutgranskning B-025). Rubriken finns kvar för skärmläsare men ritas inte.
+      sek.innerHTML = nr === 1
+        ? `<h4 data-pr-dold-rubrik style="position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0">${esc(rubrik)}</h4>`
+        : `<h4>${esc(rubrik)}</h4>`;
       return sek;
     }
     // Samma hopfällbara struktur som pgSection() och vyra-panelordning.js använder, så studio.css

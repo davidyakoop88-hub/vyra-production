@@ -148,4 +148,41 @@
     ],
     utseendeFalt: ['kistaFarg', 'kistaVisaAvsandare'],
   });
+
+  // ---- Egen text: "Ta bort bakgrund" utan bakgrund (slutgranskning B-036) --------------------------
+  // Egen text ritas utan bakgrund tills Bakgrundsfärg eller Bakgrundsstyrka ändras
+  // (widget-background.js lägger bara på en bakgrund när något av dem är satt). Kryssrutan
+  // "Ta bort bakgrund" ändrade state men ingenting syntes. Den är inaktiv tills det finns en
+  // bakgrund att ta bort, och raden säger varför. En sparad widget med bakgrund påverkas inte.
+  const INGEN_BAKGRUND = 'Texten har ingen bakgrund än – välj Bakgrundsfärg eller Bakgrundsstyrka för att lägga till en.';
+  function utanBakgrund(w) {
+    const ruta = document.querySelector('.properties #wbHide');
+    if (!ruta) return;
+    const rad = ruta.closest('label') || ruta.parentElement;
+    const tom = w.bgColor == null && w.bgStrength == null && !w.hideBackground;
+    ruta.disabled = tom;
+    // Förklaringen ligger I kryssrutans rad (panelramen flyttar raden och lägger främmande element
+    // direkt i en sektion i förvaring), på en egen rad under rutan och texten.
+    if (!rad) return;
+    let not = rad.querySelector(':scope > .pr-egen-utan-bakgrund');
+    if (tom && !not) {
+      rad.style.flexWrap = 'wrap';
+      rad.insertAdjacentHTML('beforeend', `<small class="pr-egen-utan-bakgrund" style="display:block;flex-basis:100%;opacity:.75;font-size:11px;margin:4px 0 0">${INGEN_BAKGRUND}</small>`);
+    } else if (!tom && not) { not.remove(); rad.style.flexWrap = ''; }
+  }
+  if (typeof bind === 'function' && !new URLSearchParams(location.search).has('overlay')) {
+    const tidigareBind = bind;
+    bind = function () {
+      const ut = tidigareBind.apply(this, arguments);
+      try {
+        const w = typeof liveWidget === 'function' && typeof selected !== 'undefined' ? liveWidget(selected) : null;
+        if (typeof view !== 'undefined' && view === 'editor' && w && w.type === 'templateCustomText') {
+          utanBakgrund(w);
+          // widget-background.js bygger sin grupp i ett eget bind-omslag; en gång till när kedjan kört.
+          Promise.resolve().then(() => { try { const x = liveWidget(selected); if (x && x.id === w.id) utanBakgrund(x); } catch (_) {} });
+        }
+      } catch (e) { console.error('[VyraEgenPanel]', e); }
+      return ut;
+    };
+  }
 })();

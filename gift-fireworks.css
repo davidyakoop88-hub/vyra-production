@@ -216,4 +216,5 @@
 .fw-sw.on{border-color:#fff;box-shadow:0 0 0 2px #7c5cff}
 
 /* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
-.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
+/* Färgpalett-rubriken har samma typsnitt som panelens andra etiketter (toplike-studio.css: .properties .property-group label 9px, #aeb2bd). Förut 12px halvfet och blekare - slutgranskning B-028. */
+.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:9px;font-weight:400;color:#aeb2bd}

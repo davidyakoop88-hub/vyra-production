@@ -238,6 +238,10 @@
       // '◉ 44 999', Top Streak '×18' med w.streakPrefix. Behåll det som redan står där i
       // stället för att hårdkoda något av dem — annars byter widgeten utseende vid första gåvan.
       setText(el, String(el.textContent || '').match(/^\D*/)[0] + d.amount);
+      // Top Streaks vila i sändningen (approved-rankings.js, B-018) döljer talraden tills ett riktigt
+      // tal finns. Det första talet som skrivs visar den.
+      var rad = el.parentElement;
+      if (rad && rad.hasAttribute('data-streak-vila')) { rad.removeAttribute('data-streak-vila'); rad.style.display = ''; }
     });
   }
 

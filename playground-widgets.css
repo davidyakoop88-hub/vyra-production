@@ -439,6 +439,8 @@
    hög i en 44 px-pill ("STREAK ·"). Regeln här satte aldrig någon storlek. */
 .stk-pill b{color:var(--a);min-width:2ch;text-align:center;display:inline-block;font:800 44px/1 var(--font)}
 .pgw .stk-empty .stk-nm{opacity:.7}
+/* Ingen tittare än (sändningens vila, slutgranskning B-018): "Ingen streak än" står i namnraden, så talet 0 i pillret döljs tills första gåvan. */
+.pgw .stk-ingen .stk-pill b{display:none}
 .pgw .pal{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
 .pgw .sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
 .pgw .sw:hover{transform:scale(1.12);border-color:#fff9}
@@ -537,6 +539,7 @@
 .pgw .pod .rbadge::after{content:attr(data-rank);position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#140a22 0 62%,#140a2200 72%);font:900 19cqw/1 Impact,'Arial Black',sans-serif;color:#fff;-webkit-text-stroke:.4cqw var(--fg,var(--a));text-shadow:0 0 .8cqw #fff,0 0 2.4cqw var(--fg,var(--a)),0 0 4.8cqw var(--fg,var(--a))}
 
 /* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
-.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
+/* Färgpalett-rubriken har samma typsnitt som panelens andra etiketter (toplike-studio.css: .properties .property-group label 9px, #aeb2bd). Förut 12px halvfet och blekare - slutgranskning B-028. */
+.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:9px;font-weight:400;color:#aeb2bd}
 /* B-009: nollställningen hoppar staplar och text samtidigt — inga övergångar under ett ögonblick. */
 .pgw .gv.nollst *,.pgw .gv.nollst *::before,.pgw .gv.nollst *::after{transition:none!important}

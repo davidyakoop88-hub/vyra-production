@@ -1462,7 +1462,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261017-festival2','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-2','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-2','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261014-nya-gavor','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261010-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-6';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1796,7 +1796,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261020-14';
+  const version='20261020-15';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1875,8 +1875,8 @@ Promise.resolve().then(()=>{
 
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261020-14';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261020-14'];
+  if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261020-15';css.dataset.playgroundWidgets='1';document.head.append(css)}
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261020-15'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1899,8 +1899,8 @@ Promise.resolve().then(()=>{
 
 // Approved Campaign Aura replaces the old campaign presentation; session binds live roots only.
 Promise.resolve().then(()=>{
- const css=document.createElement('link');css.rel='stylesheet';css.href='gift-campaign-aura.css?v=20261019-1';document.head.append(css);
- const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','vfx-performance-monitor.js?v=20260912-1','vfx-quality-manager.js?v=20260912-1','gift-campaign-aura-engine.js?v=20261019-1','gift-campaign-aura.js?v=20261019-1','gift-campaign-aura-session.js?v=20260912-1'];
+ const css=document.createElement('link');css.rel='stylesheet';css.href='gift-campaign-aura.css?v=20261020-15';document.head.append(css);
+ const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','vfx-performance-monitor.js?v=20260912-1','vfx-quality-manager.js?v=20260912-1','gift-campaign-aura-engine.js?v=20261019-1','gift-campaign-aura.js?v=20261020-15','gift-campaign-aura-session.js?v=20260912-1'];
  const next=i=>{if(i>=files.length){if(typeof render==='function')render();return}const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0);
 });
 
@@ -1909,7 +1909,7 @@ Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='st
 
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261020-12','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261020-15','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
 
 // Dold betyder dold, oavsett vilken renderare som ritade widgeten. Laddas sist i svansen men beror
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.

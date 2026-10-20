@@ -288,9 +288,9 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // arv(w). Top Gifts poster (vyra-topgift-panel.js) laddas efter registret och testmotorn.
   // 20261019-4 (registret) och 20261019-2 (mediaväljaren): medietypen gava, gåvoväljaren i Gift Campaign (PR 9).
   // 20261019-3 (mediaväljaren): opts.status — Fan Level 50:s deltagarrader säger "Profilbild hämtad från TikTok" (PR 14).
-  const reg = plats('vyra-panelregister.js', '20261019-4'), ram = plats('vyra-panelram.js', '20261019-3');
+  const reg = plats('vyra-panelregister.js', '20261019-4'), ram = plats('vyra-panelram.js', '20261020-15');
   const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-3');
-  const testspel = plats('vyra-testspel.js', '20261020-12'), topgift = plats('vyra-topgift-panel.js', '20261020-12');
+  const testspel = plats('vyra-testspel.js', '20261020-15'), topgift = plats('vyra-topgift-panel.js', '20261020-12');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
@@ -306,7 +306,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const ranking = plats('vyra-ranking-panel.js', '20261020-12');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
-  const mal = plats('vyra-mal-panel.js', '20261020-14');  // 20261020-14: cirkelns rubrik är en rad, inte ett fält (B-005)
+  const mal = plats('vyra-mal-panel.js', '20261020-15');  // 20261020-14: cirkelns rubrik är en rad, inte ett fält (B-005)
   assert.ok(mal > reg && mal > testspel && mal < ordning, 'målens poster laddas efter registret och testmotorn, före panelordningen');
   // Top Streaks poster (vyra-streak-panel.js, PR 10) på samma sätt.
   const streak = plats('vyra-streak-panel.js', '20261019-1');
@@ -326,7 +326,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   assert.ok(glove > reg && glove > testspel && glove < ordning, 'Glove Snipe-paketens poster laddas efter registret och testmotorn, före panelordningen');
   // Egen texts post (vyra-egen-panel.js, PR 16) på samma sätt. 20261019-2 för de tio familjefilerna ovan: Lager visas
   // igen (PR 16, vyra-lager.js skriver z-index = lagret på lådan).
-  const egen = plats('vyra-egen-panel.js', '20261020-14');  // 20261020-14: Egen bild/video, Låtönskningar och Skattkistan i ramen (B-013)
+  const egen = plats('vyra-egen-panel.js', '20261020-15');  // 20261020-14: Egen bild/video, Låtönskningar och Skattkistan i ramen (B-013)
   assert.ok(egen > reg && egen > testspel && egen < ordning, 'Egen texts post laddas efter registret och testmotorn, före panelordningen');
   assert.ok(mediaval < ram, 'mediaväljaren laddas före ramen');
   // Ordningen är en beroendeordning: ramen läser registret, och panelordningens bind-omslag ska

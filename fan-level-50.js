@@ -194,7 +194,8 @@
       </div>
       <div class="property-group"><h4>LÄGG TILL ANVÄNDARE <span class="fl50-count">${manual.length}</span></h4>
         <div class="fl50-deltagare" id="fl50Deltagare">
-        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2" spellcheck="false" aria-label="Användarnamn att lägga till"><button id="fl50AddBtn" type="button">Hämta från TikTok</button><button id="fl50AddNamn" type="button">Lägg till namn</button></div>
+        <label for="fl50AddUser" class="fl50-add-etikett">Användarnamn att lägga till</label>
+        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2" spellcheck="false"><button id="fl50AddBtn" type="button">Hämta från TikTok</button><button id="fl50AddNamn" type="button">Lägg till namn</button></div>
         <small id="fl50AddStatus">Skriv ett eller flera @användarnamn (separera med komma eller mellanslag). Hämta från TikTok hämtar namn och profilbild; Lägg till namn lägger till namnen som de är.</small>
         <div id="fl50Chips" class="fl50-chips">${chipsHtml}</div></div></div>
       <details class="property-group"><summary class="fl50-summary">Redigera listan som text</summary>

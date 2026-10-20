@@ -188,7 +188,7 @@ W.streak={name:"Top Streak",title:false,
     }
     function paint(swap){
       const t=(top.user||PG_OVERLAY)?top:DEMO_STREAK;
-      const has=t.user&&t.n>=O().x.minn;el.classList.toggle("stk-empty",!has);
+      const has=t.user&&t.n>=O().x.minn;el.classList.toggle("stk-empty",!has);el.classList.toggle("stk-ingen",!t.user);
       fa.textContent="";fa.style.background="url('"+((t.user&&t.img)||TESTAVATAR)+"') center/cover";
       if(t.user){ge.innerHTML=giftHTML(t.gift);ge2.innerHTML=giftHTML(t.gift)}else{ge.innerHTML="";ge2.innerHTML=""}
       nm.textContent=t.user?t.user:"Ingen streak än";nm.style.display=O().x.showname==="1"?"":"none";
