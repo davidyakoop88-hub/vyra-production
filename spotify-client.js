@@ -152,14 +152,26 @@
     try { new BroadcastChannel('vyra-spotify').postMessage({ type: 'connected' }); } catch {}
   }
 
+  // Ett Spotify-svar som säger VARFÖR kontot inte får användas ska fram till streamern (David
+  // 2026-10-21: "Spotify funkar inte" — studion sa bara "Inte ansluten" och slängde orsaken).
+  // Vanligast: VYRA:s Spotify-app är i utvecklingsläge, och då får bara konton som lagts till under
+  // User Management på developer.spotify.com logga in. Spotify svarar då 403 på /me.
+  function lasbarOrsak(error) {
+    const text = String(error && error.message || '');
+    if (/not be registered|not registered|user may not/i.test(text)) {
+      return 'Spotify-kontot är inte tillagt i VYRA:s Spotify-app. Lägg till kontots e-post under User Management på developer.spotify.com och anslut igen.';
+    }
+    return text.replace(/\. Uppspelning kräver Spotify Premium\.$/, '') || 'Spotify svarade inte';
+  }
+
   async function status() {
     const token = await validToken();
     if (!token) return { connected: false };
     try {
       const profile = await api('/me');
       return { connected: true, profile };
-    } catch {
-      return { connected: false };
+    } catch (error) {
+      return { connected: false, fel: lasbarOrsak(error) };
     }
   }
 
