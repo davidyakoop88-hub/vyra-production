@@ -61,7 +61,15 @@
   // Senaste Top Gift i den har sandningen (namn, bilder, varde). Foljer med i samma ogonblicksbild
   // som `totals`, sa att Top Gift overlever en omladdning utan att nagon save() kors per gava.
   let senasteTopGift = null;
-  const aterstalldaTopGift = new Set();
+  // PER WIDGETOBJEKT, INTE PER ID (Top Gift fladdrade i sandningen 2026-10-21: Jan Erik -> Mela ->
+  // Jan Erik). En omhamtad konfiguration — OBS-lanken vid varje Studio-sparning, vid varje
+  // SSE-ateranslutning och vid live:start; Studion nar cloud-sync.js foljaren projicerar en annan
+  // enhets sparning — byter ut state.widgets mot NYA objekt med det dataName/dataValue som senast
+  // sparades. Med ett Set av ID:n var aterstallningen redan forbrukad, sa det sparade (aldre)
+  // rekordet stod kvar, och grinden nedan holl kvar troskeln pa det nyare sa ingenting rattade det.
+  // Ett nytt objekt ar en ny chans; samma objekt rors bara en gang, sa en handskriven andring i
+  // Studions falt star kvar som forut.
+  const aterstalldaTopGift = new WeakSet();
 
   // live-session-client.js laddas i en parallell kedja och kan komma EFTER den har filen. Da lases
   // dess egen nyckel direkt (samma lagring den valjer forst) - annars atertogs ingenting, och en
@@ -94,7 +102,7 @@
       const tg = sparad.topGift;
       if (tg && typeof tg === 'object' && tg.name) {
         senasteTopGift = { name: String(tg.name), profileImage: String(tg.profileImage || ''),
-          giftImage: String(tg.giftImage || ''), value: Number(tg.value) || 0 };
+          giftImage: String(tg.giftImage || ''), giftName: String(tg.giftName || ''), value: Number(tg.value) || 0 };
       }
       Object.entries(sparad.totals).forEach(([username, t]) => {
         if (!t || typeof t !== 'object') return;
@@ -122,6 +130,20 @@
     }
   }
   aterstallStream();
+
+  // TROSKELN FOLJER MED TOP GIFT. Rekordgrinden (gift-event-images.js records.giftCoins) ligger bara
+  // i sessionStorage, medan Top Gift for en molnlank ocksa tas tillbaka ur localStorage. En
+  // aterskapad OBS-kalla (scenbyte, omstart) visade darfor ratt Top Gift med troskeln pa 0, och
+  // nasta ros blev "nytt rekord" over en gava pa hundratals coins. Sandningens Top Gift ar per
+  // definition rekordet, sa troskeln far aldrig ligga under det. live:start nollar senasteTopGift
+  // har och records dar, sa en ny sandning borjar fortfarande om fran noll.
+  function lyftTroskel() {
+    const records = window.VyraGiftRecords;
+    if (!records || !senasteTopGift) return;
+    const v = Number(senasteTopGift.value) || 0;
+    if (v > (Number(records.giftCoins) || 0)) records.giftCoins = v;
+  }
+  lyftTroskel();
 
   // Day-bucketed persistence so a widget's "Period" (Today/Week/Month/Year/Alltid) means something —
   // `totals` above is session-only (resets on reload), which is exactly "Denna stream" and nothing
@@ -322,6 +344,10 @@
       if (gift.getAttribute('src') !== url) gift.src = url;
     }
     el.querySelectorAll(topGiftValjare('name')).forEach(n => { if (n.textContent !== tg.name) n.textContent = tg.name; });
+    // Gavans namn under bilden (klassiska markupen, media.js vyraTopGift). Utan den stod det gamla
+    // rekordets gavonamn kvar bredvid den nya bilden efter en omhamtad konfiguration.
+    const giftLabel = tg.giftName ? el.querySelector('.vyra-gift-face span') : null;
+    if (giftLabel && giftLabel.textContent !== tg.giftName) giftLabel.textContent = tg.giftName;
     // Tecknet framfor siffran ar designens (◉ i neon, inget i royal/fokus dar CSS ritar det), sa
     // det behalls — samma regel som patchen i gift-event-images.js, och samma tal, annars skriver
     // de tva skrivarna olika text i samma nod.
@@ -364,13 +390,15 @@
         ? Math.round(summa / (Number.isFinite(n) && n >= 1 ? n : 1)) : person.diamonds;
       if (records && !(value > records.giftCoins)) return;
     }
-    const tg = { name: person.name, profileImage: person.profileImage || '', giftImage: image, value };
+    const tg = { name: person.name, profileImage: person.profileImage || '', giftImage: image,
+      giftName: String(e.giftName || e.gift || ''), value };
     senasteTopGift = tg;
     streamDirty = true;
     // INGEN save() och ingen render(). save() här gav i overlayn en ny konfiguration och en hel
     // omritning per gåva — widgetar som blinkade (uppmätt 2026-10-18). Livedata patchas i state (så
     // att en senare render() ritar rätt) och i DOM, precis som Top Like och Top Streak.
     state.widgets.filter(w => w.type === 'templateTopGift').forEach(w => {
+      aterstalldaTopGift.add(w);   // objektet bar redan livevardet; tickern behover inte skriva det igen
       w.dataName = tg.name;
       w.profileImage = tg.profileImage || w.profileImage;
       if (image) w.giftImage = image;
@@ -387,12 +415,14 @@
   // Gift stått på det sparade/demo-värdet tills nästa rekord.
   function aterstallTopGift() {
     if (!senasteTopGift || typeof state === 'undefined' || !state?.widgets) return;
+    lyftTroskel();
     state.widgets.forEach(w => {
-      if (w.type !== 'templateTopGift' || aterstalldaTopGift.has(w.id)) return;
-      aterstalldaTopGift.add(w.id);
+      if (!w || w.type !== 'templateTopGift' || aterstalldaTopGift.has(w)) return;
+      aterstalldaTopGift.add(w);
       w.dataName = senasteTopGift.name;
       if (senasteTopGift.profileImage) w.profileImage = senasteTopGift.profileImage;
       if (senasteTopGift.giftImage) w.giftImage = senasteTopGift.giftImage;
+      if (senasteTopGift.giftName) w.giftName = senasteTopGift.giftName;
       w.dataValue = senasteTopGift.value;
       skrivTopGift(w, document.querySelector(`.vyra-topgift[data-id="${w.id}"]`),
         { ...senasteTopGift, profileImage: w.profileImage, giftImage: w.giftImage });

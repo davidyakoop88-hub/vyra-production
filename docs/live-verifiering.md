@@ -527,6 +527,54 @@ Skriv in: syntes händelserna i loggen och i rätt tid? stämde kön och fördr�
 matchövervakningen poängen? Ta skärmbilder av allt som ser fel ut. Koden: `live-control.js`,
 `live-control.css`, `live-client.js`.
 
+## 15. Står Top Gift still hela sändningen, i både studion och OBS? (fladdret 2026-10-21)
+
+**Sett i sändning 2026-10-21 (produktionen körde #676), lagat samma dag, aldrig sett live efter
+lagningen.** Inspelningen av OBS-utgången: 00:45 Mela ("Popular") → 11:15 JaN EriKno (katten) →
+12:12 Mela igen, exakt på sekunden → 19:15 Jan Erik igen. Top Coins räknade vidare utan avbrott
+genom 12:12, så sidan laddades inte om — men det gör inte en omhämtad konfiguration heller.
+
+Värdet är **inte** felräknat: `tests/top-gift-molnvagen.test.js` kör bryggans riktiga former
+(streakfiltret, `giftFields`, `cloudEvent`, serverns `cleanEvent`, `normalizeCloudFields`) med
+produktionskoden och en Popular-combo på 150 slår inte en gåva på 99. Tre andra vägar dit är
+reproducerade i `tests/top-gift-konsekvent.test.js` och lagade; vilken av dem som faktiskt slog till
+den kvällen går inte att avgöra i efterhand (A passar inspelningen bäst):
+
+- **A. Omhämtad konfiguration.** OBS-länken hämtar om sin konfiguration vid varje sparning i
+  studion, vid varje SSE-återanslutning och vid live:start. Widgetarna byttes då ut mot det som
+  senast *sparades* (Jan Erik), och Top Gift lades aldrig tillbaka.
+- **B. Återskapad OBS-källa** (scenbyte med "Shutdown source when not visible", omstart).
+  Rekordgränsen började om på 0, så nästa ros från Jan Erik blev "nytt rekord".
+- **C. Medvärdsgåva.** Melas gåva gick till en annan värd (`tillVarden: false`) men räknades ändå
+  av `gift-event-images.js`, medan `live-leaderboard.js` hoppade över den och behöll Jan Erik.
+
+**Så här läser du av det, i sändning** (OBS-källan: högerklick → Interagera, eller OBS startad med
+`--remote-debugging-port=9222` och `chrome://inspect`; studion: F12):
+1. Skriv i konsolen, i **både** studion och OBS-källan, efter varje nytt Top Gift:
+   `[VyraGiftRecords.giftCoins, state.widgets.filter(w=>w.type==='templateTopGift').map(w=>[w.dataName,w.dataValue,w.giftName])]`
+   Talet och namnet ska vara **samma i båda**, och talet får aldrig sjunka under sändningen.
+2. Fliken **Nätverk** i OBS-källan: notera klockslaget för varje `GET /api/overlay-access/<länk>`
+   (= en omhämtad konfiguration) och varje ny `events/stream` (= en återanslutning).
+   `document.documentElement.dataset.overlayConnection` står på `reconnecting` medan strömmen är
+   nere. **Mät intervallet** mellan återanslutningarna — kommer de ungefär var tionde minut är det
+   en proxy/värd som stänger långlivade anslutningar, och det är troligen klockan bakom
+   "tio minuter senare". Top Gift ska stå kvar på samma namn efter varje sådan rad.
+3. Byt scen fram och tillbaka i OBS (källan rivs och återskapas) och låt någon skicka en ros: Top
+   Gift ska **inte** byta till rosen, och `VyraGiftRecords.giftCoins` ska vara rekordets värde, inte 1.
+4. **I den befintliga inspelningen från 2026-10-21**, sekund 12:12 och 19:15: startade *alla*
+   widgetars animationer om samtidigt (Top Streaks och Top Gifts flipp börjar om från början)? Då
+   var det en omritning av hela overlayn, alltså en omhämtad konfiguration (väg A). Fick bara Top
+   Gift sin rekordpuls medan resten rullade vidare? Då var det en ny gåva som grinden släppte
+   igenom, och då ska Melas gåva 12:12 letas upp i bryggans logg (`_utgaende`: `diamonds`,
+   `count`, `tillVarden`).
+5. Kör med inspelning under en battle/flervärdsrum: för varje gåva som har `tillVarden: false` i
+   `_utgaende` ska Top Gift stå still. Skriv upp om Melas gåva 2026-10-21 kom under en battle.
+
+Skriv in: vilka klockslag hade återanslutningarna och omhämtningarna? stod Top Gift still efter
+dem? var studion och OBS överens? Koden: `live-leaderboard.js` (`aterstallTopGift`, `lyftTroskel`),
+`gift-event-images.js` (`records.bedom`), `overlay-access.js` (`konfigSync`, `onopen`),
+`cloud-sync.js` (`foljMolnet`).
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

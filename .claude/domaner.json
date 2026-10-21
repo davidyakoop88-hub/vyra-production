@@ -523,6 +523,8 @@
         "tests/live-tillstand.test.js",
         "tests/servertid-klocka.test.js",
         "tests/top-gift-strikt-rekord.test.js",
+        "tests/top-gift-konsekvent.test.js",
+        "tests/top-gift-molnvagen.test.js",
         "tests/live-control-prestanda.test.js"
       ],
       "e2e": [
