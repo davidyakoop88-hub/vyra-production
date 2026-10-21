@@ -10,6 +10,8 @@ function digest(value){return crypto.createHash('sha256').update(String(value)).
 function parseCookies(header=''){return Object.fromEntries(String(header).split(';').map(v=>v.trim()).filter(Boolean).map(v=>{const i=v.indexOf('=');return i<0?[v,'']:[v.slice(0,i),decodeURIComponent(v.slice(i+1))]}))}
 function sessionCookie(value,maxAge){return`vyra_session=${encodeURIComponent(value)}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAge}`}
 function clearCookie(){return'vyra_session=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0'}
+// Håll mig inloggad: bara ett strikt boolean true räknas. Saknat fält, 'true', 1 eller skräp = som förut.
+function rememberRequested(d){return!!d&&typeof d==='object'&&d.remember===true}
 function safeText(v,max=120){return String(v||'').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,max)}
 function validOverlayState(v){return !!(v&&typeof v==='object'&&!Array.isArray(v)&&Array.isArray(v.widgets)&&v.widgets.length<=500&&v.widgets.every(w=>w&&typeof w==='object'&&typeof w.id==='string'&&w.id.length>0&&w.id.length<=160))}
 // TikTok usernames: 2-24 chars of a-z 0-9 . _ (TikTok's own rule), case-folded and with a
@@ -56,4 +58,4 @@ function klientadress(req,env=process.env){
   const kedja=String((req&&req.headers&&req.headers['x-forwarded-for'])||'').split(',').map(v=>v.trim()).filter(Boolean);
   return kedja.length?kedja[kedja.length-1]:direkt;
 }
-module.exports={klientadress,normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,safeText,validOverlayState,normalizeTikTokUsername};
+module.exports={klientadress,normalizeEmail,validatePassword,hashPassword,verifyPassword,token,digest,parseCookies,sessionCookie,clearCookie,rememberRequested,safeText,validOverlayState,normalizeTikTokUsername};

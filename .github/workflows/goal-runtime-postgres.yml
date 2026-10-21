@@ -331,6 +331,13 @@ jobs:
         run: node --test test/mfa-http.test.js
         working-directory: server
 
+      # HÅLL MIG INLOGGAD (2026-10-21). Kakans Max-Age och sessionsradens expires_at ska räknas ur
+      # samma tal, rulla på /api/auth/me, bäras genom tvåsteget och dö vid utloggning, "Logga ut alla
+      # andra" och lösenordsåterställning. Det syns bara på raden Postgres faktiskt sparade.
+      - name: Håll mig inloggad — kaka, sessionsrad, tvåsteg och utloggning
+        run: node --test test/hall-mig-inloggad-http.test.js
+        working-directory: server
+
       # TAKET FOR VERIFIERINGSMEJL, och att det inte delar hink med inloggningen (#346). Sparren
       # nycklas pa user_id och hade inget prov: den kunde tas bort och hela sviten forblev gron.
       # Det vardefulla steget ar det ANDRA - att login fortfarande svarar 200 efter att taket

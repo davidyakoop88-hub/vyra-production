@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="guardian-emblem.css?v=20261020-22">
   <link rel="stylesheet" href="design-system.css?v=20261020-1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
-  <link rel="stylesheet" href="auth-client.css?v=20261020-19">
+  <link rel="stylesheet" href="auth-client.css?v=20261021-3">
   <link rel="stylesheet" href="auth-security.css?v=20261020-19">
   <link rel="stylesheet" href="cloud-sync.css?v=20261020-1">
   <link rel="stylesheet" href="billing-client.css?v=20261020-6">
@@ -20,7 +20,7 @@
 <body>
   <aside>
     <div class="sidebar-head">
-      <a href="index.html" class="brand"><i>V</i><b>VYRA</b></a>
+      <a href="index.html?stanna=1" class="brand"><i>V</i><b>VYRA</b></a>
     </div>
     <nav>
       <div class="nav-section">
@@ -121,12 +121,12 @@
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
-  <script src="auth-client.js?v=20261020-19"></script>
+  <script src="auth-client.js?v=20261021-3"></script>
   <script src="account-profile.js?v=20260724-rc1"></script>
   <!-- Registreringspolering: styrkematare i registreringslaget, pamminnelse om
        verifieringsmailet. Bada monterar via MutationObserver / auth-handelser. -->
   <script src="vyra-losenordsstyrka.js?v=1"></script>
-  <script src="auth-security.js?v=20261020-19"></script>
+  <script src="auth-security.js?v=20261021-3"></script>
   <!-- Trial-onboarding. Monterar pa vyra-entitlement-ok, som entitlement-gate.js redan
        avfyrar och ingen lyssnade pa. Maste alltsa ligga FORE den. -->
   <script src="vyra-trial-onboarding.js?v=1"></script>
