@@ -27,7 +27,9 @@
 .vyra-streak.tsd .approved-streak-copy em small{font-size:.62em;letter-spacing:.18em;font-weight:900}
 /* studio.css gör varje .widget b till ett block; talet och STREAK ska stå på samma rad som × */
 .vyra-streak.tsd .approved-streak-copy em b,.vyra-streak.tsd .approved-streak-copy em small{display:inline!important}
-.vyra-streak.tsd .approved-streak-copy em b{font-weight:900}
+/* Och samma STORLEK som × (2026-10-22): studio.css .widget b har font-size:12px, så talet stod fast på 12 px medan
+   texten runt följde widgetens storlek — i sändningen 2026-10-21 läste det "×₂₀ STREAK". */
+.vyra-streak.tsd .approved-streak-copy em b{font-weight:900;font-size:inherit!important;line-height:inherit!important}
 
 /* ===== Design 1 · Flippen med ljus ===== */
 .vyra-streak.tsd1 .tsd-in{width:210px;padding-top:14px}
