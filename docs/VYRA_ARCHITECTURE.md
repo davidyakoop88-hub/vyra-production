@@ -314,3 +314,64 @@ chain. The most fragile match **Swedish UI label text**, which gets edited routi
 - `docs/RENDERKEDJAN.md` — the mechanism in full, with a procedure for tracing a dead path
 - `docs/HANDELSEKARTA.md` — the events that drive the chain
 - `.claude/domaner.json` — who owns which file (`node scripts/domaner.js agare <fil>`)
+
+## 12. Dold i sändningen tills första riktiga händelsen (2026-10-21)
+
+**Regeln (Davids beslut):** ingen widget syns i overlay-utgången (`studio.html?overlay=1`,
+`overlay.html?access=…`, scen- och widgetlänkar) förrän den i den **pågående sändningen** har tagit
+emot sin första riktiga händelse av rätt slag — och då visar den bara den riktiga personens namn,
+bild och värde. I studions editor syns allt som förut (exempel/demo). Undantag: Egen text, Egen bild
+och Egen video (streamerns eget innehåll utan händelser).
+
+| Del | Fil | Vad den gör |
+|---|---|---|
+| Regeln | `overlay-aktivering.js` | Lyssnar på `vyra-live-event` (efter eventgrinden i `ingest()`) och på samma händelse från en annan flik. Avgör per widgettyp vilket händelseslag som aktiverar (`VyraAktivering.slagFor`): topplistor efter mätvärde (like → Top Likes, gåva → Top Coins), mål efter `goalKind`/`pg.x.metric`, Top Gift/streak/kampanj/burk/fyrverkerier på gåva, Last-X på sina typer, Fan Level 50 på nivå 50, Top Points när poängreskontran har en person, alerts/effekter på första personhändelsen. |
+| Döljandet | `overlay-dolda.js` | Samma mekanism som `hidden`: `arDold(w) = w.hidden \|\| VyraAktivering.vantar(w)`. Lådan stannar i DOM:en för riktade livepatchar men målas inte. |
+| Första bildrutan | `overlay-access.css` | `html.overlay-output:not(.vyra-aktivering-klar)` håller alla lådor osynliga tills vaktens första svep. Laddas regeln inte blir overlayn tom hellre än att visa gamla namn. |
+| Lagringen | `localStorage['vyra-aktiverade-widgetar']` | En post per länk (envägshash av `?access=`), med sessions-id och widget-id:n. |
+
+**Vad som inte aktiverar:** simulatorns `__simulerad`, direkta `__test`-anrop, serverns testevent
+(`id` `test-…`, `POST /api/test/event`) och ▶ Testa widget. De bär exempelnamn.
+
+**Ny sändning nollställer:** `live-session-client.js` skickar `vyra-live-session` med `live:start`
+en gång per sändning (dedupen på eventId överlever omladdning). Då töms listan. Vid sidladdning
+jämförs lagrad session med aktiv; skiljer de sig kastas listan.
+
+**Varför localStorage:** OBS river och återskapar webbläsarkällan vid scenbyte och omstart, så
+sessionStorage räcker inte. Overlayn får ingen historik vid laddning (SSE spelar bara upp efter
+Last-Event-ID inom samma sida). Samma lagring och samma resonemang som dedupelistan i
+`live-session-client.js`: försvinner lagringen helt behandlas `live:start` på nytt och räknarna töms
+— då är "dold igen" rätt. Utan sändningsidentitet (lokalt läge) gäller aktiveringen högst 12 h.
+
+**Testhändelser räknas aldrig i sändningen:** i overlay-utgången skickar `live-client.js` `ingest()`
+inte `__simulerad`, `__test` eller serverns `test-…` som `vyra-live-event` (och sparar dem inte som
+senaste livehändelse). Det är signalen topplistor, Top Gift-rekord, Goal Pro, poäng, kampanj, burk,
+fontän och köer räknar på; Battle MVP:s räkning i `routeLiveBattleEvent` filtrerar dem separat.
+Actions och alerts går som förut. I studion syns testerna som idag.
+
+**Topplistorna överlever en återskapad OBS-källa:** för molnlänkar (`?overlay` med `?access=`)
+skriver `live-leaderboard.js` sändningens ögonblicksbild även till localStorage, per länk och
+sändning (`vyra-leaderboard-stream-v1:<hash>`), och nollställer den vid `live:start`. Ingen risk för
+dubbelräkning där: molnet har ingen `/api/events`-backfyllnad och en ny SSE-anslutning utan
+Last-Event-ID spelar inte upp något. Skrivbordsappens lokala länk behåller sessionStorage-regeln.
+
+**Studions panel:** sektion Innehåll visar "Syns i sändningen först när …" (t.ex. "… första gåvan
+kommer") för varje widget med aktivering.
+
+**Profilbild som inte laddar:** faller tillbaka på den generiska silhuetten `test-profile.svg` — ingen
+påhittad person.
+
+### 12a. ▶ Testa widget även i OBS — bara när ingen sändning pågår
+
+| Steg | Var |
+|---|---|
+| Studion startar testet som förut (klon, vakter, tidslinje) | `vyra-testspel.js` |
+| Pågår en sändning eller är läget okänt: bara studion, raden "Visas bara här – du är live" | `overlay-testspel.js` |
+| Annars: `POST /api/workspaces/:id/testspel` `{atgard, widgetId, typ, spelId}` | `overlay-testspel.js` |
+| Servern är domaren: med sändningsidentiteten på avgör aktiv session; annars "ingen aktiv TikTok-anslutning" = inte live, aktiv anslutning utan session = okänd = 409. Stopp släpps alltid igenom. | `server/index.js` |
+| Eget meddelandeslag `event: testspel`, pub/sub, ingen `id:`-rad, bara fyra fält | `server/goal-sse.js` |
+| Overlayn spelar samma test med motorns klon på widgetens plats; den riktiga noden rörs inte, så widgeten är dold igen efteråt | `overlay-access.js` → `overlay-testspel.js` → `VyraTestspel.spelaIOverlay` |
+| ■ Stoppa (och varje stopp utom "spelat klart") skickar `stoppa` | `overlay-testspel.js` |
+
+Testet går aldrig genom `ingest()`: det räknas inte, sparas inte som livehändelse, triggar inga
+Actions och aktiverar ingen widget.

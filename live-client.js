@@ -359,8 +359,17 @@ function ingest(e,frameId){
   // Skarpa profilbilder: byter 72 px-avataren mot profilsidans 1080 px när den är känd, annars
   // köar ett uppslag (vyra-stor-avatar.js). Synkront, så widgetarna nedströms ser den stora.
   if(window.VyraStorAvatar)window.VyraStorAvatar.forbattra(e);
-  try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
-  emit('vyra-live-event',e);
+  // TESTHANDELSER NAR ALDRIG SANDNINGENS RAKNARE (Davids regel 2026-10-21: inga exempelnamn i OBS).
+  // Simulatorns `__simulerad`, `__test`-anrop och serverns testevent (`id: test-...`, POST
+  // /api/test/event) bar TestGifter och liknande. I overlay-utgangen skickas de darfor inte som
+  // `vyra-live-event` - det ar signalen topplistor, Top Gift-rekord, Goal Pro, poang, kampanj, burk,
+  // fontan och koer raknar pa - och sparas inte som senaste livehandelse. Actions och alerts nedan
+  // gar som forut. I studion syns de som idag: dar testar man.
+  const testIOverlay=!!e&&new URLSearchParams(location.search).has('overlay')&&!!(e.__simulerad||e.__test||/^test-/.test(String(e.id||'')));
+  if(!testIOverlay){
+    try{localStorage.setItem('vyra-live-event',JSON.stringify(e))}catch{}
+    emit('vyra-live-event',e);
+  }
   // SIMULERADE EVENT FAR INTE LARAS IN.
   //
   // Simulatorn skickar sina event genom ingest() med flit — hela poangen ar att de ska ga samma

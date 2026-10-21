@@ -448,7 +448,9 @@
         "layout-standalone.css",
         "standalone-links.js",
         "standalone-widgets.js",
-        "overlay-dolda.js"
+        "overlay-dolda.js",
+        "overlay-aktivering.js",
+        "overlay-testspel.js"
       ],
       "tester": [
         "tests/overlay-sanitize.test.js",
@@ -463,6 +465,7 @@
         "tests/browser/thumb-leak.browser.test.js",
         "tests/browser/synlighet.browser.test.js",
         "tests/browser/overlay-dolda-widgetar.browser.test.js",
+        "tests/browser/overlay-aktivering.browser.test.js",
         "tests/browser/katalog-forhandsbild-storlek.browser.test.js",
         "tests/browser/forhandsvisning-behaller-sokning.browser.test.js",
         "tests/browser/paketpreview-affisch.browser.test.js"

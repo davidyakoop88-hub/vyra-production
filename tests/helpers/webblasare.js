@@ -81,16 +81,31 @@ function hoppaOver() {
   return 'ingen korbar webblasare hittades — satt VYRA_CHROMIUM till en Chrome- eller Chromium-binar (hoppar, faller inte)';
 }
 
-async function startaWebblasare() {
+// DOLD TILLS AKTIVERAD (overlay-aktivering.js). I overlay-utgangen ar varje widget dold tills den
+// fatt sin forsta riktiga handelse i sandningen. De flesta browserprov mater nagot annat - utseende,
+// placering, livepatchar - i en overlay utan handelser, och de far darfor regelns utvag
+// `window.__vyraVisaUtanAktivering` i varje ny sida och kontext. Prov som provar sjalva regeln
+// startar med `startaWebblasare({ aktivering: true })` och ser overlayn som OBS ser den.
+const UTVAG = () => { window.__vyraVisaUtanAktivering = true };
+function medUtvag(browser) {
+  const nyKontext = browser.newContext.bind(browser);
+  const nySida = browser.newPage.bind(browser);
+  browser.newContext = async (...a) => { const k = await nyKontext(...a); await k.addInitScript(UTVAG); return k };
+  browser.newPage = async (...a) => { const s = await nySida(...a); await s.addInitScript(UTVAG); return s };
+  return browser;
+}
+
+async function startaWebblasare({ aktivering = false } = {}) {
   if (!chromium) return null;
+  const klar = b => (aktivering ? b : medUtvag(b));
   const binar = hittaBinar();
   if (binar) {
-    try { return await chromium.launch({ executablePath: binar }) } catch (_) {}
+    try { return klar(await chromium.launch({ executablePath: binar })) } catch (_) {}
   }
   for (const channel of ['chrome', 'msedge', 'chromium']) {
-    try { return await chromium.launch({ channel }) } catch (_) {}
+    try { return klar(await chromium.launch({ channel })) } catch (_) {}
   }
-  try { return await chromium.launch() } catch (_) {}
+  try { return klar(await chromium.launch()) } catch (_) {}
   return null;
 }
 

@@ -87,6 +87,7 @@
     "nollstallning-vid-ny-sandning.browser.test.js": 30,
     "obs-lank-lyssnare.browser.test.js": 3,
     "overlay-alla-widgets.browser.test.js": 49,
+    "overlay-aktivering.browser.test.js": 40,
     "overlay-dolda-widgetar.browser.test.js": 180,
     "overlay-textkontur.browser.test.js": 20,
     "overlay-lackage-studio-ui.browser.test.js": 12,
