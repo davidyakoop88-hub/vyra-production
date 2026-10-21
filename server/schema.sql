@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS sessions (
   ip_hash text, user_agent text
 );
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS mfa_verified_at timestamptz;
+-- Håll mig inloggad (2026-10-21): rutan ikryssad vid inloggningen. Styr kakans Max-Age och att
+-- expires_at rullar; default false = exakt beteendet före kolumnen fanns.
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS remember boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS sessions_user_idx ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS sessions_active_token_idx ON sessions(token_hash,expires_at);

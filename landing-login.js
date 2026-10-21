@@ -71,6 +71,13 @@
   const losenFalt = form.querySelector('#loginPassword');
   const losenKrav = kort.querySelector('[data-login-losenkrav]');
   const villkor = kort.querySelector('[data-login-villkor]');
+  // Håll mig inloggad: bara i inloggningsläget, av som standard. Servern läser `remember: true`
+  // (server/index.js) och ger då sessionen 30 dagar som rullar; utan rutan är allt som förut.
+  // Inget lösenord och ingen token sparas i webbläsaren — det är fortfarande den HttpOnly-kaka
+  // servern sätter som bär inloggningen. tests/hall-mig-inloggad.test.js.
+  const minns = kort.querySelector('[data-login-minns]');
+  const minnsRuta = kort.querySelector('#loginRemember');
+  const minnsHjalp = kort.querySelector('[data-login-minns-hjalp]');
   let lage = 'login';
 
   // Visa/dölj lösenord. Texten ("Visa") och namnet ("Visa lösenord") står still och aria-pressed
@@ -132,6 +139,8 @@
     // Villkor och integritet intill Skapa konto (F21) — de låg bara i sidfoten. Ingen kryssruta:
     // servern kräver ingen acceptans i API:t, så raden informerar och länkar, den grindar inte.
     if (villkor) villkor.hidden = lage !== 'register';
+    if (minns) minns.hidden = lage !== 'login';
+    if (minnsHjalp) minnsHjalp.hidden = lage !== 'login';
     // Glömt lösenord? hör till inloggningen, inte till ett konto som ännu inte finns (slutgranskning
     // 2026-10-20 C-023).
     const glomtKnapp = kort.querySelector('[data-login-glomt]');
@@ -299,6 +308,7 @@
       password: form.querySelector('#loginPassword').value,
     };
     if (lage === 'register') payload.displayName = form.querySelector('#loginName').value;
+    if (lage === 'login' && minnsRuta) payload.remember = minnsRuta.checked === true;
     visaLosen(false);
     knapp.disabled = true;
     felrad.textContent = '';

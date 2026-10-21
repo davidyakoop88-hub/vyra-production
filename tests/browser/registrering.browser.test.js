@@ -319,7 +319,9 @@ test('inloggningslaget ser ut och beter sig som forut', { skip, timeout: 90000 }
       return {
         rubrik: (g.querySelector('h1') || {}).textContent,
         knapp: (g.querySelector('button.primary') || {}).textContent,
-        falt: [...g.querySelectorAll('input')].map(i => i.id),
+        // Håll mig inloggad (2026-10-21) är en kryssruta, inte ett fält att fylla i — den räknas för sig.
+        falt: [...g.querySelectorAll('input:not([type=checkbox])')].map(i => i.id),
+        kryss: [...g.querySelectorAll('input[type=checkbox]')].map(i => i.id + (i.checked ? ':på' : ':av')),
         vaxel: (g.querySelector('#authSwitch') || {}).textContent,
         matare: !!g.querySelector('[data-losenordsstyrka]'),
       };
@@ -327,6 +329,7 @@ test('inloggningslaget ser ut och beter sig som forut', { skip, timeout: 90000 }
     assert.equal(m.rubrik, 'Välkommen tillbaka', 'inloggningsrubriken ska vara oforandrad');
     assert.equal(m.knapp, 'Logga in', 'inloggningsknappen ska vara oforandrad');
     assert.deepEqual(m.falt, ['authEmail', 'authPassword'], 'inloggningen ska inte ha fatt fler falt');
+    assert.deepEqual(m.kryss, ['authRemember:av'], 'enda kryssrutan ar Hall mig inloggad, och den ar av som standard');
     assert.equal(m.matare, false,
       'styrkematare hor hemma dar man VALJER ett losenord, inte dar man skriver ett man redan har');
   } finally { await s.stang() }
