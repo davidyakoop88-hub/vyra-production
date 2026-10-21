@@ -413,7 +413,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
   // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
-  assert.match(media, /sound-alerts\.js\?v=20261020-7/, 'sound-alerts.js cachebustades inte');
+  assert.match(media, /sound-alerts\.js\?v=20261021-11/, 'sound-alerts.js cachebustades inte');
   for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
@@ -445,13 +445,13 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog).
-  assert.match(media, /action-event-advanced\.js\?v=20261021-8/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
+  assert.match(media, /action-event-advanced\.js\?v=20261021-11/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261021-7/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261021-11/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
