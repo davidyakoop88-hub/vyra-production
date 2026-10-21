@@ -94,9 +94,13 @@
     // PRISET KOMMER FRÅN KATALOGEN när den har gåvan. En inlärd post kan bära combons summa (före
     // 2026-10-21 lärde fem rosor in Rose som 5 coins), men rummets och molnets katalog har TikToks
     // pris per gåva. Den inlärda posten behåller sitt namn och sin bild.
-    const pris=new Map();
-    [...molnKatalog(),...rumsKatalog()].forEach(g=>{const c=Number(g.coins)||0;if(c>0)pris.set(String(g.name||'').toLowerCase(),c)});
-    const lardda=larddaGavor().map(g=>({name:g.name,image:g.image,coins:pris.get(String(g.name).toLowerCase())||g.coins||0,lard:true}));
+    // BILDEN KOMMER OCKSÅ FRÅN MOLNET när det har gåvan. En inlärd post bär bildadressen från
+    // sändningen — en tidsbegränsad TikTok-länk som slutar fungera efter en tid — medan molnets
+    // katalog serverar servern egen kopia (/api/gavor/bild/…, gavobevakare.js) som aldrig går ut.
+    const pris=new Map(),bild=new Map();
+    [...molnKatalog(),...rumsKatalog()].forEach(g=>{const n=String(g.name||'').toLowerCase(),c=Number(g.coins)||0;if(c>0&&!pris.has(n))pris.set(n,c)});
+    molnKatalog().forEach(g=>{const n=String(g.name||'').toLowerCase();if(g.image&&!bild.has(n))bild.set(n,g.image)});
+    const lardda=larddaGavor().map(g=>{const n=String(g.name).toLowerCase();return{name:g.name,image:bild.get(n)||g.image,coins:pris.get(n)||g.coins||0,lard:true}});
     const tagna=new Set(lardda.map(g=>g.name.toLowerCase()));
     const rummet=rumsKatalog()
       .filter(g=>!tagna.has(String(g.name||'').toLowerCase()))

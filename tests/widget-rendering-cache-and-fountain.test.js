@@ -445,7 +445,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog).
-  assert.match(media, /action-event-advanced\.js\?v=20261021-7/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
+  assert.match(media, /action-event-advanced\.js\?v=20261021-8/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
