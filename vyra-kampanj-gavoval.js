@@ -5,7 +5,10 @@
   //
   // Panelen (registret i vyra-mal-panel.js, sektion 2 · Innehåll) har en rad med flikar 1, 2, 3 … — lika
   // många som Antal gåvor (giftCount, 1–6). Under flikraden, för den valda fliken:
-  //   * Gåva — en rullgardinslista med gåvans bild, namn och mynt ("Ros (1 mynt)"), sökbar,
+  //   * Gåva — en rullgardinslista med gåvans bild, namn och coins ("Rose (1 coins)"), sökbar, sorterad
+  //     från billigast till dyrast. Gåvor utan bild visas inte, och en bild som inte går att ladda blir
+  //     en gåvoikon — aldrig profil-silhuetten (David 2026-10-21: "allt i tiktok är coins och de ska
+  //     vara sorterade, en ros är inte 5 mynt").
   //   * Namn — visningsnamnet, förifyllt från vald gåva men går att ändra,
   //   * Mål (st) — antalet.
   //
@@ -40,24 +43,43 @@
   const valdFlik = new Map();
   const flikFor = w => Math.min(antal(w) - 1, Math.max(0, valdFlik.get(w.id) || 0));
 
-  function katalog() {
+  function kalla() {
     const K = window.VyraGavokatalog;
     if (K && typeof K.lista === 'function') {
       try { const l = K.lista(); if (Array.isArray(l) && l.length) return l; } catch (e) { console.error('[VyraKampanjGavoval]', e); }
     }
     return (window.VYRA_GIFTS || []).filter(g => g && g.name).map(g => ({ name: g.name, image: g.file, coins: 0 }));
   }
-  const mynt = c => (Number(c) > 0 ? ' (' + Number(c) + ' mynt)' : '');
+  // Listan som visas: bara gåvor med bild, en rad per namn, billigast först. Gåvor utan känt pris
+  // (manifestet bär inget) hamnar sist, i bokstavsordning.
+  function katalog() {
+    const sedda = new Set();
+    return kalla().filter(g => {
+      const n = String(g && g.name || '').toLowerCase();
+      if (!n || !g.image || sedda.has(n)) return false;
+      sedda.add(n);
+      return true;
+    }).sort((a, b) => {
+      const ca = Number(a.coins) || 0, cb = Number(b.coins) || 0;
+      if (!ca !== !cb) return ca ? -1 : 1;
+      return ca - cb || String(a.name).localeCompare(String(b.name), 'sv');
+    });
+  }
+  const tusental = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
+  const mynt = c => (Number(c) > 0 ? ' (' + tusental(Math.round(Number(c))) + ' coins)' : '');
+  // En gåvobild som inte går att ladda. runtime-controls.js byter annars varje trasig bild mot
+  // profil-silhuetten (test-profile.svg) — därav data-fallback-applied, och den här ikonen i stället.
+  const GAVOIKON = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="2" fill="#b13cff"/><rect x="2" y="7" width="20" height="4" rx="1.5" fill="#d27bff"/><rect x="11" y="7" width="2" height="14" fill="#ffd76a"/><path d="M12 7c-2-4-6-4-6-1.5S10 7 12 7zm0 0c2-4 6-4 6-1.5S14 7 12 7z" fill="#ffd76a"/></svg>');
+  const bild = (src, lat) => '<img' + (lat ? ' loading="lazy"' : '') + ' alt="" data-fallback-applied="1" data-gc-bild src="' + bildUrl(src) + '">';
 
   function slot(w, i) {
     const items = typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(w) : [];
     const it = items[i] || { name: w['giftName' + i] || '', image: w['giftImage' + i] || '', target: +w['giftTarget' + i] || 1 };
-    let coins = Number(w['giftCoins' + i]) || 0;
-    if (!coins) {
-      const namn = String(w['giftMatch' + i] || it.name || '').toLowerCase();
-      const hit = namn && katalog().find(g => String(g.name).toLowerCase() === namn);
-      if (hit) coins = Number(hit.coins) || 0;
-    }
+    // Katalogens pris går före det sparade: ett val gjort före 2026-10-21 kan bära ett inlärt
+    // combo-värde (Rose = 5).
+    const namn = String(w['giftMatch' + i] || it.name || '').toLowerCase();
+    const hit = namn && kalla().find(g => String(g.name).toLowerCase() === namn && Number(g.coins) > 0);
+    const coins = (hit && Number(hit.coins)) || Number(w['giftCoins' + i]) || 0;
     return { name: it.name, image: it.image, target: it.target, coins, gava: w['giftMatch' + i] || it.name };
   }
 
@@ -99,7 +121,7 @@
     const html = traff.slice(0, MAX_RADER).map(g => {
       const ar = String(g.name).toLowerCase() === vg;
       return '<button type="button" role="option" aria-selected="' + ar + '" data-gc-namn="' + text(g.name) + '">'
-        + (g.image ? '<img loading="lazy" alt="" src="' + bildUrl(g.image) + '">' : '<img alt="" src="">')
+        + bild(g.image, true)
         + '<span>' + text(g.name) + text(mynt(g.coins)) + '</span></button>';
     }).join('');
     const mer = traff.length > MAX_RADER ? '<small>' + traff.length + ' gåvor — sök för att se fler.</small>' : '';
@@ -113,13 +135,13 @@
       const t = slot(w, j), ar = j === i;
       return '<button type="button" role="tab" class="gc-flik" data-gc-flik="' + j + '" aria-selected="' + ar + '" tabindex="' + (ar ? 0 : -1)
         + '" aria-controls="gcFlikPanel" aria-label="Gåva ' + (j + 1) + '" title="Gåva ' + (j + 1) + (t.name ? ': ' + text(t.name) : '') + '">'
-        + (t.image ? '<img alt="" src="' + bildUrl(t.image) + '">' : '') + '<span>' + (j + 1) + '</span></button>';
+        + (t.image ? bild(t.image) : '') + '<span>' + (j + 1) + '</span></button>';
     }).join('');
     return '<div class="gc-flikar" role="tablist" aria-label="Kampanjens gåvor">' + flikar + '</div>'
       + '<div class="gc-flikpanel" id="gcFlikPanel" role="tabpanel" aria-label="Gåva ' + (i + 1) + '">'
       + '<div class="gc-falt"><span class="gc-rubrik" id="gcGavaRubrik">Gåva</span>'
       + '<button type="button" class="gc-valj" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="gcGavaRubrik gcValtNamn">'
-      + (s.image ? '<img alt="" src="' + bildUrl(s.image) + '">' : '') + '<span id="gcValtNamn">' + text(s.gava) + '</span><i>' + text(mynt(s.coins)) + '</i><b aria-hidden="true">▾</b></button>'
+      + (s.image ? bild(s.image) : '') + '<span id="gcValtNamn">' + text(s.gava) + '</span><i>' + text(mynt(s.coins)) + '</i><b aria-hidden="true">▾</b></button>'
       + '<div class="gc-lista" hidden><input type="search" placeholder="Sök gåva …" aria-label="Sök gåva"><div role="listbox" aria-label="Gåvor"></div><small class="gc-mer"></small></div></div>'
       + '<label>Namn<input id="gcGavaNamn" value="' + text(s.name) + '"></label>'
       + '<label>Mål (st)<input id="gcGavaMal" type="number" min="1" value="' + (Math.max(1, Math.round(+s.target || 1))) + '"></label>'
@@ -243,6 +265,12 @@
       if (j < 0) sok.focus(); else opt[j].focus();
     };
   }
+
+  // Trasiga gåvobilder i väljaren blir gåvoikonen (fångas i capture-fasen, error bubblar inte).
+  if (typeof document !== 'undefined') document.addEventListener('error', e => {
+    const img = e.target;
+    if (img && img.tagName === 'IMG' && img.hasAttribute('data-gc-bild') && img.getAttribute('src') !== GAVOIKON) img.setAttribute('src', GAVOIKON);
+  }, true);
 
   const tidigareBind = bind;
   bind = function () {

@@ -280,7 +280,7 @@ const LACKA = /assets\/|\.png|\.svg|URL/;
 // Final vid, och Minsta gåvovärde i Heart Fireworks och Gift Bubbles (talfält: "(mynt)" i etiketten).
 // likes: klassiska fontänens Minsta like-värde och Stjärnläge och Portalens Stort hjärta var (talfält: "(likes)" i
 // etiketten); st: Gift Jars Full vid.
-const ENHET = /(px|%|ms|×|°|s|st|mynt)\s*$/;
+const ENHET = /(px|%|ms|×|°|s|st|coins)\s*$/;
 // Nivåerna (exempelnivå, minsta nivå och videons nivå, Fan och Gifter) är rena antal, liksom Battle MVP:s
 // exempelpoäng (coins) och målens antal (Mål, Startvärde och kampanjens mål per gåva — följare, likes, gåvor), och
 // Top Streaks exempelstreak (antalet gåvor i combon).
@@ -496,7 +496,7 @@ for (const m of MINA) {
       for (const t of s.tal) {
         if (RENA_ANTAL.test(t.etikett)) continue;
         if (t.typ === 'range') assert.ok(t.b && ENHET.test(t.b), `${t.etikett || t.id}: reglaget saknar enhet i <b> (${t.b})`);
-        else assert.ok(/\((px|%|ms|°|s|st|mynt|likes)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
+        else assert.ok(/\((px|%|ms|°|s|st|coins|likes)\)/.test(t.etikett), `${t.etikett || t.id}: talfältet saknar enhet i etiketten`);
       }
 
       if (m.effekt === false) { assert.deepEqual(fel, [], 'inga sidfel'); return; }

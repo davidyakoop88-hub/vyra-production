@@ -1435,7 +1435,7 @@ document.addEventListener('load',e=>{
 //
 // onload racker inte som halsotecken: ett skript som KASTAR under korning utloser onload anda.
 // Darfor kontrolleras VyraLive, inte bara att filen kom fram.
-Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261021-2';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
+Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261021-7';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -1467,11 +1467,11 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261020-26','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261020-6'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261020-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-event-advanced.js?v=20261021-7','action-runtime.js?v=20261012-diamonds'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261020-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-7';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20261020-18';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20261021-7';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20261020-20';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261020-27';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20261019-1';document.body.append(js)});
@@ -1801,7 +1801,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261021-6';
+  const version='20261021-7';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1873,7 +1873,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261019-1','gift-fireworks.js?v=20261019-1','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261020-14'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261019-1','gift-fireworks.js?v=20261021-7','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261021-7'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
@@ -1881,7 +1881,7 @@ Promise.resolve().then(()=>{
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261020-20';css.dataset.playgroundWidgets='1';document.head.append(css)}
-  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261020-27'];
+  const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261021-7'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1889,7 +1889,7 @@ Promise.resolve().then(()=>{
 // Gift Bubbles - systerwidget till Gift Fireworks, egen fristaende canvas/DOM-motor.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-gift-bubbles]')){let css=document.createElement('link');css.rel='stylesheet';css.href='gift-bubbles.css?v=20260928-1';css.dataset.giftBubbles='1';document.head.append(css)}
-  const files=['gift-bubbles.js?v=20261020-23','gift-bubbles-session.js?v=20261018-state'];
+  const files=['gift-bubbles.js?v=20261021-7','gift-bubbles-session.js?v=20261018-state'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });
@@ -1897,7 +1897,7 @@ Promise.resolve().then(()=>{
 // Heart Fireworks - modell 2, egen fristaende canvas-motor (skotten formar hjartan).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-heart-fireworks]')){let css=document.createElement('link');css.rel='stylesheet';css.href='heart-fireworks.css?v=20260928-1';css.dataset.heartFireworks='1';document.head.append(css)}
-  const files=['heart-fireworks.js?v=20261019-1','heart-fireworks-session.js?v=20261018-7'];
+  const files=['heart-fireworks.js?v=20261021-7','heart-fireworks-session.js?v=20261018-7'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
 });

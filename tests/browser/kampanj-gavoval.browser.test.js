@@ -35,11 +35,15 @@ function servera() {
 
 // Inlärda gåvor, som efter en sändning (svenska namn, riktiga mynt). Katalogen läser dem först.
 const E = 'assets/gifts/events/';
+// Ros är inlärd med combons summa (5 rosor = 5), som inlärningen gjorde före 2026-10-21; molnets
+// katalog har TikToks pris per gåva (1), och det ska vinna. Utan bild ska inte visas alls.
 const INLARDA = [
   { name: 'Solglasögon', image: E + '0016_Cool.png', coins: 199 },
-  { name: 'Ros', image: E + '0001_Rose.png', coins: 1 },
+  { name: 'Ros', image: E + '0001_Rose.png', coins: 5 },
   { name: 'Glasstrut', image: E + '0033_Ice_Cream_Cone.png', coins: 1 },
+  { name: 'Utan Bild', image: '', coins: 3 },
 ];
+const MOLN = [{ name: 'Ros', image: E + '0001_Rose.png', coins: 1 }, { name: 'Trasig Bild', image: 'assets/finns-inte.png', coins: 2 }];
 
 let server, browser, bas;
 const skip = hoppaOver();
@@ -95,7 +99,7 @@ test('Gift Campaign: flik 1 och 2 väljer var sin gåva, gåvorna står kvar, fl
   const fel = [];
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   page.on('pageerror', e => fel.push(String(e && e.message || e)));
-  await page.addInitScript(l => { try { if (!localStorage.getItem('vyra-seen-gifts-v1')) localStorage.setItem('vyra-seen-gifts-v1', JSON.stringify(l)); } catch (_) {} }, INLARDA);
+  await page.addInitScript(([l, m]) => { try { if (!localStorage.getItem('vyra-seen-gifts-v1')) localStorage.setItem('vyra-seen-gifts-v1', JSON.stringify(l)); localStorage.setItem('vyra-gift-cloud-v1', JSON.stringify(m)); } catch (_) {} }, [INLARDA, MOLN]);
   try {
     await startaStudio(page);
     await page.evaluate(() => {
@@ -119,14 +123,30 @@ test('Gift Campaign: flik 1 och 2 väljer var sin gåva, gåvorna står kvar, fl
     assert.equal(etiketter.filter(e => e === 'Namn').length, 1);
     assert.equal(etiketter.filter(e => e === 'Mål (st)').length, 1);
 
-    // Flik 1 → Solglasögon. Listan visar inlärda gåvor först, med mynt.
+    // Listan: sorterad billigast först, coins (inte mynt), katalogens pris per gåva (Ros 1, inte 5),
+    // ingen gåva utan bild, och en bild som inte laddar blir gåvoikonen — aldrig profil-silhuetten.
+    await page.click('.properties .gc-valj');
+    await page.waitForSelector('.properties .gc-lista:not([hidden]) [role="option"]');
+    await page.waitForTimeout(800);
+    const lista = await page.evaluate(() => [...document.querySelectorAll('.properties .gc-lista [role="option"]')].map(b => ({
+      text: b.textContent.replace(/\u00a0/g, ' '), src: b.querySelector('img') && b.querySelector('img').getAttribute('src') })));
+    const pris = lista.map(r => +((/\(([\d ]+) coins\)/.exec(r.text) || [])[1] || '0').replace(/ /g, '')).filter(Boolean);
+    assert.deepEqual(pris, [...pris].sort((a, b) => a - b), 'listan är inte sorterad efter coins: ' + lista.slice(0, 8).map(r => r.text).join(', '));
+    assert.ok(lista.some(r => r.text === 'Ros (1 coins)'), 'Ros ska kosta 1 coins: ' + lista.filter(r => /^Ros/.test(r.text)).map(r => r.text));
+    assert.ok(!lista.some(r => /mynt/.test(r.text)), 'ordet mynt står kvar');
+    assert.ok(!lista.some(r => /^Utan Bild/.test(r.text)), 'en gåva utan bild visas');
+    const trasig = lista.find(r => /^Trasig Bild/.test(r.text));
+    assert.ok(trasig && /^data:image\/svg/.test(trasig.src), 'trasig bild ska bli gåvoikonen, inte ' + (trasig && trasig.src));
+    assert.ok(!lista.some(r => /test-profile/.test(r.src || '')), 'profil-silhuetten i gåvolistan');
+    await page.click('.properties .gc-valj');
+
+    // Flik 1 → Solglasögon.
     const rader = await valjGava(page, 'Solglasögon');
-    assert.equal(rader[0], 'Solglasögon (199 mynt)', 'första raden: ' + rader[0]);
-    assert.ok(rader.includes('Ros (1 mynt)'));
+    assert.ok(rader.length > 0);
     let w = await widgeten(page);
     assert.match(w.text, /Solglasögon/, 'widgeten visar gåvans namn');
     assert.equal(w.bilder[0], E + '0016_Cool.png', 'widgeten visar gåvans bild');
-    assert.match(await page.evaluate(() => document.querySelector('.properties .gc-valj').textContent), /Solglasögon.*\(199 mynt\)/);
+    assert.match(await page.evaluate(() => document.querySelector('.properties .gc-valj').textContent), /Solglasögon.*\(199 coins\)/);
     assert.equal(await page.evaluate(() => document.querySelector('#gcGavaNamn').value), 'Solglasögon', 'Namn förifylls från gåvan');
 
     // Flik 2 → Glasstrut. Flik 1 är orörd.

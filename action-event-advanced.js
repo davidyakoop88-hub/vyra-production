@@ -91,7 +91,12 @@
   //   2. rummets   — TikToks egen katalog for det har rummet. Ratt namn och varde, inte sett an.
   //   3. manifest  — fast lista, ENGELSKA namn och inget coin-varde. Sista utvagen.
   function gavolistan(){
-    const lardda=larddaGavor().map(g=>({name:g.name,image:g.image,coins:g.coins||0,lard:true}));
+    // PRISET KOMMER FRÅN KATALOGEN när den har gåvan. En inlärd post kan bära combons summa (före
+    // 2026-10-21 lärde fem rosor in Rose som 5 coins), men rummets och molnets katalog har TikToks
+    // pris per gåva. Den inlärda posten behåller sitt namn och sin bild.
+    const pris=new Map();
+    [...molnKatalog(),...rumsKatalog()].forEach(g=>{const c=Number(g.coins)||0;if(c>0)pris.set(String(g.name||'').toLowerCase(),c)});
+    const lardda=larddaGavor().map(g=>({name:g.name,image:g.image,coins:pris.get(String(g.name).toLowerCase())||g.coins||0,lard:true}));
     const tagna=new Set(lardda.map(g=>g.name.toLowerCase()));
     const rummet=rumsKatalog()
       .filter(g=>!tagna.has(String(g.name||'').toLowerCase()))

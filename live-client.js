@@ -242,7 +242,11 @@ function recordSeenGift(e){
     const lista=JSON.parse(localStorage.getItem(KEY)||'[]');
     const gammal=lista.find(x=>x.name===namn)||{};
     const kvar=lista.filter(x=>x.name!==namn);
-    const coins=Number(e.diamonds??e.coins??e.diamondCount??0)||0;
+    // PRIS PER GÅVA, inte combons summa: bryggan skickar diamonds = pris × repeatCount och count =
+    // repeatCount (normalizer.js giftFields). Fem rosor i en combo lärde förut in Rose som 5 coins
+    // (David 2026-10-21: "en ros är inte 5 mynt, är 1 coins").
+    const antal=Math.max(1,Number(e.count??e.repeatCount??1)||1);
+    const coins=Math.round((Number(e.diamonds??e.coins??e.diamondCount??0)||0)/antal);
     kvar.unshift({
       name:namn,
       image:e.giftImage||gammal.image||'',
