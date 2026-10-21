@@ -77,6 +77,17 @@
     });
   }
 
+  // KRONAN i Design 1 (David 2026-10-21: "varför kan jag inte ändra kronan på top gift?"). Samma tolv
+  // kronor som Top Gifter Podium (assets/playground/<id>-crown.webp, alla 512 px breda, så de fyller
+  // samma plats utan att förvrängas). Neon Valkyrie är den som alltid stått där och är standard.
+  // Panelens val (vyra-topgift-panel.js, fältet tgdKrona) läser den här listan.
+  window.VyraTopGiftKronor = [
+    ['neon-valkyrie', 'Neon Valkyrie'], ['royal-phoenix', 'Royal Phoenix'], ['gilded-lion', 'Gilded Lion'],
+    ['diamond-halo', 'Diamond Halo'], ['obsidian-dragon', 'Obsidian Dragon'], ['frostfire-crown', 'Frostfire'],
+    ['midnight-butterfly', 'Midnight Butterfly'], ['thunder-warden', 'Thunder Warden'], ['stellar-emperor', 'Stellar Emperor'],
+    ['ocean-oracle', 'Ocean Oracle'], ['moonlit-sakura', 'Moonlit Sakura'], ['celestial-serpent', 'Celestial Serpent'],
+  ];
+
   const forra = vyraTopGift;
   vyraTopGift = function (w) {
     if (!w || w.giftFrame) return forra(w);
@@ -87,7 +98,11 @@
       // Design 1: kronan i en höjdlös behållare före bilden, och klassen som slår på fri gåva och strålar.
       // Kronan står där rubriken stod, så kryssrutan Rubrik slår av och på den.
       html = html.replace('premium-topgift topgift-neon', 'premium-topgift topgift-neon tgd1');
-      if (w.showTitle !== false) html = html.replace('<div class="vyra-flip"', '<div class="tgd-kronfaste"><img class="tgd-krona" src="assets/playground/neon-valkyrie-crown.webp" alt=""></div><div class="vyra-flip"');
+      // Kronan väljs i panelen (tgdKrona, vyra-topgift-panel.js). Bara id:n ur listan blir en sökväg;
+      // allt annat — ett gammalt eller manipulerat värde — blir standardkronan.
+      const kronor = (window.VyraTopGiftKronor || []).map(k => k[0]);
+      const krona = kronor.includes(w.tgdKrona) ? w.tgdKrona : 'neon-valkyrie';
+      if (w.showTitle !== false) html = html.replace('<div class="vyra-flip"', '<div class="tgd-kronfaste"><img class="tgd-krona" src="assets/playground/' + krona + '-crown.webp" alt=""></div><div class="vyra-flip"');
     }
     return html;
   };

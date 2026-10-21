@@ -293,7 +293,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // 20261019-3 (mediaväljaren): opts.status — Fan Level 50:s deltagarrader säger "Profilbild hämtad från TikTok" (PR 14).
   const reg = plats('vyra-panelregister.js', '20261020-23'), ram = plats('vyra-panelram.js', '20261020-23');
   const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-3');
-  const testspel = plats('vyra-testspel.js', '20261021-1'), topgift = plats('vyra-topgift-panel.js', '20261021-7');
+  const testspel = plats('vyra-testspel.js', '20261021-1'), topgift = plats('vyra-topgift-panel.js', '20261021-9');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.

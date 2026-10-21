@@ -32,6 +32,12 @@
 
   const NAMN = { neon: 'Design 1', royal: 'Design 2', fokus: 'Design 3' };
 
+  // KRONAN i Design 1: listan ägs av renderaren (topgift-designer.js, window.VyraTopGiftKronor), som
+  // laddas både i studion och i overlayn. Den här filen laddas bara i studion — och före renderaren —
+  // så alternativen läses först när panelen byggs.
+  const kronval = { sektion: 5, typ: 'val', falt: 'tgdKrona', etikett: 'Krona', om: w => w.showTitle !== false,
+    get alternativ() { return window.VyraTopGiftKronor || [['neon-valkyrie', 'Neon Valkyrie']]; } };
+
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
@@ -68,6 +74,7 @@
       ] : []),
       // Design 1 ritar avatarramen runt profilbilden (mätt); i 2 och 3 gör den ingenting.
       ...(neon ? [{ sektion: 5, typ: 'knapp', id: 'profilram', legacyId: '.gaf-frame-group .pro-frame-picker', etikett: 'Profilram' }] : []),
+      ...(neon ? [kronval] : []),
       { sektion: 5, typ: 'tal', falt: 'topGiftGlow', etikett: 'Ljus', enhet: '%', legacyId: '#pfTopGiftGlow' },
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation
@@ -88,7 +95,7 @@
       ersatter: ['#pfTestTopGift', '#pfTopGiftProfile', '#pfTopGiftGift', '#vyraTomWidget'],
       arv: ['highlight', 'text', 'fontFamily'],
       kontroller,
-      utseendeFalt: ['accent', 'accent2', 'tgdRam', 'tgdBildram', 'profileFrame', 'topGiftGlow', 'giftSize', 'dataSize',
+      utseendeFalt: ['accent', 'accent2', 'tgdKrona', 'tgdRam', 'tgdBildram', 'profileFrame', 'topGiftGlow', 'giftSize', 'dataSize',
         'fontStyle', 'fontFamily', 'topGiftFlipSpeed', 'entranceAnimation', 'entranceDuration', 'inheritBrandKit',
         ...TEXTFALT, ...BAKGRUNDSFALT],
     };
