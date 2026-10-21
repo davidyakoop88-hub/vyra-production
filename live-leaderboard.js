@@ -165,10 +165,12 @@
     return Object.values(merged).filter(t => t[metric] > 0).sort((a, b) => b[metric] - a[metric]);
   }
 
+  // Svenskt talformat, samma som media.js vyraRankingTal (slutgranskning N-AB-007): "98 700" med hårt
+  // tusentalsmellanslag, från en miljon "1,2 mn". Förut "98.7K".
   function formatNum(n) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
+    n = Math.max(0, Math.round(Number(n) || 0));
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + '\u00a0mn';
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
   }
 
   function record(e) {
@@ -298,7 +300,12 @@
     // Tecknet framfor siffran ar designens (◉ i neon, inget i royal/fokus dar CSS ritar det), sa
     // det behalls — samma regel som patchen i gift-event-images.js, och samma tal, annars skriver
     // de tva skrivarna olika text i samma nod.
+    // Design 1 (premium neon) ritar myntet som ett <i> forst i <em> (ranking-sixpack.js enkelLasbar):
+    // da skrivs bara textnoden efter det, som i skrivTal nedan — textContent rev myntet vid forsta
+    // gavan (slutgranskningen 2026-10-20, A-001).
     el.querySelectorAll(topGiftValjare('value')).forEach(n => {
+      const ikon = n.firstElementChild;
+      if (ikon && ikon.tagName === 'I') { skrivTal(n, tg.value, true); return; }
       const text = String(n.textContent || '').match(/^\D*/)[0] + tg.value;
       if (n.textContent !== text) n.textContent = text;
     });
@@ -437,8 +444,21 @@
         // value back still counts as a DOM mutation, which would wake the observer that called us
         // and spin forever". Samma regel galler har.
         const satt = (el, varde) => { if (el && el.textContent !== varde) el.textContent = varde };
+        // NOLLRADEN TAR DEMORADENS PLATS (2026-10-20): texten som töms sparas i data-noll-plats och
+        // ritas osynligt av ranking-sixpack.css, så lådan är lika stor i OBS som i Layout. Samma
+        // regel som zeroRankingRows() i live-zero-state.js.
+        const reservera = (el, varde) => {
+          varde = String(varde || '').trim();
+          if (el && varde && typeof el.setAttribute === 'function' && !/^\D*0$/.test(varde) && el.getAttribute('data-noll-plats') !== varde) el.setAttribute('data-noll-plats', varde);
+        };
         rows.forEach(row => {
           const strong = row.querySelector('strong'), em = row.querySelector('em'), small = row.querySelector('small');
+          if (strong) reservera(strong, strong.textContent);
+          if (small) reservera(small, small.textContent);
+          if (em && /\d/.test(em.textContent || '')) {
+            const sista = em.lastChild;
+            reservera(em, sista && sista.nodeType === 3 && em.firstElementChild ? sista.nodeValue : em.textContent);
+          }
           satt(strong, '');
           satt(small, '');
           if (em) skrivTal(em, '0', true);

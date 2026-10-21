@@ -2,3 +2,8 @@
 .widget.vyra-campaign-aura{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:0!important}.widget.vyra-campaign-aura .count b,.widget.vyra-campaign-aura .count span{display:inline}
 /* Ärv färgschema (gift-campaign-aura.js): textfärgen från färgschemat på rubrik, räknare och namn. */
 .vyra-campaign-aura[data-arv-text] .event-heading,.vyra-campaign-aura[data-arv-text] .event-heading span,.vyra-campaign-aura[data-arv-text] .count,.vyra-campaign-aura[data-arv-text] .count span,.vyra-campaign-aura[data-arv-text] .name,.vyra-campaign-aura[data-arv-text] .goal-mark,.vyra-campaign-aura[data-arv-text] .remaining{color:var(--campaign-text)}
+/* LIGGANDE KAMPANJ (slutgranskning B-022, 2026-10-20). Liggande ritas i en designbredd på 152 px per gåva
+   och skalas ned till widgetens bredd (zoom 0,68 med fyra gåvor), så undertexten, gåvonamnen och "… kvar
+   till målet" landade på 6–7 px i sändningen. Här är de större så att de hamnar på 8–9 px; stående (zoom 1)
+   är orörd. */
+.vyra-campaign-aura .cg-liggande .event-heading span{font-size:13px}.vyra-campaign-aura .cg-liggande .name{font-size:13px}.vyra-campaign-aura .cg-liggande .remaining{font-size:12px;min-height:15px}

@@ -224,7 +224,8 @@
 @keyframes pg-gvpop{0%{opacity:0;transform:translateY(8px) scale(.8)}20%{opacity:1}100%{opacity:0;transform:translateY(-54px) scale(1.15)}}
 .pgw .gvc .gvpop,.pgw .gv .gvpop{position:absolute;right:34px;top:2px;font:900 36px "Segoe UI";color:var(--a);text-shadow:0 0 14px var(--a),0 2px 6px #000;animation:pg-gvpop 1.05s ease-out forwards;pointer-events:none;z-index:5}
 .pgw .gv1,.pgw .gv2,.pgw .gv6{position:relative}
-.pgw .gvbanner{position:absolute;left:50%;top:44%;width:max-content;max-width:94%;text-align:center;font:900 68px "Segoe UI";letter-spacing:.08em;color:#fff;opacity:0;pointer-events:none;z-index:10;padding:14px 38px;border-radius:22px;background:rgba(6,8,18,.82);border:4px solid var(--a);
+/* MÅL NÅTT!-skylten är ogenomskinlig (#060812, förut rgba .82): "100% av 2 000" under den syns inte igenom (slutgranskning N-AB-010). */
+.pgw .gvbanner{position:absolute;left:50%;top:44%;width:max-content;max-width:94%;text-align:center;font:900 68px "Segoe UI";letter-spacing:.08em;color:#fff;opacity:0;pointer-events:none;z-index:10;padding:14px 38px;border-radius:22px;background:#060812;border:4px solid var(--a);
   text-shadow:0 0 22px var(--a),0 3px 0 #0008;box-shadow:0 0 calc(var(--g)*40px) var(--a),0 10px 30px #000a}
 @keyframes pg-bannerin{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}16%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}28%{transform:translate(-50%,-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.04)}}
 .pgw .gv.done .gvbanner{animation:pg-bannerin calc(2.2s/var(--sp)) ease-out forwards}
@@ -439,6 +440,9 @@
    hög i en 44 px-pill ("STREAK ·"). Regeln här satte aldrig någon storlek. */
 .stk-pill b{color:var(--a);min-width:2ch;text-align:center;display:inline-block;font:800 44px/1 var(--font)}
 .pgw .stk-empty .stk-nm{opacity:.7}
+/* Ingen tittare än (sändningens vila, slutgranskning B-018): "Ingen streak än" står i namnraden, så talet 0 i pillret döljs tills första gåvan.
+   Hela pillret döljs, inte bara talet: annars stod ett tomt "🔥 STREAK" utan tal under vilan (N-AB-004). */
+.pgw .stk-ingen .stk-pill{display:none}
 .pgw .pal{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
 .pgw .sw{aspect-ratio:1;border-radius:8px;border:2px solid #ffffff22;cursor:pointer;padding:0;transition:transform .12s,border-color .12s}
 .pgw .sw:hover{transform:scale(1.12);border-color:#fff9}
@@ -537,4 +541,7 @@
 .pgw .pod .rbadge::after{content:attr(data-rank);position:absolute;left:50%;top:50%;width:58%;height:58%;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,#140a22 0 62%,#140a2200 72%);font:900 19cqw/1 Impact,'Arial Black',sans-serif;color:#fff;-webkit-text-stroke:.4cqw var(--fg,var(--a));text-shadow:0 0 .8cqw #fff,0 0 2.4cqw var(--fg,var(--a)),0 0 4.8cqw var(--fg,var(--a))}
 
 /* Rubrik över färgpaletten (en span, inte en <label> utan kontroll). */
-.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:12px;font-weight:600;color:var(--ed-muted,#b9a9c9)}
+/* Färgpalett-rubriken har samma typsnitt som panelens andra etiketter (toplike-studio.css: .properties .property-group label 9px, #aeb2bd). Förut 12px halvfet och blekare - slutgranskning B-028. */
+.pg-pal-rubrik{display:block;margin:10px 0 6px;font-size:9px;font-weight:400;color:#aeb2bd}
+/* B-009: nollställningen hoppar staplar och text samtidigt — inga övergångar under ett ögonblick. */
+.pgw .gv.nollst *,.pgw .gv.nollst *::before,.pgw .gv.nollst *::after{transition:none!important}

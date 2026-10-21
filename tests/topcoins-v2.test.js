@@ -32,7 +32,7 @@ test('both approved designs are transparent by default and animated independentl
 });
 
 test('Top Coins assets are loaded after media with a fresh shared cache version', () => {
-  assert.match(html, /topcoins-v2\.css\?v=20261019-1/);
+  assert.match(html, /topcoins-v2\.css\?v=20261020-12/);
   // Laddordningen mäts över de riktiga <script src>-taggarna i dokumentordning. media.js:s
   // ?v= låses inte: den bumpas i varje PR som rör media.js, och en låst sträng som inte
   // längre fanns gav indexOf -1 och en vakt som var grön oavsett ordning.
@@ -84,5 +84,7 @@ test('overlay: Top Coins ritar leaderboardens nollform sjalv, editorn behaller d
   assert.equal(ed.strong.textContent, 'MAYA');
   assert.ok(ed.em.textContent.startsWith(' '),
     `mellanslag efter ikonen, annars klistras livevardet ihop med den: "${ed.em.textContent}"`);
-  assert.match(ed.em.textContent, /44.999 COINS$/);
+  // Enheten (MYNT) ritas av topcoins-v2.css (.tc-copy em::after), inte i texten (slutgranskningen
+  // 2026-10-20, A-002): annars tappade nolläget och livevärdena den.
+  assert.match(ed.em.textContent, /44.999$/);
 });

@@ -69,9 +69,9 @@ test('Top Coins v2: <i>-myntet star kvar och livevardet skrivs i textnoden efter
     const ikon = em.querySelector('i');
     assert.ok(ikon, 'myntikonen <i> revs av skrivningen: textContent byter ut alla barn');
     assert.ok(ikon.querySelector('svg[data-mynt]'), 'myntsymbolen ska sta kvar i <i>');
-    assert.equal(em.textContent, ' 12.3K');
+    assert.equal(em.textContent, ' 12\u00a0300');  // svenskt talformat (N-AB-007)
     assert.equal(em.lastChild.nodeType, 3, 'talet ska ligga i en textnod efter <i>');
-    assert.equal(em.lastChild.nodeValue, ' 12.3K');
+    assert.equal(em.lastChild.nodeValue, ' 12\u00a0300');
   } finally { dom.window.close(); }
 });
 
@@ -100,7 +100,7 @@ test('Top Coins v2 i overlay utan livedata: nollningen behaller <i>, skriver "V 
   } finally { dom.window.close(); }
 });
 
-test('Top Like: <em>♥ 0</em> far "♥ 98.7K" utan strukturandring', () => {
+test('Top Like: <em>♥ 0</em> far "♥ 98 700" utan strukturandring', () => {
   const widget = { id: 'tl1', type: 'templateTopLike', useLiveData: true, liveMetric: 'likes' };
   const { dom, w } = overlayFonster([widget]);
   try {
@@ -111,7 +111,7 @@ test('Top Like: <em>♥ 0</em> far "♥ 98.7K" utan strukturandring', () => {
     malaOm(w);
 
     const em = w.document.querySelector('.toplike-row em');
-    assert.equal(em.textContent, '♥ 98.7K');
+    assert.equal(em.textContent, '♥ 98\u00a0700');
     assert.equal(em.childNodes.length, 1, 'Top Like-raden fick fler barn an sin enda textnod');
     assert.equal(em.firstChild.nodeType, 3, 'Top Like-radens enda barn ska vara en textnod');
     assert.equal(em.children.length, 0, 'ett element smog in i en Top Like-rad');

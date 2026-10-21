@@ -26,3 +26,18 @@
 .lc-perf-grid b{font-size:16px;font-variant-numeric:tabular-nums}
 .lc-perf-grid b em{font-style:normal;font-size:11px;font-weight:600;color:#9f92ac}
 @media(max-width:1000px){.lc-perf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Slutgranskning 2026-10-20 C-011: td:first-child{display:grid} slog ut colspan pa den tomma raden,
+   sa texten brots ett ord per rad. C-031: kontonamnet klipptes till "Inget TikTok-ko..." i smal ruta. */
+.lc-table td.lc-empty{display:table-cell}
+.lc-health .lc-konto{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+
+/* Kontrollgranskning C, andra omgången (N-C-004): vid 1024 px bröts "HÄNDELSER / MIN" och
+   "SKYDDADE / DROPPADE" på två rader i 133/160 px breda rutor, och eftersom innehållet var lodrätt
+   centrerat hamnade både etiketten och siffran på en annan höjd än i grannrutorna. Rutorna läggs nu
+   uppifrån (etiketterna på samma baslinje i hela raden, även bredvid TIKTOK-rutans tre rader), och
+   under 1100 px får de plats nog att inte bryta: 3 + 2 statusrutor och 2 + 2 prestandarutor. */
+.lc-health article,.lc-perf-grid article{align-items:flex-start}
+.lc-health article>i{flex:none;margin-top:1px}
+@media(max-width:1100px){.lc-health{grid-template-columns:repeat(3,minmax(0,1fr))}.lc-perf-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1000px){.lc-health{grid-template-columns:repeat(2,minmax(0,1fr))}}

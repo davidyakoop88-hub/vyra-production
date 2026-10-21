@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Last-X standardtexter på svenska",
+  "motiv": "Slutgranskningen efter ihopslagning med main",
   "nycklar": 162,
   "filter": null,
-  "tid": "2026-10-20T05:47:13.010Z"
+  "tid": "2026-10-20T22:01:52.731Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -175,51 +175,51 @@
    "fyllnad": 100
   },
   "catalog:heartgoal:citrus": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:classic": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:dark": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:emerald": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:frost": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:galaxy": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:golden": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:ice": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:midnight": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:neon": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:ocean": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:heartgoal:sakura": {
-   "matt": "230x264",
+   "matt": "230x277",
    "fyllnad": 100
   },
   "catalog:lastx:badge": {
@@ -251,7 +251,7 @@
    "fyllnad": 100
   },
   "catalog:topstreak": {
-   "matt": "280x226",
+   "matt": "280x228",
    "fyllnad": 100
   },
   "catalog:guardianemblem:model:emerald": {
@@ -287,7 +287,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:landscape": {
-   "matt": "432x289",
+   "matt": "432x291",
    "fyllnad": 100
   },
   "catalog:giftcampaign:emerald:portrait": {
@@ -295,7 +295,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:gold:landscape": {
-   "matt": "432x289",
+   "matt": "432x291",
    "fyllnad": 100
   },
   "catalog:giftcampaign:gold:portrait": {
@@ -303,7 +303,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:platinum:landscape": {
-   "matt": "432x289",
+   "matt": "432x291",
    "fyllnad": 100
   },
   "catalog:giftcampaign:platinum:portrait": {
@@ -335,7 +335,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:signal-orbit": {
-   "matt": "230x206",
+   "matt": "230x231",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:prism-core:landscape": {
@@ -363,83 +363,83 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:prism-vertical": {
-   "matt": "127x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:voltage": {
-   "matt": "136x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:prism-vertical": {
-   "matt": "127x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:voltage": {
-   "matt": "136x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:toplike:basic-v2": {
-   "matt": "186x478",
+   "matt": "233x498",
    "fyllnad": 100
   },
   "catalog:toplike:celestial": {
-   "matt": "390x116",
+   "matt": "390x130",
    "fyllnad": 100
   },
   "catalog:toplike:prism-horizontal": {
-   "matt": "380x170",
+   "matt": "380x186",
    "fyllnad": 100
   },
   "catalog:toplike:prism-vertical": {
-   "matt": "127x311",
+   "matt": "193x311",
    "fyllnad": 100
   },
   "catalog:toplike:royal-rose": {
-   "matt": "390x144",
+   "matt": "390x158",
    "fyllnad": 100
   },
   "catalog:toplike:voltage": {
-   "matt": "136x278",
+   "matt": "197x278",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-orbit:circle": {
-   "matt": "360x402",
+   "matt": "360x410",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-rail:landscape": {
-   "matt": "400x78",
+   "matt": "400x97",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-tower:portrait": {
@@ -447,11 +447,11 @@
    "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-orbit:circle": {
-   "matt": "360x402",
+   "matt": "360x410",
    "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-rail:landscape": {
-   "matt": "400x78",
+   "matt": "400x97",
    "fyllnad": 100
   },
   "catalog:socialgoal:followers:crown-tower:portrait": {
@@ -459,11 +459,11 @@
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-orbit:circle": {
-   "matt": "360x402",
+   "matt": "360x410",
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-rail:landscape": {
-   "matt": "400x78",
+   "matt": "400x119",
    "fyllnad": 100
   },
   "catalog:socialgoal:likes:heart-tower:portrait": {
@@ -791,15 +791,15 @@
    "fyllnad": 100
   },
   "catalog:topstreak:design:1": {
-   "matt": "210x187",
+   "matt": "210x190",
    "fyllnad": 100
   },
   "catalog:topstreak:design:2": {
-   "matt": "276x167",
+   "matt": "276x162",
    "fyllnad": 100
   },
   "catalog:topstreak:design:3": {
-   "matt": "236x250",
+   "matt": "236x245",
    "fyllnad": 100
   }
  }

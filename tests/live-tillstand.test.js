@@ -61,7 +61,7 @@ test('modell webb: sparat konto utan livesession är INTE anslutet och inte grö
   assert.equal(m.connector, 'väntar');
   assert.equal(m.live, 'inte aktiv');
   assert.equal(m.text, 'TikTok-konto sparat · @jokero060');
-  assert.equal(m.connectorText, 'Väntar på connector');
+  assert.equal(m.connectorText, 'Väntar på anslutning');
   assert.equal(m.gron, false);
 });
 
@@ -99,7 +99,7 @@ test('modell desktop: ansluten, sparat-men-inte-anslutet, väntar och offline', 
 
   const tomt = bygg({ connection: { connected: false, state: 'idle' } }, { lage: 'desktop', online: true });
   assert.equal(tomt.text, 'Anslut TikTok', 'viloläget måste vara exakt "Anslut TikTok" — e-postkravet skriver om just den texten');
-  assert.equal(tomt.connectorText, 'Väntar på connector');
+  assert.equal(tomt.connectorText, 'Väntar på anslutning');
 
   const ansluter = bygg({ connection: { connected: false, state: 'reconnecting', reconnectAttempt: 3 } }, { lage: 'desktop', online: true });
   assert.equal(ansluter.connector, 'ansluter');
@@ -163,7 +163,7 @@ test('skärmbildens läge (webb, sparat konto, ingen LIVE): toppraden och korten
   const v = avlas(d);
   assert.equal(v.chipText, 'TikTok-konto sparat · @jokero060', 'toppraden påstår fortfarande en anslutning');
   assert.equal(v.chipGron, false, 'toppraden lyser grönt fast inga LIVE-händelser kan komma fram');
-  assert.equal(v.tikText, 'Väntar på connector');
+  assert.equal(v.tikText, 'Väntar på anslutning');
   assert.equal(v.tikGron, false);
   assert.equal(v.tikKonto, '@jokero060');
   assert.equal(v.serverNamn, 'MOLNET');
@@ -188,7 +188,7 @@ test('webb: inget sparat konto — "Anslut TikTok" och "Inget TikTok-konto spara
   const v = avlas(d);
   assert.equal(v.chipText, 'Anslut TikTok');
   assert.equal(v.chipGron, false);
-  assert.equal(v.tikText, 'Väntar på connector');
+  assert.equal(v.tikText, 'Väntar på anslutning');
   assert.equal(v.tikKonto, 'Inget TikTok-konto sparat');
 });
 

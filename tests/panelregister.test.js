@@ -22,7 +22,7 @@ const giltig = (over = {}) => Object.assign({
   kontroller: [
     { sektion: 2, typ: 'text', falt: 'heartTitle', etikett: 'Rubrik', legacyId: '#heartTitle' },
     { sektion: 3, typ: 'std-position', utan: ['lager'] },
-    { kalla: 'exempel', typ: 'text', falt: 'provNamn', etikett: 'Namn' },
+    { sektion: 1, typ: 'text', falt: 'provNamn', etikett: 'Namn' },
     { sektion: 2, kalla: 'live', typ: 'text' },
     { sektion: 7, typ: 'std-aterstall' },
   ],
@@ -74,6 +74,8 @@ test('felstavade poster avvisas med ett läsbart fel', () => {
     [giltig({ kontroller: [{ sektion: 2, typ: 'reglage', falt: 'a' }] }), /okänd typ/],
     [giltig({ kontroller: [{ sektion: 2, typ: 'text' }] }), /falt saknas/],
     [giltig({ kontroller: [{ sektion: 2, typ: 'text', falt: 'a', kalla: 'tiktok' }] }), /okänd kalla/],
+    // Exempeldata finns inte längre (David 2026-10-20): ingen panel har ett exempeldatablock.
+    [giltig({ kontroller: [{ sektion: 1, typ: 'text', falt: 'a', kalla: 'exempel' }] }), /okänd kalla "exempel"/],
     [giltig({ kontroller: [{ sektion: 5, typ: 'farg', falt: 'a', arv: 'accent' }] }), /okänt arv/],
     [giltig({ kontroller: [{ sektion: 2, typ: 'knapp', etikett: 'X' }] }), /knapp kräver id/],
     [giltig({ kontroller: [{ sektion: 2, typ: 'text', falt: 'a', utan: ['x'] }] }), /utan gäller bara std-block/],

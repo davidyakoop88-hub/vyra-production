@@ -60,7 +60,7 @@
   function metric(label,value,note,status='neutral'){
     return `<article class="pw-metric ${status}"><small>${esc(label)}</small><strong>${esc(value)}</strong><span>${esc(note)}</span></article>`;
   }
-  function shell(){return `<section class="performance-wizard"><div class="pw-hero"><span class="pw-spark">✦</span><div><small>VYRA DIAGNOSTIK</small><h2>Performance Wizard</h2><p>Kontrollerar hur jämnt Studio ritar bilden och hur tung din öppna overlay är. Ingen information lämnar din dator.</p></div><button class="primary" id="pwStart">Starta kontroll</button></div><div class="pw-steps"><span class="active"><b>1</b>Dator</span><i></i><span><b>2</b>Overlay</span><i></i><span><b>3</b>Resultat</span></div><div id="pwBody" class="pw-empty"><div class="pw-gauge"><span>✓</span></div><h3>Redo att kontrollera</h3><p>Låt Studio vara synligt medan kontrollen körs. Det tar ungefär två sekunder.</p></div></section>`}
+  function shell(){return `<section class="performance-wizard"><div class="pw-hero"><span class="pw-spark">✦</span><div><small>VYRA DIAGNOSTIK</small><h2>Prestandakontroll</h2><p>Kontrollerar hur jämnt Studio ritar bilden och hur tung din öppna overlay är. Ingen information lämnar din dator.</p></div><button class="primary" id="pwStart">Starta kontroll</button></div><div class="pw-steps"><span class="active"><b>1</b>Dator</span><i></i><span><b>2</b>Overlay</span><i></i><span><b>3</b>Resultat</span></div><div id="pwBody" class="pw-empty"><div class="pw-gauge"><span>✓</span></div><h3>Redo att kontrollera</h3><p>Låt Studio vara synligt medan kontrollen körs. Det tar ungefär två sekunder.</p></div></section>`}
   function renderRunning(){
     const body=document.querySelector('#pwBody');if(!body)return;
     document.querySelectorAll('.pw-steps span').forEach(x=>x.classList.add('active'));
@@ -97,7 +97,7 @@
   function open(){
     document.querySelectorAll('aside button').forEach(b=>b.classList.toggle('active',b.dataset.extra==='performanceWizard'));
     const title=document.querySelector('#title'),crumb=document.querySelector('#crumb'),view=document.querySelector('#view');
-    if(title)title.textContent='Performance Wizard';if(crumb)crumb.textContent='VYRA / PRESTANDA';if(view)view.innerHTML=shell();
+    if(title)title.textContent='Prestandakontroll';if(crumb)crumb.textContent='VYRA / PRESTANDA';if(view)view.innerHTML=shell();
     document.querySelector('#pwStart')?.addEventListener('click',run);
   }
   function mount(){document.querySelector('[data-extra="performanceWizard"]')?.addEventListener('click',open)}

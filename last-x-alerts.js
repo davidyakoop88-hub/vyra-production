@@ -64,8 +64,8 @@
   };
   const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'roll', 'fade'];
   const ENTRANCE_LABEL = {
-    'slide-left': 'Slider in från vänster', 'slide-right': 'Slider in från höger',
-    pop: 'Zoomar in', roll: 'Rullar in', fade: 'Tonar in'
+    'slide-left': 'Glid in från vänster', 'slide-right': 'Glid in från höger',
+    pop: 'Zooma in', roll: 'Rulla in', fade: 'Tona in'
   };
   // Outron är intron baklänges — .last-x-leaving går tillbaka till entréns egen vilotransform.
   // Därför finns ingen outroINSTÄLLNING: varje val här bär sin egen utgång i CSS:en.
@@ -191,7 +191,7 @@
     const label = labelFor(w, typeKey);
     // EN TESTAVATAR FÖR ALLA (David 2026-10-11): utan foto visades initialen; nu samma reservbild
     // som alla andra familjer.
-    const profileImage = remembered?.avatar || w.profileImage || TESTAVATAR;
+    const profileImage = remembered?.avatar || (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage) || TESTAVATAR;
     const hasImage = profileImage ? ` data-has-image="1"` : '';
     const sticky = w.lastXPersistent !== false && remembered ? ' last-x-sticky' : '';
     const banner = BANNER_ASSETS[design] ? `<img class="last-x-frame-art" src="assets/images/last-x/${BANNER_ASSETS[design]}" alt="">` : '';
@@ -241,7 +241,7 @@
         <label>Design<select id="lastXDesign">${Object.entries(DESIGNS).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
       </div>
       <div class="property-group"><h4>ANIMATION</h4>
-        <label>Intro — hur rutan kommer in<select id="lastXEntrance">
+        <label>Inträdeseffekt<select id="lastXEntrance">
           ${ENTRANCES.map(e => `<option value="${e}">${ENTRANCE_LABEL[e]}</option>`).join('')}
         </select></label>
         <p class="last-x-type-hint">Outron speglar intron: när tiden tar slut ${ENTRANCE_OUTRO[entranceOf(w)]} rutan igen. Därför finns inget eget outro-val.</p>
@@ -252,7 +252,7 @@
       </div>
       <div class="property-group"><h4>ACCENTFÄRG</h4>
         <label class="last-x-type-check"><input type="checkbox" id="inheritBrandKit"${w.inheritBrandKit ? ' checked' : ''}><span>Ärv globalt färgschema (🎨 Färgschema-knappen ovan)</span></label>
-        <label>Egen accent (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || accentFor(Object.assign({}, w, { inheritBrandKit: false }), typeKey)}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
+        <label>Accentfärg (åsidosätter tema)<input id="followColor" type="color" value="${w.followColor || accentFor(Object.assign({}, w, { inheritBrandKit: false }), typeKey)}" ${w.inheritBrandKit ? 'disabled' : ''}></label>
       </div>
       <div class="property-group"><h4>INNEHÅLL (förhandsvisning)</h4>
         <label>Rubrik<input id="followLabel" value="${w.followLabel || TYPES[typeKey].label}" ${multi ? 'disabled' : ''}></label>
@@ -397,7 +397,9 @@
     if (nod._lx && !nod._lx.prov) throw new Error('lastXSpelaPa: noden tillhör sändningen');
     stateFor(nod, { prov: true, w: k, setTimeout: opts.setTimeout, clearTimeout: opts.clearTimeout });
     const e = Object.assign({}, event || {});
-    if (!e.username) e.username = k.followName || TYPES[typeKey].defaultName;
+    // Typens exempelnamn, aldrig widgetens sparade followName: panelen har inget exempeldatablock
+    // längre (2026-10-20), så ett gammalt sparat testnamn ska inte styra testet.
+    if (!e.username) e.username = TYPES[typeKey].defaultName;
     // Klonen ritades med den senaste personen synlig (last-x-sticky). Utan den syns entrén, och
     // stilen räknas om innan fasmaskinen tänder kortet så att övergången faktiskt spelar.
     nod.classList.remove('last-x-sticky', 'last-x-active', 'last-x-leaving');
@@ -443,7 +445,7 @@
     const name = box.querySelector('.last-x-name'), message = box.querySelector('.last-x-message'), image = box.querySelector('.last-x-avatar img');
     if (name) name.textContent = w.followName;
     if (message) message.textContent = w.followMessage;
-    if (image) image.src = VyraSafe.src(w.profileImage || TESTAVATAR);
+    if (image) image.src = VyraSafe.src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage) || TESTAVATAR);
     box.classList.remove('last-x-active', 'last-x-leaving');
     void box.offsetWidth;
     box.classList.add('last-x-active');

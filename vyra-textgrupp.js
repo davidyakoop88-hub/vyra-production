@@ -166,6 +166,7 @@
 
   // ---- panelen ------------------------------------------------------------------------------
   const TYPSNITT = ['Inter', 'Arial', 'Georgia', 'Impact', 'Verdana', 'Courier New', 'monospace'];
+  const TYPSNITT_NAMN = { monospace: 'Monospace (fast bredd)' };
 
   // KOMPAKT MED FLIT. Första versionen gav varje kontroll en egen rad och blev 586 px — panelens
   // STÖRSTA post, och därmed samma sorts svällning som gruppen byggdes för att råda bot på. Uppmätt
@@ -175,8 +176,9 @@
   // `.property-grid`, precis som Tiktory gör med sin "Text Shadow: X, Y, BLUR, Color". Typsnitt och
   // textstorlek behåller sina egna rader — de ändras oftast, och ett reglage behöver bredden.
   function grupp(w) {
+    // Värdet är CSS-namnet; texten i listan är svensk (slutgranskning N-AB-005: förut stod råa "monospace").
     const alt = TYPSNITT.map(t =>
-      `<option value="${t}" ${w.textFont === t ? 'selected' : ''}>${t}</option>`).join('');
+      `<option value="${t}" ${w.textFont === t ? 'selected' : ''}>${TYPSNITT_NAMN[t] || t}</option>`).join('');
     const skala = Math.round((Number(w.textScale) || 1) * 100);
     return `<div class="property-group vyra-textgrupp"><h4>TEXT</h4>`
       + `<label><span>Typsnitt</span><select id="vtFont">`

@@ -24,7 +24,7 @@
       const dur=finite(w.mvpDuration||design.duration||10,design.duration||10,2,15);
       return `<div class="widget battle-mvp mvp-celebration mvc-lion-clash${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}" data-mvp-lion="1" style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||320,320,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--lion-dur:${dur}s">`
         + `<div class="lion" role="img" aria-label="Lion Clash MVP"><div class="lion-body">`
-        + `<img class="lion-photo" src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt="">`
+        + `<img class="lion-photo" src="${safe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage),'assets/images/test-profile.svg')}" alt="">`
         + `<img class="lion-art" src="${art}" alt="">`
         + `<span class="eye eye-blue"></span><span class="eye eye-orange"></span>`
         + `<svg class="energy" viewBox="0 0 1000 1000" aria-hidden="true"><path class="blue-path" pathLength="1" d="M276 517 A224 224 0 0 1 500 293"/><path class="orange-path" pathLength="1" d="M724 517 A224 224 0 0 0 500 293"/></svg>`
@@ -56,7 +56,7 @@
     const particles=Array.from({length:20},(_,i)=>'<i style="--i:'+i+';--x:'+((i*37)%100)+'%;--drift:'+((i%2?1:-1)*(12+i*2))+'px"></i>').join('');
     return `<div class="widget battle-mvp mvp-celebration mvc-${key}${selected===w.id?' selected':''}" data-id="${safe.text(w.id)}"${design.raster?' data-mvc-particles="off"':''} style="left:${finite(w.x,0,-10000,10000)}px;top:${finite(w.y,0,-10000,10000)}px;width:${finite(w.width||400,400,100,2000)}px;zoom:${finite(w.widgetScale||1,1,.1,5)};--mvc-duration:${duration}s;--mvc-accent:${design.accent};--mvc-photo-left:${photo.left}%;--mvc-photo-top:${photo.top}%;--mvc-photo-width:${photo.width}%;--mvc-photo-height:${photo.height}%;--mvc-fx-intensity:${finite(w.mvpFxIntensity,100,20,250)};--mvc-fx-speed:${finite(w.mvpFxSpeed,100,40,200)};--mvc-fx-size:${finite(w.mvpFxSize,100,50,220)};--mvc-fx-depth:${finite(w.mvpFxDepth,34,0,60)};--mvc-fx-hole:${finite(w.mvpFxHole,118,60,200)};--mvc-fx-tint:${FX_TINTS.indexOf(w.mvpFxTint)>0?w.mvpFxTint:'auto'}">
       <div class="mvc-stage">${design.raster?'':'<div class="mvc-charge" aria-hidden="true"></div>'}
-      <div class="mvc-portrait"><img src="${safe.url(w.profileImage,'assets/images/test-profile.svg')}" alt=""></div>
+      <div class="mvc-portrait"><img src="${safe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage),'assets/images/test-profile.svg')}" alt=""></div>
       ${design.raster?'<img class="mvc-smoke" src="assets/mvp-celebrations/gold-ribbon-smoke.png" alt="" aria-hidden="true">':''}
       <img class="mvc-art mvc-art-left" src="${art}" alt=""><img class="mvc-art mvc-art-right" src="${art}" alt="">
       ${signatureAccents[key]?'<div class="mvc-signature mvc-signature-'+key+'" aria-hidden="true">'+signatureAccents[key]+'</div>':''}

@@ -165,7 +165,10 @@
       gift: '.vyra-gift-face img',
       profile: '.vyra-profile-face img',
       name: '.topgift-copy strong, .tgf-plate strong',
-      value: '.topgift-copy em, .tgf-plate em'
+      value: '.topgift-copy em, .tgf-plate em',
+      // Design 1 har myntet som ett <i> forst i <em>; utan flaggan rev skrivningen det (A-001,
+      // slutgranskningen 2026-10-20). Designer utan <i> tar den vanliga vagen.
+      ikon: true
     },
     templateTopStreak: {
       root: '.vyra-streak',
@@ -235,6 +238,10 @@
       // '◉ 44 999', Top Streak '×18' med w.streakPrefix. Behåll det som redan står där i
       // stället för att hårdkoda något av dem — annars byter widgeten utseende vid första gåvan.
       setText(el, String(el.textContent || '').match(/^\D*/)[0] + d.amount);
+      // Top Streaks vila i sändningen (approved-rankings.js, B-018) döljer talraden tills ett riktigt
+      // tal finns. Det första talet som skrivs visar den.
+      var rad = el.parentElement;
+      if (rad && rad.hasAttribute('data-streak-vila')) { rad.removeAttribute('data-streak-vila'); rad.style.display = ''; }
     });
   }
 
@@ -252,7 +259,7 @@
     var noder = nodesFor(widget, shape.root);
     if (!noder.length) return;
     var namn = widget.dataName || (new URLSearchParams(location.search).has('overlay') ? '' : '@StreamQueen');
-    var d = { giftImage: widget.giftImage, profileImage: widget.profileImage, name: namn, amount: amount };
+    var d = { giftImage: (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : function (v) { return v; })(widget.giftImage), profileImage: (typeof window.vyraReservbild === 'function' ? window.vyraReservbild : function (v) { return v; })(widget.profileImage), name: namn, amount: amount };
     noder.forEach(function (node) { skrivProfilNod(node, shape, d); });
   }
 
@@ -285,8 +292,8 @@
       profileImage: ex.profil ? bild(ex.profil) : '',
       name: ex.namn || '',
       // Livevägen skriver gåvans värde som det kommer (live-leaderboard.js); Signal Orbit visar
-      // det som renderaren gör, med tusentalsavgränsning och COINS.
-      amount: orbit ? Math.round(coins).toLocaleString('sv-SE') + ' COINS' : coins
+      // det som renderaren gör, med tusentalsavgränsning. Enheten (MYNT) ritas av topcoins-v2.css.
+      amount: orbit ? Math.round(coins).toLocaleString('sv-SE') : coins
     });
     if (nod.classList) {
       nod.classList.remove('play', 'record');
@@ -539,7 +546,9 @@
         // An unnamed incoming gift keys to '' and would otherwise match every empty slot at once.
         var incoming = key(giftName);
         for (var index = 0; incoming && index < slots.length; index += 1) {
-          if (key(slots[index].name) !== incoming) continue;
+          // Gåvan som valts i panelens gåvoval (vyra-kampanj-gavoval.js) räknas även när visningsnamnet
+          // ändrats efteråt. Utan något val är det namnet som förut.
+          if (key(widget['giftMatch' + index] || slots[index].name) !== incoming) continue;
           var amount = Number(detail.count == null ? 1 : detail.count);
           if (!Number.isFinite(amount) || amount <= 0) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];

@@ -111,7 +111,9 @@ test('dubbel-bind utan render kapar inte gift-widgetens ramväljare', { skip }, 
     ws: document.querySelectorAll('.gaf-frame-group [data-ws-frame]').length,
     pro: document.querySelectorAll('.gaf-frame-group [data-pro-frame]').length,
   }));
-  assert.ok(fore.ws > 20, `väntade ramrutnätet (en kollektion + Ingen) efter render, fick ${fore.ws} ws-swatchar`);
+  // Gränsen var 20. Sedan platshållarramarna (SVG) inte längre visas som val (slutgranskningen
+  // 2026-10-20, A-008) har Kollektion 1 18 riktiga ramar + Ingen. Signature-väljaren har inga ws-swatchar.
+  assert.ok(fore.ws > 12, `väntade ramrutnätet (en kollektion + Ingen) efter render, fick ${fore.ws} ws-swatchar`);
   assert.equal(fore.pro, 0, 'Signature-markup i pickern redan efter render');
 
   // Rebind-lyssnaren (media.js:781) gör exakt detta vid varje sen skriptladdning: bind() utan
@@ -127,7 +129,7 @@ test('dubbel-bind utan render kapar inte gift-widgetens ramväljare', { skip }, 
   await page.close();
   assert.equal(efter.pro, 0,
     `pickern kapades av premium-bindaren: ${efter.pro} data-pro-frame-knappar, rubrik "${efter.rubrik}"`);
-  assert.ok(efter.ws > 20,
+  assert.ok(efter.ws > 12,
     `53-ramspickern överlevde inte ombindningen: ${efter.ws} ws-swatchar kvar`);
 });
 

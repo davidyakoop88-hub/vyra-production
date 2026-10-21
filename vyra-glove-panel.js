@@ -50,6 +50,7 @@
     ersatter: ['[data-paket-test]', '.paket-testknappar'],
     utanText: true,
     kontroller: [
+      { sektion: 2, typ: 'text', falt: 'prGloveAvvecklad', legacyId: '#prGloveAvvecklad', om: w => AVVECKLADE.includes(w.boostPack) },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: live },
       { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       { sektion: 7, typ: 'std-aterstall' },
@@ -57,6 +58,33 @@
   });
   post(['pinkPrincess', 'royalRuby', 'cloudFox'], 'glove', LIVE_WEBM);
   post(['koiPearl', 'masquerade'], 'glove-mp4', LIVE_MP4);
+
+  // ---- Avvecklade paket (slutgranskning B-001/B-002, 2026-10-20) ---------------------------------------
+  //
+  // Koi Pearl Lagoon och Masquerade Ball är ogenomskinliga svarta MP4-rutor med en AI-vattenstämpel i källfilen,
+  // och det syns i sändningen. Klippen går inte att laga i kod. Katalogen och Vip-widget erbjuder dem inte längre
+  // (media.js VYRA_AVVECKLADE_PAKET), men en sparad widget av de typerna står kvar och ritas som förut — panelen
+  // säger bara tydligt varför användaren bör byta. Ingenting raderas och inga filer flyttas.
+  const AVVECKLADE = ['koiPearl', 'masquerade'];
+  const AVVECKLAD_TEXT = 'Klippen i det här paketet har en vattenstämpel och är svarta bakom effekten – byt till ett annat paket.';
+  const iOverlay = () => (typeof VYRA_OVERLAY !== 'undefined' && VYRA_OVERLAY)
+    || (typeof location !== 'undefined' && /[?&]overlay(=|&|$)/.test(location.search));
+  if (typeof props === 'function' && !iOverlay()) {
+    const tidigareProps = props;
+    props = function () {
+      const html = tidigareProps.apply(this, arguments);
+      const w = (typeof liveWidget === 'function' && typeof selected !== 'undefined') ? liveWidget(selected) : null;
+      if (typeof html !== 'string' || !w || w.type !== 'templateGloveSnipe' || w.battleEventKind !== 'pack' || !AVVECKLADE.includes(w.boostPack)) return html;
+      return html + `<div class="property-group pr-glove-tillagg" hidden><small id="prGloveAvvecklad" class="pr-info pr-varning" role="note">${AVVECKLAD_TEXT}</small></div>`;
+    };
+    if (!document.getElementById('vyra-glove-panel-stil')) {
+      const s = document.createElement('style');
+      s.id = 'vyra-glove-panel-stil';
+      s.textContent = '.properties .pr-info{display:block;opacity:.75;font-size:11px;margin:2px 0 6px}'
+        + '.properties .pr-info.pr-varning{opacity:1;color:#ffd27a;background:rgba(255,170,40,.12);border:1px solid rgba(255,170,40,.45);border-radius:8px;padding:8px 10px;line-height:1.4}';
+      (document.head || document.documentElement).append(s);
+    }
+  }
 
   // ---- Testadaptrarna ---------------------------------------------------------------------------------
   //

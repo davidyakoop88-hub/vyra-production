@@ -452,3 +452,27 @@
 .widget-catalog .rk6-katalog .rk6-grupp>button{min-width:0}
 .widget-catalog .rk6-katalog .rk6-kort-ikon{display:inline-flex;align-items:center;justify-content:center;font-style:normal}
 .widget-catalog .rk6-katalog .rk6-kort-ikon svg{width:16px;height:16px;display:block}
+
+/* NOLLÄGET UTAN TOMMA LÅDOR (slutgranskningen 2026-10-20, A-003). I overlay före första händelsen är
+   namnet tomt (renderarens nolla, live-zero-state.js) — "no invented person". Voltage ritar namnet i en
+   egen mörk pill och Basic v2/Prism under en ledlist, så varje rad visade en tom låda eller en ensam
+   list. Tomt namn = ingen namnyta; värdet står kvar. Så fort ett riktigt namn skrivs i <strong> är
+   den inte längre :empty och ytan kommer tillbaka. I editorn står alltid exempelnamnen, så där ändras
+   inget. visibility, inte display: lådan behåller sin storlek, så widgeten är lika stor i OBS som i
+   Layout (storlek-matning vaktar det). */
+.widget.vyra-toplike.rk6:is(.rk6-voltage,.rk6-basic-v2,.rk6-prism-vertical) .toplike-row>.rk6-namn:has(>strong:empty){visibility:hidden!important}
+/* Basic v2 har namn och värde i samma ruta (rad 1 och 2); utan namn centreras värdet i rutan. Värdet
+   står kvar i rad 2 och flyttas upp med top (position:relative tar ingen plats): med grid-row:1/3
+   försvann rad 2:s höjd och raden blev 58 i stället för 62 — lådan 19 px lägre i OBS än i Layout.
+   Flytten är halva namnytan + radgapet: padding 7 + raden 1,6 x namnstorleken + gap 4. */
+.widget.vyra-toplike.rk6.rk6-basic-v2 .toplike-row:has(>.rk6-namn>strong:empty)>em{position:relative!important;top:calc(-0.5 * (11px + 1.6 * var(--rk6-namn-fs,17px)))!important}
+/* NOLLRADEN TAR DEMORADENS PLATS (2026-10-20). Lådorna är innehållsstora, så ett tomt namn och en
+   ensam "0" gjorde lådan i OBS mindre än i Layout (Basic v2 186x478 mot 232x497) — och den växte när
+   första gillningen kom. live-zero-state.js sparar den levererade texten i data-noll-plats; här ritas
+   den OSYNLIG i ett pseudo-element (ingår inte i textContent), så ingenting syns men lådan behåller
+   sin storlek. Namnet: bara när det är tomt. Värdet: bara på en rad vars namn är tomt, och lagt över
+   nollan (samma ruta i ett inline-grid) så det tar den bredaste av de två bredderna, inte summan. */
+.widget.vyra-toplike .toplike-row :is(strong,small):empty[data-noll-plats]::before{content:attr(data-noll-plats);visibility:hidden}
+.widget.vyra-toplike.rk6 .toplike-row:has(strong:empty)>em[data-noll-plats]::after{content:attr(data-noll-plats);visibility:hidden;order:99;margin-left:calc(-1ch - var(--rk6-varde-gap,5px))}
+.widget.vyra-toplike.rk6.rk6-basic-v2{--rk6-varde-gap:6px}
+.widget.vyra-toplike.rk6:is(.rk6-celestial,.rk6-royal-rose){--rk6-varde-gap:3px}

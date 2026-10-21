@@ -42,14 +42,14 @@
   // (fasta procentmått per motiv) och i de klassiska stilarna i ett emblem med egen form per stil. En
   // storlek kräver ändrade renderare och CSS per stil, och hör till en egen PR.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Namn och Poäng syns i editorn men ersätts av matchens MVP i
-  // sändningen (triggerBattleMvp); de är exempeldata (sektion 1) och testet spelar med dem. Rubriken
-  // är egen text. Profilbilden väljs med mediaväljaren och gäller tills den första MVP:n kommer.
+  // EGEN TEXT OCH LIVEDATA. Namn, poäng och profilbild kommer från matchens MVP i sändningen
+  // (triggerBattleMvp). Panelen har varken exempeldata eller bildväljare för profilbilden (David
+  // 2026-10-20): ▶ Testa widget spelar vyra-exempeldata.js, och renderaren ritar sin automatiska
+  // reserv tills den första MVP:n kommer. Rubriken är egen text.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const PROFIL = 'assets/images/test-profile.svg';
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
@@ -87,11 +87,8 @@
   const poangPa = w => !!(w && w.mvpShowCoins === true);
 
   // Gemensamma rader.
-  const namn = { kalla: 'exempel', typ: 'text', falt: 'mvpName', etikett: 'Namn', legacyId: '#mvpName' };
   const typsnitt = arv => Object.assign({ sektion: 4, typ: 'val', falt: 'textFont', etikett: 'Typsnitt', legacyId: '#vtFont' }, arv ? { arv: 'fontFamily' } : {});
   const stil = { sektion: 5, typ: 'val', falt: 'mvpStyle', etikett: 'Stil', legacyId: '#mvpStyle' };
-  const profilbild = { sektion: 5, typ: 'media', medietyp: 'bild', falt: 'profileImage', etikett: 'Profilbild innan första MVP:n',
-    reserv: PROFIL, reservText: 'Automatisk – ersätts av MVP:ns profilbild när en battle avgörs' };
   const fastBild = { sektion: 5, typ: 'text', falt: 'prMvpFast', legacyId: '#prMvpFast' };
   const bakgrund = { sektion: 5, typ: 'std-bakgrund', om: harEgenBakgrund };
   const visningstid = { sektion: 6, typ: 'tal', falt: 'mvpDuration', etikett: 'Visningstid', enhet: 's', legacyId: '#mvpDuration' };
@@ -124,8 +121,6 @@
   // inkopplade.
   function klassisk(s) {
     return post('klassisk:' + s, KLASSISKA[s], 'klassisk', 'catalog:battlemvp:' + s, [
-      namn,
-      { kalla: 'exempel', typ: 'tal', falt: 'mvpScore', etikett: 'Poäng', legacyId: '#mvpScore', om: poangPa },
       { sektion: 2, typ: 'text', falt: 'mvpLabel', etikett: 'Rubrik', legacyId: '#mvpLabel' },
       { sektion: 2, typ: 'kryss', falt: 'mvpShowLabel', etikett: 'Visa rubrik', legacyId: '#mvpShowLabelMain' },
       { sektion: 2, typ: 'kryss', falt: 'mvpShowName', etikett: 'Visa namn', legacyId: '#mvpShowNameMain' },
@@ -138,7 +133,6 @@
       stil,
       { sektion: 5, typ: 'farg', falt: 'mvpColor', etikett: 'Färg 1', legacyId: '#mvpColor', arv: 'highlight' },
       { sektion: 5, typ: 'farg', falt: 'mvpColor2', etikett: 'Färg 2', legacyId: '#mvpColor2', arv: 'secondary' },
-      profilbild,
       bakgrund,
       visningstid,
       aterstall,
@@ -150,7 +144,6 @@
   // Namnstorlek står bland texten.
   function ram(id) {
     return post('ram:' + id, ramNamn(id), 'ram', 'catalog:battlemvp:frame:' + id, [
-      namn,
       { sektion: 2, typ: 'text', falt: 'mvpLabel', etikett: 'Rubrik', legacyId: '#mvpLabel' },
       { sektion: 2, typ: 'kryss', falt: 'mvpShowLabel', etikett: 'Visa rubrik', legacyId: '#mvpShowLabel' },
       { sektion: 2, typ: 'kryss', falt: 'mvpShowName', etikett: 'Visa namn', legacyId: '#mvpShowName' },
@@ -161,7 +154,6 @@
       { sektion: 4, typ: 'tal', falt: 'mvpLabelSize', etikett: 'Rubrikstorlek', enhet: 'px', legacyId: '#mvpLabelSize' },
       { sektion: 4, typ: 'tal', falt: 'mvpNameSize', etikett: 'Namnstorlek', enhet: 'px', legacyId: '#mvpNameSize' },
       stil,
-      profilbild,
       fastBild,
       bakgrund,
       visningstid,
@@ -176,7 +168,6 @@
     const rubrik = !guld && !lejon;
     const partiklar = MED_PARTIKLAR.includes(id);
     return post('firande:' + id, firandeNamn(id), 'firande', 'catalog:battlemvp:celebration:' + id, [
-      namn,
       ...(rubrik ? [
         { sektion: 2, typ: 'text', falt: 'mvpLabel', etikett: 'Rubrik', legacyId: '#mvpLabel' },
         { sektion: 2, typ: 'kryss', falt: 'mvpShowLabel', etikett: 'Visa rubrik', legacyId: '#mvpShowLabelMain' },
@@ -195,7 +186,6 @@
         { sektion: 5, typ: 'tal', falt: 'mvpFxHole', etikett: 'Fri yta runt profilbilden', enhet: '%', legacyId: '#mvpFxHole' },
         { sektion: 5, typ: 'val', falt: 'mvpFxTint', etikett: 'Partikelfärg', legacyId: '#mvpFxTint' },
       ] : []),
-      profilbild,
       fastBild,
       bakgrund,
       visningstid,
@@ -337,8 +327,9 @@
     spela(nod, k, ex, ctl) {
       if (typeof window.mvpSpelaPa !== 'function') throw new Error('media.js saknar mvpSpelaPa');
       if (window.VyraTextgrupp && typeof window.VyraTextgrupp.applicera === 'function') window.VyraTextgrupp.applicera(nod, k);
-      const poang = k.mvpScore != null && k.mvpScore !== '' ? k.mvpScore : ex.poang;
-      window.mvpSpelaPa(nod, k, { name: k.mvpName || ex.namn, score: poang, profileImage: k.profileImage || ex.bild(ex.profil) },
+      // Testet spelar alltid exempeldatafilens MVP: widgetens sparade namn, poäng och bild läses inte.
+      const poang = ex.poang;
+      window.mvpSpelaPa(nod, k, { name: ex.namn, score: poang, profileImage: ex.bild(ex.profil) },
         { setTimeout: ctl.setTimeout });
       const total = Math.max(0, (Number(k.mvpDuration) || 7) * 1000);
       const entre = Math.round(total * ENTRE_ANDEL), utgang = Math.round(total * UTGANG_ANDEL);

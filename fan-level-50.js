@@ -72,6 +72,45 @@
   }
   const namnStil = namn => `--fl50-nm-k:${namnFaktor(namn)};--fl50-nm-ks:${namnFaktor(namn, 8)}`;
 
+  // UPPSKATTNINGEN RÄCKER INTE — MÄT (slutgranskningen 2026-10-20, A-004). Oswald laddas ingenstans,
+  // så namnet ritas i reservtypsnittet ('Segoe UI' på Windows, system-ui i OBS på andra system), som
+  // är bredare än 0,6 em per versal: "NOVA STORM" (10 tecken, faktor 1) blev 107 px i en 103 px
+  // banderoll och klipptes till "NOVA STOR…" i sändningen. Efter varje ritning mäts varje namn som
+  // inte får plats, och faktorerna krymps med kvoten — samma golv 0,5 som namnFaktor. Ett namn som
+  // redan får plats rörs aldrig, så en ritning utan klippta namn skriver ingenting.
+  function passaNamn(scope) {
+    (scope || document).querySelectorAll('.fan-level-50 .fl50-name').forEach(box => {
+      const sp = box.firstElementChild; if (!sp) return;
+      for (let varv = 0; varv < 3; varv++) {
+        const cw = sp.clientWidth, sw = sp.scrollWidth;
+        if (!cw || sw <= cw) return;                       // dold (0) eller får plats
+        const k = parseFloat(box.style.getPropertyValue('--fl50-nm-k')) || 1;
+        const ks = parseFloat(box.style.getPropertyValue('--fl50-nm-ks')) || 1;
+        if (k <= 0.5 && ks <= 0.5) return;                 // golvet: ellipsen tar resten
+        const r = cw / sw * 0.98;
+        box.style.setProperty('--fl50-nm-k', Math.max(0.5, Math.floor(k * r * 1000) / 1000));
+        box.style.setProperty('--fl50-nm-ks', Math.max(0.5, Math.floor(ks * r * 1000) / 1000));
+      }
+    });
+  }
+  let passaPlanerad = 0;
+  function planeraPassning() {
+    if (passaPlanerad) return;
+    passaPlanerad = (root.requestAnimationFrame || (f => root.setTimeout(f, 16)))(() => { passaPlanerad = 0; passaNamn(); });
+  }
+  if (typeof MutationObserver === 'function' && root.document && root.document.body) {
+    // Bara mutationer som rör en Fan Level 50-tavla: en omritning, ett kortbyte (bytKort skriver
+    // namnets text) eller ▶ Testa:s klon. Stilskrivningarna ovan är inga childList-mutationer.
+    new MutationObserver(muts => {
+      for (const m of muts) {
+        const t = m.target && m.target.nodeType === 1 ? m.target : m.target && m.target.parentElement;
+        if ((t && t.closest && t.closest('.fan-level-50')) || [...(m.addedNodes || [])].some(n => n.nodeType === 1 && (n.matches('.fan-level-50') || n.querySelector('.fan-level-50')))) { planeraPassning(); return; }
+      }
+    }).observe(root.document.body, { childList: true, subtree: true });
+  }
+  // Typsnitt som laddas efter ritningen ändrar bredden.
+  try { root.document.fonts && root.document.fonts.ready.then(planeraPassning); root.document.fonts.addEventListener('loadingdone', planeraPassning); } catch (_) {}
+
   // EN WIDGET, ALLA DESIGNER (David 2026-10-16): katalogen har ett kort i stallet for fyra, och
   // inspektorn valjer en design eller 'alla'. Med 'alla' far kort nr N mall nr N (runt), sa bandet
   // visar alla fyra bredvid varandra och slideshowen byter mall med varje fan.
@@ -88,7 +127,7 @@
     const team = safe.text(m.team || w.fanl50Team || '');
     return `<div class="fl50-card fl50-design-${design}">
       <img class="fl50-art" src="${d.art}" alt="">
-      <div class="fl50-photo"><img src="${safe.url(m.avatar, FALLBACK)}" alt=""></div>
+      <div class="fl50-photo"><img src="${safe.url((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(m.avatar), FALLBACK)}" alt=""></div>
       <div class="fl50-name" style="${namnStil(m.name)}"><span>${safe.text(m.name, 'FAN')}</span></div>
       ${team ? `<div class="fl50-team"><span>#${team}</span></div>` : ''}
       ${rank ? `<div class="fl50-rank">#${rank}</div>` : ''}
@@ -155,7 +194,8 @@
       </div>
       <div class="property-group"><h4>LÄGG TILL ANVÄNDARE <span class="fl50-count">${manual.length}</span></h4>
         <div class="fl50-deltagare" id="fl50Deltagare">
-        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2, @namn3 …" spellcheck="false" aria-label="Användarnamn att lägga till"><button id="fl50AddBtn" type="button">Hämta från TikTok</button><button id="fl50AddNamn" type="button">Lägg till namn</button></div>
+        <label for="fl50AddUser" class="fl50-add-etikett">Användarnamn att lägga till</label>
+        <div class="fl50-add"><input id="fl50AddUser" placeholder="@namn1, @namn2" spellcheck="false"><button id="fl50AddBtn" type="button">Hämta från TikTok</button><button id="fl50AddNamn" type="button">Lägg till namn</button></div>
         <small id="fl50AddStatus">Skriv ett eller flera @användarnamn (separera med komma eller mellanslag). Hämta från TikTok hämtar namn och profilbild; Lägg till namn lägger till namnen som de är.</small>
         <div id="fl50Chips" class="fl50-chips">${chipsHtml}</div></div></div>
       <details class="property-group"><summary class="fl50-summary">Redigera listan som text</summary>
@@ -318,7 +358,7 @@
         NYCKLAR.forEach(k => card.classList.remove('fl50-design-' + k)); card.classList.add('fl50-design-' + design);
         const art = card.querySelector('.fl50-art'); if (art) art.src = ART[design].art;
       }
-      const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src(m.avatar || FALLBACK, FALLBACK);
+      const ph = card.querySelector('.fl50-photo img'); if (ph) ph.src = safe.src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(m.avatar) || FALLBACK, FALLBACK);
       const nm = card.querySelector('.fl50-name span'); if (nm) { nm.textContent = safe.text(m.name, 'FAN'); nm.parentElement.style.setProperty('--fl50-nm-k', namnFaktor(m.name)); nm.parentElement.style.setProperty('--fl50-nm-ks', namnFaktor(m.name, 8)); }
       const teamText = safe.text(m.team || w.fanl50Team || '');
       const tm = card.querySelector('.fl50-team span'); if (tm) tm.textContent = teamText ? ('#' + teamText) : '';
@@ -335,6 +375,7 @@
     roster: () => auto.slice(),
     members,
     namnFaktor,
+    passaNamn,
     // ▶ Testa widget (vyra-fl50-panel.js): kortens HTML med en given lista, och ett kortbyte pa ett givet
     // kort. Inget av dem laser eller skriver rostern, layouten eller natet. glom(id) tar bort det
     // slideshowen eventuellt minns for klonens id.

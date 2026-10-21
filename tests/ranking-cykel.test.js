@@ -47,9 +47,10 @@ function rigg(metric) {
 const rader = box => [...box.querySelectorAll('.toplike-row')];
 
 for (const [metric, rubrik, ikon, forvantat] of [
-  ['likes', 'TOP LIKES', '♥', ['1.2K', '1.1K']],
-  ['coins', 'TOP COINS', '●', ['2.3K', '2.2K']],
-  ['points', 'TOP POINTS', '◆', ['3.5K', '3.3K']]
+  // Svenskt talformat med hårt tusentalsmellanslag (slutgranskning N-AB-007): "1 234", inte "1.2K".
+  ['likes', 'TOP LIKES', '♥', ['1\u00a0234', '1\u00a0111']],
+  ['coins', 'TOP COINS', '●', ['2\u00a0345', '2\u00a0222']],
+  ['points', 'TOP POINTS', '◆', ['3\u00a0456', '3\u00a0333']]
 ]) {
   test(`rankingcykeln ritar ${metric} ur livedatan, inte demodatan`, () => {
     const { box } = rigg(metric);
@@ -73,11 +74,11 @@ for (const [metric, rubrik, ikon, forvantat] of [
 
 test('MUTATIONSVAKTEN: likes-steget laser person.likes, aldrig person.activeLikes', () => {
   // Det har ar provet #345 bestallde. Byts `person.likes` mot `person.activeLikes` i
-  // visaRankingSteg blir raden "♥ 7.8K" i stallet for "♥ 1.2K" och bada assertionerna nedan faller.
+  // visaRankingSteg blir raden "♥ 7 777" i stallet for "♥ 1 234" och bada assertionerna nedan faller.
   const { box } = rigg('likes');
   const em = rader(box)[0].querySelector('em').textContent;
-  assert.equal(em, '♥ 1.2K');
-  assert.doesNotMatch(em, /7\.8K/,
+  assert.equal(em, '♥ 1\u00a0234');
+  assert.doesNotMatch(em, /7\u00a0777/,
     'activeLikes togs bort i #343 — laser koden det faltet igen ar raden fel i sandning');
 });
 

@@ -23,9 +23,9 @@
   //     hjärtat och pillen har fasta mått inuti. En rad säger det, och Storlek skalar hela widgeten,
   //   * Ljus i målen verkar (goal-motion.css räknade med '62%' i en skuggradie, som var ogiltig),
   //   * Antal (talets färg) i Heart Me verkar (studio.css:169 satte color:#fff på talet),
-  //   * +1 Test och Testa 100 % (Social Goal) är ersatta av ▶ Testa widget, och kampanjens sökvägsfält
-  //     för gåvobilden av gåvoväljaren (mediaväljaren med typ 'gava': gåvans bild och namn, aldrig
-  //     sökvägen),
+  //   * +1 Test och Testa 100 % (Social Goal) är ersatta av ▶ Testa widget. Kampanjens sökvägsfält för
+  //     gåvobilden är borta; gåvan väljs i flikraden 1, 2, 3 … (vyra-kampanj-gavoval.js) ur Action & Events
+  //     gåvokatalog — bild, namn och mynt — och namnet och målet står under fliken,
   //   * Nu (kampanjens räknare per gåva) står inte i panelen: den räknas upp live (gift-event-images.js)
   //     och en LIVE-rad säger det. Fältet ligger kvar i state,
   //   * BAKGRUND visas inte: alla tre är genomskinliga motiv.
@@ -78,7 +78,9 @@
       kontroller: [
         // 2 · Innehåll
         { sektion: 2, typ: 'val', falt: 'goalKind', etikett: 'Vad räknas', legacyId: '#gmKind' },
-        { sektion: 2, typ: 'text', falt: 'goalTitle', etikett: 'Rubrik', legacyId: '#gmTitle' },
+        // Cirkelns rubrik är målad i konsten (B-005): fältet visas inte där, en rad säger varför.
+        { sektion: 2, typ: 'text', falt: 'goalTitle', etikett: 'Rubrik', legacyId: '#gmTitle', om: () => format !== 'circle' },
+        { sektion: 2, typ: 'text', falt: 'prRubrikIBilden', legacyId: '#gmTitleBild', om: () => format === 'circle' },
         { sektion: 2, typ: 'tal', falt: 'goalTarget', etikett: 'Mål', legacyId: '#pfGoalTarget' },
         { sektion: 2, typ: 'tal', falt: 'goalCurrent', etikett: 'Startvärde', legacyId: '#pfGoalCurrent' },
         { sektion: 2, typ: 'kryss', falt: 'goalShowPercent', etikett: 'Visa procent', legacyId: '#gmShowPct' },
@@ -161,27 +163,15 @@
   const antalGavor = w => Math.min(6, Math.max(1, +(w && w.giftCount) || 4));
   const ljudPa = w => !!(w && w.campaignSound);
 
+  // Gåvorna väljs i en flikrad, en flik per gåva (vyra-kampanj-gavoval.js): Gåva (bild, namn och mynt ur
+  // Action & Events gåvokatalog), Namn och Mål för den valda fliken. Elementet byggs i en dold grupp av
+  // den filens props-omslag och flyttas hit med legacyId. Det ersätter raderna "Gåva N: namn" och
+  // "Gåva N: mål" — fälten (giftName<i>, giftTarget<i>, giftImage<i>) är desamma.
+  //
+  // UTTALAT UNDANTAG från "ingen panel väljer gåvobild" (tests/utan-bildvaljare.test.js): gåvan är
+  // kampanjens innehåll — vilken gåva som räknas — inte en reservbild innan första gåvan.
   function gavoKontroller() {
-    const ut = [];
-    for (let i = 0; i < 6; i++) {
-      const om = w => antalGavor(w) > i;
-      ut.push(
-        { sektion: 2, typ: 'media', medietyp: 'gava', falt: 'giftImage' + i, etikett: 'Gåva ' + (i + 1), om,
-          // Galleriet är det befintliga (media.js openPagedGiftPicker): samma värde som förut, och namnet
-          // följer med gåvan.
-          valj: w => { if (typeof openPagedGiftPicker === 'function') openPagedGiftPicker(w, i); },
-          // Miniatyren visar den gåva widgeten faktiskt ritar — platsens standardgåva när fältet är tomt.
-          las: w => w['giftImage' + i] || ((typeof window.VyraCampaignItems === 'function' && window.VyraCampaignItems(w)[i]) || {}).image || '',
-          // Namnet som widgeten visar (galleriet skriver namn och bild tillsammans).
-          gavonamn: w => {
-            const lista = typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(w) : [];
-            return lista[i] ? lista[i].name : '';
-          } },
-        { sektion: 2, typ: 'text', falt: 'giftName' + i, etikett: `Gåva ${i + 1}: namn`, legacyId: '#giftName' + i, om },
-        { sektion: 2, typ: 'tal', falt: 'giftTarget' + i, etikett: `Gåva ${i + 1}: mål`, legacyId: '#giftTarget' + i, om },
-      );
-    }
-    return ut;
+    return [{ sektion: 2, typ: 'text', falt: 'gcGavoflikar', legacyId: '#gcGavoflikar' }];
   }
 
   function kampanj(tema, orient) {
@@ -193,8 +183,7 @@
       marke: () => KAMPANJTEMA[tema] + ' · ' + (orient === 'portrait' ? 'stående' : 'liggande'),
       katalognyckel: () => `catalog:giftcampaign:${tema}:${orient}`,
       test: 'kampanj',
-      // Sökvägsfälten för gåvobilden och knappen som öppnade galleriet bredvid dem: gåvoväljaren ersätter
-      // båda.
+      // Sökvägsfälten för gåvobilden och knappen som öppnade galleriet bredvid dem. Ingen av dem visas.
       ersatter: ['#giftImage0', '#giftImage1', '#giftImage2', '#giftImage3', '#giftImage4', '#giftImage5', '.open-gift-picker'],
       arv: ['highlight', 'text', 'fontFamily'],
       kontroller: [
@@ -261,6 +250,11 @@
     if (!el.disabled) el.disabled = true;
     el.readOnly = true;
     el.title = 'Fast bredd i den här modellen (' + FAST_BREDD + ' px före Storlek)';
+    // Hjälpraden hamnade sist i sektionen, efter Lager, tre rader under fältet den förklarar
+    // (slutgranskning B-027). Den flyttas till raden direkt under Bredd.
+    const info = document.querySelector('.properties #prFastBredd');
+    const breddRad = el.closest('label');
+    if (info && breddRad && breddRad.nextElementSibling !== info) breddRad.after(info);
   }
 
   function stil() {
@@ -326,6 +320,7 @@
   const STEG_MS = [700, 1900, 3300], MAL_VISNING = 5000;
   function malAdapter(malFalt, stegFor) {
     return {
+      utanEntre: w => entreMs(w) === 0,
       spela(nod, k, ex, ctl) {
         const P = window.VyraGoalDom;
         if (!P || typeof P.patch !== 'function') throw new Error('media.js saknar VyraGoalDom');

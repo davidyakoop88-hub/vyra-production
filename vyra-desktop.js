@@ -177,6 +177,9 @@
   // hade "Ladda ner VYRA Desktop" statt pa fem stallen, tva av dem bredvid varandra i
   // Statistik-vyn. En plats hogt upp slar fem utspridda.
   function ritaSidhuvud() {
+    // OBS-utgången har ingen rubrikrad att visa knappen i. Utan vakten hämtade overlayen ändå
+    // skrivbordsappens metadata och fick en onödig 401 i konsolen (slutgranskning 2026-10-20 C-037).
+    if (new URLSearchParams(location.search).has('overlay') || document.documentElement.classList.contains('overlay-output')) return;
     const rad = document.querySelector('header .head-actions');
     if (!rad || rad.querySelector('[data-ladda-desktop]')) return;
 

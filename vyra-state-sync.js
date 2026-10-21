@@ -311,7 +311,7 @@
 
     var label = document.createElement('span');
     var title = document.createElement('b');
-    title.textContent = 'Flytta state mellan datorer';
+    title.textContent = 'Flytta studion mellan datorer';
     var hint = document.createElement('small');
     hint.textContent = 'Exporterar scener, widgets och Action & Event som en JSON-fil.';
     label.appendChild(title);
@@ -323,12 +323,12 @@
 
     var exportButton = document.createElement('button');
     exportButton.type = 'button';
-    exportButton.textContent = '↓ Exportera state';
+    exportButton.textContent = '↓ Exportera studion';
     exportButton.addEventListener('click', downloadSnapshot);
 
     var importButton = document.createElement('button');
     importButton.type = 'button';
-    importButton.textContent = '↑ Importera state';
+    importButton.textContent = '↑ Importera studion';
 
     var fileInput = document.createElement('input');
     fileInput.type = 'file';

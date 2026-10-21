@@ -47,10 +47,10 @@
   // ändrad geometri i ranking-sixpack.css per design (sex designer med egna mått och läsbarhetsläge)
   // och hör till en egen PR. Riktningen har kvar det som fungerar: Spegla riktningen.
   //
-  // EGEN TEXT, EXEMPEL OCH LIVEDATA. Listan kommer från sändningen (live-leaderboard.js) eller, för
-  // Top Points, från Actions & Events (VyraPoints). Rubriken är egen text. Namn och värde i Top Coins
-  // och Top Points SÅG redigerbara ut men ignorerades av listan (granskningen) — de är nu exempeldata i
-  // sektion 1, och testet matar in dem i sin lista: exempelpersonen klättrar från plats 3 till plats 1.
+  // EGEN TEXT OCH LIVEDATA. Listan kommer från sändningen (live-leaderboard.js) eller, för
+  // Top Points, från Actions & Events (VyraPoints). Rubriken är egen text. Panelen har inget
+  // exempeldatablock (David 2026-10-20): testet spelar exempeldatafilens personer, där en klättrar från
+  // plats 3 till plats 1. Sparade dataName/dataValue ligger kvar i state men läses inte av testet.
 
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
@@ -88,25 +88,9 @@
 
   const LIVE = {
     templateTopLike: 'Listan kommer från TikTok: namn, profilbild och likes för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
-    templateTopCoins: 'Listan kommer från TikTok: namn, profilbild och coins för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
-    templateTopPoints: 'Listan kommer från sändningen: namn och poäng ur dina Actions & Events (eller likes/coins, efter Rangordna efter).',
+    templateTopCoins: 'Listan kommer från TikTok: namn, profilbild och mynt för dem som gett mest. Rangordna efter och Period styr vilken lista som visas.',
+    templateTopPoints: 'Listan kommer från sändningen: namn och poäng ur dina Actions & Events (eller likes/mynt, efter Rangordna efter).',
   };
-
-  function exempel(typ) {
-    if (typ === 'templateTopCoins') return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tcName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Coins', legacyId: '#tcValue' },
-    ];
-    if (typ === 'templateTopPoints') return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn', legacyId: '#tpName' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Poäng', legacyId: '#tpValue' },
-    ];
-    // Top Like hade inga fält för det; ramen bygger dem (pr-dataName, pr-dataValue).
-    return [
-      { kalla: 'exempel', typ: 'text', falt: 'dataName', etikett: 'Namn' },
-      { kalla: 'exempel', typ: 'text', falt: 'dataValue', etikett: 'Likes' },
-    ];
-  }
 
   // Kontrollernas id per typ. Top Like har redan Rubrik, Antal och Visa-rutorna (media.js
   // topLikeProps, bundna av topLikeBind) och Top Points sitt Antal (#tpCount); de flyttas in i stället
@@ -121,8 +105,6 @@
   function post(typ, id) {
     const ids = EGNA_ID[typ];
     const kontroller = [
-      // 1 · Exempeldata
-      ...exempel(typ),
       // 2 · Innehåll
       { sektion: 2, typ: 'text', falt: 'templateTitle', etikett: 'Rubrik', legacyId: ids.rubrik, om: visaRubrik },
       { sektion: 2, typ: 'kryss', falt: 'showTitle', etikett: 'Visa rubrik', legacyId: ids.visaRubrik },
@@ -159,7 +141,7 @@
       { sektion: 6, typ: 'std-entre' },
       { sektion: 6, typ: 'kryss', falt: 'rankingCycle', etikett: 'Växla mellan listor', legacyId: '#rankingCycle' },
       { sektion: 6, typ: 'kryss', falt: 'cycleLikes', etikett: 'Lista: likes', legacyId: '#cycleLikes', om: cykel },
-      { sektion: 6, typ: 'kryss', falt: 'cycleCoins', etikett: 'Lista: coins', legacyId: '#cycleCoins', om: cykel },
+      { sektion: 6, typ: 'kryss', falt: 'cycleCoins', etikett: 'Lista: mynt', legacyId: '#cycleCoins', om: cykel },
       { sektion: 6, typ: 'kryss', falt: 'cyclePoints', etikett: 'Lista: poäng', legacyId: '#cyclePoints', om: cykel },
       { sektion: 6, typ: 'tal', falt: 'cycleSeconds', etikett: 'Tid per lista', enhet: 's', legacyId: '#cycleSeconds', om: cykel },
       // 7 · Återställ utseende
@@ -236,7 +218,7 @@
     if (!/id="rankingCycle"/.test(html)) {
       delar.push(kryss('rankingCycle', !!w.rankingCycle, 'Växla mellan listor'),
         kryss('cycleLikes', w.cycleLikes !== false, 'Lista: likes'),
-        kryss('cycleCoins', w.cycleCoins !== false, 'Lista: coins'),
+        kryss('cycleCoins', w.cycleCoins !== false, 'Lista: mynt'),
         kryss('cyclePoints', w.cyclePoints !== false, 'Lista: poäng'),
         `<label class="range-label">Tid per lista <b>${w.cycleSeconds || 4} s</b><input id="cycleSeconds" type="range" min="2" max="15" value="${w.cycleSeconds || 4}"></label>`);
     }
@@ -419,19 +401,19 @@
   const harEntre = k => !!(k.entranceAnimation && k.entranceAnimation !== 'none');
 
   // Samma kortform som topplistan själv skriver (live-leaderboard.js formatNum).
+  // Svenskt: "98 700", från en miljon "1,2 mn" (slutgranskning N-AB-007).
   function tal(n) {
     n = Math.max(0, Math.round(Number(n) || 0));
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
-    return String(n);
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '').replace('.', ',') + '\u00a0mn';
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
   }
-  const talUr = v => { const n = Number(String(v == null ? '' : v).replace(/[^0-9.]/g, '')); return Number.isFinite(n) && n > 0 ? n : 0; };
 
-  // Exempelpersonen: widgetens Namn och värde (sektion 1), med samma reserver som panelen visar.
+  // Exempelpersonen: fast, aldrig widgetens sparade dataName/dataValue (panelen har inget
+  // exempeldatablock längre).
   function exempelperson(k) {
-    if (k.type === 'templateTopCoins') return { namn: (k.dataName && String(k.dataName).trim()) || 'MAYA', varde: talUr(k.dataValue) || 44999 };
-    if (k.type === 'templateTopPoints') return { namn: (k.dataName && String(k.dataName).trim()) || 'MAYA', varde: talUr(k.dataValue) || 1500 };
-    return { namn: (k.dataName && String(k.dataName).trim()) || '', varde: talUr(k.dataValue) };
+    if (k.type === 'templateTopCoins') return { namn: 'MAYA', varde: 44999 };
+    if (k.type === 'templateTopPoints') return { namn: 'MAYA', varde: 1500 };
+    return { namn: '', varde: 0 };
   }
 
   // Tre steg av listan. Exempelpersonens slutvärde är exakt det som står i sektion 1; de andra skalas

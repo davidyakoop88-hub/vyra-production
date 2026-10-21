@@ -117,9 +117,9 @@
       '5': { label: 'Steg' }, '6': { label: 'Bara siffra' }, '7': { label: 'Stående' }, '8': { label: 'Smal med pil' }, '9': { label: 'Stående pill' }
     },
     'likefountain.palette': {
-      portal: { label: 'Portal · rosa & lila' }, rainbow: { label: 'Rainbow' }, neon: { label: 'Neon' },
-      fire: { label: 'Fire' }, ice: { label: 'Ice' }, gold: { label: 'Gold' }, aurora: { label: 'Aurora' },
-      pastel: { label: 'Pastel' }, mono: { label: 'Mono' }
+      portal: { label: 'Rosa & lila' }, rainbow: { label: 'Regnbåge' }, neon: { label: 'Neon' },
+      fire: { label: 'Eld' }, ice: { label: 'Is' }, gold: { label: 'Guld' }, aurora: { label: 'Norrsken' },
+      pastel: { label: 'Pastell' }, mono: { label: 'Enfärgad' }
     },
     'followeralert.theme': {
       gold: { label: 'Gold', color: '#ffd35d' }, ocean: { label: 'Ocean', color: '#4fc3ff' }, blush: { label: 'Blush', color: '#ff6f9c' }
@@ -463,7 +463,7 @@
       // tal som DESIGNS i goal-motion.js, så katalogknapp och fabrik ger samma widget.
       ...(v.model === 'heart-tower' ? { width: 100 } : {}),
       title: ({likes:'Like Goal',diamonds:'Diamond Goal'})[v.kind] || 'Follower Goal',
-      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWERS GOAL',
+      goalTitle: ({likes:'LIKE GOAL',diamonds:'DIAMOND GOAL'})[v.kind] || 'FOLLOWER GOAL',
       goalCurrent: 0, goalTarget: 1000, goalModel: v.model, goalOrientation: v.orientation,
       goalColor: ({1:'#ff4f9f',2:'#ff82c8',3:'#49c8ff',4:'#4d8dff','pulse-rail':'#b629ff','pulse-tower':'#b629ff','prism-core':'#38d9ff','prism-spine':'#38d9ff','signal-ribbon':'#ff3d91','heart-column':'#ff3d91'})[v.model] || '#b629ff',
       goalColor2: ({1:'#ffb1dc',2:'#9d4dff',3:'#d9f6ff',4:'#67dcff','pulse-rail':'#20d9ff','pulse-tower':'#20d9ff','prism-core':'#8768ff','prism-spine':'#8768ff','signal-ribbon':'#ff765e','heart-column':'#ff765e'})[v.model] || '#20d9ff'
@@ -472,13 +472,17 @@
     'fanlevel.theme': v => ({
       type: 'templateFanLevel', x: 100, y: 80, width: 260, title: 'Fan Level Up',
       fanHeadline: 'LEVEL UP', fanLevelLabel: 'FAN LEVEL', fanLevel: 12, fanName: 'HeartRiser',
-      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light
+      fanMessage: 'Fan level up!', fanTheme: v.theme, fanColor: v.color, fanLight: v.light,
+      // Lådan står absolut på x/y. Utan markeringen mäter guardian-emblem-models.js (migreraPlats)
+      // om en sparad heartbeat låg i flödet (före 2026-10-20) och flyttar x/y dit den syntes.
+      levelPlacering: 'absolut'
     }),
     'fanlevel.layout': v => ({
       type: 'templateFanLevel', x: 100, y: 80, width: v.layout === 'heartbeat' || v.layout === 'duo' ? 300 : 260,
       title: 'Fan Level Up', fanHeadline: 'FAN LEVEL UP', fanLevelLabel: 'LV.', fanLevel: 12,
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
-      fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout
+      fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout,
+      levelPlacering: 'absolut'
     }),
     // Fan Level 50-tavlan. Rostern (vilka fans som natt niva 50) lever i minnet och kommer fran
     // fan-level-50-session.js; fanl50Manual ar den handtaggade listan som SPARAS. fanl50Source
@@ -500,7 +504,10 @@
       title: 'Guardian Emblem', guardianStep: Number(v.step),
       // 'auto' som default: en streamer som inte rort valet ska fa sitt eget sprak, inte vart.
       guardianLang: 'auto', guardianShowUsername: true, guardianCustomText: '',
-      guardianUsername: '@Guardian'
+      guardianUsername: '@Guardian',
+      // Lådan står absolut på x/y. Utan markeringen mäter guardian-emblem-models.js om var ett
+      // sparat emblem syntes när CSS:en lade det i flödet (före 2026-10-20) och flyttar x/y dit.
+      guardianPlacering: 'absolut'
     }),
     'guardianemblem.model': v => Object.assign(BUILD['guardianemblem.step']({step:4}), {
       guardianModel: v.model,
@@ -510,13 +517,15 @@
       type: 'templateGifterLevel', x: 100, y: 70, width: 270, title: 'Gifter Level Up',
       gifterHeadline: 'LEVEL UP', gifterLabel: 'GIFTER LEVEL', gifterLevel: 15,
       gifterName: 'ThunderGifter', gifterMessage: 'NY NIVÅ UPPLÅST', gifterLayout: v.layout,
-      gifterColor: '#9965ff', gifterLight: '#e2d6ff'
+      gifterColor: '#9965ff', gifterLight: '#e2d6ff',
+      // Se fanlevel.theme: orbitlevel låg i flödet före 2026-10-20.
+      levelPlacering: 'absolut'
     }),
     // Med tema i nyckeln satts followTheme + temats farg (samma som panelens temaval skriver).
     // Basnyckeln ger exakt det gamla objektet, utan followTheme — snapshotprovet jamfor det.
     'followeralert': v => Object.assign({
       type: 'templateFollowerAlert', x: 100, y: 80, width: 300, title: v.theme ? 'New Follower Alert · ' + v.theme.label : 'New Follower Alert',
-      followLabel: 'NEW FOLLOWER', followName: 'Aurora Vale', followMessage: 'TAKES THE STAGE',
+      followLabel: 'NY FÖLJARE', followName: 'Aurora Vale', followMessage: 'TAR SCENEN',
       followColor: v.theme ? v.theme.color : '#ffd35d', followDuration: 6
     }, v.theme ? { followTheme: v.themeId } : {}),
 
@@ -612,7 +621,7 @@
     // media.js, aldrig pa widgetobjektet. Skrevs det hit hamnade varje gava i den sparade
     // layouten — se docs/tech-debt.md punkt 3, skulden som inte ska aterskapas.
     'giftjar.model': v => ({
-      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: 'Gift Jar',
+      type: 'templateGiftJar', x: 90, y: 150, width: 250, title: v.label ? 'Gift Jar · ' + v.label : 'Gift Jar',  // B-034: mallnamnet bär modellen
       jarModel: v.model, jarAccent: v.accent, jarLight: v.light, jarSymbol: v.symbol,
       jarCount: 0, jarCapacity: 50, jarShowCounter: false, jarAutoResetMs: 0
     })
@@ -758,7 +767,7 @@
     'giftjar': parts => {
       if (!parts[0]) throw new Error('catalog:giftjar kräver en modell');
       const model = pick('giftjar.model', parts[0], 'gift jar-modell');
-      return ['giftjar.model', { model: parts[0], accent: model.accent, light: model.light, symbol: model.symbol }];
+      return ['giftjar.model', { model: parts[0], label: model.label, accent: model.accent, light: model.light, symbol: model.symbol }];
     }
   };
 
