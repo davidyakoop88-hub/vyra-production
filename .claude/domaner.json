@@ -35,6 +35,8 @@
         "home-3d.js",
         "landing-tubes.js",
         "landing-login.js",
+        "vyra-sprak.js",
+        "vyra-sprak-en.js",
         "landing-mobil.js",
         "landing-floede.css",
         "index.html",
@@ -165,12 +167,10 @@
         "guardian-session.js",
         "last-x-alerts.css",
         "last-x-alerts.js",
-        "media.js",
-        "premium-gift-widget-demo.html",
+        "media.js",
         "premium-gift-widget.js",
         "premium-widget-assets.js",
-        "premium-widget-core.js",
-        "premium-widget-demo.html",
+        "premium-widget-core.js",
         "profile-frames-premium.css",
         "public/widgets/*",
         "stage-background.js",
@@ -558,10 +558,7 @@
         "recognition-adapter.js",
         "recognition-adapter-types.js",
         "recognition-verify.js",
-        "recognition-verify.html",
-        "recognition-card-demo.html",
-        "recognition-adapter-demo.html",
-        "recognition-runtime-demo.html"
+        "recognition-verify.html"
       ],
       "tester": [
         "scripts/test/recognition-runtime.test.js"
