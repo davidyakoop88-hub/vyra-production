@@ -100,16 +100,16 @@
     const pris=new Map(),bild=new Map();
     [...molnKatalog(),...rumsKatalog()].forEach(g=>{const n=String(g.name||'').toLowerCase(),c=Number(g.coins)||0;if(c>0&&!pris.has(n))pris.set(n,c)});
     molnKatalog().forEach(g=>{const n=String(g.name||'').toLowerCase();if(g.image&&!bild.has(n))bild.set(n,g.image)});
-    const lardda=larddaGavor().map(g=>{const n=String(g.name).toLowerCase();return{name:g.name,image:bild.get(n)||g.image,coins:pris.get(n)||g.coins||0,lard:true}});
+    const lardda=larddaGavor().map(g=>{const n=String(g.name).toLowerCase();return{name:g.name,image:bild.get(n)||g.image,coins:pris.get(n)||g.coins||0,giftId:String(g.giftId||''),lard:true}});
     const tagna=new Set(lardda.map(g=>g.name.toLowerCase()));
     const rummet=rumsKatalog()
       .filter(g=>!tagna.has(String(g.name||'').toLowerCase()))
-      .map(g=>({name:g.name,image:g.image||'',coins:Number(g.coins)||0,lard:false,rum:true}));
+      .map(g=>({name:g.name,image:g.image||'',coins:Number(g.coins)||0,giftId:String(g.giftId||g.id||''),lard:false,rum:true}));
     rummet.forEach(g=>tagna.add(g.name.toLowerCase()));
     // Nya gåvor först i molnkällan, så en gåva TikTok släppt i veckan syns utan att man söker.
     const moln=molnKatalog()
       .filter(g=>g.image&&!tagna.has(String(g.name||'').toLowerCase()))
-      .map(g=>({name:g.name,image:g.image,coins:Number(g.coins)||0,lard:false,moln:true,ny:!!g.ny}))
+      .map(g=>({name:g.name,image:g.image,coins:Number(g.coins)||0,giftId:String(g.giftId||''),lard:false,moln:true,ny:!!g.ny}))
       .sort((a,b)=>(b.ny?1:0)-(a.ny?1:0));
     moln.forEach(g=>tagna.add(g.name.toLowerCase()));
     const manifest=(window.VYRA_GIFTS||[])
@@ -120,8 +120,27 @@
     const alla=[...lardda,...rummet,...moln,...manifest].map(g=>nyaNamn.has(g.name.toLowerCase())?{...g,ny:true}:g);
     return [...alla.filter(g=>g.ny),...alla.filter(g=>!g.ny)];
   }
-  // Samma katalog läses av Gift Campaigns gåvoval (vyra-kampanj-gavoval.js): en lista, ett ställe.
-  window.VyraGavokatalog={lista:gavolistan};
+  // GÅVANS ID FÖR ETT NAMN (David 2026-10-21: "sound på gift är inte aktiv"). TikTok skickar gåvans namn
+  // på streamerns språk ("Ros"), men ett event kan ha sparats med ett annat namn för samma gåva — Sound
+  // Alerts väljare erbjöd manifestets engelska namn ("Rose"). Ett namn jämfört med ett namn träffade då
+  // aldrig. Id:t är detsamma på alla språk; alla tre katalogerna (inlärda, rummets, molnets) bär det.
+  function gavoIdn(namn){
+    const n=String(namn||'').trim().toLowerCase(),ut=new Set();
+    if(!n)return ut;
+    [...larddaGavor(),...rumsKatalog(),...molnKatalog()].forEach(g=>{const id=String(g.giftId||g.id||'');if(id&&String(g.name||'').trim().toLowerCase()===n)ut.add(id)});
+    return ut;
+  }
+  // Träffar ett gåvo-event den här gåvan? Namnet först (som förut), sedan id:t — det som eventet sparade
+  // (giftId) eller det som katalogen säger att det sparade namnet har.
+  function gavanTraffar(e,payload,expected,actual){
+    if(actual.toLowerCase()===expected.toLowerCase())return true;
+    const id=String(payload.giftId||'');
+    if(!id)return false;
+    if(e.giftId&&String(e.giftId)===id)return true;
+    return gavoIdn(expected).has(id);
+  }
+  // Samma katalog läses av Gift Campaigns gåvoval (vyra-kampanj-gavoval.js) och Sound Alerts: en lista, ett ställe.
+  window.VyraGavokatalog={lista:gavolistan,idn:gavoIdn};
   function openTriggerGiftPicker(input){
     const gammal=document.querySelector('.gift-picker-modal');
     if(gammal)gammal.remove();
@@ -406,6 +425,6 @@
   // pa. __test slipper igenom: replay-knappen i live-control.js och Testa-knapparna ar uttryckliga
   // handgrepp i studion, inte live-trafik. Saknas modulen kor vi som forr (fail-open) - hellre ett
   // dubbelavdrag an en svart overlay.
-  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if(['gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=(s.actions||[]).find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;const runIds=korbara.map(id=>window.VyraActionEvent?.runAction((s.actions||[]).find(a=>a.id===id),payload)).filter(r=>typeof r==='string');if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)})}
+  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='gift'&&!gavanTraffar(e,payload,expected,actual))return;if((e.advancedTrigger||e.trigger)==='chatCommand'&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=(s.actions||[]).find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;const runIds=korbara.map(id=>window.VyraActionEvent?.runAction((s.actions||[]).find(a=>a.id===id),payload)).filter(r=>typeof r==='string');if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)})}
   window.VyraAdvancedEvents={handleEvent};
 })();

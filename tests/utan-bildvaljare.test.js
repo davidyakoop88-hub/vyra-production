@@ -147,7 +147,7 @@ test('undantaget: Gift Campaign väljer sina gåvor i flikraden, ur Action & Eve
   }
   const val = las('vyra-kampanj-gavoval.js');
   assert.match(val, /window\.VyraGavokatalog/, 'listan läser Action & Events katalog');
-  assert.match(las('action-event-advanced.js'), /window\.VyraGavokatalog=\{lista:gavolistan\}/, 'samma gavolistan() som eventdialogens gåvoväljare');
+  assert.match(las('action-event-advanced.js'), /window\.VyraGavokatalog=\{lista:gavolistan[,}]/, 'samma gavolistan() som eventdialogens gåvoväljare');
   // Fälten är renderarens: namn och bild skrivs dit renderaren läser (media.js campaignItems).
   for (const f of ["'giftName' + i", "'giftImage' + i", "'giftMatch' + i", "'giftTarget' + i"]) assert.ok(val.includes(f), f);
 });
