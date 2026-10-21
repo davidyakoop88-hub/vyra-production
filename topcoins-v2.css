@@ -30,7 +30,7 @@ html body .widget.vyra-topcoins-new .tc-copy small{display:none!important}
 html body .widget.vyra-topcoins-new em{display:flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;width:100%!important;margin:0!important;color:#ffd566!important;font-size:clamp(12px,6.8cqw,18px)!important;line-height:1.1!important;font-style:normal!important;font-weight:900!important;letter-spacing:.025em;text-shadow:0 2px 6px #000,0 0 8px #eebd3977!important}
 /* Enheten efter talet (topcoins-v2.js: <em> bär bara talet, så nolläget, testet och livevärdena behåller den).
    Flexens gap är 6 px; marginalen drar tillbaka det till ett vanligt ordmellanrum. */
-html body .widget.vyra-topcoins-new .tc-copy em::after{content:"MYNT";margin-left:calc(.28em - 6px)}
+html body .widget.vyra-topcoins-new .tc-copy em::after{content:"COINS";margin-left:calc(.28em - 6px)}
 html body .widget.vyra-topcoins-new em>i{display:block;flex:0 0 auto;width:1.15em;height:1.15em;font-style:normal}
 html body .widget.vyra-topcoins-new em>i svg,html body .widget.vyra-topcoins-new .tc-coin svg{display:block;width:100%;height:100%}
 html body .widget.vyra-topcoins-new .tc-coin{position:absolute;z-index:4;display:block;width:14%;aspect-ratio:1;font-style:normal;filter:drop-shadow(0 0 5px #ffc94d)}

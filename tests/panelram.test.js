@@ -293,7 +293,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   // 20261019-3 (mediaväljaren): opts.status — Fan Level 50:s deltagarrader säger "Profilbild hämtad från TikTok" (PR 14).
   const reg = plats('vyra-panelregister.js', '20261020-23'), ram = plats('vyra-panelram.js', '20261020-23');
   const ordning = plats('vyra-panelordning.js', '20261019-1'), mediaval = plats('vyra-mediaval.js', '20261019-3');
-  const testspel = plats('vyra-testspel.js', '20261021-1'), topgift = plats('vyra-topgift-panel.js', '20261020-23');
+  const testspel = plats('vyra-testspel.js', '20261021-1'), topgift = plats('vyra-topgift-panel.js', '20261021-7');
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
@@ -306,21 +306,21 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const mvp = plats('vyra-mvp-panel.js', '20261020-23');
   assert.ok(mvp > reg && mvp > testspel && mvp < ordning, 'Battle MVP:s poster laddas efter registret och testmotorn, före panelordningen');
   // Rankingens poster (vyra-ranking-panel.js, PR 8) på samma sätt.
-  const ranking = plats('vyra-ranking-panel.js', '20261020-23');
+  const ranking = plats('vyra-ranking-panel.js', '20261021-7');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
   const mal = plats('vyra-mal-panel.js', '20261020-26');  // 20261020-26: Gift Campaigns gåvor i en flikrad (vyra-kampanj-gavoval.js)
-  const gavoval = plats('vyra-kampanj-gavoval.js', '20261020-26');
+  const gavoval = plats('vyra-kampanj-gavoval.js', '20261021-7');
   assert.ok(gavoval > mal && gavoval < ordning, 'Gift Campaigns gåvoval laddas efter målens poster, före panelordningen');
   assert.ok(mal > reg && mal > testspel && mal < ordning, 'målens poster laddas efter registret och testmotorn, före panelordningen');
   // Top Streaks poster (vyra-streak-panel.js, PR 10) på samma sätt.
   const streak = plats('vyra-streak-panel.js', '20261020-23');
   assert.ok(streak > reg && streak > testspel && streak < ordning, 'Top Streaks poster laddas efter registret och testmotorn, före panelordningen');
   // Playgroundfamiljernas poster (vyra-playground-panel.js, PR 11) på samma sätt.
-  const playground = plats('vyra-playground-panel.js', '20261019-2');
+  const playground = plats('vyra-playground-panel.js', '20261021-7');
   assert.ok(playground > reg && playground > testspel && playground < ordning, 'playgroundfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
   // Fyrverkeriernas poster (vyra-fyrverkeri-panel.js, PR 12) på samma sätt.
-  const fyrverkeri = plats('vyra-fyrverkeri-panel.js', '20261020-23');
+  const fyrverkeri = plats('vyra-fyrverkeri-panel.js', '20261021-7');
   assert.ok(fyrverkeri > reg && fyrverkeri > testspel && fyrverkeri < ordning, 'fyrverkeriernas poster laddas efter registret och testmotorn, före panelordningen');
   // Fontänernas och gåvoburkens poster (vyra-fontan-panel.js, PR 13) på samma sätt.
   const fontan = plats('vyra-fontan-panel.js', '20261020-20');  // 20261020-14: svenska alternativ och hela beskrivningar (B-015, B-016)

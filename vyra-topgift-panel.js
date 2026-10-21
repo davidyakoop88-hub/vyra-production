@@ -108,7 +108,7 @@
     modell: orbitModell,
     galler: ['signal-orbit'],
     rubrik: () => 'Top Gift',
-    marke: () => 'Design 4 · flest mynt',
+    marke: () => 'Design 4 · flest coins',
     katalognyckel: () => 'catalog:ranking:templateTopCoins:signal-orbit',
     test: 'topgift',
     // Top Likes flikrad (Content/Design/Animation) och sökvägsfältet för profilbilden.
@@ -116,7 +116,7 @@
     arv: ['highlight', 'text', 'fontFamily'],
     kontroller: [
       { sektion: 2, typ: 'kryss', falt: 'showGift', etikett: 'Visa gåva' },
-      { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från sändningen: namn, profilbild och mynt för den som gett mest.' },
+      { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från sändningen: namn, profilbild och coins för den som gett mest.' },
       { sektion: 3, typ: 'std-position' },
       { sektion: 3, typ: 'kryss', falt: 'rankingMirror', etikett: 'Spegla', legacyId: '#wsMirror' },
       { sektion: 4, typ: 'val', falt: 'textFont', etikett: 'Typsnitt', legacyId: '#vtFont', arv: 'fontFamily' },
@@ -170,7 +170,7 @@
 
   T.registrera('topgift', {
     utanEntre: w => !harEntre(w),
-    typer: [['rose', 'Rose · 1 mynt'], ['lion', 'Lion · 29 999 mynt']],
+    typer: [['rose', 'Rose · 1 coins'], ['lion', 'Lion · 29 999 coins']],
     typEtikett: 'Gåva',
     spela(nod, k, ex, ctl) {
       // Klonen ska inte armas av autoStartAllFlips (media.js) — dess VyraFlip-register hör till sändningen.

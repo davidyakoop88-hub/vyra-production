@@ -27,7 +27,7 @@
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   if (new URLSearchParams(location.search).has('overlay')) return;
 
-  const ENHETER = ['%', 'px', 'ms', 's', '×', '°', 'mynt'];
+  const ENHETER = ['%', 'px', 'ms', 's', '×', '°', 'mynt', 'coins'];
   // Ett tal (med punkt eller komma, ev. redan grupperat med hårt mellanslag) och en valfri enhet.
   const MONSTER = new RegExp('^(-?\\d[\\d\\u00a0]*)(?:[.,](\\d+))?\\s*(' + ENHETER.map(e => e.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')?$');
 

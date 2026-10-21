@@ -510,3 +510,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Slutgranskningen efter ihopslagning med main
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 162
+
+## 2026-10-21 — 162 referenser skrivna
+
+- **Motiv:** Enheten mynt blir coins (Signal Orbit, Top Gift Fokus)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 162

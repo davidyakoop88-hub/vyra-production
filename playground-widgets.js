@@ -226,7 +226,7 @@ W.streak={name:"Top Streak",title:false,
 
 
 const GMET={
-  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (mynt)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
+  coins:{l:"GIFT-MÅL",i:"💰",d:2000,n:"Gåvor (coins)",f:e=>e.type==="gift"?e.gift.c*e.count:0},
   gifts:{l:"GÅVOR",i:"🎁",d:50,n:"Antal gåvor",f:e=>e.type==="gift"?e.count:0},
   likes:{l:"TAP-MÅL",i:"❤️",d:1000,n:"Likes (tryck)",f:e=>e.type==="likes"?e.count:0},
   // antal: bara sandlådans exempelhändelser bär det (många följare i en händelse, så att ▶ Testa widget
@@ -843,8 +843,8 @@ const yFor = (w, v) => { const H = duk().h, h = hojdAv(w); return v === 'top' ? 
 const placeringAv = w => { const v = w.pg && w.pg.placering; return v && Math.abs((Number(w.y) || 0) - yFor(w, v)) <= 2 ? v : ''; };
 // Färg 2 visas inte i Top Streak Flip: ingen stilregel för streaken läser --b (mätt utan verkan, PR 11).
 const GLOBAL_PG = k => GLOBAL.filter(f => !(f.k === 'frameImg' && k !== 'podium') && !(f.k === 'accent2' && k === 'streak') && f.k !== 'pos' && f.k !== 'scale');
-// Målets enhet följer Mäter (spec 5.5: "Mål (enhet efter Mäter: mynt/likes/följare)").
-const MALENHET = { coins: 'mynt', gifts: 'gåvor', likes: 'likes', follows: 'följare', shares: 'delningar', comments: 'kommentarer' };
+// Målets enhet följer Mäter (spec 5.5: "Mål (enhet efter Mäter: coins/likes/följare)").
+const MALENHET = { coins: 'coins', gifts: 'gåvor', likes: 'likes', follows: 'följare', shares: 'delningar', comments: 'kommentarer' };
 function schemaOf(k, o) {
   const sch = W[k].schema || [];
   if (k !== 'goal') return sch;

@@ -97,7 +97,7 @@ test('N-AB-006 och N-AB-007: talen i panelen och i rankingen skrivs på svenska'
     const b = () => Object.fromEntries([...document.querySelectorAll('.properties label > b')]
       .map(b => [b.parentElement.firstChild.textContent.trim(), b.textContent]));
     let v = await page.evaluate(b);
-    assert.equal(v['Final vid'], '1 000 mynt');
+    assert.equal(v['Final vid'], '1 000 coins');
     assert.equal(v['Glöd'], '0,80 ×');
     // Efter ett drag: samma form (förut "0,8 ×" och "2100 mynt").
     v = await page.evaluate(async () => {
@@ -107,7 +107,7 @@ test('N-AB-006 och N-AB-007: talen i panelen och i rankingen skrivs på svenska'
       return Object.fromEntries([...document.querySelectorAll('.properties label > b')].map(b => [b.parentElement.firstChild.textContent.trim(), b.textContent]));
     });
     assert.equal(v['Glöd'], '0,80 ×', 'Glöd efter drag');
-    assert.equal(v['Final vid'], '2 100 mynt', 'Final vid efter drag');
+    assert.equal(v['Final vid'], '2 100 coins', 'Final vid efter drag');
 
     await valj(page, 'catalog:toplike:voltage');
     const rader = await page.evaluate(() => [...document.querySelectorAll('.canvas [data-id="prov"] .toplike-row em')].map(e => ({ t: e.textContent.trim(), sw: e.scrollWidth, cw: e.clientWidth })));

@@ -78,7 +78,7 @@ test('A-001: Top Gift · Design 1 behåller myntet när overlayn nollar talet', 
   assert.ok(v.mynt, `myntet står kvar först i värdet (första barn: ${v.forst})`);
 });
 
-test('A-002: Signal Orbit visar enheten MYNT i overlay, i studion och i talet som livevägen skriver', { skip }, async () => {
+test('A-002: Signal Orbit visar enheten COINS i overlay, i studion och i talet som livevägen skriver', { skip }, async () => {
   for (const [page, vantat] of [[overlay, '0'], [studio, '44 999']]) {
     await bygg(page, 'catalog:ranking:templateTopCoins:signal-orbit');
     const v = await page.evaluate(s => {
@@ -87,7 +87,7 @@ test('A-002: Signal Orbit visar enheten MYNT i overlay, i studion och i talet so
     }, rot);
     assert.ok(v, 'värdet finns');
     assert.equal(v.text.replace(/ /g, ' '), vantat, 'texten bär bara talet');
-    assert.equal(v.efter, '"MYNT"', 'enheten ritas efter talet');
+    assert.equal(v.efter, '"COINS"', 'enheten ritas efter talet');
     assert.ok(v.mynt, 'myntet står kvar');
   }
 });

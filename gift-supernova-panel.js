@@ -40,8 +40,8 @@ const REGLAGE={
  fwPlaySpeed:['Rörelsehastighet',.4,2.5,.1,1,v=>v.toFixed(1)+' ×'],
  fwGlow:['Glöd',0,1.5,.05,.8,v=>v.toFixed(2)+' ×'],
  fwRadius:['Rundning',0,50,1,50,v=>Math.round(v)+' px'],
- fwFinal:['Final vid',100,10000,100,1000,v=>Math.round(v)+' mynt'],
- fwMin:['Minsta gåva',1,500,1,1,v=>Math.round(v)+' mynt'],
+ fwFinal:['Final vid',100,10000,100,1000,v=>Math.round(v)+' coins'],
+ fwMin:['Minsta gåva',1,500,1,1,v=>Math.round(v)+' coins'],
  // Standard 1 sedan 2026-10-18 (användarens beslut: ett fyrverkeri i taget). Samma tal som fwFiler i gift-fireworks.js.
  fwLanes:['Samtidiga fyrverkerier',1,5,1,1,v=>Math.round(v)+' st']};
 // RUNDNING 0 (PR 12): `Number(v)||standard` gjorde 0 till standardvärdet, så Rundning 0 sparades som 50

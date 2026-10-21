@@ -98,7 +98,7 @@
     kontroller: [
       // 2 · Innehåll
       { sektion: 2, typ: 'text', falt: 'pg.title', etikett: 'Rubrik', legacyId: '#pgg_title' },
-      live('Hämtas från sändningen: namn, profilbild och mynt för de tre största givarna.'),
+      live('Hämtas från sändningen: namn, profilbild och coins för de tre största givarna.'),
       // 3 · Storlek och placering
       position,
       // 4 · Text

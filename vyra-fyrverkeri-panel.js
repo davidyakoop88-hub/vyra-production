@@ -67,8 +67,8 @@
     kontroller: [
       // 2 · Innehåll: vilket fyrverkeri och vilka gåvor som tänder det.
       { sektion: 2, typ: 'val', falt: 'fwTheme', etikett: 'Tema', legacyId: '#fwCanvasTheme' },
-      { sektion: 2, typ: 'tal', falt: 'fwMin', etikett: 'Minsta gåva', enhet: 'mynt', legacyId: '#fwMin' },
-      { sektion: 2, typ: 'tal', falt: 'fwFinal', etikett: 'Final vid', enhet: 'mynt', legacyId: '#fwFinal' },
+      { sektion: 2, typ: 'tal', falt: 'fwMin', etikett: 'Minsta gåva', enhet: 'coins', legacyId: '#fwMin' },
+      { sektion: 2, typ: 'tal', falt: 'fwFinal', etikett: 'Final vid', enhet: 'coins', legacyId: '#fwFinal' },
       { sektion: 2, typ: 'tal', falt: 'fwLanes', etikett: 'Samtidiga fyrverkerier', enhet: 'st', legacyId: '#fwLanes' },
       anonyma('#fwExcludeAnon'),
       live('Hämtas från sändningen: gåvan, avsändarens namn och profilbild. Gåvans värde avgör hur stort fyrverkeriet blir.'),
@@ -109,7 +109,7 @@
     ersatter: ['#testHf', '#hfCombo'],
     utanText: true,
     kontroller: [
-      { sektion: 2, typ: 'tal', falt: 'hfMin', etikett: 'Minsta gåvovärde (mynt)', legacyId: '#hfMin' },
+      { sektion: 2, typ: 'tal', falt: 'hfMin', etikett: 'Minsta gåvovärde (coins)', legacyId: '#hfMin' },
       anonyma('#hfExcludeAnon'),
       { sektion: 2, typ: 'kryss', falt: 'hfGold', etikett: 'Guldskott i mitten (från combo ×15)', legacyId: '#hfGold' },
       { sektion: 2, typ: 'kryss', falt: 'hfShowCombo', etikett: 'Combo-räknare (×N)', legacyId: '#hfShowCombo' },
@@ -130,7 +130,7 @@
     ersatter: ['#testGb', '#gbCombo'],
     utanText: true,
     kontroller: [
-      { sektion: 2, typ: 'tal', falt: 'gbMin', etikett: 'Minsta gåvovärde (mynt)', legacyId: '#gbMin' },
+      { sektion: 2, typ: 'tal', falt: 'gbMin', etikett: 'Minsta gåvovärde (coins)', legacyId: '#gbMin' },
       anonyma('#gbExcludeAnon'),
       { sektion: 2, typ: 'kryss', falt: 'gbGiftIn', etikett: 'Gåva i bubblorna', legacyId: '#gbGiftIn' },
       { sektion: 2, typ: 'kryss', falt: 'gbHearts', etikett: 'Hjärtbubblor', legacyId: '#gbHearts' },
