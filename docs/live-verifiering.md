@@ -502,6 +502,31 @@ eller `badge.combine.icon`) är läst ur protot, inte ur en payload.
 Skriv in: kändes entrén igen? var bilderna tomma? Koden: `tiktok-bridge/normalizer.js`
 (`superfanFields`), `electron-app/tiktok-fields.js` (kopian), `server/event-bus.js`.
 
+## 14. Visar LIVE-kontroll det som faktiskt händer i sändningen?
+
+**Beslutat 2026-10-21 (David), aldrig sett med riktig data.** LIVE-kontroll (sidomenyn → Insikter →
+LIVE-kontroll) är felsökningsvyn: den ska visa varje TikTok-händelse, vad som matchade och varför
+inget hände. Den är provad med prov och låtsasdata (live-domänen, slutgranskningen 2026-10-20),
+men ingen har sett den följa en riktig sändning.
+
+**Så här läser du av det, i sändning:**
+1. Öppna LIVE-kontroll innan du går live. **TikTok** ska gå från "Väntar på anslutning" till ansluten
+   när liven startar, och **Server** ska stå Online.
+2. **Händelselogg:** när någon skickar en gåva, likear eller följer ska raden dyka upp inom ett par
+   sekunder, med rätt namn och gåva. Sök på ett namn i rutan "Sök namn, gift eller event".
+3. **Händelser / min** och **Mottagna** ska öka i takt med det som händer. **Fel** ska stå kvar på 0.
+4. **Prestanda och kraschskydd:** **Kö** ska ligga nära 0, **Fördröjning** ska vara låg (under en
+   sekund) och **Skyddade / droppade** ska stå på 0. Stiger kön eller fördröjningen när det kommer
+   mycket hjärtan: ta en skärmbild — det är just det glapp som setts tidigare.
+5. **Matchövervakning** under en battle: **Ditt lag** och **Motståndare** ska följa poängen i TikTok,
+   **MVP** ska visa rätt person, och X2/X3, Tap Tap, Glove och Snipe ska märkas när de händer.
+6. Om en widget inte reagerade på något: leta upp händelsen i loggen. Finns den där men inget
+   hände, är felet i widgeten. Finns den inte, kom den aldrig fram från TikTok.
+
+Skriv in: syntes händelserna i loggen och i rätt tid? stämde kön och fördröjningen? följde
+matchövervakningen poängen? Ta skärmbilder av allt som ser fel ut. Koden: `live-control.js`,
+`live-control.css`, `live-client.js`.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

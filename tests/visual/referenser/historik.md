@@ -504,3 +504,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Slutgranskningens andra omgång, Guardian/Fan/Gifter på sin plats, ranking i nolläge, utan bildväljare, Gift Campaign-flikar
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 162
+
+## 2026-10-20 — 162 referenser skrivna
+
+- **Motiv:** Slutgranskningen efter ihopslagning med main
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** alla 162
