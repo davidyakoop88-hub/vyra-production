@@ -715,6 +715,12 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // real. Nothing here writes to Postgres — no applyEvent, no claim, no frame — and
   // studio-goal-stream.test.js fails if that ever changes.
   const testEventRoute=p.match(/^\/api\/test\/event\/([0-9a-f-]+)$/i);if(testEventRoute&&req.method==='POST'){const workspaceId=testEventRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});const d=await body(req).catch(()=>({})),testEvent=buildTestEvent(d.type,d),out=await eventBus.publish(workspaceId,testEvent);if(!out.duplicate)metrics.event(out.event.type);return send(res,202,{success:true,test:true,duplicate:out.duplicate,event:out.event})}
+  // ▶ TESTA WIDGET I OBS (overlay-testspel.js). Bara nar ingen sandning pagar: tittarna far aldrig se
+  // exempelnamn. Servern ar domaren, inte klienten. Med sandningsidentiteten pa ar en aktiv session
+  // svaret; annars vet servern bara att ingen TikTok-anslutning ar aktiv - en aktiv anslutning utan
+  // session ar OKAND och behandlas som live. Stopp slapps alltid igenom (att stoppa ar ofarligt).
+  // Pub/sub via GoalSse.publishTestspel: ingen livehandelse, inget i streamen, ingen skrivning.
+  const testspelRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/testspel$/i);if(testspelRoute&&req.method==='POST'){const workspaceId=testspelRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`testspel:${workspaceId}`,120,60))return send(res,429,{ok:false,error:'För många test just nu — vänta en stund'});const d=await body(req).catch(()=>({}));let lage='okand';try{if(process.env.VYRA_SANDNINGSIDENTITET==='1')lage=(await StreamSessions.aktivSession({workspaceId}))?'live':'inte-live';else{const r=await pool.query('SELECT active FROM tiktok_connections WHERE workspace_id=$1 AND active=true LIMIT 1',[workspaceId]);lage=r.rows.length?'okand':'inte-live'}}catch{lage='okand'}if(d.atgard!=='stoppa'&&lage!=='inte-live')return send(res,409,{ok:false,lage});const ok=await GoalSse.publishTestspel(eventBus,workspaceId,d);return send(res,ok?202:400,{ok,lage})}
   // ADMINISTRATIV ATEROPPNING AV ETT STANGT RUM. Ligger efter den gemensamma sessionsraden och
   // arver darfor husets bada skydd: den globala sameOrigin-sparren (403 'Origin nekad' fore allt
   // annat) och CSRF-kravet pa icke-GET (session() returnerar null utan giltig x-vyra-csrf -> 401).

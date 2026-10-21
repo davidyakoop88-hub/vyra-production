@@ -306,10 +306,14 @@
   }
 
   const tidigareRoute = root.routeLiveBattleEvent;
+  const OVERLAY_LAGE = (() => { try { return new URLSearchParams(location.search).has('overlay'); } catch (_) { return false; } })();
   root.routeLiveBattleEvent = function (event = {}) {
     if (typeof tidigareRoute === 'function') tidigareRoute(event);
     const typ = String(event.type || event.event || '').toLowerCase();
     if (typ === 'battle' || typ.includes('battle')) { hanteraBattle(event); return }
+    // Testhandelser (simulatorn, __test, serverns test-...) far aldrig bli MVP-poang i sandningen
+    // (overlay-aktivering.js). I studion raknas de som forut.
+    if (OVERLAY_LAGE && (event.__simulerad || event.__test || /^test-/.test(String(event.id || '')))) return;
     if (typ === 'gift' || typ.includes('gift')) rakna(event);
   };
 

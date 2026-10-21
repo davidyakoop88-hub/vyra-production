@@ -48,5 +48,5 @@ test('cachebustarna höjdes med filerna', () => {
   assert.match(las('playground-widgets.css'), /\.stk-pill b\{[^}]*font:800 44px\/1 var\(--font\)\}/);
   assert.match(media, /last-x-alerts\.js\?v=20261020-27/);  // 20261020-9: svenska standardmeddelanden
   assert.match(media, /gift-fireworks\.js\?v=20261019-1/);  // 20261019-1: fwSpelaPa (PR 12)
-  assert.match(html, /media\.js\?v=20261020-27/);
+  assert.match(html, /media\.js\?v=20261021-4/);
 });

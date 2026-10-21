@@ -63,14 +63,33 @@
   let senasteTopGift = null;
   const aterstalldaTopGift = new Set();
 
+  // live-session-client.js laddas i en parallell kedja och kan komma EFTER den har filen. Da lases
+  // dess egen nyckel direkt (samma lagring den valjer forst) - annars atertogs ingenting, och en
+  // aterskapad OBS-kalla stod med tom topplista mitt i sandningen (uppmatt 2026-10-21, ordningsberoende).
   function aktivSession() {
-    try { return window.VyraLiveSession?.runtime?.().aktivSession() || null } catch (e) { return null }
+    try { const rt = window.VyraLiveSession?.runtime?.(); if (rt) return rt.aktivSession() || null } catch (e) {}
+    try { return window.localStorage.getItem('vyra-live-session-aktiv') || window.sessionStorage.getItem('vyra-live-session-aktiv') || null } catch (e) { return null }
+  }
+  // EN ATERSKAPAD OBS-KALLA (2026-10-21). OBS river webblasarkallan vid scenbyte ("Shutdown source
+  // when not visible") och vid omstart, och da forsvinner sessionStorage - listan blev tom och
+  // widgeten doldes mitt i sandningen tills nasta handelse. For en MOLNLANK (?overlay med ?access=)
+  // skrivs darfor samma ogonblicksbild ocksa till localStorage, per lank (envagshash av nyckeln,
+  // aldrig nyckeln sjalv) och per sandning. Dubbelrakningsrisken ovan galler inte dar: molnet har
+  // ingen /api/events-backfyllnad och en ny SSE-anslutning utan Last-Event-ID spelar inte upp
+  // nagonting, sa ingenting kan raknas tva ganger. Skrivbordsappens lokala lank (som HAR
+  // backfyllnaden) foljer den gamla regeln. Nollstalls vid live:start som allt annat.
+  const MOLNLANK = (() => { try { const p = new URLSearchParams(location.search); return VYRA_OVERLAY && p.get('access') ? p.get('access') : null } catch (e) { return null } })();
+  const STREAM_LS_KEY = MOLNLANK ? (() => { let h = 0x811c9dc5; for (let i = 0; i < MOLNLANK.length; i++) { h ^= MOLNLANK.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0 } return STREAM_KEY + ':' + h.toString(36) })() : null;
+  function lasLokal() {
+    if (!STREAM_LS_KEY) return null;
+    try { return JSON.parse(window.localStorage.getItem(STREAM_LS_KEY) || 'null') } catch (e) { return null }
   }
   function aterstallStream() {
     const session = aktivSession();
     if (!session) return;
     try {
-      const sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
+      let sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
+      if (!sparad || sparad.sessionId !== session || !sparad.totals) sparad = lasLokal();
       if (!sparad || sparad.sessionId !== session || !sparad.totals) return;
       const tg = sparad.topGift;
       if (tg && typeof tg === 'object' && tg.name) {
@@ -95,6 +114,12 @@
       if (!session) window.sessionStorage.removeItem(STREAM_KEY);
       else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift }));
     } catch (e) {}
+    if (STREAM_LS_KEY) {
+      try {
+        if (!session) window.localStorage.removeItem(STREAM_LS_KEY);
+        else window.localStorage.setItem(STREAM_LS_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift }));
+      } catch (e) {}
+    }
   }
   aterstallStream();
 

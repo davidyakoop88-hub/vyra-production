@@ -177,6 +177,19 @@ function sseChunk(item, overlayId) {
     return `event: konfig\ndata: ${JSON.stringify({ overlayId: idet, revision: Number(revision) })}\n\n`;
   }
 
+  // ▶ TESTA WIDGET (studion -> OBS, bara nar ingen sandning pagar). Ett EGET meddelandeslag och
+  // aldrig en livehandelse: ingen `id:`-rad (ingen Last-Event-ID-historik, inget att spela upp vid
+  // ateranslutning), inget i streamen, ingen ingest. Bara fyra falt nar webblasaren - widgetens
+  // id, atgarden, testtypen och testets id. Inget namn, ingen konfiguration: overlayn spelar sin
+  // egen kopia av widgeten med motorns egna exempeldata, och en lank utan widgeten gor ingenting.
+  if (item.testspel && typeof item.testspel === 'object') {
+    const ram = testspelRam(item.testspel);
+    return ram ? `event: testspel
+data: ${JSON.stringify(ram)}
+
+` : null;
+  }
+
   // Raw TikTok events, unchanged: workspace-scoped, replayable, same bytes for every overlay.
   if (item.event && typeof item.event === 'object' && item.streamId) {
     return `id: ${item.streamId}\nevent: live\ndata: ${JSON.stringify(item.event)}\n\n`;
@@ -194,6 +207,26 @@ async function publishKonfig(eventBus, workspaceId, { overlayId, revision }) {
   return true;
 }
 
+const TESTSPEL_ID = /^[A-Za-z0-9_.:-]{1,120}$/;
+function testspelRam(d) {
+  if (!d || typeof d !== 'object') return null;
+  const atgard = d.atgard === 'spela' || d.atgard === 'stoppa' ? d.atgard : null;
+  const widgetId = typeof d.widgetId === 'string' && TESTSPEL_ID.test(d.widgetId) ? d.widgetId : null;
+  if (!atgard || !widgetId) return null;
+  const typ = typeof d.typ === 'string' && /^[A-Za-z0-9_.:-]{1,40}$/.test(d.typ) ? d.typ : null;
+  const spelId = typeof d.spelId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(d.spelId) ? d.spelId : null;
+  return { atgard, widgetId, typ, spelId };
+}
+
+// Publicerar testbeskedet pa workspace-kanalen. Pub/sub, aldrig xAdd - samma regel som konfig.
+async function publishTestspel(eventBus, workspaceId, d) {
+  const ram = testspelRam(d);
+  if (!ram) return false;
+  const client = await eventBus.connect();
+  await client.publish(eventBus.channel(workspaceId), JSON.stringify({ testspel: ram }));
+  return true;
+}
+
 // Publishes on the workspace channel — the same one raw events use, so one subscription per
 // connection carries both. Refuses an invalid frame instead of putting it on the channel: every
 // subscriber would have to drop it anyway, and it would be indistinguishable from a real one in a
@@ -207,4 +240,4 @@ async function publish(eventBus, workspaceId, update) {
 }
 
 module.exports = { FIELDS, buildFrame, visibleTo, isGoalMessage, frameEnvelope, sseChunk, publish,
-  publishKonfig };
+  publishKonfig, publishTestspel, testspelRam };

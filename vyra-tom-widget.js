@@ -213,6 +213,11 @@
     }
   }
   window.addEventListener('vyra-live-event', function () { setTimeout(avsloja, 0); });
+  // EFTER EN OMLADDNING kommer ingen handelse: live-leaderboard.js lagger tillbaka sandningens Top
+  // Gift ur ogonblicksbilden (aterstallTopGift) i en repaint, men noden ritades tom och dold innan
+  // dess. Uppmatt 2026-10-21: OBS "Uppdatera" mitt i en sandning gav Top Gift med ratt namn i state
+  // och display:none pa skarmen tills nasta gava. Samma avslojande efter varje repaint.
+  window.addEventListener('vyra-live-repaint', function () { setTimeout(avsloja, 0); });
 
   // ---- 5. DE FYRA ANDRA FAMILJERNA -----------------------------------------------------------
   //

@@ -341,10 +341,13 @@
     return total > 0 && total <= MAX_TOTAL_MS ? Object.freeze(ut) : null;
   }
 
-  function spela(w) {
-    if (iOverlay() || !iEditor()) return false;
-    w = w || vald();
-    if (!w || w.id !== valtId()) return false;   // bara VALD widget spelas
+  // `iOverlayLage` = studion bad overlayn spela samma test (overlay-testspel.js, bara nar ingen
+  // sandning pagar). Da finns ingen editor och inget val; widgeten och typen kommer fran beskedet.
+  // Allt annat - klonen, vakterna, state-bilden, tidslinjen och stoppet - ar exakt detsamma.
+  function spela(w, iOverlayLage) {
+    if (iOverlayLage ? !iOverlay() : (iOverlay() || !iEditor())) return false;
+    w = w || (iOverlayLage ? null : vald());
+    if (!w || (!iOverlayLage && w.id !== valtId())) return false;   // bara VALD widget spelas
     const p = adapterFor(w);
     if (!p) return false;
     if (spel) stoppa('omstart');
@@ -355,9 +358,12 @@
     try { k = typeof structuredClone === 'function' ? structuredClone(w) : JSON.parse(JSON.stringify(w)); }
     catch (_) { k = JSON.parse(JSON.stringify(w)); }
     k.id = w.id + KLON_SUFFIX;
-    const typ = p.a.typer ? (typval.get(w.id) || p.a.typer[0][0]) : null;
+    const typ = p.a.typer
+      ? ((iOverlayLage && iOverlayLage.typ && p.a.typer.some(t => String(t[0]) === String(iOverlayLage.typ))) ? iOverlayLage.typ : (typval.get(w.id) || p.a.typer[0][0]))
+      : null;
 
     const s = {
+      iOverlay: !!iOverlayLage,
       wid: w.id, adapterId: p.id, adapter: p.a, k, typ, nod: null, stil: null,
       ctrl: new AbortController(), timers: new Set(), intervaller: new Set(), rafs: new Set(),
       motor: [], brott: [], faser: null, fas: null, forlopp: [], stoppar: false, startad: false, rensa: () => {},
@@ -375,6 +381,8 @@
       if (!nod) throw new Error('klonen kunde inte ritas');
       nod.setAttribute('data-id', k.id);
       nod.style.cssText = riktig.style.cssText;   // exakt samma placering, även transform satt efter render
+      // I overlayn ar den riktiga noden dold (dold tills aktiverad / overlay-dolda.js) - klonen ska synas.
+      if (iOverlayLage) { nod.style.removeProperty('display'); nod.style.removeProperty('visibility'); nod.classList.remove('widget-hidden'); }
       nod.style.pointerEvents = 'none';
       nod.classList.remove('selected');
       nod.querySelectorAll(':scope > .resize-handle, :scope > .vyra-handle, :scope > .gift-resize-handle').forEach(h => h.remove());
@@ -420,6 +428,7 @@
     // Selected-vakten: byte av vald widget eller vy utan render() (som annars stoppar först).
     s.bevakning = setInterval(() => {
       if (spel !== s) return;
+      if (s.iOverlay) { if (!s.nod.isConnected) stoppa('val'); return; }
       if (valtId() !== s.wid || !iEditor() || !s.nod.isConnected) stoppa('val');
     }, BEVAKNING_MS);
   }
@@ -534,11 +543,20 @@
   };
 
   if (iOverlay()) {
-    // Overlay: ingenting ritas, ingenting lindas in. registrera() finns kvar så att familjernas
-    // filer kan laddas på samma sätt i båda lägena.
+    // Overlay: ingenting ritas av sig sjalv, ingen knapp. registrera() finns kvar så att familjernas
+    // filer kan laddas på samma sätt i båda lägena. Det enda overlayn kan gora ar att spela det
+    // test studion bett om (overlay-testspel.js) - med samma klon, vakter och tidslinje - och stoppa det.
     api.spela = () => false;
     api.stoppa = () => false;
     api.kan = () => false;
+    api.spelaIOverlay = (w, typ) => { try { return spela(w, { typ: typ || null }); } catch (e) { console.error('[VyraTestspel]', e); if (spel) stoppa('fel'); return false; } };
+    api.stoppaIOverlay = orsak => stoppa(orsak || 'studion');
+    api.kanIOverlay = w => !!adapterFor(w);
+    // Varje render() i overlayn (konfig-omhamtning) bygger om duken - stoppa forst, som i editorn.
+    if (typeof render === 'function') {
+      const foregaende = render;
+      render = function () { if (spel) stoppa('render'); return foregaende.apply(this, arguments); };
+    }
     window.VyraTestspel = api;
     return;
   }

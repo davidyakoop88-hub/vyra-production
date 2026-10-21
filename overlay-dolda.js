@@ -63,6 +63,14 @@
     if (el.dataset[EGEN_KLASS]) { el.classList.remove('widget-hidden'); delete el.dataset[EGEN_KLASS]; }
   }
 
+  // DOLD TILLS AKTIVERAD (overlay-aktivering.js): i overlay-utgangen ar en widget som annu inte fatt
+  // sin forsta riktiga handelse i sandningen dold pa exakt samma satt som en dold widget.
+  function arDold(w) {
+    if (!w) return false;
+    if (w.hidden) return true;
+    try { return !!(window.VyraAktivering && window.VyraAktivering.vantar(w)); } catch (_) { return false; }
+  }
+
   let attrVakt = null;
   const vaktade = new WeakSet();
 
@@ -70,7 +78,7 @@
     const lista = widgetar();
     const dolda = new Set();
     for (const w of lista) {
-      if (!w || w.id == null || !w.hidden) continue;
+      if (!w || w.id == null || !arDold(w)) continue;
       dolda.add(String(w.id));
       for (const el of lador(w.id)) {
         dolj(el);
@@ -79,6 +87,12 @@
     }
     // Visad igen (eller borttagen ur lagret): ta bort var egen markering, inget annat.
     document.querySelectorAll('[data-vyra-dold="1"]').forEach(el => { if (!dolda.has(el.dataset.id)) visa(el); });
+    // Forsta svepet ar gjort: overlay-access.css slutar halla alla lador osynliga. I overlay kravs
+    // att aktiveringsregeln finns - annars hellre en tom overlay an gamla namn i sandningen.
+    if (!document.documentElement.classList.contains('vyra-aktivering-klar')
+      && (window.VyraAktivering || !document.documentElement.classList.contains('overlay-output'))) {
+      document.documentElement.classList.add('vyra-aktivering-klar');
+    }
   }
 
   function harWidgetnod(poster) {
@@ -99,13 +113,13 @@
       for (const p of poster) {
         const el = p.target;
         const w = lista.find(x => x && String(x.id) === el.dataset.id);
-        if (w && w.hidden) dolj(el); else if (el.dataset[MARK]) visa(el);
+        if (arDold(w)) dolj(el); else if (el.dataset[MARK]) visa(el);
       }
     });
     // Billig grind: utan dolda widgetar och utan kvarvarande markeringar gor observatorn ingenting.
     const nodVakt = new MutationObserver(poster => {
       if (!harWidgetnod(poster)) return;
-      if (!widgetar().some(w => w && w.hidden) && !document.querySelector('[data-vyra-dold="1"]')) return;
+      if (!widgetar().some(arDold) && !document.querySelector('[data-vyra-dold="1"]')) return;
       svep();
     });
     const starta = () => nodVakt.observe(document.body || document.documentElement, { childList: true, subtree: true });

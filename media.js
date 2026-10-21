@@ -1435,7 +1435,7 @@ document.addEventListener('load',e=>{
 //
 // onload racker inte som halsotecken: ett skript som KASTAR under korning utloser onload anda.
 // Darfor kontrolleras VyraLive, inte bara att filen kom fram.
-Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261020-19';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
+Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261021-2';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261017-p1granskning';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -1484,7 +1484,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra
 Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261020-24';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261021-2';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1544,7 +1544,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guar
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261012-diamonds';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261021-2';document.body.append(js)});
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
@@ -1918,7 +1918,11 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 
 // Dold betyder dold, oavsett vilken renderare som ritade widgeten. Laddas sist i svansen men beror
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261018-1';document.body.append(js)});
+// Aktiveringsregeln (overlay-aktivering.js: dold i sandningen tills forsta riktiga handelsen) laddas
+// FORE vakten, sa att vaktens forsta svep redan vet vilka widgetar som vantar.
+Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261021-2';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
+// ▶ Testa widget aven i OBS, bara nar ingen sandning pagar (overlay-testspel.js). Eget meddelandeslag, aldrig en livehandelse.
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-testspel.js?v=20261021-1';document.body.append(js)});
 
 // Färgschemats provbild, färgkoder, kontrastvarning och återställning (granskning 2026-10-17 F37).
 // Bygger bara på #brandKitModal i studio.html; ritar ingenting i overlay-läget.
