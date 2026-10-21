@@ -432,6 +432,21 @@ prov('testspel i studion: skickar till OBS bara nar ingen sandning pagar, och �
     assert.equal(await rad(), 'Visas bara här – du är live');
     assert.deepEqual(await sida.evaluate(() => window.__anrop), [], 'ett testbesked skickades under en sandning');
     await sida.evaluate(() => window.VyraTestspel.stoppa());
+
+    // Okant lage (ingen arbetsyta, ingen sandning): testet stannar i studion, men raden pastar inte
+    // att du ar live (slutrundan 2026-10-21 - raden sade "du är live" i en studio utan sandning).
+    id = await forbered();
+    await sida.evaluate(() => {
+      const rt = window.VyraLiveSession.runtime();
+      window.VyraLiveSession.runtime = () => Object.assign({}, rt, { aktivSession: () => null });
+      window.VyraAuth.lastDetail = () => ({});
+    });
+    await sida.waitForTimeout(400);
+    assert.equal(await sida.evaluate(i => window.VyraTestspel.spela(liveWidget(i)), id), true);
+    await sida.waitForTimeout(800);
+    assert.equal(await rad(), 'Visas bara här i studion');
+    assert.deepEqual(await sida.evaluate(() => window.__anrop), [], 'ett testbesked skickades utan arbetsyta');
+    await sida.evaluate(() => window.VyraTestspel.stoppa());
   } finally { await kontext.close() }
 });
 

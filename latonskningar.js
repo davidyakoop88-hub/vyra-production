@@ -289,7 +289,7 @@
           + '<label><input id="latVisaKo" type="checkbox"' + (w.latVisaKo === false ? '' : ' checked') + '> Visa kön i widgeten</label>'
           + '<label class="range-label">Visa låtar i kön <b>' + s.visa + '</b><input id="latVisa" type="range" min="0" max="10" value="' + s.visa + '"></label>'
           + '<label class="range-label">Volym (YouTube) <b>' + s.volym + '</b><input id="latVolym" type="range" min="0" max="100" value="' + s.volym + '"></label>')
-        + sek('STYR', '<div class="switch-row" id="latStyr"><button id="latTesta" type="button">▶ Testa en önskning</button><button id="latHoppa" type="button">⏭ Hoppa över</button><button id="latTom" type="button">Töm kön</button></div>')
+        + sek('STYR', '<div class="switch-row" id="latStyr"><button id="latHoppa" type="button">⏭ Hoppa över</button><button id="latTom" type="button">Töm kön</button></div>')
         + sek('POSITION & STORLEK', '<div class="property-grid"><label>X<input id="propX" type="number" value="' + (w.x || 0) + '"></label><label>Y<input id="propY" type="number" value="' + (w.y || 0) + '"></label><label>Bredd<input id="propWidth" type="number" value="' + (w.width || 340) + '"></label><label>Lager<input id="propLayer" type="number" value="' + (w.layer || 1) + '"></label></div>')
         + '<button class="delete" id="del">Ta bort</button>';
     };
@@ -325,7 +325,8 @@
     [['#latVisa', 'latVisa'], ['#latVolym', 'latVolym']].forEach(function (p) {
       var f = q(p[0]); if (f) f.oninput = function (e) { w[p[1]] = Number(e.target.value); var b = e.target.parentElement.querySelector('b'); if (b) b.textContent = e.target.value; if (typeof save === 'function') save(); rita(); };
     });
-    if ((el = q('#latTesta'))) el.onclick = function () { ta({ type: 'chatcommand', id: 'test-' + nu(), username: 'Testtittare', comment: installning(w).kommando + ' Never Gonna Give You Up', at: nu(), __test: true }); };
+    // ▶ Testa en önskning är borttagen (slutrundan 2026-10-21): den lade en riktig låt i den riktiga kön
+    // (och i Spotify-kön), och ett test får aldrig ändra riktig data. Panelen säger "Inget att testa".
     if ((el = q('#latHoppa'))) el.onclick = function () { hoppaOver(); if (kanal) kanal.postMessage('hoppa'); };
     if ((el = q('#latTom'))) el.onclick = function () { tom(); if (kanal) kanal.postMessage('tom'); };
   }

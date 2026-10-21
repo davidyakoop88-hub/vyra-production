@@ -28,6 +28,10 @@
 
   const TEXT_LIVE = 'Visas bara här – du är live';
   const TEXT_OBS = 'Visas även i OBS';
+  // Lage som inte ar live men inte heller bekraftat (ingen inloggning, skrivbordsappen, servern svarar
+  // inte): testet stannar i studion, men raden far inte pasta att du ar live (slutrundan 2026-10-21).
+  const TEXT_STUDIO = 'Visas bara här i studion';
+  let radText = TEXT_STUDIO;
 
   function aktivSession() {
     try { return window.VyraLiveSession?.runtime?.().aktivSession() || null; } catch (_) { return null; }
@@ -86,6 +90,7 @@
         rot.append(rad);
       }
       if (rad.textContent !== text) rad.textContent = text;
+      radText = text;
     });
   }
 
@@ -126,7 +131,7 @@
     if (skickat) stoppaIOverlay();
     bevaka(wid);
     const l = lage();
-    visaRad(wid, TEXT_LIVE);
+    visaRad(wid, l === 'live' ? TEXT_LIVE : TEXT_STUDIO);
     if (l !== 'fraga-servern') return;
     const T = window.VyraTestspel;
     const st = T.status();
@@ -140,6 +145,7 @@
       else if (skickat && skickat.spelId === spelId) stoppaIOverlay();
     } else if (skickat && skickat.spelId === spelId) {
       skickat = null;
+      if (fortfarande && r && r.lage === 'live') visaRad(wid, TEXT_LIVE);
     }
   }
 
@@ -167,11 +173,11 @@
       const r = forraBind.apply(this, arguments);
       try {
         const T = window.VyraTestspel, st = T && T.status && T.status();
-        if (st && st.aktiv) visaRad(st.widget, skickat && String(skickat.widgetId) === String(st.widget) ? TEXT_OBS : TEXT_LIVE);
+        if (st && st.aktiv) visaRad(st.widget, skickat && String(skickat.widgetId) === String(st.widget) ? TEXT_OBS : radText);
       } catch (_) {}
       return r;
     };
   }
 
-  window.VyraOverlayTestspel = { lage, TEXT_LIVE, TEXT_OBS, skickat: () => skickat };
+  window.VyraOverlayTestspel = { lage, TEXT_LIVE, TEXT_OBS, TEXT_STUDIO, skickat: () => skickat };
 })();
