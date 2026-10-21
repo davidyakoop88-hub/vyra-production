@@ -23,7 +23,7 @@ const PALETT=[["Mint","#3dffb0","#2d8cff"],["Rosa/guld","#ff4fa3","#ffd24a"],["E
  ["Solnedgång","#ff6b3d","#ff2d95"],["Hav","#19d3ff","#1f6bff"],["Skog","#3fbf5a","#0f7a4a"],["Candy","#ff8ad8","#8ad8ff"],
  ["Kunglig","#ffc83d","#9a4dff"],["Neongul","#f5ff3d","#3dff8a"],["Rosé","#ffb3c7","#ffd9a8"],["Kol","#cfd6e6","#5a6478"],
  ["Lava","#ff5a1f","#ffd23d"],["Orkidé","#d28cff","#ff8ad0"],["Is","#bff0ff","#6fb8ff"],["Blod","#c3122b","#ff4d4d"]];
-const ENTRE=[['zoom','Zoom (överskjuter)'],['drop','Drop'],['bounce','Bounce'],['rise','Rise'],['glass','Glas'],['neon','Neon-flimmer'],['none','Ingen']];
+const ENTRE=[['zoom','Zooma in med studs'],['drop','Falla in'],['bounce','Studsa in'],['rise','Stiga upp'],['glass','Glas'],['neon','Neon-flimmer'],['none','Ingen']];
 const NAMNFX=[['none','Ingen effekt'],['shimmer','Shimmer'],['aurora','Aurora'],['flicker','Flimmer'],['hide','Dölj namnet']];
 const TYPSNITT=[["'Segoe UI',system-ui,sans-serif",'Segoe UI'],["Impact,'Arial Narrow Bold',sans-serif",'Impact'],['Georgia,serif','Georgia (serif)'],["'Trebuchet MS',sans-serif",'Trebuchet'],["Consolas,'Courier New',monospace",'Mono']];
 const POS=[['','Egen placering'],['top','Överst'],['mid','Mitten'],['bottom','Nederst']];

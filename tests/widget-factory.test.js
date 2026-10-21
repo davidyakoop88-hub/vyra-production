@@ -261,7 +261,7 @@ test('Social Goal: followers normaliseras till follows', { timeout: 5000 }, () =
   assert.equal(legacy.createdFrom, canonical.createdFrom,
     'aliaset gav en annan createdFrom och därmed en andra standalone-instans');
   assert.equal(legacy.goalKind, canonical.goalKind, 'goalKind normaliserades inte');
-  assert.equal(canonical.goalTitle, 'FOLLOWERS GOAL');
+  assert.equal(canonical.goalTitle, 'FOLLOWER GOAL');
   // Likes is untouched.
   const likes = VyraWidgets.create('catalog:socialgoal:likes:1:portrait');
   assert.equal(likes.goalKind, 'likes');

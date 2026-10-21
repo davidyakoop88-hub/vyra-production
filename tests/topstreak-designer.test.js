@@ -66,7 +66,7 @@ test('Design 3 har åtta färgstilar och panelen visar bara reglage som designen
 
 test('approved-rankings.js lämnar över till designern och har de tre korten', () => {
   const js = las('approved-rankings.js');
-  assert.match(js, /if \(D && D\.har\(w\)\) return D\.html\(w, \{ name, value, profile, gift, dold, valt: selected === w\.id \}\);/);
+  assert.match(js, /if \(D && D\.har\(w\)\) return D\.html\(w, \{ name, value, vila, profile, gift, dold, valt: selected === w\.id \}\);/);  // vila: B-018
   assert.match(js, /return D && D\.har\(w\) \? D\.props\(w\) : approvedStreakProps\(w\);/);
   assert.match(js, /window\.VyraStreakDesigner\.bind\(w\)/);
   const html = las('studio.html');

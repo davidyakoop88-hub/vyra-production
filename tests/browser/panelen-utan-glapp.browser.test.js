@@ -127,9 +127,10 @@ test('Top Like: ingen rubrik DESIGN utan kontroller', { skip }, async () => {
 
 test('volymreglagen visar sitt värde', { skip }, async () => {
   await panel('catalog:giftcampaign:emerald:landscape');
-  assert.match(await sida.evaluate(() => document.querySelector('#campaignVolume').closest('label').textContent), /\d+%/);
+  // Mellanslag före % (svensk standard, vyra-talformat.js, slutgranskning B-024).
+  assert.match(await sida.evaluate(() => document.querySelector('#campaignVolume').closest('label').textContent), /\d+ %/);
   await panel('catalog:giftfireworks:comet');
-  assert.match(await sida.evaluate(() => document.querySelector('#fwVolume').closest('label').textContent), /\d+%/);
+  assert.match(await sida.evaluate(() => document.querySelector('#fwVolume').closest('label').textContent), /\d+ %/);
 });
 
 // Intro-valet: finns på alla widgetar som kan ha en entré, och gör något på rotnoden.

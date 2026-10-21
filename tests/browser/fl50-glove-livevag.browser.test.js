@@ -136,7 +136,7 @@ test('Fan Level 50: slideshowen byter kort i editorn (swap läser studions state
   }
 });
 
-test('Fan Level 50: deltagarlistan i panelen — lägg till, hämta, byt namn, bild, ta bort och bandets fart', { skip, timeout: 150000 }, async () => {
+test('Fan Level 50: deltagarlistan i panelen — lägg till, hämta, byt namn, ingen bildväljare, ta bort och bandets fart', { skip, timeout: 150000 }, async () => {
   const fel = [];
   const page = await oppna(fel);
   const hamtningar = [];
@@ -177,8 +177,11 @@ test('Fan Level 50: deltagarlistan i panelen — lägg till, hämta, byt namn, b
     assert.deepEqual(await page.evaluate(() => liveWidget('fd').fanl50Manual[2]), { name: 'Hamtad', avatar: 'assets/gifts/events/7460_Cap.png', hamtad: true });
     let p = await panel();
     assert.deepEqual(p.rader, ['Ett', 'Två', 'Hamtad']);
-    assert.equal(p.valjare, 3, 'en mediaväljare per deltagare');
-    assert.deepEqual(p.status, ['Ingen egen bild – standardbilden visas', 'Ingen egen bild – standardbilden visas', 'Profilbild hämtad från TikTok']);
+    // Ingen bildväljare per deltagare (David 2026-10-20: ingen panel väljer profilbild). Den hämtade
+    // bilden kommer från TikTok och ritas i widgeten.
+    assert.equal(p.valjare, 0, 'ingen mediaväljare i deltagarraderna');
+    assert.deepEqual(p.status, []);
+    assert.doesNotMatch(p.text, /Välj bild|Använd automatisk|Profilbild/, 'ingen bildväljare i panelen');
     assert.doesNotMatch(p.text, /assets\/|\.png|\.svg|URL/, 'ingen sökväg i panelen');
     assert.match(await page.evaluate(() => document.querySelector('.canvas [data-id="fd"] .fl50-card:nth-child(3) .fl50-photo img').getAttribute('src')), /7460_Cap\.png/, 'den hämtade bilden i widgeten');
 
@@ -188,11 +191,12 @@ test('Fan Level 50: deltagarlistan i panelen — lägg till, hämta, byt namn, b
     await page.waitForTimeout(700);
     assert.equal(await namnPa(page, 'fd'), 'Ettan|Två|Hamtad|Ettan|Två|Hamtad');
 
-    // Bild: Använd automatisk tar bort den hämtade bilden (standardbilden visas).
-    await page.click('#pr-fanl50Manual-2-auto');
+    // En egen bild som redan är sparad på en deltagare (data:, från den gamla väljaren) ritas inte:
+    // standardbilden visas (vyraReservbild i media.js). Fältet i state står kvar.
+    await page.evaluate(() => { const w = liveWidget('fd'); w.fanl50Manual = w.fanl50Manual.map((m, i) => i === 0 ? Object.assign({}, m, { avatar: 'data:image/png;base64,iVBORw0KGgo=' }) : m); render(); });
     await page.waitForTimeout(700);
-    assert.deepEqual(await page.evaluate(() => liveWidget('fd').fanl50Manual[2]), { name: 'Hamtad', avatar: '' });
-    assert.match(await page.evaluate(() => document.querySelector('.canvas [data-id="fd"] .fl50-card:nth-child(3) .fl50-photo img').getAttribute('src')), /test-profile\.svg/);
+    assert.match(await page.evaluate(() => document.querySelector('.canvas [data-id="fd"] .fl50-card:nth-child(1) .fl50-photo img').getAttribute('src')), /test-profile\.svg/);
+    assert.match(await page.evaluate(() => liveWidget('fd').fanl50Manual[0].avatar), /^data:/, 'det sparade fältet raderas inte');
 
     // Ta bort.
     await page.click('#fl50Del1');

@@ -8,6 +8,10 @@
 // widgeten varken vald eller spelande, sa ytan var bara bakgrund. Koi Pearl ar dessutom H.264-MP4,
 // som inte alla webblasare kan avkoda.
 //
+// SEDAN 2026-10-20 (slutgranskning B-001/B-002) finns Koi Pearl och Masquerade inte i katalogen: deras
+// klipp ar svarta rutor med vattenstampel. Provet gor samma matning pa Pink Princess (WebM), och
+// avkodningsfelet framkallas med en trasig .webm i stallet for en trasig .mp4.
+//
 // Kravet: previewytan visar paketets affisch direkt, spelar klippet ovanpa nar det gar, och star
 // kvar pa affischen nar videon inte kan avkodas. Paketet i layouten/sandningen ror vi inte: dar
 // vilar det slackt som forut.
@@ -40,16 +44,16 @@ async function overlayKatalog(page) {
     }
   });
 }
-async function forhandsvisaKoi(page) {
+async function forhandsvisaPaket(page) {
   const ok = await page.evaluate(() => {
     const kort = [...document.querySelectorAll('.overlay-widget-gallery .widget-catalog button')]
-      .find(b => !b.closest('.owg-thumb') && /Koi Pearl Lagoon · hela paketet/.test(b.textContent));
+      .find(b => !b.closest('.owg-thumb') && /Pink Princess · hela paketet/.test(b.textContent));
     const p = kort && kort.querySelector('.owg-preview');
     if (!p) return false;
     p.click();
     return true;
   });
-  assert.ok(ok, 'provet mater inget: Koi Pearl-paketets Förhandsvisa finns inte');
+  assert.ok(ok, 'provet mater inget: Pink Princess-paketets Förhandsvisa finns inte');
 }
 // Syns NAGOT av paketet i ytan: affischbilden laddad och synlig, eller en video som visar en ruta.
 const matYta = () => {
@@ -62,11 +66,11 @@ const matYta = () => {
   return { nod: true, synlig: cs.visibility === 'visible' && Number(cs.opacity) > 0 && r.height > 0, bildSyns, videoSyns, fel: v && v.error ? v.error.code : null };
 };
 
-test('Koi-paketets preview visar affischen eller klippet, aldrig en svart yta', { skip, timeout: 120000 }, async () => {
+test('paketets preview visar affischen eller klippet, aldrig en svart yta', { skip, timeout: 120000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   try {
     await overlayKatalog(page);
-    await forhandsvisaKoi(page);
+    await forhandsvisaPaket(page);
     await page.waitForTimeout(1500);
     const m = await page.evaluate(matYta);
     assert.ok(m.nod, 'paketet ritades inte i previewytan');
@@ -78,10 +82,10 @@ test('Koi-paketets preview visar affischen eller klippet, aldrig en svart yta', 
 test('nar videon inte kan avkodas star affischen kvar', { skip, timeout: 120000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   try {
-    // Samma fil, men bytes ingen avkodare forstar — som H.264 i en webblasare utan codec.
-    await page.route('**/*.mp4', r => r.fulfill({ status: 200, contentType: 'video/mp4', body: Buffer.from('inte en video') }));
+    // Samma fil, men bytes ingen avkodare forstar — som H.264-paketen i en webblasare utan codec.
+    await page.route('**/*.webm', r => r.fulfill({ status: 200, contentType: 'video/webm', body: Buffer.from('inte en video') }));
     await overlayKatalog(page);
-    await forhandsvisaKoi(page);
+    await forhandsvisaPaket(page);
     await page.waitForFunction(() => {
       const v = document.querySelector('.overlay-live-preview-stage video.pack-fx-video');
       return v && v.error;
@@ -98,11 +102,11 @@ test('paketet pa duken vilar slackt som forut', { skip, timeout: 120000 }, async
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   try {
     await overlayKatalog(page);
-    await forhandsvisaKoi(page);
+    await forhandsvisaPaket(page);
     await page.waitForTimeout(500);
     // Samma widget pa den riktiga duken, ovald och utan klipp: osynlig, ingen affisch, inget autoplay.
     const m = await page.evaluate(async () => {
-      const w = window.VyraWidgets.create('catalog:glovesnipe:koiPearl:pack:2');
+      const w = window.VyraWidgets.create('catalog:glovesnipe:pinkPrincess:pack:2');
       state.widgets.push(w); selected = null; go('editor');
       await new Promise(r => setTimeout(r, 500));
       const nod = document.querySelector(`.canvas .battle-pack-full[data-id="${w.id}"]`);
@@ -114,5 +118,20 @@ test('paketet pa duken vilar slackt som forut', { skip, timeout: 120000 }, async
     assert.equal(m.vis, 'hidden');
     assert.ok(!/pack-stilla|pack-active|pack-preview/.test(m.klass), 'previewns klasser lackte till duken: ' + m.klass);
     assert.equal(m.autoplay, false);
+  } finally { await page.close(); }
+});
+
+test('Koi Pearl och Masquerade har inget kort i katalogen (B-001/B-002)', { skip, timeout: 120000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
+  try {
+    await overlayKatalog(page);
+    const m = await page.evaluate(() => {
+      const nycklar = [...document.querySelectorAll('[data-catalog-key]')].map(b => b.dataset.catalogKey);
+      const text = document.querySelector('.widget-catalog').textContent;
+      return { avvecklade: nycklar.filter(k => /^catalog:glovesnipe:(koiPearl|masquerade):/.test(k)), pink: nycklar.includes('catalog:glovesnipe:pinkPrincess:pack:2'), namn: /Koi Pearl|Masquerade/.test(text) };
+    });
+    assert.ok(m.pink, 'provet mater inget: Pink Princess finns inte i katalogen');
+    assert.deepEqual(m.avvecklade, [], 'avvecklade paket gar fortfarande att lagga till');
+    assert.equal(m.namn, false, 'katalogen namner fortfarande Koi Pearl eller Masquerade');
   } finally { await page.close(); }
 });

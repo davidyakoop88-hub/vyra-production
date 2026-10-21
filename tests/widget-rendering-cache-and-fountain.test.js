@@ -180,7 +180,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261019-1: editorns span-regel undantar Follower Alerts etikett (Layout = sändning, 4 px).
   // 20261019-2: Heart Me:s tal läser --heart-number (Antal), Visa antal/procent och firandet (PR 9).
   // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
-  assert.match(studio, /studio\.css\?v=20261020-2/);
+  assert.match(studio, /studio\.css\?v=20261020-24/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
@@ -201,9 +201,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261018-13/);
+  assert.match(studio, /widget-factory\.js\?v=20261020-24/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
-  assert.match(studio, /gift-event-images\.js\?v=20261019-1/);
+  // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
+  assert.match(studio, /gift-event-images\.js\?v=20261020-26/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -328,7 +329,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-08-19: guardian-emblem.css fick sitt vilolage i sandningen (en alert far inte ligga
   // kvar pa skarmen mellan handelserna). BARA den filen andrades, sa bara den strangen byts —
   // en bump utan andring ar en gratis omladdning for varje anvandare.
-  assert.match(studio, /guardian-emblem\.css\?v=20260819-2/);
+  assert.match(studio, /guardian-emblem\.css\?v=20261020-22/);
   assert.match(studio, /guardian-emblem-fas\.js\?v=20261018-1/);
   // SAMMANSLAGNINGEN 2026-08-20 (Stigningen mot main): studio.css och media.js andrades av
   // BADA grenarna, sa bada far strangen 20260820-3. Grenen andrade dessutom
@@ -351,7 +352,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nya skinnens CSS ligger i ranking-sixpack.css) — men bada bumpas tillsammans har eftersom
   // skinnlistan (toplike-design.js) och skinnklassens konsumenter andrades i samma omgang.
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);   // 20261011-1: kryssrutor + ws-anim-specificitet
-  assert.match(media, /toplike-studio\.js\?v=20261019-3/);
+  assert.match(media, /toplike-studio\.js\?v=20261020-18/);
   // Bumpade 2026-09-08 (ramen ror inte bildmattet): gift-alert-frames.js/.css lagger ramen runt hela
   // flippen med utatskalad konst, profile-frames-premium.css bar Top Likes syskonregler.
   assert.match(media, /gift-alert-frames\.js\?v=20261019-1/);
@@ -386,7 +387,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
   // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
-  assert.match(media, /const version='20261020-6'/);
+  assert.match(media, /const version='20261020-25'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -412,7 +413,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
   // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
-  assert.match(media, /sound-alerts\.js\?v=20261020-6/, 'sound-alerts.js cachebustades inte');
+  assert.match(media, /sound-alerts\.js\?v=20261020-7/, 'sound-alerts.js cachebustades inte');
   for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }
@@ -442,19 +443,20 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
-  // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan.
-  assert.match(media, /action-event-advanced\.js\?v=20261014-nya-gavor/, 'action-event-advanced.js cachebustades inte for nya gavor');
+  // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
+  // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog).
+  assert.match(media, /action-event-advanced\.js\?v=20261020-26/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261018-klocka/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261020-19/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   // 20261020-2: Ny Action fäller de avancerade valen (granskning 2026-10-17 F35).
-  assert.match(media, /action-event\.js\?v=20261020-2/, 'action-event.js cachebustades inte');
+  assert.match(media, /action-event\.js\?v=20261020-3/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
@@ -466,7 +468,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
-  assert.match(media, /custom-widgets\.js\?v=20261018-1/);
+  assert.match(media, /custom-widgets\.js\?v=20261020-14/);
   // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
   // Classics och panelen ar ororda och behaller sina tidigare versioner.
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-

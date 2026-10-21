@@ -58,6 +58,12 @@
       grupp = document.createElement('div');
       grupp.className = 'property-group vyra-bildfalt';
       grupp.innerHTML = `<h4>${RUBRIK}</h4>`;
+      // DOLD sedan 2026-10-20 (David: ingen widget ska ha bildväljare för profilbild eller gåvobild i
+      // panelen). Raderna flyttas fortfarande hit, så att de gamla bindarna hittar sina fält, men gruppen
+      // visas aldrig. Renderaren ritar sin automatiska reserv (vyraReservbild i media.js ignorerar en
+      // egen bild som redan är sparad).
+      grupp.hidden = true;
+      grupp.style.setProperty('display', 'none', 'important');   // .property-group sätter display i studio.css
       // Sist i panelen. vyra-panelordning.js flyttar den till rätt plats och fäller ihop den —
       // ordningen ägs på ett enda ställe, och det här är inte det stället.
       panel.append(grupp);

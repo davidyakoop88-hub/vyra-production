@@ -54,7 +54,7 @@
 
   const safeText = (v, f) => (window.VyraSafe ? VyraSafe.text(v, f) : (v == null || v === '' ? f : String(v)));
   const safeSrc = (v, f) => (window.VyraSafe ? (VyraSafe.src ? VyraSafe.src(v, f) : VyraSafe.url(v, f)) : (v || f));
-  const avatar = w => safeSrc(w.profileImage, 'assets/images/test-profile.svg');
+  const avatar = w => safeSrc((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), 'assets/images/test-profile.svg');
   const tal = v => {
     const n = Number(String(v ?? '').replace(/[^0-9.-]/g, ''));
     return Number.isFinite(n) ? Math.round(n).toLocaleString('sv-SE') : String(v || '0');

@@ -58,9 +58,9 @@
     const ram = ['farg', 'sexkant', 'hd'].includes(w.tgdRam) ? w.tgdRam : 'farg';
     const hd = ram === 'hd' ? (bildram(w.tgdBildram) || bildram('gilded-lion')) : null;
     const html = rot(w, 'tgd2 ram-' + ram, {
-      bild: `<div class="rad"><div class="pw"><div class="vyra-profile-face"><img src="${src(w.profileImage, PROFIL)}" alt=""></div>`
+      bild: `<div class="rad"><div class="pw"><div class="vyra-profile-face"><img src="${src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), PROFIL)}" alt=""></div>`
         + `${hd ? `<img class="hdram" src="${src(hd.url, '')}" alt="">` : ''}<i class="glans"></i></div>`
-        + `<div class="vyra-gift-face"><img src="${src(w.giftImage, GAVA)}" alt=""></div></div>`,
+        + `<div class="vyra-gift-face"><img src="${src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.giftImage), GAVA)}" alt=""></div></div>`,
       text: namn(w) + '<span class="linje"></span>' + mynt(w)
     });
     return hd ? html.replace('--g:', `--hal:${hd.hal};--g:`) : html;
@@ -70,9 +70,9 @@
     .map(([b, t, d, l]) => `<i style="--b:${b}px;--t:${t}s;--d:${d}s;left:${l}%"></i>`).join('');
   function design3(w) {
     return rot(w, 'tgd3', {
-      bild: `<div class="ruta"><div class="bubblor">${BUBBLOR}</div><div class="vyra-gift-face"><img src="${src(w.giftImage, GAVA)}" alt=""></div>`
+      bild: `<div class="ruta"><div class="bubblor">${BUBBLOR}</div><div class="vyra-gift-face"><img src="${src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.giftImage), GAVA)}" alt=""></div>`
         + `<div class="stank"><i></i><i></i><i></i><i></i></div><span class="landring"></span>`
-        + `<div class="bw"><div class="vyra-profile-face"><img src="${src(w.profileImage, PROFIL)}" alt=""></div><i></i><i></i></div></div>`,
+        + `<div class="bw"><div class="vyra-profile-face"><img src="${src((typeof window.vyraReservbild === 'function' ? window.vyraReservbild : v => v)(w.profileImage), PROFIL)}" alt=""></div><i></i><i></i></div></div>`,
       text: namn(w) + mynt(w)
     });
   }

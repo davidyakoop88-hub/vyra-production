@@ -55,20 +55,20 @@
   const BUBBLOR = [[9, 7.2, 0, 14], [5, 6.0, 1.3, 30], [7, 7.8, 2.6, 48], [4, 6.4, .7, 62], [10, 8.4, 3.4, 78], [6, 6.6, 4.2, 24], [5, 7.4, 2.0, 88], [4, 6.8, 5.1, 40], [6, 7.6, 5.8, 70]]
     .map(([b, t, dl, l]) => `<i style="--b:${b}px;--t:${t}s;--d:${dl}s;left:${l}%"></i>`).join('');
 
-  // o: { name, value, profile, gift, dold, valt } — redan säkrade och demonollade av approved-rankings.js.
+  // o: { name, value, vila, profile, gift, dold, valt } — redan säkrade och demonollade av approved-rankings.js.
   function html(w, o) {
     const d = design(w);
     const namn = `<strong>${o.name}</strong>`;
     if (d === 1) return rot(w, d, o,
       `<div class="tsd1-cirkel"><div class="tsd1-flip"><div class="streak-profile-face"><img src="${o.profile}" alt=""><i class="tsd-ljus"></i></div>${gava(o)}</div></div>`
-      + `<div class="approved-streak-copy">${namn}<em>🔥 ×<b>${o.value}</b> <small>STREAK</small></em></div>`);
+      + `<div class="approved-streak-copy">${namn}<em${o.vila || ''}>🔥 ×<b>${o.value}</b> <small>STREAK</small></em></div>`);
     if (d === 2) return rot(w, d, o,
       `<div class="rad"><div class="pw">${profil(o)}<i class="glans"></i></div>${gava(o)}</div>`
-      + `<div class="approved-streak-copy">${namn}<span class="linje"></span><em>×<b>${o.value}</b> <small>STREAK</small></em></div>`);
+      + `<div class="approved-streak-copy">${namn}<span class="linje"></span><em${o.vila || ''}>×<b>${o.value}</b> <small>STREAK</small></em></div>`);
     return rot(w, d, o,
       `<div class="ruta"><div class="bubblor">${BUBBLOR}</div>${gava(o)}<div class="stank"><i></i><i></i><i></i><i></i></div><span class="landring"></span>`
       + `<div class="bw">${profil(o)}<i></i><i></i></div></div>`
-      + `<div class="approved-streak-copy">${namn}<em>🔥 ×<b>${o.value}</b> <small>STREAK</small></em></div>`);
+      + `<div class="approved-streak-copy">${namn}<em${o.vila || ''}>🔥 ×<b>${o.value}</b> <small>STREAK</small></em></div>`);
   }
 
   // PANELEN. Samma innehåll som Clean Flip (namn, streak, bilder) och det designen faktiskt använder.

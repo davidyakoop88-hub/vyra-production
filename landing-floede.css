@@ -28,3 +28,5 @@
 .floede a{color:var(--violet-light)}
 .trust-floede{color:#c9a9f5;font-weight:700;text-decoration:none;border-bottom:1px solid #a855f766}
 @media(max-width:760px){.floede-steg{grid-template-columns:1fr}.floede{padding-top:40px}}
+/* Slutgranskning 2026-10-20 C-030: "Sa funkar det"/"Om provperioden" var 17 px hoga pa mobil. */
+.trust-floede{display:inline-block;padding:6px 0}

@@ -55,7 +55,9 @@
         "fargschema-prov.js",
         "vyra-sidbyte.js",
         "vyra-mobil.js",
-        "vyra-mobil.css"
+        "vyra-mobil.css",
+        "vyra-automationer.js",
+        "vyra-vyord.js"
       ],
       "tester": [
         "tests/rebind-after-late-scripts.test.js",
@@ -103,7 +105,9 @@
         "tests/browser/driftstatus-delar.browser.test.js",
         "tests/browser/landning-floede-provperiod.browser.test.js",
         "tests/varumarke-ett-namn.test.js",
-        "tests/browser/studio-mobil.browser.test.js"
+        "tests/browser/studio-mobil.browser.test.js",
+        "tests/browser/slutgranskning-c-medel.browser.test.js",
+        "tests/browser/slutgranskning-c-andra.browser.test.js"
       ],
       "matning": [],
       "risker": [
@@ -198,6 +202,7 @@
         "vyra-mvp-panel.js",
         "vyra-ranking-panel.js",
         "vyra-mal-panel.js",
+        "vyra-kampanj-gavoval.js",
         "vyra-streak-panel.js",
         "vyra-playground-panel.js",
         "vyra-fyrverkeri-panel.js",
@@ -205,11 +210,14 @@
         "vyra-fl50-panel.js",
         "vyra-glove-panel.js",
         "vyra-lager.js",
-        "vyra-egen-panel.js"
+        "vyra-egen-panel.js",
+        "vyra-talformat.js",
+        "vyra-effekt-vila.js"
       ],
       "tester": [
         "tests/widget-factory.test.js",
         "tests/panelregister.test.js",
+        "tests/utan-bildvaljare.test.js",
         "tests/browser/mediaval.browser.test.js",
         "tests/browser/fargarv-sant.browser.test.js",
         "tests/browser/topgift-livevag.browser.test.js",
@@ -221,6 +229,7 @@
         "tests/browser/streak-livevag.browser.test.js",
         "tests/browser/fontan-livevag.browser.test.js",
         "tests/browser/fl50-glove-livevag.browser.test.js",
+        "tests/browser/slutgranskning-studio-som-overlay.browser.test.js",
         "tests/browser/lager-tva-widgetar.browser.test.js",
         "tests/katalog-inom-duken.test.js",
         "tests/storlek-migrering.test.js",
@@ -304,7 +313,9 @@
         "tests/gift-supernova-panel.test.js",
         "tests/korsfilskopplingar.test.js",
         "tests/browser/spotify-kommandon.browser.test.js",
-        "tests/browser/widgetsok-alla-paket.browser.test.js"
+        "tests/browser/widgetsok-alla-paket.browser.test.js",
+        "tests/browser/slutgranskning-b.browser.test.js",
+        "tests/browser/slutgranskning-ab2.browser.test.js"
       ],
       "matning": [
         {
@@ -745,7 +756,8 @@
         "server/test/session-device.test.js",
         "server/test/account-data.test.js",
         "server/test/support.test.js",
-        "tests/browser/support-vad-hander-sedan.browser.test.js"
+        "tests/browser/support-vad-hander-sedan.browser.test.js",
+        "tests/browser/slutgranskning-c-hoga.browser.test.js"
       ],
       "matning": [],
       "risker": [

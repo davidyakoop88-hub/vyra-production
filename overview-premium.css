@@ -177,3 +177,8 @@
   .historikgivare-lista li { grid-template-columns: 18px 24px 1fr auto }
   .historikgivare-lista em { display: none }
 }
+
+/* Slutgranskning 2026-10-20 C-021: skelettet doldes med hidden, men .toppgivare-rad{display:grid}
+   vann over webblasarens [hidden]{display:none} - fem andande rutor stod kvar under "Ingen TikTok ansluten".
+   Samma fel kan inte uppsta for nagon annan [hidden] i raden. */
+.toppgivare [hidden]{display:none!important}

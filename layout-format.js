@@ -66,7 +66,7 @@
     picker.innerHTML =
       '<span>Format</span>' +
       '<button type="button" data-format="mobile">Mobil <small>9:16</small></button>' +
-      '<button type="button" data-format="widescreen">Dator <small>16:9 · 1920 × 1080</small></button>';
+      '<button type="button" data-format="widescreen" title="Dator 16:9 · 1920 × 1080">Dator <small>16:9<span class="lf-upplosning"> · 1920 × 1080</span></small></button>';
 
     // Statusen ar SYSKON till pickern, inte barn. Inuti role="group" stod texten dar ett tredje
     // klickbart val forvantas sta och saag ut som en knapp utan funktion. aria-live behalls sa

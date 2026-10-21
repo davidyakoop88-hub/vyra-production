@@ -48,7 +48,7 @@
   const live = text => ({ sektion: 2, kalla: 'live', typ: 'text', etikett: text });
   const aterstall = { sektion: 7, typ: 'std-aterstall' };
   const arPortal = w => !!w && w.fountainDesign === 'portal';
-  const POP = [['fountainPopBurst', 'Burst'], ['fountainPopSparkle', 'Gnistor'], ['fountainPopMiniHearts', 'Mini-hjärtan'],
+  const POP = [['fountainPopBurst', 'Explosion'], ['fountainPopSparkle', 'Gnistor'], ['fountainPopMiniHearts', 'Mini-hjärtan'],
     ['fountainPopStars', 'Stjärnor'], ['fountainPopConfetti', 'Konfetti'], ['fountainPopFirework', 'Fyrverkeri'], ['fountainPopRing', 'Ring/chockvåg']];
   const egnaFarger = { falt: 'fountainPalette', villkor: v => v === 'custom', text: 'Aktiv vid Färgpalett Egna färger.' };
 
@@ -99,8 +99,8 @@
   });
 
   // ---- 1b. Like Fountain Portal (spec 5.15) ------------------------------------------------------
-  const PALETTNAMN = { portal: 'Portal', rainbow: 'Rainbow', neon: 'Neon', fire: 'Fire', ice: 'Ice', gold: 'Gold',
-    aurora: 'Aurora', pastel: 'Pastel', mono: 'Mono', custom: 'egna färger' };
+  const PALETTNAMN = { portal: 'Rosa & lila', rainbow: 'Regnbåge', neon: 'Neon', fire: 'Eld', ice: 'Is', gold: 'Guld',
+    aurora: 'Norrsken', pastel: 'Pastell', mono: 'Enfärgad', custom: 'egna färger' };
   const egna = w => w.fountainPalette === 'custom';
   R.definiera({
     typ: 'templateLikeFountain',
@@ -328,4 +328,16 @@
     const w = typeof liveWidget === 'function' && typeof selected !== 'undefined' ? liveWidget(selected) : null;
     if (w && w.type === 'templateGiftJar') { try { visaFyllnad(w); } catch (_) {} }
   });
+
+  // KORTEN I RÖRELSESTIL OCH FÄRGTEMA (slutgranskning B-015, 2026-10-20). Ramen lägger rubriken (.pr-etikett) först
+  // i kortrutnätet, och där blev den en egen rutnätscell bredvid första kortet. Beskrivningarna klipptes med ellips
+  // ("Mjuka individuell…") i 72 px breda kort. Rubriken spänner nu över hela raden och beskrivningen bryts i stället.
+  if (!document.getElementById('vyra-fontan-panel-stil')) {
+    const s = document.createElement('style');
+    s.id = 'vyra-fontan-panel-stil';
+    s.textContent = '.properties .lf-motion-grid>.pr-etikett,.properties .lf-preset-grid>.pr-etikett{grid-column:1/-1}'
+      + '.properties .lf-motion-card{align-items:flex-start}'
+      + '.properties .lf-motion-card small{white-space:normal;overflow:visible;text-overflow:clip;font-size:9px;line-height:1.3}';
+    (document.head || document.documentElement).append(s);
+  }
 })();

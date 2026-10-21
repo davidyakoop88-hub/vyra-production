@@ -41,7 +41,7 @@ window.VyraPremiumHome = home = function () {
     <div class="alltime-head">
       <div><span class="eyebrow">TOTALT</span><h3>Din historik</h3></div>
       <div class="alltime-periods">
-        ${[['all', 'Alltid'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
+        ${[['all', 'All tid'], ['90d', '90 dagar'], ['30d', '30 dagar'], ['7d', '7 dagar']]
           .map(([v, etikett], i) => `<button data-alltime-period="${v}"${i === 0 ? ' class="vald"' : ''}>${etikett}</button>`).join('')}
       </div>
     </div>

@@ -112,7 +112,10 @@
     if (!falt.offsetParent && falt.tagName !== 'TEXTAREA') return false;
     const etikett = etikettFor(falt);
     if (!etikett) return false;                       // utan etikett vet vi inte vad fältet är
-    return !NEKAS.test(etikett);
+    // Ett fält som bara bär ett tal (Top Gifts exempelvärde "Mynt") har ingen nytta av en emoji, och en
+    // emoji där gör talet oläsbart för renderaren (slutgranskningen 2026-10-20, A-012). Hela etiketten
+    // jämförs, så "Mynt per gåva" eller en rubrik som råkar innehålla ordet påverkas inte.
+    return !NEKAS.test(etikett) && !/^(mynt|coins|antal|poäng|värde)$/i.test(etikett);
   }
 
   function bygg() {

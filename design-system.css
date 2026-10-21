@@ -269,8 +269,8 @@ input::placeholder, textarea::placeholder { color: var(--text-muted); }
   font-size: 13px; color: var(--text-secondary); margin: 5px 0 0;
 }
 .section-header-eyebrow {
-  display: block; font: 700 10px Manrope, sans-serif; letter-spacing: .14em;
-  text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;
+  display: block; font: 700 11px Manrope, sans-serif; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;
 }
 
 /* ==========================================================================

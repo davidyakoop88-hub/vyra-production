@@ -31,7 +31,12 @@
   --ge-feather:#f7f5f0;
   --ge-text-light:#f5f0e6;
 
-  position:relative;
+  /* INGEN `position` HAR. Lådan ar en `.widget` och star absolut pa sin x/y (studio.css). Har stod
+     forut `position:relative`, och eftersom filen laddas efter studio.css vann den: emblemet lag i
+     flodet. Ensam i duken syntes det inte, men ▶ Testa monterar klonen som syskon EFTER den riktiga
+     noden — och i flodet hamnade klonen en hel emblemhojd langre ned, till storsta delen utanfor
+     duken (2026-10-20, Guardian "flyttar pa sig nar man testar"). Absolut ar ocksa ett eget
+     koordinatsystem for aura, bild och avatarhal, sa inget inuti emblemet flyttar sig. */
   display:flex;
   flex-direction:column;
   align-items:center;
