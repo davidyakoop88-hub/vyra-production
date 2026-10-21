@@ -62,13 +62,15 @@ test('paketwidgeten ritas som en hel film, ingen symbolruta', () => {
   const v = nod.querySelector('video.pack-fx-video');
   assert.ok(v, 'ingen <video> i widgeten');
   assert.match(v.getAttribute('src'), /assets\/videos\/battle\/pink-princess\/x2\.webm$/);
-  assert.match(v.getAttribute('poster'), /x2\.jpg$/);
+  // WebM-klippen har genomskinlig bakgrund, sa affischen ar en genomskinlig WebP ur samma klipp
+  // (slutrundan 2026-10-21: JPG-affischen ritade en svart ruta bakom figuren i layouten).
+  assert.match(v.getAttribute('poster'), /x2\.webp$/);
   assert.equal(v.hasAttribute('autoplay'), false, 'ska inte spela i vila');
   assert.equal(v.hasAttribute('loop'), false, 'klippet ska spelas en gång');
   // Affischen ar ett syskon till videon (visas bara nar videon star stilla, se spela()-provet).
   const bild = nod.querySelector('img.pack-fx-poster');
   assert.ok(bild, 'affischbilden saknas');
-  assert.match(bild.getAttribute('src'), /x2\.jpg$/);
+  assert.match(bild.getAttribute('src'), /x2\.webp$/);
   assert.match(nod.getAttribute('style'), /width:432px/);
 });
 
@@ -88,7 +90,7 @@ test('spela() byter klipp och tänder noden utan save och utan render', () => {
   // kvar pa bildruta 0 — och TikTok LIVE Studio visade inget pa en hel sandning.
   assert.equal(v.hasAttribute('autoplay'), true, 'autoplay saknas vid uppspelning');
   assert.equal(v.preload, 'auto', 'preload ska vara auto vid uppspelning');
-  assert.match(nod.querySelector('img.pack-fx-poster').getAttribute('src'), /snipe\.jpg$/, 'affischen foljer inte klippet');
+  assert.match(nod.querySelector('img.pack-fx-poster').getAttribute('src'), /snipe\.webp$/, 'affischen foljer inte klippet');
   assert.equal(w.__saves, saves, 'uppspelningen anropade save()');
   assert.equal(w.__renders, renders, 'uppspelningen byggde om duken');
   assert.equal(w.VyraBattlePaket.spela('boost-x3'), true);
