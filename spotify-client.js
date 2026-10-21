@@ -100,6 +100,31 @@
     return payload;
   }
 
+  // INGEN AKTIV ENHET (David 2026-10-21, uppmätt i hans studio): Spotify-appen var öppen på datorn
+  // ("JOKERO", Computer, is_active: false), Premium, ansluten — men play() svarade "Player command
+  // failed: No active device found". Spotify räknar en enhet som aktiv först när den spelat nyligen,
+  // och ett spelarkommando utan device_id går bara till en aktiv enhet. Med datorns device_id angivet
+  // spelade samma anrop direkt (play 204, queue 200, next 200, uppmätt samma kväll).
+  //
+  // Därför: kommandot försöker som förut, och bara när Spotify svarar "no active device" väljs en enhet
+  // — den aktiva om någon finns, annars datorn, annars den första — och kommandot skickas igen med
+  // device_id. Finns ingen enhet alls säger felet vad streamern ska göra.
+  async function valjEnhet() {
+    const svar = await api('/me/player/devices');
+    const enheter = (svar && svar.devices || []).filter(d => d && d.id && !d.is_restricted);
+    return enheter.find(d => d.is_active) || enheter.find(d => d.type === 'Computer') || enheter[0] || null;
+  }
+  async function spelare(path, options) {
+    try {
+      return await api(path, options);
+    } catch (error) {
+      if (!/no active device/i.test(String(error && error.message))) throw error;
+      const enhet = await valjEnhet();
+      if (!enhet) throw new Error('Öppna Spotify på datorn eller mobilen, så VYRA har en enhet att spela på');
+      return api(path + (path.includes('?') ? '&' : '?') + 'device_id=' + encodeURIComponent(enhet.id), options);
+    }
+  }
+
   async function connect() {
     const verifier = randomValue();
     const state = randomValue();
@@ -188,7 +213,7 @@
       uri = result?.tracks?.items?.[0]?.uri;
       if (!uri) throw new Error('Låten hittades inte på Spotify');
     }
-    await api('/me/player/play', { method: 'PUT', body: JSON.stringify({ uris: [uri] }) });
+    await spelare('/me/player/play', { method: 'PUT', body: JSON.stringify({ uris: [uri] }) });
     return uri;
   }
 
@@ -205,13 +230,13 @@
       track = result?.tracks?.items?.[0] || null;
       if (!track) throw new Error('Låten hittades inte på Spotify');
     }
-    await api(`/me/player/queue?uri=${encodeURIComponent(track.uri)}`, { method: 'POST' });
+    await spelare(`/me/player/queue?uri=${encodeURIComponent(track.uri)}`, { method: 'POST' });
     return { uri: track.uri, titel: track.name || '', artist: (track.artists || []).map(a => a.name).join(', '),
       bild: track.album?.images?.[track.album.images.length > 1 ? 1 : 0]?.url || '', sekunder: Math.round((track.duration_ms || 0) / 1000) };
   }
 
   async function next() {
-    return api('/me/player/next', { method: 'POST' });
+    return spelare('/me/player/next', { method: 'POST' });
   }
 
   function disconnect() {
