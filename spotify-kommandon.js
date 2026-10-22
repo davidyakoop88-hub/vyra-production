@@ -574,6 +574,7 @@
         '.spk-valjare [role=listbox]{overflow:auto;display:flex;flex-direction:column;gap:2px}',
         '.spk-valjare [role=option]{display:flex;align-items:center;gap:8px;text-align:left;padding:4px 6px;flex:none}',
         '.spotify-card .spk-onskekort{grid-column:1/-1}',
+        '.spotify-card .spk-onskekort [data-spk-onskningar]{align-self:stretch;width:100%}',
         '.spotify-card .spk-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%;max-height:360px;overflow:auto}',
         '.spotify-card .spk-onskan{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;background:var(--surface-2,#ffffff0d);min-width:0}',
         '.spotify-card .spk-onskan img,.spotify-card .spk-not{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:none;display:grid;place-items:center;font-style:normal;background:#1db95426;color:#1ed760}',
