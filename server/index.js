@@ -127,6 +127,12 @@ const ingestHink=type=>TIKTOK_INGEST_HINKAR[String(type||'').toLowerCase()]||nul
 // kommandon. De räknas i en EGEN hink med eget tak, så en kommandostorm aldrig kan äta den budget
 // gåvorna lever på. Vanlig chatt släpps fortfarande inte fram — den delar gåvornas hink.
 const TIKTOK_KOMMANDO_RATE_LIMIT=10;
+// VANLIG CHATT I EGEN HINK (2026-10-22, #365 väg ett fullföljd). Uppmätt i sändningen samma kväll:
+// bryggan tog emot chatten (räknaren chat=904 och steg) men vitlistan släppte den aldrig till molnet,
+// så TTS Chat, chattboten och chatt-triggade Actions var tysta för alla utan VYRA Desktop. Chatten
+// räknas nu i en egen hink med eget tak och kan därför aldrig äta gåvornas budget. #365 mätte toppen
+// till 16 chattrader/s; 30/s ger marginal, och det som går över avvisas utan att röra gåvorna.
+const TIKTOK_CHATT_RATE_LIMIT=30;
 // The current backend (msedge-tts) is free, so this isn't a billing guard today — it's here so a
 // runaway TTS Chat spam burst (or a client-side bug) can't hammer the upstream service unbounded,
 // and so it's already in place if a paid provider is ever swapped in behind server/tts.js later.
@@ -173,6 +179,9 @@ async function ingestTikTokEvent(workspaceId,payload){
   if(String(payload?.type||'').toLowerCase()==='chatcommand'){
     if(await rateLimiter.exceeded(`tiktok-ingest-kommando:${workspaceId}`,TIKTOK_KOMMANDO_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
       throw Object.assign(new Error(`För många chattkommandon för denna workspace (max ${TIKTOK_KOMMANDO_RATE_LIMIT}/sekund)`),{status:429});
+  }else if(String(payload?.type||'').toLowerCase()==='chat'){
+    if(await rateLimiter.exceeded(`tiktok-ingest-chatt:${workspaceId}`,TIKTOK_CHATT_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+      throw Object.assign(new Error(`För många chattrader för denna workspace (max ${TIKTOK_CHATT_RATE_LIMIT}/sekund)`),{status:429});
   }else if(ingestHink(payload?.type)){
     const[hink,gräns]=ingestHink(payload.type);
     if(await rateLimiter.exceeded(`tiktok-ingest-${hink}:${workspaceId}`,gräns,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
