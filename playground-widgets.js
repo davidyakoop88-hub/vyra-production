@@ -694,13 +694,21 @@ function conv(ev) {
   const user = String(ev.username || ev.name || ev.user || ev.nickname || '?');
   const avatar = safeUrl(ev.profileImage || ev.avatar || '');
   if (t === 'gift' || t === 'gift_combo' || t === 'giftcombo') {
+    // En gåva till en annan värd (multi-guest, battle) är inte streamerns: den räknas inte i podiet,
+    // streaken eller målen — samma regel som live-leaderboard.js och gift-event-images.js (#360).
+    if (ev.tillVarden === false) return null;
     const rc = Math.max(1, Math.floor(Number(ev.repeatCount ?? ev.combo ?? ev.count) || 1));
     const key = String(ev.userId || user) + '|' + String(ev.giftId || ev.giftName || '');
     const nu = Date.now(), prev = lastRC.get(key);
     let count = rc;
     if (!ev.__test && prev && nu - prev.t < 12000 && rc > prev.n) count = rc - prev.n;
     if (ev.repeatEnd === true) lastRC.delete(key); else lastRC.set(key, { n: rc, t: nu });
-    const perUnit = Number(ev.diamonds) > 0 ? Number(ev.diamonds) : (Number(ev.coins ?? ev.value) > 0 ? Number(ev.coins ?? ev.value) / rc : 1);
+    // STYCKPRISET. Bryggan skickar diamonds = pris × repeatCount (tiktok-bridge/normalizer.js giftFields),
+    // precis som coins. Förut togs diamonds rakt av som styckpris och multiplicerades med count: fem rosor
+    // i en combo blev 25 coins i podiet och Goal Pro i stället för 5 (2026-10-22). Proven matade
+    // styckpriset i diamonds och dolde det; de matar nu det bryggan faktiskt skickar.
+    const total = Number(ev.diamonds) > 0 ? Number(ev.diamonds) : Number(ev.coins ?? ev.value);
+    const perUnit = total > 0 ? total / rc : 1;
     const name = String(ev.giftName || 'Gift');
     return {
       type: 'gift', user, avatar, count, combo: rc > 1,

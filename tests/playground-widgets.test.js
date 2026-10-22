@@ -107,7 +107,8 @@ test('podiet rangordnar givare efter mynt och visar namnen', () => {
 test('en combo räknas som skillnaden, inte som summan av alla upprepningar', () => {
   const h = boot(['templatePgPodium']);
   // TikTok skickar repeatCount 1, 2, 3 för SAMMA combo — totalen ska bli 3 gåvor, inte 6.
-  for (const n of [1, 2, 3]) h.gava({ username: 'kim', giftName: 'Rose', giftId: 'r1', diamonds: 10, coins: 10 * n, repeatCount: n, repeatEnd: n === 3 });
+  // diamonds och coins är TOTALEN för combon, som bryggan skickar dem (pris × repeatCount).
+  for (const n of [1, 2, 3]) h.gava({ username: 'kim', giftName: 'Rose', giftId: 'r1', diamonds: 10 * n, coins: 10 * n, repeatCount: n, repeatEnd: n === 3 });
   const rad = host(h, 'podium').querySelector('.pcol.r1 .cn').textContent.replace(/\s| /g, '');
   assert.equal(rad, '30', 'tre gåvor à 10 mynt ska bli 30, fick ' + rad);
 });
@@ -311,4 +312,23 @@ test('modulen skriver aldrig direkt i sessionens localStorage-nycklar', () => {
   const kod = las('playground-widgets.js');
   assert.ok(!/localStorage\.(setItem|removeItem)/.test(kod), 'session-write-monopoly: skriv via save()');
   assert.ok(!/\.innerHTML\s*=\s*[^;]*\bev\./.test(kod));
+});
+
+// 2026-10-22: bryggan skickar diamonds och coins som TOTALEN för combon (pris × repeatCount). Förut togs
+// diamonds som styckpris och multiplicerades med antalet — fem rosor i en enda combo-ram blev 25.
+test('en combo i en enda ram räknas till pris × antal, inte antal²', () => {
+  const h = boot(['templatePgPodium']);
+  h.gava({ username: 'kim', giftName: 'Rose', giftId: 'r1', diamonds: 5, coins: 5, count: 5, repeatCount: 5, repeatEnd: true });
+  const rad = host(h, 'podium').querySelector('.pcol.r1 .cn').textContent.replace(/\s| /g, '');
+  assert.equal(rad, '5', 'fem rosor à 1 coin ska bli 5, fick ' + rad);
+});
+
+test('en gåva till en annan värd räknas inte i podiet eller streaken', () => {
+  const h = boot(['templatePgPodium', 'templatePgStreak']);
+  h.gava({ username: 'anna', giftName: 'Crown', diamonds: 799, coins: 799 });
+  h.gava({ username: 'medvard', giftName: 'Lion', diamonds: 29999, coins: 29999, tillVarden: false });
+  for (let i = 1; i <= 9; i++) h.gava({ username: 'medvard', giftName: 'Rose', giftId: 'r1', diamonds: i, coins: i, count: i, repeatCount: i, repeatEnd: i === 9, tillVarden: false });
+  assert.equal(host(h, 'podium').querySelector('.pcol.r1 .nm').textContent, 'anna', 'en medvärdsgåva tog förstaplatsen');
+  const top = h.window.VyraPlaygroundWidgets.state.pg1.top;
+  assert.notEqual(top && top.user, 'medvard', 'en medvärds combo tog Top Streak Flip');
 });
