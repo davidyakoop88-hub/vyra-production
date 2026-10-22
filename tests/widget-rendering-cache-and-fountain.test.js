@@ -204,7 +204,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   assert.match(studio, /widget-factory\.js\?v=20261020-24/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
-  assert.match(studio, /gift-event-images\.js\?v=20261020-26/);
+  // 20261021-13: en gåva till en annan värd (tillVarden:false) tar inte Top Gift.
+  assert.match(studio, /gift-event-images\.js\?v=20261021-13/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);

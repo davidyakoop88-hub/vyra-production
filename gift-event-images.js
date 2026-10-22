@@ -133,8 +133,15 @@
     var antal = Number(detail.count || detail.repeatCount || detail.combo || 0) || 1;
     var giftVarde = records.styckvarde(coins, antal);
     var comboVarde = antal >= 2 ? coins : 0;
+    // EN GAVA TILL EN ANNAN VARD AR INTE STREAMERNS TOP GIFT (#360, samma regel som
+    // live-leaderboard.js record()). Har saknades den: i ett flervardsrum kunde en medvardsgava
+    // ta Top Gift och hoja troskeln, medan live-leaderboard.js — den andra skrivaren — hoppade over
+    // gavan och fortfarande hade det gamla rekordet, som den lade tillbaka vid nasta aterstallning
+    // (sandningen 2026-10-21: Jan Erik -> Mela -> Jan Erik). `=== false`: en aldre brygga skickar
+    // inte faltet, och da raknas gavan som forut. Top Streak lamnas orord i den har andringen.
+    var tillAnnanVard = detail.tillVarden === false;
     var beslut = {
-      gift: giftVarde > records.giftCoins,
+      gift: !tillAnnanVard && giftVarde > records.giftCoins,
       streak: comboVarde > records.streakCoins,
       giftVarde: giftVarde,
       comboVarde: comboVarde
