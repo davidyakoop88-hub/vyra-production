@@ -3,9 +3,10 @@
 //
 // Granskningen fotograferade 94 modeller i studio och overlay. De höga fynden här syntes i sändningen
 // eller gjorde ett panelfält verkningslöst, och varje prov nedan föll mot 5d75be0c:
-//   B-001/B-002  Koi Pearl Lagoon och Masquerade Ball: svarta MP4-rutor med vattenstämpel. Katalogen
-//                erbjuder dem inte längre (paketpreview-affisch.browser.test.js), och en SPARAD widget
-//                ritas som förut men panelen säger tydligt att paketet bör bytas.
+//   B-001/B-002  Koi Pearl Lagoon och Masquerade Ball: svarta MP4-rutor med vattenstämpel. Togs ur
+//                katalogen 2026-10-20; sedan 2026-10-23 är klippen omkodade till WebM med alfa utan
+//                stämpel och paketen tillbaka (paketpreview-affisch.browser.test.js). Provet nedan
+//                pinnar att widgeten spelar WebM och att varningsraden i panelen är borta.
 //   B-003        Egen bild/video: studiotipset "Välj en bild i panelen →" ritades i overlayn.
 //   B-005        Social Goal cirkel: fältet Rubrik gjorde ingenting (rubriken är målad i bilden).
 //   B-006        Social Goal Rail: rubriken låg på ornamentet och "0 / 1 000" under ändkapseln.
@@ -60,24 +61,19 @@ async function iOverlay(page, nyckel, falt) {
   }, [nyckel, falt]);
 }
 
-const AVVECKLAD = 'Klippen i det här paketet har en vattenstämpel och är svarta bakom effekten – byt till ett annat paket.';
-
-test('B-001/B-002: en sparad Koi Pearl/Masquerade ritas som förut och panelen säger att paketet ska bytas', { skip, timeout: 120000 }, async () => {
+test('B-001/B-002: Koi Pearl/Masquerade spelar WebM med alfa och panelen varnar inte längre', { skip, timeout: 120000 }, async () => {
   const page = await studio();
   try {
-    for (const p of ['koiPearl', 'masquerade']) {
+    for (const [p, mapp] of [['koiPearl', 'koi-pearl'], ['masquerade', 'masquerade']]) {
       await valj(page, `catalog:glovesnipe:${p}:pack:2`);
       const m = await page.evaluate(() => {
-        const rad = document.querySelector('.properties [data-panelram-sektion="2"] #prGloveAvvecklad');
-        return { text: rad && rad.textContent.trim(), synlig: !!rad && rad.getClientRects().length > 0,
-          ritad: !!document.querySelector('.canvas .battle-pack-full[data-id="prov"] video.pack-fx-video') };
+        const v = document.querySelector('.canvas .battle-pack-full[data-id="prov"] video.pack-fx-video');
+        return { rad: !!document.querySelector('.properties #prGloveAvvecklad'), src: v && v.getAttribute('src'), poster: v && v.getAttribute('poster') };
       });
-      assert.equal(m.text, AVVECKLAD, p + ': raden om vattenstämpeln saknas i Innehåll');
-      assert.equal(m.synlig, true, p + ': raden syns inte');
-      assert.equal(m.ritad, true, p + ': den sparade widgeten ritas inte längre');
+      assert.equal(m.rad, false, p + ': varningsraden om vattenstämpeln står kvar');
+      assert.equal(m.src, `assets/videos/battle/${mapp}/boost-x2.webm`, p + ': klippet är inte WebM');
+      assert.equal(m.poster, `assets/videos/battle/${mapp}/boost-x2.webp`, p + ': affischen är inte WebP med alfa');
     }
-    await valj(page, 'catalog:glovesnipe:pinkPrincess:pack:2');
-    assert.equal(await page.evaluate(() => !!document.querySelector('.properties #prGloveAvvecklad')), false, 'Pink Princess fick raden');
   } finally { await page.close(); }
 });
 

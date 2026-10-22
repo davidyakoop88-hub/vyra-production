@@ -700,7 +700,7 @@ function owgWatchForLateCards(gallery) {
 //
 // Har, och BARA har, tands den med paketets egna klasser: pack-active gor den synlig och
 // pack-stilla lagger affischen (klippets .jpg) ovanpa. Klippet spelas sedan i loop och affischen
-// tas bort forst nar videon faktiskt visar rutor. Kan videon inte avkodas (Koi Pearl ar H.264-MP4,
+// tas bort forst nar videon faktiskt visar rutor. Kan videon inte avkodas (Koi Pearl var H.264-MP4 till 2026-10-23,
 // som inte alla webblasare har) star affischen kvar. Duken och overlayn ritar egna noder ur wh()
 // och ror aldrig de har klasserna, sa paketet i sandningen spelas precis som forut.
 function owgVackPaketPreview() {

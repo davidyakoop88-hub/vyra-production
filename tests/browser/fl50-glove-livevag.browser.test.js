@@ -237,14 +237,14 @@ test('Glove Snipe: battlehändelser spelar klippet i paketet som förut', { skip
     // Matchstart → Tap Tap i alla synliga paket (motorn spelar genom VyraBattlePaket.spela), aldrig i det dolda.
     await live(page, { type: 'battle', battleStatus: 'started', battleId: 'b1', id: 'h1' });
     await page.waitForTimeout(300);
-    assert.equal(await paketLage(page), 'ga:tap:tap.webm gb:tap:tap.mp4 gc:-', 'matchstarten spelar Tap Tap');
+    assert.equal(await paketLage(page), 'ga:tap:tap.webm gb:tap:tap.webm gc:-', 'matchstarten spelar Tap Tap');
     let v = await page.evaluate(() => { const x = document.querySelector('.canvas [data-id="ga"] video'); return { autoplay: x.hasAttribute('autoplay'), muted: x.muted, loop: x.loop }; });
     assert.deepEqual(v, { autoplay: true, muted: true, loop: false }, 'samma startväg som förut');
     await stangAlla(page);
     // Uttryckliga klipp: X3 i båda, Snipe bara i WebM-paketet (MP4-paketet har inget Snipe-klipp).
     await live(page, { type: 'x3', id: 'h2' });
     await page.waitForTimeout(300);
-    assert.equal(await paketLage(page), 'ga:boost-x3:x3.webm gb:boost-x3:boost-x3.mp4 gc:-');
+    assert.equal(await paketLage(page), 'ga:boost-x3:x3.webm gb:boost-x3:boost-x3.webm gc:-');
     await stangAlla(page);
     await live(page, { type: 'snipe', id: 'h3' });
     await page.waitForTimeout(300);
@@ -255,7 +255,7 @@ test('Glove Snipe: battlehändelser spelar klippet i paketet som förut', { skip
     const fore = await page.evaluate(() => JSON.stringify(state.widgets));
     await page.evaluate(() => window.triggerGloveSnipe({ kind: 'glove', multiplier: 3 }));
     await page.waitForTimeout(300);
-    assert.equal(await paketLage(page), 'ga:- gb:boost-x3:boost-x3.mp4 gc:-', 'Glove ×3 → X3 i den sist tillagda');
+    assert.equal(await paketLage(page), 'ga:- gb:boost-x3:boost-x3.webm gc:-', 'Glove ×3 → X3 i den sist tillagda');
     assert.equal(await page.evaluate(() => JSON.stringify(state.widgets)), fore, 'paketvägen skriver inget på widgetarna');
     await stangAlla(page);
     await page.evaluate(() => window.triggerGloveSnipe({ kind: 'snipe' }));

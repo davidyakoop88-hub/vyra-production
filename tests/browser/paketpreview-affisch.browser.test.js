@@ -8,9 +8,9 @@
 // widgeten varken vald eller spelande, sa ytan var bara bakgrund. Koi Pearl ar dessutom H.264-MP4,
 // som inte alla webblasare kan avkoda.
 //
-// SEDAN 2026-10-20 (slutgranskning B-001/B-002) finns Koi Pearl och Masquerade inte i katalogen: deras
-// klipp ar svarta rutor med vattenstampel. Provet gor samma matning pa Pink Princess (WebM), och
-// avkodningsfelet framkallas med en trasig .webm i stallet for en trasig .mp4.
+// 2026-10-20 (slutgranskning B-001/B-002) togs Koi Pearl och Masquerade ur katalogen: klippen var svarta
+// rutor med vattenstampel. Provet gor matningen pa Pink Princess (WebM), och avkodningsfelet framkallas
+// med en trasig .webm. Sedan 2026-10-23 ar Koi och Masquerade tillbaka som WebM med alfa (sista provet).
 //
 // Kravet: previewytan visar paketets affisch direkt, spelar klippet ovanpa nar det gar, och star
 // kvar pa affischen nar videon inte kan avkodas. Paketet i layouten/sandningen ror vi inte: dar
@@ -121,17 +121,20 @@ test('paketet pa duken vilar slackt som forut', { skip, timeout: 120000 }, async
   } finally { await page.close(); }
 });
 
-test('Koi Pearl och Masquerade har inget kort i katalogen (B-001/B-002)', { skip, timeout: 120000 }, async () => {
+test('Koi Pearl och Masquerade ar tillbaka i katalogen som WebM med alfa (B-001/B-002 atgardat)', { skip, timeout: 120000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   try {
     await overlayKatalog(page);
     const m = await page.evaluate(() => {
       const nycklar = [...document.querySelectorAll('[data-catalog-key]')].map(b => b.dataset.catalogKey);
-      const text = document.querySelector('.widget-catalog').textContent;
-      return { avvecklade: nycklar.filter(k => /^catalog:glovesnipe:(koiPearl|masquerade):/.test(k)), pink: nycklar.includes('catalog:glovesnipe:pinkPrincess:pack:2'), namn: /Koi Pearl|Masquerade/.test(text) };
+      return { koi: nycklar.includes('catalog:glovesnipe:koiPearl:pack:2'), masq: nycklar.includes('catalog:glovesnipe:masquerade:pack:2') };
     });
-    assert.ok(m.pink, 'provet mater inget: Pink Princess finns inte i katalogen');
-    assert.deepEqual(m.avvecklade, [], 'avvecklade paket gar fortfarande att lagga till');
-    assert.equal(m.namn, false, 'katalogen namner fortfarande Koi Pearl eller Masquerade');
+    assert.equal(m.koi, true, 'Koi Pearl Lagoon saknas i katalogen');
+    assert.equal(m.masq, true, 'Masquerade Ball saknas i katalogen');
+    // Klippen och affischerna ligger pa disk: WebM, WebP med alfa och JPG over svart, inga MP4 kvar.
+    for (const mapp of ['koi-pearl', 'masquerade']) for (const k of ['boost-x2', 'boost-x3', 'tap', 'glove']) {
+      for (const ext of ['webm', 'webp', 'jpg']) assert.ok(fs.existsSync(path.join(ROOT, 'assets/videos/battle', mapp, k + '.' + ext)), `${mapp}/${k}.${ext} saknas`);
+      assert.equal(fs.existsSync(path.join(ROOT, 'assets/videos/battle', mapp, k + '.mp4')), false, `${mapp}/${k}.mp4 med vattenstampel ligger kvar`);
+    }
   } finally { await page.close(); }
 });

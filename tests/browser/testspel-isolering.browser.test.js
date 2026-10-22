@@ -1665,8 +1665,8 @@ const FL50_GLOVE_ISOLERING = [
   { namn: 'Fan Level 50 · slideshow (2 s)', nyckel: 'catalog:fanlevel50:royal', adapter: 'fan50', slideshow: true, faser: { entre: 300, visning: 8000, utgang: 500 } },
   { namn: 'Glove Snipe · Pink Princess (Snipe)', nyckel: 'catalog:glovesnipe:pinkPrincess:pack:2', adapter: 'glove', typ: 'snipe',
     klipp: /pink-princess\/snipe\.webm$/, faser: { entre: 200, visning: 9300, utgang: 500 } },
-  { namn: 'Glove Snipe · Koi Pearl (X2, MP4)', nyckel: 'catalog:glovesnipe:koiPearl:pack:2', adapter: 'glove-mp4', typ: null,
-    klipp: /koi-pearl\/boost-x2\.mp4$/, faser: { entre: 200, visning: 6342, utgang: 500 } },
+  { namn: 'Glove Snipe · Koi Pearl (X2, utan Snipe)', nyckel: 'catalog:glovesnipe:koiPearl:pack:2', adapter: 'glove-mp4', typ: null,
+    klipp: /koi-pearl\/boost-x2\.webm$/, faser: { entre: 200, visning: 6342, utgang: 500 } },
 ];
 const GLOVE_GAMLA = ['[data-paket-test]', '.paket-testknappar'];
 const fgBild = page => bild(page).then(async b => Object.assign({}, b, await page.evaluate(() => ({
