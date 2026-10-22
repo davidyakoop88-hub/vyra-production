@@ -376,3 +376,30 @@ dialog {
 @media (max-width: 800px) {
   #view { padding: 14px; }
 }
+
+/* ==========================================================================
+   SPRÅKVÄLJAREN I SIDHUVUDET (SV | EN, vyra-sprak.js steg 2)
+   Ett segmenterat par i samma sekundärstil som knapparna bredvid (Färgschema).
+   .head-actions button bär !important ovan, därför samma vikt här — annars blir
+   SV och EN två lösa knappar med var sin ram.
+   ========================================================================== */
+.head-actions .studio-sprakval {
+  display: inline-flex; align-items: center; gap: 2px; padding: 2px;
+  background: linear-gradient(145deg, var(--surface-1), var(--bg-app-2));
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+}
+.head-actions .studio-sprakval button {
+  all: unset; box-sizing: border-box; cursor: pointer;
+  min-width: 30px; padding: 7px 8px; text-align: center;
+  border-radius: calc(var(--radius-md) - 3px);
+  font: 700 9px/1 Inter, sans-serif; letter-spacing: .06em;
+  background: transparent !important; border: 0 !important; box-shadow: none !important;
+  color: var(--text-secondary) !important;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.head-actions .studio-sprakval button:hover { color: var(--text-primary) !important; transform: none; }
+.head-actions .studio-sprakval button[aria-pressed="true"] {
+  background: linear-gradient(120deg, var(--accent-purple), var(--accent-violet)) !important;
+  color: var(--text-primary) !important;
+}
+.head-actions .studio-sprakval button:focus-visible { outline: 2px solid var(--border-active); outline-offset: 1px; }

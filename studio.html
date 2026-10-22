@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="sv">
+<html lang="sv" data-sprak-utom=".canvas, .widget, .properties > :not(.panel-title):not(.properties-empty), .owg-thumb, .owg-configure-preview, .owg-configure-settings, .widget-catalog h4, .widget-catalog h5, .widget-catalog button > span:not(.btn), .widget-catalog button > b, .widget-catalog button > small">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="design-tokens.css?v=1">
   <link rel="stylesheet" href="studio.css?v=20261020-24">
   <link rel="stylesheet" href="guardian-emblem.css?v=20261020-22">
-  <link rel="stylesheet" href="design-system.css?v=20261020-1">
+  <link rel="stylesheet" href="design-system.css?v=20261022-1">
   <link rel="stylesheet" href="sidebar-premium.css?v=20261016-meny">
   <link rel="stylesheet" href="auth-client.css?v=20261021-3">
   <link rel="stylesheet" href="auth-security.css?v=20261020-19">
@@ -63,8 +63,9 @@
   </aside>
   <main>
     <header>
-      <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title">God kväll, Streamer</h1></div>
+      <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title" data-sprak-tillbaka>God kväll, Streamer</h1></div>
       <div class="head-actions">
+        <span class="studio-sprakval" data-sprakval></span>
         <button id="openBrandKit" type="button" title="Sätt Accentfärg/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det">🎨 Färgschema</button>
         <button class="connect connection"><i></i><span>Anslut TikTok</span></button>
         <button id="openOverlay" hidden aria-hidden="true"></button>
@@ -118,6 +119,7 @@
     <button class="primary" id="brandKitSave">Spara färgschema</button>
   </dialog>
   <div class="toast"></div>
+  <script src="vyra-sprak-en.js?v=20261022-1"></script><script src="vyra-sprak-studio-en.js?v=20261022-1"></script><script src="vyra-sprak.js?v=20261022-1"></script>
   <!-- Ägaren av aktiv sessionsstate. Måste ligga först: studio.js läser sitt state ur den, och
        extras.js cachar sitt vid load — båda före auth hinner svara. -->
   <script src="session-state.js?v=20260817-cooldown"></script>
@@ -129,12 +131,12 @@
   <script src="auth-security.js?v=20261021-3"></script>
   <!-- Trial-onboarding. Monterar pa vyra-entitlement-ok, som entitlement-gate.js redan
        avfyrar och ingen lyssnade pa. Maste alltsa ligga FORE den. -->
-  <script src="vyra-trial-onboarding.js?v=1"></script>
+  <script src="vyra-trial-onboarding.js?v=20261022-1"></script>
   <script src="entitlement-gate.js?v=20260728-1"></script>
   <script src="desktop-profile.js?v=20260724-1"></script>
   <script src="studio.js?v=20261010-1"></script>
-  <script src="layout-format.js?v=20261020-19"></script>
-  <script src="stage-background.js?v=2"></script>
+  <script src="layout-format.js?v=20261022-1"></script>
+  <script src="stage-background.js?v=20261022-1"></script>
   <!-- Angra/gor om: wrappar render for baslinjesynk och monterar sina knappar efter
        formatvaljaren — maste darfor ligga efter bade studio.js och layout-format.js. -->
   <script src="vyra-historik.js?v=20260818-scenbakgrund"></script>
@@ -163,7 +165,7 @@
   <script src="toplike-design.js?v=20260924-pension"></script>
   <!-- Malruntimen: efter sessionsagaren den fragar om lage, fore media.js som renderar malen. -->
   <script src="goal-client.js?v=20260916-facit"></script>
-  <script src="media.js?v=20261022-2"></script>
+  <script src="media.js?v=20261022-3"></script>
   <link rel="stylesheet" href="topcoins-v2.css?v=20261021-7">
   <script src="topcoins-v2.js?v=20261021-7"></script>
   <!-- Top Points fyra designer. EFTER media.js: modulen lindar wh/props/bind som media.js definierar,

@@ -107,8 +107,10 @@ function lasTikTok(last){const m=document.querySelector('#connectModal');if(!m)r
 // knappen inte höll. Bara viloläget skrivs om — "Ansluter…", "Ansluten" och felen står kvar.
 function malaEpostknapp(){const e=document.querySelector('.connection span');if(!e)return;
   const overifierad=window.VyraAuth?.lastDetail?.()?.user?.emailVerified===false;
-  if(overifierad&&e.textContent==='Anslut TikTok')e.textContent='Verifiera e-post för TikTok';
-  else if(!overifierad&&e.textContent==='Verifiera e-post för TikTok')e.textContent='Anslut TikTok';
+  // Engelska (vyra-sprak.js) har bytt texten i sidan: jamfor mot bada sprakens form.
+  const t=s=>window.VyraLang?.t?window.VyraLang.t(s):s,ar=s=>e.textContent===s||e.textContent===t(s);
+  if(overifierad&&ar('Anslut TikTok'))e.textContent='Verifiera e-post för TikTok';
+  else if(!overifierad&&ar('Verifiera e-post för TikTok'))e.textContent='Anslut TikTok';
   document.querySelector('.connection')?.classList.toggle('epostkrav',overifierad)}
 // I FÖRVÄG. Att beskedet kom först efter ett misslyckat tryck var inte tydligt nog: användaren
 // skrev sitt namn, tryckte och fick då veta att ett annat steg saknades. Därför visas kravet så
