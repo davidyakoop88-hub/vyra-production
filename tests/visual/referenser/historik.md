@@ -522,3 +522,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Top Streak Design 1-3: talet lika stort som texten
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 162
+
+## 2026-10-22 — 6 referenser skrivna
+
+- **Motiv:** Heart Me-teman dark/ocean/midnight/citrus fick egna färger och Last-X Royal visar namnet
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 6 av 162 (filter: catalog:heartgoal:dark,catalog:heartgoal:ocean,catalog:heartgoal:midnight,catalog:heartgoal:citrus,catalog:lastx:royal) — catalog:heartgoal:citrus, catalog:heartgoal:dark, catalog:heartgoal:midnight, catalog:heartgoal:ocean, catalog:lastx:royal, catalog:lastx:royalAmethyst
