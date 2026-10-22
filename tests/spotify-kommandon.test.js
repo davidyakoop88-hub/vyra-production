@@ -298,7 +298,7 @@ test('Spotify-sidan: rutorna säger Aktiv när Spotify är anslutet, och gåva �
     assert.equal(r.querySelector('small'), r.firstElementChild.nextElementSibling, 'förklaringen ska stå direkt under kommandot');
   }
   const status = () => Object.fromEntries(rutor.length ? [...w.document.querySelectorAll('.music-rules > article')].map(a => [a.firstElementChild.textContent, a.querySelector('[data-spk-status]').textContent]) : []);
-  assert.deepEqual(status(), { '!önska <låt>': 'Aktiv', '!song': 'Aktiv', '!skip': 'Aktiv', 'Gåva → låt': 'Välj gåva och låt' });
+  assert.deepEqual(status(), { '!önska <låt>': 'Aktiv', '!song': 'Aktiv', '!skip': 'Aktiv', 'Gåva → låt': 'Välj gåva och låt', 'Önskningar': 'Tom' });
 
   w.document.querySelector('[data-spk-valj="0"]').click();
   const val = [...w.document.querySelectorAll('.spk-valjare [data-spk-gava]')];
@@ -332,11 +332,93 @@ test('Spotify-sidan: utan anslutning säger rutorna det, och en pausad !song sä
   w.document.querySelector('#view').innerHTML = SIDAN;
   await vanta(60);
   const texter = [...w.document.querySelectorAll('[data-spk-status]')].map(e => e.textContent);
-  assert.ok(texter.every(t => t === 'Anslut Spotify först'), texter.join(' | '));
+  assert.ok(texter.slice(0, 4).every(t => t === 'Anslut Spotify först') && texter[4] === 'Tom', texter.join(' | '));
   w.localStorage.setItem('vyra-spotify-token-v1', '{}');
   w.VyraSpotify.status = async () => ({ connected: true, profile: {} });
   w.dispatchEvent(new w.CustomEvent('vyra:spotify-changed'));
   await vanta(40);
   const song = [...w.document.querySelectorAll('.music-rules > article')].find(a => a.firstElementChild.textContent === '!song');
   assert.equal(song.querySelector('[data-spk-status]').textContent, 'Pausad i Chatbot');
+});
+
+// ---- ÖNSKELISTAN (David 2026-10-22: "om någon önskar sig låt man ska kunna se den i vyralive.app
+// också listan") --------------------------------------------------------------------------------------
+const rader = w => [...w.document.querySelectorAll('.spk-lista .spk-onskan')].map(li =>
+  [li.querySelector('b').textContent, li.querySelector('small').textContent.split(' · ')[0], li.querySelector('em').textContent]);
+
+test('önskelistan: varje !önska syns på Spotify-sidan med tittare och läge, senaste överst', async () => {
+  const w = studio();
+  w.document.querySelector('#view').innerHTML = SIDAN;
+  await vanta(40);
+  assert.match(w.document.querySelector('[data-spk-onskningar]').textContent, /Inga önskningar än/);
+  assert.equal(w.document.querySelector('.spk-onskekort [data-spk-status]').textContent, 'Tom');
+
+  chatt(w, { username: 'lina', comment: '!önska Blinding Lights' });
+  chatt(w, { username: 'lina', comment: '!önska en till direkt' });     // väntetid
+  chatt(w, { username: 'lina', comment: '!önska en till direkt' });     // samma spam syns bara en gång
+  chatt(w, { username: 'omar', comment: '!önska blinding lights' });    // redan önskad
+  chatt(w, { username: 'omar', comment: '!önska Levitating' });
+  await vanta(40);
+  assert.deepEqual(rader(w), [
+    ['Levitating', '@omar', 'I kön'],
+    ['blinding lights', '@omar', 'Avvisad'],
+    ['en till direkt', '@lina', 'Avvisad'],
+    ['Blinding Lights', '@lina', 'I kön']
+  ]);
+  const orsaker = [...w.document.querySelectorAll('.spk-onskan small')].map(s => s.textContent);
+  assert.match(orsaker[1], /Redan önskad/);
+  assert.match(orsaker[2], /Väntetid 60 s/);
+  assert.equal(w.document.querySelector('.spk-onskekort [data-spk-status]').textContent, '4 önskningar');
+
+  // Spotify spelar linas låt: den blir "Spelas nu", omars ligger kvar i kön.
+  w.VyraSpotifyKommandon.stamLista('spotify:track:BlindingLights');
+  assert.deepEqual(rader(w).map(r => r[2]), ['I kön', 'Avvisad', 'Avvisad', 'Spelas nu']);
+  // Spotify har gått vidare till omars: linas är spelad.
+  w.VyraSpotifyKommandon.stamLista('spotify:track:Levitating');
+  assert.deepEqual(rader(w).map(r => r[2]), ['Spelas nu', 'Avvisad', 'Avvisad', 'Spelad']);
+
+  w.document.querySelector('[data-spk-tom-lista]').click();
+  assert.match(w.document.querySelector('[data-spk-onskningar]').textContent, /Inga önskningar än/);
+  assert.equal(w.document.querySelector('[data-spk-tom-lista]').hidden, true);
+});
+
+test('önskelistan: ett Spotify-fel syns som Misslyckades med orsaken, och listan överlever en omladdning', async () => {
+  const w = studio();
+  w.VyraSpotify.queue = async () => { throw new Error('Låten hittades inte på Spotify'); };
+  w.document.querySelector('#view').innerHTML = SIDAN;
+  await vanta(40);
+  chatt(w, { username: 'lisa', comment: '!önska asdfghjkl' });
+  await vanta(40);
+  assert.deepEqual(rader(w), [['asdfghjkl', '@lisa', 'Misslyckades']]);
+  assert.match(w.document.querySelector('.spk-onskan small').textContent, /Låten hittades inte på Spotify/);
+
+  // Ny flik med samma sessionStorage: listan finns kvar, och en önskan som var mitt i sökningen
+  // när fliken laddades om blir inte hängande på "Söker…".
+  const sparat = JSON.parse(w.sessionStorage.getItem('vyra-spotify-onskningar'));
+  sparat.unshift({ nr: 'x', fraga: 'Flowers', av: 'omar', at: Date.now(), status: 'soker', orsak: '', uri: '', titel: '', artist: '', bild: '' });
+  const w2 = studio({ fore: v => v.sessionStorage.setItem('vyra-spotify-onskningar', JSON.stringify(sparat)) });
+  w2.document.querySelector('#view').innerHTML = SIDAN;
+  await vanta(40);
+  assert.deepEqual(rader(w2).map(r => [r[0], r[2]]), [['Flowers', 'Misslyckades'], ['asdfghjkl', 'Misslyckades']]);
+});
+
+test('önskelistan: en synlig Låtönskningar-widget tar !önska, och då säger listan det', async () => {
+  const w = studio({ widgets: [{ type: 'templateSongRequests', hidden: false }] });
+  w.document.querySelector('#view').innerHTML = SIDAN;
+  await vanta(40);
+  chatt(w, { username: 'lina', comment: '!önska Blinding Lights' });
+  await vanta(30);
+  assert.equal(rader(w).length, 0);
+  assert.match(w.document.querySelector('[data-spk-onskningar]').textContent, /Låtönskningar-widgeten tar emot !önska/);
+});
+
+test('önskelistan: tittarens text kan inte injicera HTML', async () => {
+  const w = studio();
+  w.VyraSpotify.queue = async () => { throw new Error('nej'); };
+  w.document.querySelector('#view').innerHTML = SIDAN;
+  await vanta(40);
+  chatt(w, { username: '<img src=x onerror=alert(1)>', comment: '!önska <b>fet</b><script>x()</script>' });
+  await vanta(30);
+  assert.equal(w.document.querySelectorAll('.spk-lista script, .spk-lista b b, .spk-lista img[src="x"]').length, 0);
+  assert.match(w.document.querySelector('.spk-onskan b').textContent, /<b>fet<\/b>/);
 });

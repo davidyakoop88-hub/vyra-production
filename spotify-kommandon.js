@@ -11,6 +11,10 @@
 //                                svaret skickas: "Nu spelas: Titel – Artist". Ett eget svar med
 //                                {låt} i texten får låten insatt där. Ett eget svar utan {låt} rörs
 //                                inte.
+//   Önskningar                 → listan på Spotify-sidan visar varje !önska: vem, vilken låt, när
+//                                och läget (Söker / I kön / Spelas nu / Spelad / Avvisad / Misslyckades).
+//                                David 2026-10-22: "om någon önskar sig låt man ska kunna se den i
+//                                vyralive.app också listan".
 //   Gåva → låt                 → vald gåva (namn eller giftId, som Action & Events gavanTraffar)
 //                                startar vald låt med VyraSpotify.play().
 //
@@ -54,6 +58,11 @@
   var VANTAR = [];      // { fraga, uri, at }
   var GAVA_SENAST = {}; // rad-id -> tidpunkt
   var PAGAR = {};       // action-id -> 1 medan !song-svaret hämtar låten
+  var LISTA = [];       // önskningarna som syns på Spotify-sidan, senaste först
+  var LISTA_MAX = 30;
+  var LISTA_KEY = 'vyra-spotify-onskningar';   // sessionStorage: listan överlever en omladdning av fliken
+  var LISTA_NR = 0;
+  var STAM_MS = 15000;  // så ofta Spotify tillfrågas om vad som spelas, bara medan sidan är öppen
 
   // ---- MILJÖN -----------------------------------------------------------------------------------
   function iOverlay() {
@@ -170,6 +179,7 @@
   function stamMotSpotify() {
     return Promise.resolve().then(function () { return spotify().current(); }).then(function (c) {
       var uri = c && c.item && c.item.uri;
+      stamLista(uri);
       if (!uri) return;
       for (var i = VANTAR.length - 1; i >= 0; i--) if (VANTAR[i].uri === uri) { VANTAR.splice(0, i + 1); return; }
     }).catch(function () {});
@@ -177,24 +187,72 @@
   function onska(fraga, av) {
     if (!fraga || fraga.length < 2) return false;
     var vem = av.toLowerCase(), t = Date.now();
-    if (SENAST[vem] && t - SENAST[vem] < COOLDOWN_MS) return false;
+    if (SENAST[vem] && t - SENAST[vem] < COOLDOWN_MS) { avvisa(fraga, av, 'Väntetid 60 s'); return false; }
     rensaVantande();
     var lc = fraga.toLowerCase();
-    if (VANTAR.some(function (x) { return x.fraga.toLowerCase() === lc && t - x.at < DUBBLETT_MS; })) return false;
+    if (VANTAR.some(function (x) { return x.fraga.toLowerCase() === lc && t - x.at < DUBBLETT_MS; })) { avvisa(fraga, av, 'Redan önskad'); return false; }
     SENAST[vem] = t;
     var post = { fraga: fraga, uri: '', at: t, av: av };
+    var rad = notera({ fraga: fraga, av: av, status: 'soker' });
     var fortsatt = VANTAR.length >= MAX_VANTAR ? stamMotSpotify() : Promise.resolve();
     // Platsen hålls direkt, så att två önskningar samma sekund inte båda ryms under taket.
     VANTAR.push(post);
     fortsatt.then(function () {
-      if (VANTAR.indexOf(post) >= MAX_VANTAR) { VANTAR.splice(VANTAR.indexOf(post), 1); return; }
-      return Promise.resolve(spotify().queue(fraga)).then(function (lat) { post.uri = lat && lat.uri || ''; });
+      if (VANTAR.indexOf(post) >= MAX_VANTAR) { VANTAR.splice(VANTAR.indexOf(post), 1); uppdatera(rad, { status: 'avvisad', orsak: 'Kön är full (' + MAX_VANTAR + ')' }); return; }
+      return Promise.resolve(spotify().queue(fraga)).then(function (lat) {
+        post.uri = lat && lat.uri || '';
+        uppdatera(rad, { status: 'ko', uri: post.uri, titel: lat && lat.titel || '', artist: lat && lat.artist || '', bild: lat && lat.bild || '' });
+      });
     }).catch(function (err) {
       var i = VANTAR.indexOf(post); if (i >= 0) VANTAR.splice(i, 1);
+      uppdatera(rad, { status: 'fel', orsak: err && err.message || 'Spotify svarade inte' });
       logga('önskningen kunde inte läggas i kön', err);
     });
     return true;
   }
+
+  // ---- ÖNSKELISTAN ---------------------------------------------------------------------------------
+  function lasLista() {
+    try { var l = JSON.parse(root.sessionStorage.getItem(LISTA_KEY) || '[]'); if (Array.isArray(l)) LISTA = l.filter(function (o) { return o && o.fraga; }).slice(0, LISTA_MAX); } catch (e) {}
+    // En önskning som var mitt i sökningen när fliken laddades om får aldrig något svar.
+    LISTA.forEach(function (o) { if (o.status === 'soker') { o.status = 'fel'; o.orsak = 'Avbröts av omladdning'; } });
+  }
+  function sparaLista() { try { root.sessionStorage.setItem(LISTA_KEY, JSON.stringify(LISTA)); } catch (e) {} }
+  function listanAndrades() {
+    sparaLista();
+    ritaLista();
+    try { root.dispatchEvent(new CustomEvent('vyra:spotify-onskningar', { detail: { antal: LISTA.length } })); } catch (e) {}
+  }
+  function notera(o) {
+    var rad = { nr: ++LISTA_NR + '-' + Date.now().toString(36), fraga: o.fraga, av: o.av, at: Date.now(), status: o.status,
+      orsak: o.orsak || '', uri: '', titel: '', artist: '', bild: '' };
+    LISTA.unshift(rad);
+    if (LISTA.length > LISTA_MAX) LISTA.length = LISTA_MAX;
+    listanAndrades();
+    return rad;
+  }
+  function uppdatera(rad, falt) { Object.keys(falt).forEach(function (k) { rad[k] = falt[k]; }); listanAndrades(); }
+  // En tittare som spammar !önska under väntetiden ska inte fylla listan med samma avvisning.
+  function avvisa(fraga, av, orsak) {
+    var t = Date.now(), lc = fraga.toLowerCase();
+    var finns = LISTA.some(function (o) { return o.status === 'avvisad' && o.av === av && String(o.fraga).toLowerCase() === lc && t - o.at < COOLDOWN_MS; });
+    if (!finns) notera({ fraga: fraga, av: av, status: 'avvisad', orsak: orsak });
+  }
+  // Spotify säger bara vad som spelas JUST NU. Den önskan som spelas markeras; de som lades i kön
+  // före den har Spotify redan passerat.
+  function stamLista(uri) {
+    var andrat = false, hittad = -1;
+    if (uri) for (var i = 0; i < LISTA.length; i++) if ((LISTA[i].status === 'ko' || LISTA[i].status === 'spelas') && LISTA[i].uri === uri) { hittad = i; break; }
+    LISTA.forEach(function (o, i) {
+      var nytt = o.status;
+      if (i === hittad) nytt = 'spelas';
+      else if (o.status === 'spelas') nytt = 'spelad';
+      else if (hittad >= 0 && i > hittad && o.status === 'ko') nytt = 'spelad';
+      if (nytt !== o.status) { o.status = nytt; andrat = true; }
+    });
+    if (andrat) listanAndrades();
+  }
+  function vantarPaSpotify() { return LISTA.some(function (o) { return o.status === 'ko' || o.status === 'spelas'; }); }
 
   // ---- GÅVA → LÅT ---------------------------------------------------------------------------------
   function gavoIdn(namn) {
@@ -367,7 +425,42 @@
       + '<article><code>!skip</code><small>Moderatorer och du själv kan byta låt</small>' + status(l.skip) + brytare('spkSkip', s.skip, 'På') + '</article>'
       + '<article class="spk-gavokort"><b>Gåva → låt</b><small>Spela vald låt vid gåva</small>' + status(l.gava)
       + '<div class="spk-rader">' + rader.map(radHtml).join('') + '</div>'
-      + '<button type="button" class="spk-ny" data-spk-ny>＋ Lägg till gåva</button></article>';
+      + '<button type="button" class="spk-ny" data-spk-ny>＋ Lägg till gåva</button></article>'
+      + '<article class="spk-onskekort"><b>Önskningar</b><small>Låtar tittarna önskat med !önska, senaste överst.</small>' + status(listLage())
+      + '<div data-spk-onskningar>' + listaHtml() + '</div>'
+      + '<button type="button" data-spk-tom-lista' + (LISTA.length ? '' : ' hidden') + '>Töm listan</button></article>';
+  }
+  var STATUSTEXT = { soker: 'Söker…', ko: 'I kön', spelas: 'Spelas nu', spelad: 'Spelad', fel: 'Misslyckades', avvisad: 'Avvisad' };
+  function klockslag(at) { var d = new Date(Number(at) || 0); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function onskanHtml(o) {
+    var namn = o.titel ? o.titel + (o.artist ? ' – ' + o.artist : '') : o.fraga;
+    var under = ['@' + String(o.av || 'tittare').replace(/^@/, ''), klockslag(o.at)];
+    if (o.titel && String(o.fraga).toLowerCase() !== String(o.titel).toLowerCase()) under.push('"' + o.fraga + '"');
+    if (o.orsak) under.push(o.orsak);
+    var bild = sakerUrl(o.bild) ? '<img alt="" data-fallback-applied="1" src="' + sakerUrl(o.bild) + '">' : '<i class="spk-not">♫</i>';
+    var aktiv = o.status === 'ko' || o.status === 'spelas';
+    return '<li class="spk-onskan" data-spk-lage="' + saker(o.status) + '">' + bild
+      + '<span><b>' + saker(namn) + '</b><small>' + saker(under.join(' · ')) + '</small></span>'
+      + '<em class="spk-status' + (aktiv ? ' spk-aktiv' : '') + '">' + saker(STATUSTEXT[o.status] || o.status) + '</em></li>';
+  }
+  function listaHtml() {
+    if (widgetAgerKommandona()) return '<p class="spk-tom">Låtönskningar-widgeten tar emot !önska just nu. Önskningarna syns i widgeten.</p>';
+    return LISTA.length ? '<ol class="spk-lista">' + LISTA.map(onskanHtml).join('') + '</ol>'
+      : '<p class="spk-tom">Inga önskningar än. När en tittare skriver !önska &lt;låt&gt; i chatten syns den här.</p>';
+  }
+  function listLage() {
+    var i = LISTA.filter(function (o) { return o.status === 'ko' || o.status === 'spelas' || o.status === 'soker'; }).length;
+    return LISTA.length ? [i > 0, LISTA.length + (LISTA.length === 1 ? ' önskning' : ' önskningar')] : [false, 'Tom'];
+  }
+  // Bara listan ritas om, inte hela sidan: annars tappar ett låtfält som redigeras sin text.
+  function ritaLista() {
+    var plats = doc && doc.querySelector('.spotify-card [data-spk-onskningar]');
+    if (!plats) return;
+    plats.innerHTML = listaHtml();
+    var knapp = doc.querySelector('.spotify-card [data-spk-tom-lista]');
+    if (knapp) knapp.hidden = !LISTA.length;
+    var kort = doc.querySelector('.spotify-card .spk-onskekort [data-spk-status]');
+    if (kort) kort.outerHTML = status(listLage());
   }
 
   var utkast = null;   // raderna medan sidan är öppen (en tom rad sparas inte förrän den fyllts i)
@@ -405,6 +498,7 @@
       };
     });
     if ((el = q('[data-spk-ny]'))) el.onclick = function () { utkast.gavor.push({ id: 'g' + Date.now().toString(36), gava: null, lat: '', on: true }); omrita(); };
+    if ((el = q('[data-spk-tom-lista]'))) el.onclick = function () { LISTA = []; listanAndrades(); };
     if ((el = q('[data-spk-testa-song]'))) el.onclick = function () { latText().then(function (l) { toast(mening(l)); }); };
   }
   function oppnaValjare(knapp, rad) {
@@ -451,6 +545,14 @@
     try { new MutationObserver(kolla).observe(doc.querySelector('#view') || doc.documentElement, { childList: true, subtree: true }); } catch (e) {}
     root.addEventListener('vyra:spotify-changed', function () { lasAnslutning().then(function () { if (doc.querySelector('.spotify-card .music-rules[data-spotify-kommandon]')) omrita(); }); });
     kolla();
+    // Medan Spotify-sidan är öppen och något ligger i kön frågas Spotify var 15:e sekund vad som
+    // spelas, så att "I kön" blir "Spelas nu" och sedan "Spelad". Stängd sida = inga anrop.
+    setInterval(function () {
+      if (!doc.querySelector('.spotify-card [data-spk-onskningar]') || !vantarPaSpotify() || !spotify() || !harToken()) return;
+      if (typeof spotify().current !== 'function') return;
+      Promise.resolve().then(function () { return spotify().current(); })
+        .then(function (c) { stamLista(c && c.is_playing !== false && c.item && c.item.uri); }, function () {});
+    }, STAM_MS);
     if (!doc.getElementById('spk-stil')) {
       var st = doc.createElement('style'); st.id = 'spk-stil';
       st.textContent = [
@@ -470,7 +572,17 @@
         '.spotify-card .spk-lat{flex:1 1 200px;min-width:0;max-width:100%}',
         '.spk-valjare{position:absolute;z-index:50;left:0;top:100%;margin-top:4px;width:min(320px,90vw);max-height:320px;display:flex;flex-direction:column;gap:6px;padding:8px;border-radius:10px;background:var(--surface-1,#150b1a);border:1px solid var(--border-subtle,#ffffff22);box-shadow:0 12px 30px #000a}',
         '.spk-valjare [role=listbox]{overflow:auto;display:flex;flex-direction:column;gap:2px}',
-        '.spk-valjare [role=option]{display:flex;align-items:center;gap:8px;text-align:left;padding:4px 6px;flex:none}'
+        '.spk-valjare [role=option]{display:flex;align-items:center;gap:8px;text-align:left;padding:4px 6px;flex:none}',
+        '.spotify-card .spk-onskekort{grid-column:1/-1}',
+        '.spotify-card .spk-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%;max-height:360px;overflow:auto}',
+        '.spotify-card .spk-onskan{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;background:var(--surface-2,#ffffff0d);min-width:0}',
+        '.spotify-card .spk-onskan img,.spotify-card .spk-not{width:36px;height:36px;border-radius:6px;object-fit:cover;flex:none;display:grid;place-items:center;font-style:normal;background:#1db95426;color:#1ed760}',
+        '.spotify-card .spk-onskan span{display:flex;flex-direction:column;min-width:0;flex:1}',
+        '.spotify-card .spk-onskan b,.spotify-card .spk-onskan small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+        '.spotify-card .spk-onskan small{font-size:11px;opacity:.75}',
+        '.spotify-card .spk-onskan[data-spk-lage=spelad],.spotify-card .spk-onskan[data-spk-lage=avvisad],.spotify-card .spk-onskan[data-spk-lage=fel]{opacity:.6}',
+        '.spotify-card .spk-onskan[data-spk-lage=spelas]{outline:1px solid #1db954}',
+        '.spotify-card .spk-tom{font-size:12px;opacity:.75;margin:0}'
       ].join('');
       (doc.head || doc.documentElement).appendChild(st);
     }
@@ -478,6 +590,7 @@
 
   // ---- START --------------------------------------------------------------------------------------
   if (iOverlay()) { root.VyraSpotifyKommandon = { aktiv: false }; return; }
+  lasLista();
   root.addEventListener('vyra-live-event', function (ev) { try { ta(ev && ev.detail); } catch (err) { logga('kommandot föll', err); } });
   // action-event.js laddas från media.js-svansen, efter den här filen. Lindningen görs när den finns.
   if (!lindaIn()) {
@@ -488,7 +601,9 @@
   root.VyraSpotifyKommandon = {
     aktiv: true, ta: ta, tolka: tolka, latText: latText, fyll: fyll, behoverLat: behoverLat, lindaIn: lindaIn,
     installningar: installningar, gavanTraffar: gavanTraffar, sida: sida,
+    onskningar: function () { return LISTA.map(function (o) { return { fraga: o.fraga, av: o.av, status: o.status, titel: o.titel, artist: o.artist, orsak: o.orsak }; }); },
+    stamLista: stamLista,
     vantar: function () { return VANTAR.map(function (x) { return { fraga: x.fraga, av: x.av, uri: x.uri }; }); },
-    rensa: function () { SENAST = {}; SEDDA = {}; SEDDA_ANTAL = 0; VANTAR = []; GAVA_SENAST = {}; PAGAR = {}; }
+    rensa: function () { SENAST = {}; SEDDA = {}; SEDDA_ANTAL = 0; VANTAR = []; GAVA_SENAST = {}; PAGAR = {}; LISTA = []; sparaLista(); }
   };
 })(typeof window !== 'undefined' ? window : globalThis);
