@@ -80,7 +80,8 @@ async function oppna(fel, widgets, vald) {
 
 // Riktiga händelser, i VYRA:s format, genom samma ingång som bryggan.
 const gava = (page, user, giftName, diamonds, repeatCount = 1, giftId) => page.evaluate(([user, giftName, diamonds, repeatCount, giftId]) =>
-  window.routeLiveBattleEvent({ type: 'gift', username: user, giftName, giftId: giftId || giftName, diamonds, repeatCount, repeatEnd: true }),
+  // `diamonds` är här styckpriset; bryggan skickar totalen (pris × repeatCount), så det gör provet också.
+  window.routeLiveBattleEvent({ type: 'gift', username: user, giftName, giftId: giftId || giftName, diamonds: diamonds * repeatCount, repeatCount, repeatEnd: true }),
 [user, giftName, diamonds, repeatCount, giftId || null]);
 
 const riktig = id => `.canvas [data-id="${id}"]:not([data-testspel-klon])`;

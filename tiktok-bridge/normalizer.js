@@ -515,8 +515,9 @@ function battleProbe(data){
 // 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén, samma BARRAGE-ror. Ocksa en person.
 const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
   // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
-  // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt stoppas.
-  'chatcommand']);
+  // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt sedan
+  // 2026-10-22 på samma sätt (TIKTOK_CHATT_RATE_LIMIT) — utan den var TTS Chat tyst i webbversionen.
+  'chatcommand','chat']);
 
 // EMOTES — formen kommer ur bibliotekets egna typer, inte ur en gissning
 // (tiktok-live-proto/dist/node/v3.d.ts):

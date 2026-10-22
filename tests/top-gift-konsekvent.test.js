@@ -206,3 +206,14 @@ test('en ateranslutning applicerar samma revision igen', async () => {
   await sync.ateranslot(); await kor();
   assert.deepEqual(applicerade, [7, 7], 'samma revision applicerades inte om — mekanismen ar en annan an provet antar');
 });
+
+test('en medvärds combo tar inte Top Streak (2026-10-22)', () => {
+  const { dom, w } = fonster();
+  try {
+    gava(w, { type: 'gift', username: 'janerik', name: 'Jan Erik', giftName: 'Rose', diamonds: 5, count: 5 });
+    gava(w, { type: 'gift', username: 'mela', name: 'Mela', giftName: 'Rose', diamonds: 50, count: 50, tillVarden: false });
+    assert.equal(w.VyraGiftRecords.streakCoins, 5, 'en medvärds combo höjde Top Streak-grinden');
+    gava(w, { type: 'gift', username: 'mela', name: 'Mela', giftName: 'Rose', diamonds: 50, count: 50 });
+    assert.equal(w.VyraGiftRecords.streakCoins, 50, 'utan fältet (äldre brygga) räknas combon som förut');
+  } finally { dom.window.close() }
+});

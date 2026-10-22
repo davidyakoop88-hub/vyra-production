@@ -138,11 +138,12 @@
     // ta Top Gift och hoja troskeln, medan live-leaderboard.js — den andra skrivaren — hoppade over
     // gavan och fortfarande hade det gamla rekordet, som den lade tillbaka vid nasta aterstallning
     // (sandningen 2026-10-21: Jan Erik -> Mela -> Jan Erik). `=== false`: en aldre brygga skickar
-    // inte faltet, och da raknas gavan som forut. Top Streak lamnas orord i den har andringen.
+    // inte faltet, och da raknas gavan som forut. Samma regel for Top Streak sedan 2026-10-22: en
+    // medvardens combo ar inte streamerns langsta streak.
     var tillAnnanVard = detail.tillVarden === false;
     var beslut = {
       gift: !tillAnnanVard && giftVarde > records.giftCoins,
-      streak: comboVarde > records.streakCoins,
+      streak: !tillAnnanVard && comboVarde > records.streakCoins,
       giftVarde: giftVarde,
       comboVarde: comboVarde
     };
