@@ -841,6 +841,7 @@
         "tts-chat.css",
         "sound-alerts.js",
         "spotify-client.js",
+        "spotify-kommandon.js",
         "streamdeck.js",
         "scripts/streamdeck-ikoner.js",
         "streamdeck-plugin/*",
@@ -863,7 +864,9 @@
         "tests/paus-indikator.test.js",
         "tests/tts-rostkort-bredd.test.js",
         "tests/browser/streamdeck-tva-vagar.browser.test.js",
-        "tests/tts-instruktion-ord.test.js"
+        "tests/tts-instruktion-ord.test.js",
+        "tests/spotify-kommandon.test.js",
+        "tests/spotify-enhet.test.js"
       ],
       "matning": [],
       "risker": [
