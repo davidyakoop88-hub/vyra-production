@@ -125,7 +125,10 @@
   function uppdateraKnapp(knapp) {
     var sb = giltig(lasState().stageBackground);
     var text = sb ? 'Bakgrund · ' + LAGEN[sb.mode] + (sb.studioOnly ? ' (studio)' : '') : 'Bakgrund';
-    if (knapp.textContent !== text) knapp.textContent = text;
+    // Sprakvalet (vyra-sprak.js) oversatter knappen. Jamfor aven mot den oversatta texten, annars
+    // skriver vi tillbaka svenskan varje gang och de tva observatorerna slass om noden.
+    var oversatt = window.VyraLang && typeof window.VyraLang.t === 'function' ? window.VyraLang.t(text) : text;
+    if (knapp.textContent !== text && knapp.textContent !== oversatt) knapp.textContent = text;
     knapp.classList.toggle('active', !!sb);
   }
 

@@ -37,6 +37,7 @@
         "landing-login.js",
         "vyra-sprak.js",
         "vyra-sprak-en.js",
+        "vyra-sprak-studio-en.js",
         "landing-mobil.js",
         "landing-floede.css",
         "index.html",
@@ -109,7 +110,10 @@
         "tests/varumarke-ett-namn.test.js",
         "tests/browser/studio-mobil.browser.test.js",
         "tests/browser/slutgranskning-c-medel.browser.test.js",
-        "tests/browser/slutgranskning-c-andra.browser.test.js"
+        "tests/browser/slutgranskning-c-andra.browser.test.js",
+        "tests/sprak-sv-en.test.js",
+        "tests/sprak-studio.test.js",
+        "tests/browser/sprak-studio.browser.test.js"
       ],
       "matning": [],
       "risker": [

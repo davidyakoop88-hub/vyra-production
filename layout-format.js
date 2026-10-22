@@ -48,7 +48,10 @@
       // unchanged — that childList mutation re-triggers the MutationObserver below, which
       // calls applyFormat() again, which writes textContent again, forever. Skipping the
       // write when nothing actually changed breaks the loop.
-      if (status.textContent !== statusText) status.textContent = statusText;
+      // Engelska (vyra-sprak.js) har bytt texten i sidan: jamfor aven mot den oversatta formen,
+      // annars ar det samma eviga slinga som ovan, fast mellan tva observatorer.
+      var oversatt = window.VyraLang && typeof window.VyraLang.t === 'function' ? window.VyraLang.t(statusText) : statusText;
+      if (status.textContent !== statusText && status.textContent !== oversatt) status.textContent = statusText;
     }
   }
 

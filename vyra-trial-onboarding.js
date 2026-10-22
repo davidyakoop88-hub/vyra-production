@@ -100,7 +100,10 @@
     const text = sista
       ? 'Provperioden · sista dagen'
       : `Provperioden · ${dagar} ${dagar === 1 ? 'dag' : 'dagar'} kvar`;
-    if (el.textContent !== text) el.textContent = text;
+    // Engelska (vyra-sprak.js) har bytt texten i sidan. Jämför mot båda formerna, annars skriver vi
+    // tillbaka svenskan varje gång och observatörerna slåss om noden.
+    const oversatt = window.VyraLang && typeof window.VyraLang.t === 'function' ? window.VyraLang.t(text) : text;
+    if (el.textContent !== text && el.textContent !== oversatt) el.textContent = text;
     el.title = 'Provperioden slutar ' + DATUM(Date.now() + kvar);
   }
 
