@@ -253,6 +253,18 @@
     if (andrat) listanAndrades();
   }
   function vantarPaSpotify() { return LISTA.some(function (o) { return o.status === 'ko' || o.status === 'spelas'; }); }
+  // LÅTÖNSKNINGAR-WIDGETEN äger !önska när den ligger synlig i lagret (widgetAgerKommandona). Med
+  // källan Spotify syntes dess önskningar ändå aldrig här, och ett fel från Spotify stannade i
+  // widgeten, som bara ritar de som lyckats: listan var tom och ingenting spelades, utan att något
+  // sa varför (David 2026-10-23). Widgeten noterar därför sina Spotify-önskningar här — samma lista,
+  // samma lägen och samma felorsak som när den här filen själv tar kommandot.
+  function extern(fraga, av) {
+    var rad = notera({ fraga: String(fraga || ''), av: String(av || 'tittare'), status: 'soker' });
+    return {
+      klar: function (lat) { uppdatera(rad, { status: 'ko', uri: lat && lat.uri || '', titel: lat && lat.titel || '', artist: lat && lat.artist || '', bild: lat && lat.bild || '' }); },
+      fel: function (orsak) { uppdatera(rad, { status: 'fel', orsak: String(orsak || 'Spotify svarade inte') }); }
+    };
+  }
 
   // ---- GÅVA → LÅT ---------------------------------------------------------------------------------
   function gavoIdn(namn) {
@@ -601,7 +613,7 @@
 
   root.VyraSpotifyKommandon = {
     aktiv: true, ta: ta, tolka: tolka, latText: latText, fyll: fyll, behoverLat: behoverLat, lindaIn: lindaIn,
-    installningar: installningar, gavanTraffar: gavanTraffar, sida: sida,
+    installningar: installningar, gavanTraffar: gavanTraffar, sida: sida, extern: extern,
     onskningar: function () { return LISTA.map(function (o) { return { fraga: o.fraga, av: o.av, status: o.status, titel: o.titel, artist: o.artist, orsak: o.orsak }; }); },
     stamLista: stamLista,
     vantar: function () { return VANTAR.map(function (x) { return { fraga: x.fraga, av: x.av, uri: x.uri }; }); },

@@ -88,6 +88,39 @@ test('Spotify i studion: varje önskning läggs i Spotify-kön exakt en gång', 
   } finally { await page.close(); }
 });
 
+// "Spotify funkar inte" (David 2026-10-23, vyralive.app, widgeten med källan Spotify i lagret):
+// önskelistan på Spotify-sidan var tom, för widgeten äger !önska och noterade ingenting där — och
+// ett fel från Spotify stannade i widgeten, som bara ritar de som lyckats. Streamerns eget !skip
+// gjorde heller ingenting: widgeten krävde `arVard`, som ingen del av kedjan sätter.
+test('Spotify i studion: önskningen och Spotifys felorsak syns i önskelistan, och streamern kan !skip', { skip, timeout: 90000 }, async () => {
+  const { page, fel } = await sida(false);
+  try {
+    await page.evaluate(() => {
+      window.__nasta = 0;
+      window.VyraSpotify = Object.assign({}, window.VyraSpotify, {
+        queue: q => /premium/.test(q) ? Promise.reject(new Error('Uppspelning kräver Spotify Premium.')) : Promise.resolve({ uri: 'spotify:track:x', titel: 'Blinding Lights', artist: 'The Weeknd' }),
+        next: () => { window.__nasta++; return Promise.resolve(); }
+      });
+      const t = VyraLive.tillstand; VyraLive.tillstand = () => Object.assign({}, t && t(), { konto: '@Jokero' });
+      VyraSpotifyKommandon.rensa();
+      const w = VyraWidgets.create('catalog:latonskningar:spotify'); state.widgets.push(w); view = 'editor'; render(); bind();
+    });
+    await chatt(page, { username: 'lina', comment: '!önska blinding lights' });
+    await chatt(page, { username: 'omar', comment: '!önska premium-låten' });
+    await page.waitForTimeout(500);
+    const lista = await page.evaluate(() => VyraSpotifyKommandon.onskningar());
+    assert.deepEqual(lista.map(o => [o.av, o.status]), [['omar', 'fel'], ['lina', 'ko']], 'önskelistan på Spotify-sidan visar inte widgetens önskningar');
+    assert.match(lista[0].orsak, /Premium/, 'Spotifys felorsak når inte önskelistan');
+    assert.equal(lista[1].titel, 'Blinding Lights');
+
+    await chatt(page, { username: 'tittare', comment: '!skip' });
+    await chatt(page, { username: 'jokero', comment: '!skip' });
+    await page.waitForTimeout(200);
+    assert.equal(await page.evaluate(() => window.__nasta), 1, 'streamerns eget !skip hoppade inte över (eller en tittare kunde)');
+    assert.deepEqual(fel, []);
+  } finally { await page.close(); }
+});
+
 test('i studion: båda källorna finns i katalogen och skapas hela på duken', { skip, timeout: 90000 }, async () => {
   const { page, fel } = await sida(false);
   try {
