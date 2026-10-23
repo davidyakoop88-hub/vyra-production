@@ -11,8 +11,9 @@
 //   1. Fyra entréer, inklusive den nya "roll" (rulla in), i BÅDA filerna.
 //   2. Varje entré med en vilotransform har en outro som speglar den exakt.
 //      Outron är alltid intron baklänges — den är ingen egen inställning.
-//   3. Visningstiden är 5, 10 eller 15 sekunder. Den gamla klampen 4–6 låg på fyra ställen och
-//      måste bort från alla fyra, annars säger panelen en sak och timern en annan.
+//   3. Visningstiden är ett reglage, 3–30 s i hela sekunder (slutgranskningen 2026-10-23; före det
+//      en lista med 5, 10 och 15). De gamla listvärdena betyder exakt samma tid. Den gamla klampen
+//      4–6 låg på fyra ställen och får inte komma tillbaka, annars säger panelen en sak och timern en annan.
 //
 // RÖTT NU: "roll" finns inte, och 4–6-klampen sitter kvar på alla fyra ställen.
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -28,7 +29,7 @@ const STUDIO = fs.readFileSync(path.join(ROOT, 'last-x-alerts.js'), 'utf8');
 const ENTRANCES = ['slide-left', 'slide-right', 'pop', 'roll', 'fade'];
 // fade rör sig bara i opacitet — den har ingen transform att spegla.
 const MOVING = ENTRANCES.filter(e => e !== 'fade');
-const DURATIONS = [5, 10, 15];
+const DURATION_MIN = 3, DURATION_MAX = 30;
 
 test.after(closeAll);
 
@@ -74,11 +75,40 @@ test('introväljaren erbjuder alla fem entréer, inklusive rulla in', () => {
     'introväljarens alternativ matchar inte entréerna i koden');
 });
 
-test('visningstiden erbjuder 5, 10 och 15 sekunder', () => {
+test('visningstiden är ett reglage 3–30 s i hela sekunder som visar värdet i sekunder', () => {
   const { host } = panel();
-  const opts = [...host.querySelectorAll('#followDuration option')].map(o => Number(o.value));
-  assert.deepEqual(opts.sort((a, b) => a - b), DURATIONS,
-    'den gamla 4–6-skalan sitter kvar i panelen');
+  const el = host.querySelector('#followDuration');
+  assert.ok(el, 'tidsvalet finns inte');
+  assert.equal(el.tagName, 'INPUT', 'visningstiden är fortfarande en lista');
+  assert.equal(el.type, 'range');
+  assert.equal(Number(el.min), DURATION_MIN);
+  assert.equal(Number(el.max), DURATION_MAX);
+  assert.equal(Number(el.step), 1);
+  assert.equal(Number(el.value), 5, 'widgetens sparade 5 s syns inte på reglaget');
+  assert.equal(el.closest('label').querySelector(':scope > b').textContent, '5 s', 'reglaget visar inte sekunderna');
+});
+
+// De gamla listvärdena (5/10/15) ska ge exakt samma tid och samma läge på reglaget. Övriga tal hålls
+// inom 3–30 och avrundas till hela sekunder; saknas tiden gäller 5 s.
+for (const [sparat, vantat] of [[5, 5], [10, 10], [15, 15], [3, 3], [30, 30], [4, 4], [6, 6], [12.4, 12], ['20', 20],
+  [2, 3], [0, 3], [-4, 3], [45, 30], [undefined, 5], [null, 5], ['', 5], ['abc', 5], [NaN, 5]]) {
+  test(`sparad visningstid ${typeof sparat === "string" ? JSON.stringify(sparat) : String(sparat)} ger ${vantat} s på reglaget och i timern`, () => {
+    const { h } = panel();
+    assert.equal(h.window.VyraLastX.visningstid({ followDuration: sparat }), vantat);
+    const w = { id: 'lx2', type: 'templateLastX', x: 0, y: 0, width: 500, lastXType: 'all', lastXDesign: 'card', followDuration: sparat };
+    const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
+    run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(w)});selected='lx2';view='editor'`);
+    if (sparat === undefined || Number.isNaN(sparat)) run(`state.widgets[0].followDuration=${sparat === undefined ? 'undefined' : 'NaN'}`);
+    const host = h.document.createElement('div');
+    host.innerHTML = h.window.props();
+    assert.equal(Number(host.querySelector('#followDuration').value), vantat);
+    assert.equal(host.querySelector('#followDuration').closest('label').querySelector(':scope > b').textContent, vantat + ' s');
+  });
+}
+
+test('spannet på reglaget är exporterat', () => {
+  const { h } = panel();
+  assert.deepEqual({ ...h.window.VyraLastX.visningstidSpann }, { min: 3, max: 30, standard: 5 });
 });
 
 test('panelen skriver ut att outron speglar intron', () => {
@@ -169,10 +199,12 @@ test('den gamla 4–6-klampen är borta ur båda filerna', () => {
     'OBS-widgeten klampar fortfarande till 4–6 sekunder');
 });
 
-test('båda filerna känner igen 5, 10 och 15 som giltiga tider', () => {
+test('båda filerna har samma tidsspann, 3–30 s med 5 s som standard', () => {
   for (const src of [STUDIO, OBS]) {
-    const m = src.match(/DURATIONS\s*=\s*\[([^\]]+)\]/);
-    assert.ok(m, 'ingen DURATIONS-lista — tiderna är hårdkodade någon annanstans');
-    assert.deepEqual(m[1].split(',').map(s => Number(s.trim())).sort((a, b) => a - b), DURATIONS);
+    const min = src.match(/DURATION_MIN\s*=\s*(\d+)/), max = src.match(/DURATION_MAX\s*=\s*(\d+)/),
+      std = src.match(/DURATION_STANDARD\s*=\s*(\d+)/);
+    assert.ok(min && max && std, 'inget DURATION_MIN/MAX/STANDARD — tiderna är hårdkodade någon annanstans');
+    assert.deepEqual([+min[1], +max[1], +std[1]], [DURATION_MIN, DURATION_MAX, 5]);
+    assert.doesNotMatch(src, /DURATIONS\s*=\s*\[/, 'den gamla listan 5/10/15 ligger kvar');
   }
 });

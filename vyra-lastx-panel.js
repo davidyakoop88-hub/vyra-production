@@ -5,7 +5,7 @@
   // Elva modeller av templateLastX (last-x-alerts.js), i tre grupper efter vad designen visar
   // (last-x-alerts.css):
   //   * card, stack, skew, badge — rubrik, namn, meddelande och profilbild,
-  //   * royal (Royal Coronation) — rubrik och profilbild; namn och meddelande är dolda,
+  //   * royal (Royal Coronation) — rubrik, profilbild och namn; meddelandet är dolt,
   //   * crownBanner, royalAmethyst, iceKing, neonCyber, dragonFlame, angelGold — rubrik, namn och
   //     profilbild; meddelandet är dolt.
   // De gamla typerna (templateLastGifter m.fl.) har ingen post och behåller sin äldre panel.
@@ -22,7 +22,7 @@
   //     royal och banderollerna — där syns den bara när den gör något,
   //   * Egen accent färgar bara dolda delar i royal och banderollerna (0–0,0008 andel px) — bara
   //     card, stack, skew och badge har den,
-  //   * Meddelandet är dolt i royal och banderollerna, namnet i royal — fälten visas inte där, och en
+  //   * Meddelandet är dolt i royal och banderollerna — fältet visas inte där, och en
   //     rad i Utseende säger vad designen inte visar,
   //   * BAKGRUND visas inte för en ny widget (Ta bort bakgrund gav 0 px i alla elva — det finns
   //     ingen bakgrund att ta bort). En widget som redan har en egen bakgrund behåller gruppen, så
@@ -80,8 +80,7 @@
           legacyId: '#lastXMessage_' + k, om: w => aktiva(w).includes(k) });
       }
     }
-    const live = royal ? 'Hämtas från TikTok: profilbilden för den senaste personen av varje vald typ.'
-      : platta ? 'Hämtas från TikTok: namn, profilbild och händelse för den senaste personen av varje vald typ.'
+    const live = platta ? 'Hämtas från TikTok: namn, profilbild och händelse för den senaste personen av varje vald typ.'
         : 'Hämtas från TikTok: namn och profilbild för den senaste personen av varje vald typ.';
 
     const kontroller = [
@@ -90,7 +89,8 @@
       { sektion: 2, typ: 'kryss', falt: 'lastXType', etikett: 'Vilka ska visas', legacyId: '.last-x-type-checks' },
       ...perTyp,
       ...(visarMeddelande ? [{ sektion: 2, typ: 'text', falt: 'lastXMeddelandeTips', legacyId: '#lastXMeddelandeTips' }] : []),
-      { sektion: 2, typ: 'val', falt: 'followDuration', etikett: 'Visningstid', legacyId: '#followDuration' },
+      // Reglage 3–30 s i hela sekunder (last-x-alerts.js durationOf); de gamla valen 5/10/15 betyder samma tid.
+      { sektion: 2, typ: 'tal', falt: 'followDuration', etikett: 'Visningstid', enhet: 's', min: 3, max: 30, steg: 1, legacyId: '#followDuration' },
       { sektion: 2, typ: 'kryss', falt: 'lastXPersistent', legacyId: '#lastXPersistent' },
       { sektion: 2, kalla: 'live', typ: 'text', etikett: live },
       // 3 · Storlek och placering
@@ -155,7 +155,7 @@
   // ---- 3. Testadaptern --------------------------------------------------------------------------
   //
   // ENTRÉ: kortet kommer in med widgetens intro (enterLX, 400 ms). VISNING: widgetens visningstid
-  // (5, 10 eller 15 s). UTGÅNG: intron baklänges (360 ms) — eller ingen alls när widgeten behåller
+  // (3–30 s). UTGÅNG: intron baklänges (360 ms) — eller ingen alls när widgeten behåller
   // den senaste personen synlig, för då ligger kortet kvar i sändningen också. Typväljaren väljer
   // händelsen; en typ som widgeten inte visar spelas som widgetens första typ.
   const T = window.VyraTestspel;

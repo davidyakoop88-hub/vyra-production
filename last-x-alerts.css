@@ -298,11 +298,14 @@
 /* royal — full artwork skin: the coronation frame (assets/images/last-x/royal-coronation.png,
    chroma-keyed + trimmed to end just under the gem, 836x811) is the whole widget. The avatar
    sits BEHIND the art and shows through the keyed medallion hole (centre 49.9%/51.9%, diameter
-   39.5% of width); the only text is the type label in gold under the gem. */
+   39.5% of width). Under the gem: the type label in gold and, since 2026-10-23, the person's name
+   (it was hidden, so Royal showed nobody). The band under the art grew from 94 to 154 units of 836
+   to fit the name (avatar top rescaled 46.5% -> 43.6% so it stays in the hole); a long name is cut
+   with an ellipsis instead of wrapping. */
 /* width:100% so dragging the widget's own resize handle scales the whole coronation graphic —
    aspect-ratio keeps height following proportionally, so it can never look stretched/squished. */
 .last-x-widget.design-royal .last-x-tilt{
-  display:block;min-width:0;width:100%;aspect-ratio:836/905;
+  display:block;min-width:0;width:100%;aspect-ratio:836/965;
   padding:0;background:none;box-shadow:none;
 }
 .last-x-widget.design-royal .last-x-glass{
@@ -311,18 +314,24 @@
 }
 .last-x-widget.design-royal .last-x-sheen,.last-x-widget.design-royal .last-x-gleam{display:none}
 .last-x-widget.design-royal .last-x-avatar{
-  position:absolute;z-index:1;left:49.94%;top:46.5%;width:42.5%;height:auto;aspect-ratio:1/1;
+  position:absolute;z-index:1;left:49.94%;top:43.6%;width:42.5%;height:auto;aspect-ratio:1/1;
   transform:translate(-50%,-50%);box-shadow:none;
 }
 .last-x-widget.design-royal .last-x-copy{
-  position:absolute;z-index:3;left:15%;right:15%;top:90.5%;bottom:0;
-  flex:none;align-items:center;justify-content:center;text-align:center;
+  position:absolute;z-index:3;left:12%;right:12%;top:84.9%;bottom:0;
+  flex:none;align-items:center;justify-content:flex-start;gap:3px;text-align:center;
 }
 .last-x-widget.design-royal .last-x-label{
   color:#ffd35d;letter-spacing:.3em;font-size:15px;
   text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 14px rgba(255,211,93,.45);
 }
-.last-x-widget.design-royal .last-x-name,.last-x-widget.design-royal .last-x-message{display:none}
+.last-x-widget.design-royal .last-x-name{
+  width:100%;max-width:100%;font-size:21px;font-weight:800;line-height:1.2;letter-spacing:.04em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:#fff4d1;background:none;-webkit-text-fill-color:#fff4d1;
+  text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 12px rgba(255,211,93,.4);
+}
+.last-x-widget.design-royal .last-x-message{display:none}
 /* Kroningen loopar inte. En Last-X-alert har enter -> hold -> exit, sa rorelsen hor till
    entren och lamnar widgeten stilla under hold — den eviga 3,5-graderspendlingen gjorde
    den rastlos. */
