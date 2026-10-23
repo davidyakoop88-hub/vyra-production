@@ -97,6 +97,33 @@ test('märket trycker inte ner prisraden under vecket i en 900px-vy',
   } finally { await context.close() }
 });
 
+// Slutgranskningen 2026-10-21: "prisraden kräver en kort rullning i låga fönster". 1366 x 768 med
+// Chromes list ger ~657 px vy (uppmätt: raden slutade på y=816). Gäller fliken Logga in, som är det
+// besökaren ser först. Skapa konto är ~180 px högre av e-postkravet och villkorstexten, som MÅSTE
+// synas innan kontot skapas — där är en kort rullning rätt pris, och den som fyller i ett formulär
+// har redan sett priset.
+for (const flik of ['Logga in']) {
+  test(`prisraden syns utan rullning på en laptop med webbläsarlist (1366 x 657, ${flik})`,
+    { skip, timeout: 60000 }, async () => {
+    const { context, page } = await sidan({ width: 1366, height: 657 });
+    try {
+      if (flik !== 'Logga in') {
+        await page.evaluate(f => { const b = [...document.querySelectorAll('.login-flikar button')].find(x => x.textContent.trim() === f); if (b) b.click(); }, flik);
+        await page.waitForTimeout(300);
+      }
+      const m = await page.evaluate(`(() => {
+        const r = document.querySelector('.hero-prisrad').getBoundingClientRect();
+        const k = document.querySelector('.login-kort').getBoundingClientRect();
+        return { botten: Math.round(r.bottom), topp: Math.round(r.top), kortBotten: Math.round(k.bottom),
+          vy: innerHeight, bredd: document.documentElement.scrollWidth, vyBredd: innerWidth };
+      })()`);
+      assert.ok(m.botten <= m.vy, `prisraden slutar på y=${m.botten} i en ${m.vy}px-vy`);
+      assert.ok(m.kortBotten <= m.topp + 1, `kortet (botten y=${m.kortBotten}) ligger över prisraden (topp y=${m.topp})`);
+      assert.ok(m.bredd <= m.vyBredd, `sidan rullar i sidled: ${m.bredd} > ${m.vyBredd}`);
+    } finally { await context.close() }
+  });
+}
+
 test('märket krymper i ett kort fönster i stället för att äta prisraden',
   { skip, timeout: 60000 }, async () => {
   // Kontrollmätning mot föregående prov: det ska vara MÄRKET som ger vika i korta fönster, inte

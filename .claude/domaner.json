@@ -526,6 +526,7 @@
         "tests/browser/command-center-*.browser.test.js",
         "tests/live-control-testgava.test.js",
         "tests/live-control-state.test.js",
+        "tests/live-control-taptap.test.js",
         "tests/live-tillstand.test.js",
         "tests/servertid-klocka.test.js",
         "tests/top-gift-strikt-rekord.test.js",
