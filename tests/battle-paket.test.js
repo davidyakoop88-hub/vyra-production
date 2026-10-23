@@ -115,7 +115,7 @@ test('klippet väljs av eventet: tap, snipe, 2 → X2, 3 → X3, annars glove', 
   assert.equal(f({}), 'glove');
   // MP4-paketen har inget Snipe-klipp; de övriga fyra finns.
   assert.equal(w.VyraBattlePaket.fil({ boostPack: 'koiPearl' }, 'snipe'), null);
-  assert.equal(w.VyraBattlePaket.fil({ boostPack: 'koiPearl' }, 'boost-x2'), 'assets/videos/battle/koi-pearl/boost-x2.mp4');
+  assert.equal(w.VyraBattlePaket.fil({ boostPack: 'koiPearl' }, 'boost-x2'), 'assets/videos/battle/koi-pearl/boost-x2.webm');
   assert.equal(w.VyraBattlePaket.fil({ boostPack: 'pinkPrincess' }, 'snipe'), 'assets/videos/battle/pink-princess/snipe.webm');
   assert.equal(w.VyraBattlePaket.fil({ boostPack: 'okänt' }, 'tap'), null);
 });

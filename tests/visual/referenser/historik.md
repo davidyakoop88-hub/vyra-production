@@ -528,3 +528,15 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Heart Me-teman dark/ocean/midnight/citrus fick egna färger och Last-X Royal visar namnet
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 6 av 162 (filter: catalog:heartgoal:dark,catalog:heartgoal:ocean,catalog:heartgoal:midnight,catalog:heartgoal:citrus,catalog:lastx:royal) — catalog:heartgoal:citrus, catalog:heartgoal:dark, catalog:heartgoal:midnight, catalog:heartgoal:ocean, catalog:lastx:royal, catalog:lastx:royalAmethyst
+
+## 2026-10-22 — 2 referenser skrivna
+
+- **Motiv:** Koi Pearl och Masquerade tillbaka i katalogen som WebM med alfa (B-001/B-002 åtgärdat)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 164 (filter: koiPearl,masquerade) — catalog:glovesnipe:koiPearl:pack:2, catalog:glovesnipe:masquerade:pack:2
+
+## 2026-10-23 — 2 referenser skrivna
+
+- **Motiv:** Koi Pearl och Masquerade: ny silhuettnyckel, inget grått dis eller grå kantglöd
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 164 (filter: koiPearl,masquerade) — catalog:glovesnipe:koiPearl:pack:2, catalog:glovesnipe:masquerade:pack:2

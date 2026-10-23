@@ -326,7 +326,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const fontan = plats('vyra-fontan-panel.js', '20261020-20');  // 20261020-14: svenska alternativ och hela beskrivningar (B-015, B-016)
   assert.ok(fontan > reg && fontan > testspel && fontan < ordning, 'fontänernas och gåvoburkens poster laddas efter registret och testmotorn, före panelordningen');
   // Fan Level 50:s och Glove Snipe-paketens poster (vyra-fl50-panel.js och vyra-glove-panel.js, PR 14) på samma sätt.
-  const fl50 = plats('vyra-fl50-panel.js', '20261020-23'), glove = plats('vyra-glove-panel.js', '20261020-14');  // 20261020-14: raden om avvecklade paket (B-001)
+  const fl50 = plats('vyra-fl50-panel.js', '20261020-23'), glove = plats('vyra-glove-panel.js', '20261023-21');  // 20261023-21: Koi Pearl och Masquerade tillbaka som WebM, raden om avvecklade paket borta
   assert.ok(fl50 > reg && fl50 > testspel && fl50 < ordning, 'Fan Level 50:s post laddas efter registret och testmotorn, före panelordningen');
   assert.ok(glove > reg && glove > testspel && glove < ordning, 'Glove Snipe-paketens poster laddas efter registret och testmotorn, före panelordningen');
   // Egen texts post (vyra-egen-panel.js, PR 16) på samma sätt. 20261019-2 för de tio familjefilerna ovan: Lager visas

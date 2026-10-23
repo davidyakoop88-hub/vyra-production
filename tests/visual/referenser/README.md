@@ -99,7 +99,8 @@ Guardian Emblem fotograferas i `hyllning` vid 900 ms — 20 fotograferingar av 2
 
 Fyra poster i `UTAN_REFERENS` (`tests/helpers/katalognycklar.js`) undantar tillsammans de nycklar
 tabellen räknar upp. Koi Pearl Lagoon och Masquerade Ball (H.264, åtta nycklar) stod här tills
-slutgranskningen 2026-10-20 tog bort dem ur katalogen: klippen var svarta rutor med vattenstämpel. Varje post bär sitt uppmätta skäl:
+slutgranskningen 2026-10-20 tog bort dem ur katalogen: klippen var svarta rutor med vattenstämpel. Sedan
+2026-10-23 är de tillbaka som WebM med alfa och fotograferas som de andra paketen. Varje post bär sitt uppmätta skäl:
 
 | Post | Nycklar | Skäl i korthet |
 |---|---|---|

@@ -81,9 +81,9 @@ const UTAN_REFERENS = {
     + 'varje fast tidpunkt är duken tom (0 % målad i alla tre varianterna), och en pixeljämförelse '
     + 'av ett partikelsystem säger ingenting även när den lyckas.',
   // MP4-PAKETEN (Koi Pearl Lagoon, Masquerade Ball) STOD HAR TILL 2026-10-20: H.264 som provets Chromium inte
-  // kan avkoda. Slutgranskningen (B-001/B-002) tog bort dem ur katalogen — klippen ar svarta rutor med
-  // vattenstampel — sa de har ingen katalognyckel kvar att undanta, och en post utan traff ar dod kod
-  // (visuell-regression: 'undantagslistan ar kort').
+  // kan avkoda. Slutgranskningen (B-001/B-002) tog bort dem ur katalogen — klippen var svarta rutor med
+  // vattenstampel. Sedan 2026-10-23 ar de tillbaka som VP9-WebM med alfa, som provets Chromium spelar precis
+  // som de tre andra paketen, sa de fotograferas och behover inget undantag.
   'catalog:likefountain':
     'en fontän av hjärtan i ständig rörelse. Uppmätt 2026-08-19: 22 olika bildrutor på 12 sekunder '
     + 'och ingen kom igen, i fyra körningar av fyra. Frysningen når inte heller rörelsen. Utan ett '

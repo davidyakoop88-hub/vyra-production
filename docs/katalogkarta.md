@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `3c292d89`
+Commit: `61a2c322`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **171** |
-| Sektioner | 24 |
-| Med katalognyckel | 171 / 171 |
-| Med shadow DOM-miniatyr | 134 / 171  ⚠️ |
-| Ritar sin design | 171 / 171 |
+| Kort totalt | **173** |
+| Sektioner | 26 |
+| Med katalognyckel | 173 / 173 |
+| Med shadow DOM-miniatyr | 134 / 173  ⚠️ |
+| Ritar sin design | 173 / 173 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -53,6 +53,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LIKE FOUNTAIN | 10 | 10/10 | 10/10 | 10/10 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | BATTLE MVP · 12 DESIGNER | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | BATTLE MVP · FIRANDE · 8 KOREOGRAFIER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+| Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Royal Ruby · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
@@ -246,6 +248,18 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Roséguld | `catalog:battlemvp:celebration:rosegold` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Pärlvingar | `catalog:battlemvp:celebration:pearl` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
 | Lavendelmåne | `catalog:battlemvp:celebration:moon` | ✓ | ✓ | 2026-10-19 | [#658](https://github.com/davidyakoop88-hub/vyra-production/pull/658) |
+
+### Koi Pearl Lagoon · VIDEO FX
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Koi Pearl Lagoon · hela paketet | `catalog:glovesnipe:koiPearl:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+
+### Masquerade Ball · VIDEO FX
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Masquerade Ball · hela paketet | `catalog:glovesnipe:masquerade:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### Pink Princess · VIDEO FX
 
