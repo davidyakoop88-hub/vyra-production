@@ -170,7 +170,7 @@
     },
     'topstreak.width': {neon:235,'sakura-rail':235,'cyber-grid':330,storm:310},
     'ranking.kind': {templateTopCoins:{title:'TOP COINS',icon:'●',label:'Top Coins'},templateTopPoints:{title:'TOP POINTS',icon:'◆',label:'Top Points'}},
-    'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#b331ff','#e9d8ff'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#2caeff','#d8f2ff'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#5b6bff','#dde1ff'],citrus:['#ffb020','#fff4dd']},
+    'heartgoal.theme': {classic:['#ff447d','#ffffff'],dark:['#ff4a1c','#ffe4d9'],emerald:['#37ed8a','#d8ffe9'],galaxy:['#a764ff','#efddff'],golden:['#ffbd2e','#fff1bb'],ice:['#42d8ff','#dff9ff'],neon:['#ff3bc8','#ffffff'],ocean:['#14c8b4','#d6fff9'],sakura:['#ff78b7','#fff0f7'],frost:['#8fd4ff','#eaf8ff'],midnight:['#2f6bff','#dbe5ff'],citrus:['#b8e62e','#f6ffd9']},
     'fanlevel.theme': {gold:['#ff8a20','#ffd36b'],neon:['#ff3ac8','#a74cff'],ice:['#29cfff','#b9f5ff'],emerald:['#35e783','#baffd4'],fire:['#ff3c24','#ffb52d'],sakura:['#ff6fa8','#ffd9e8'],storm:['#6d7bff','#d6dbff'],royal:['#c79bff','#f0e2ff']},
     // The eight layouts from the Fan Level reference board. Theme remains an editor choice;
     // layout controls structure and motion, so a created catalog widget is never just a recolour.

@@ -297,7 +297,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   assert.ok(reg > 0 && ram > 0 && ordning > 0 && mediaval > 0, 'en av laddraderna saknas eller har fel bust');
   assert.ok(testspel > 0 && topgift > reg && topgift > testspel && topgift < ordning, 'Top Gifts poster laddas efter registret och testmotorn, före panelordningen');
   // Last-X:s poster (vyra-lastx-panel.js, PR 5) på samma sätt.
-  const lastx = plats('vyra-lastx-panel.js', '20261020-23');
+  const lastx = plats('vyra-lastx-panel.js', '20261023-13');
   assert.ok(lastx > reg && lastx > testspel && lastx < ordning, 'Last-X:s poster laddas efter registret och testmotorn, före panelordningen');
   // Alertfamiljernas poster (vyra-alert-panel.js, PR 6) på samma sätt.
   const alert = plats('vyra-alert-panel.js', '20261020-23');

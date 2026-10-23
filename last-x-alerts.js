@@ -53,11 +53,10 @@
     crownBanner: 'Crown Banner', royalAmethyst: 'Royal Amethyst', iceKing: 'Ice King',
     neonCyber: 'Neon Cyber', dragonFlame: 'Dragon Flame', angelGold: 'Angel Gold'
   };
-  // Vad designen inte visar (last-x-alerts.css: royal döljer namn och meddelande, banderollerna
-  // meddelandet). Panelen säger det i stället för att erbjuda fält som inte syns.
+  // Vad designen inte visar (last-x-alerts.css: royal och banderollerna döljer meddelandet). Panelen
+  // säger det i stället för att erbjuda fält som inte syns. Royal visar namnet sedan 2026-10-23.
   const BANNERDESIGNER = ['crownBanner', 'royalAmethyst', 'iceKing', 'neonCyber', 'dragonFlame', 'angelGold'];
-  const DOLT = Object.assign({ royal: 'Den här designen visar inte namnet eller meddelandet – bara rubriken och profilbilden.' },
-    Object.fromEntries(BANNERDESIGNER.map(d => [d, 'Den här designen visar inte meddelandet – bara rubriken, namnet och profilbilden.'])));
+  const DOLT = Object.fromEntries(['royal', ...BANNERDESIGNER].map(d => [d, 'Den här designen visar inte meddelandet – bara rubriken, namnet och profilbilden.']));
   const BANNER_ASSETS = {
     crownBanner: 'crown-banner.png', royalAmethyst: 'royal-amethyst.png', iceKing: 'ice-king.png',
     neonCyber: 'neon-cyber.png', dragonFlame: 'dragon-flame.png', angelGold: 'angel-gold.png'
@@ -76,7 +75,9 @@
   // Visningstiden. Den gamla skalan var ett reglage klampat till 4–6 s, med klampen upprepad på
   // fyra ställen (här, panelen, legacy-vägen och OBS-widgetens HOLD_MS) — fyra ställen som kunde
   // säga olika saker. Nu finns tiderna på ETT ställe och alla fyra läser dem härifrån.
-  const DURATIONS = [5, 10, 15];
+  // REGLAGE 3–30 s (slutgranskningen, 2026-10-23): listan 5/10/15 blev ett reglage i hela sekunder.
+  // De sparade 5, 10 och 15 är fortfarande giltiga och betyder exakt samma tid.
+  const DURATION_MIN = 3, DURATION_MAX = 30, DURATION_STANDARD = 5;
   const EMBLEM = { card: '✦', stack: '✦', skew: '✦', badge: '◆', royal: '✦',
     crownBanner: '', royalAmethyst: '', iceKing: '', neonCyber: '', dragonFlame: '', angelGold: '' };
 
@@ -151,10 +152,15 @@
   }
   function designOf(w) { return DESIGNS[w.lastXDesign] ? w.lastXDesign : 'card'; }
   function entranceOf(w) { return ENTRANCES.includes(w.lastXEntrance) ? w.lastXEntrance : 'slide-left'; }
-  // Okända tider (inklusive de gamla 4:orna och 6:orna som redan ligger sparade i folks layouter)
-  // faller till 5 s i stället för att klampas — 6 hade annars blivit 6, ett värde panelen inte
-  // längre kan visa, och reglaget hade sett tomt ut.
-  function durationOf(w) { return DURATIONS.includes(w.followDuration) ? w.followDuration : 5; }
+  // Ett sparat tal avrundas till hela sekunder och hålls inom reglagets 3–30 s; saknas tiden, eller
+  // är den inget tal, gäller 5 s. 5, 10 och 15 (de gamla listvalen) ger alltså 5, 10 och 15.
+  function durationOf(w) {
+    const v = w ? w.followDuration : undefined;
+    if (v == null || v === '' || typeof v === 'boolean') return DURATION_STANDARD;
+    const n = Number(v);
+    if (!Number.isFinite(n)) return DURATION_STANDARD;
+    return Math.max(DURATION_MIN, Math.min(DURATION_MAX, Math.round(n)));
+  }
   function holdMsOf(w) { return durationOf(w) * 1000; }
 
   // card/stack/skew/badge hug their own content (last-x-alerts.css's width:fit-content) so the
@@ -267,9 +273,7 @@
         ${DOLT[designOf(w)] ? `<p class="last-x-type-hint" id="lastXDoltInfo">${DOLT[designOf(w)]}</p>` : ''}
       </div>
       <div class="property-group follow-trigger-editor"><h4>VISNINGSTID</h4>
-        <label>Rutan ligger kvar<select id="followDuration">
-          ${DURATIONS.map(d => `<option value="${d}">${d} sekunder</option>`).join('')}
-        </select></label>
+        <label class="range-label">Rutan ligger kvar <b>${durationOf(w)} s</b><input id="followDuration" type="range" min="${DURATION_MIN}" max="${DURATION_MAX}" step="1" value="${durationOf(w)}"></label>
         <p class="last-x-type-hint">Räknat från att intron är klar. Kommer en ny händelse av samma typ under tiden byts namnet på plats och tiden börjar om.</p>
         <label class="last-x-type-check"><input type="checkbox" id="lastXPersistent"${w.lastXPersistent !== false ? ' checked' : ''}><span>Behåll senaste personen synlig tills nästa händelse</span></label>
         <button id="testLastX" type="button">▶ Testa alert</button>
@@ -421,6 +425,8 @@
     typer: TYPE_KEYS.slice(),
     aktiva: w => activeKeysFor(w).slice(),
     typNamn: k => (TYPES[k] ? TYPES[k].typNamn : ''),
+    visningstid: w => durationOf(w || {}),
+    visningstidSpann: Object.freeze({ min: DURATION_MIN, max: DURATION_MAX, standard: DURATION_STANDARD }),
   });
   // Broadcasts a real (or test) event to every Last-X widget configured for that type — mirrors
   // the OBS widget's per-type latest-event routing, just fanned out across however many Last-X
@@ -501,6 +507,12 @@
           omrita();
         };
       });
+      // Reglaget visar sekunderna medan det dras; värdet sparas när det släpps (change, set ovan).
+      const tidReglage = document.querySelector('#followDuration');
+      if (tidReglage) tidReglage.oninput = e => {
+        const b = tidReglage.parentElement && tidReglage.parentElement.querySelector(':scope > b');
+        if (b) b.textContent = durationOf({ followDuration: e.target.value }) + ' s';
+      };
       const persistentBox = document.querySelector('#lastXPersistent');
       if (persistentBox) persistentBox.onchange = e => { w.lastXPersistent = e.target.checked; save(); render() };
 

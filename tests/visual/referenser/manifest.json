@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 197,
  "senaste": {
-  "motiv": "Top Streak Design 1-3: talet lika stort som texten",
-  "nycklar": 162,
-  "filter": null,
-  "tid": "2026-10-21T23:24:27.859Z"
+  "motiv": "Heart Me-teman dark/ocean/midnight/citrus fick egna färger och Last-X Royal visar namnet",
+  "nycklar": 6,
+  "filter": "catalog:heartgoal:dark,catalog:heartgoal:ocean,catalog:heartgoal:midnight,catalog:heartgoal:citrus,catalog:lastx:royal",
+  "tid": "2026-10-22T23:49:25.328Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -231,7 +231,7 @@
    "fyllnad": 100
   },
   "catalog:lastx:royal": {
-   "matt": "432x468",
+   "matt": "432x499",
    "fyllnad": 100
   },
   "catalog:lastx:skew": {

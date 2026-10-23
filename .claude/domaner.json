@@ -275,6 +275,8 @@
         "tests/crystal-garden-campaign.test.js",
         "tests/gift-campaign-fountain-motion.test.js",
         "tests/last-x-animation-settings.test.js",
+        "tests/last-x-royal-namn.test.js",
+        "tests/heart-me-teman-skiljer.test.js",
         "tests/last-x-like-count.test.js",
         "tests/last-x-svenska.test.js",
         "tests/last-x-live-wiring.test.js",
