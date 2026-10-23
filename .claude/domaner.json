@@ -216,7 +216,9 @@
         "vyra-lager.js",
         "vyra-egen-panel.js",
         "vyra-talformat.js",
-        "vyra-effekt-vila.js"
+        "vyra-effekt-vila.js",
+        "vyra-bildrad.js",
+        "vyra-bildrad.css"
       ],
       "tester": [
         "tests/widget-factory.test.js",
@@ -319,7 +321,9 @@
         "tests/browser/spotify-kommandon.browser.test.js",
         "tests/browser/widgetsok-alla-paket.browser.test.js",
         "tests/browser/slutgranskning-b.browser.test.js",
-        "tests/browser/slutgranskning-ab2.browser.test.js"
+        "tests/browser/slutgranskning-ab2.browser.test.js",
+        "tests/bildrad.test.js",
+        "tests/browser/bildrad.browser.test.js"
       ],
       "matning": [
         {
