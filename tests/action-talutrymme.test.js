@@ -124,15 +124,17 @@ test('4: en TTS-action med cloud:-röst går molnvägen, inte till standardröst
   });
   const ov = overlay(1);
   const anrop = [];
-  ov.VyraAuth = { api: (vag, o) => { anrop.push({ vag, kropp: JSON.parse(o.body) }); return Promise.resolve({ audioContent: '' }) } };
+  // Ett inloggat workspace: utan det kan molnvägen inte ens försöka, och sedan 2026-10-23 läser då
+  // datorns röst upp i stället (tts-chat.js spelaUpp) — provet ska mäta molnvägen, inte reserven.
+  ov.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: 'ws1' }] }), api: (vag, o) => { anrop.push({ vag, kropp: JSON.parse(o.body) }); return Promise.resolve({ audioContent: '' }) } };
   ov.VyraSessionState.readActiveExtra = () => null;
 
   gavor(flikar);
   await vanta(200);
 
-  assert.equal(ov.__tal.length, 0, 'molnrösten hamnade i den lokala speechSynthesis ändå');
-  assert.ok(anrop.length || ov.__tal.length === 0,
-    'varken molnvägen eller den lokala vägen användes — actionen tystnade helt');
+  assert.equal(anrop.length, 1, 'molnvägen försöktes inte — actionen gick direkt till standardrösten');
+  assert.match(anrop[0].vag, /\/tts\/synthesize$/);
+  assert.equal(anrop[0].kropp.voiceName, 'sv-SE-MattiasNeural');
 });
 
 // ---- 5-6. duckning i stället för köande --------------------------------------------------------
