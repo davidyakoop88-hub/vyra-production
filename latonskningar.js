@@ -67,6 +67,15 @@
     if (/^!(skip|hoppa)\b/i.test(t)) return { skip: true };
     return null;
   }
+  // `arVard` sätts inte av någon del av kedjan, så streamerns eget !skip gjorde ingenting — bara
+  // moderatorer kunde hoppa över. Samma regel som spotify-kommandon.js farHoppa: avsändaren är
+  // kontot som är anslutet till LIVE.
+  function arStreamern(e) {
+    var jag = '';
+    try { var t = root.VyraLive && root.VyraLive.tillstand && root.VyraLive.tillstand(); jag = String(t && t.konto || '').replace(/^@/, '').toLowerCase(); } catch (x) {}
+    var vem = String(e.username || e.uniqueId || '').replace(/^@/, '').toLowerCase();
+    return !!jag && vem === jag;
+  }
   function ta(e) {
     if (!e) return false;
     var typ = String(e.type || '').toLowerCase();
@@ -80,7 +89,7 @@
     var at = Number(e.at) || Number(e.timestamp) || t;
     if (at && t - at > HISTORIK_MS) return false;
     if (r.skip) {
-      if (e.isModerator || e.__test || e.arVard) hoppaOver();
+      if (e.isModerator || e.__test || e.arVard || arStreamern(e)) hoppaOver();
       return true;
     }
     return lagg({ id: id, fraga: r.fraga, av: String(e.username || e.name || 'tittare'), bild: String(e.profileImage || e.profileUrl || ''), __test: !!e.__test }, w);
@@ -187,8 +196,18 @@
     var nyckel = 'vyra-lat-spotify-' + post.id;
     var gor = function () {
       try { if (localStorage.getItem(nyckel)) { post.status = 'skickad'; rita(); return Promise.resolve(); } localStorage.setItem(nyckel, String(nu())); } catch (e) {}
-      return Promise.resolve(root.VyraSpotify.queue(post.fraga)).then(function (lat) { post.lat = lat; post.status = 'skickad'; })
-        .catch(function (err) { post.status = 'fel'; post.fel = String(err && err.message || 'Spotify svarade inte').slice(0, 80); })
+      // Önskelistan på Spotify-sidan (spotify-kommandon.js) visar önskningen och, framför allt,
+      // varför Spotify sa nej. Widgeten ritar bara de som lyckats, så felet syntes ingenstans.
+      var K = root.VyraSpotifyKommandon, rad = null;
+      try { if (K && typeof K.extern === 'function') rad = K.extern(post.fraga, post.av); } catch (e) {}
+      return Promise.resolve().then(function () { return root.VyraSpotify.queue(post.fraga); })
+        .then(function (lat) { post.lat = lat; post.status = 'skickad'; try { if (rad) rad.klar(lat); } catch (e) {} })
+        .catch(function (err) {
+          var orsak = String(err && err.message || 'Spotify svarade inte');
+          post.status = 'fel'; post.fel = orsak.slice(0, 80);
+          try { if (rad) rad.fel(orsak); } catch (e) {}
+          try { console.warn('[VYRA Låtönskningar] Spotify-önskningen kunde inte läggas i kön', orsak); } catch (e) {}
+        })
         .then(rita);
     };
     try { if (navigator.locks && navigator.locks.request) { navigator.locks.request(nyckel, gor); return; } } catch (e) {}
