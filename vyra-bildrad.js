@@ -247,11 +247,19 @@
   // ranking-sixpack.js och spellayout.js (vanliga skript längre ned i studio.html) har installerat
   // sig; då ritades varje topplista med en gammal design (uppmätt i riggen, ungefär varannan
   // laddning). Därför väntar installationen på DOMContentLoaded.
+  //
+  // OCH FÖRST NÄR RANG 1–3 LIGGER YTTERST. Ett osorterat omslag (Gift Campaign Aura, laddas asynkront)
+  // som körde strax före installationen hamnade annars innanför den här — och då kunde spellayout.js
+  // aldrig lägga sig utanför det igen (vakten ser rang 4 ytterst), så Aura ritade gamingtemats Gift
+  // Campaign med 0 platser (uppmätt i CI två gånger, gaming-overlay.browser.test.js). Ligger ett
+  // osorterat omslag ytterst väntar den här tills rang 1–3 har sorterat sig vid nästa skript-load
+  // (lyssnaren nedan registreras efter deras och körs därför sist). Efter ~5 s installeras den ändå.
   const RANG = 4;
-  let djup = 0;
+  let djup = 0, forsok = 0;
   function install() {
     if (document.readyState === 'loading') return;
     if (typeof wh !== 'function' || wh.__vyraYtter >= RANG) return;
+    if (!(wh.__vyraYtter >= 3) && forsok++ < 25) { setTimeout(install, 200); return; }
     const tidigare = wh;
     const f = function (w) {
       if (djup) return tidigare.apply(this, arguments);

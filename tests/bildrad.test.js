@@ -20,15 +20,20 @@ const las = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const data = x => JSON.parse(JSON.stringify(x));
 
 // En sandlåda med registret, de tre familjernas panelfiler och vyra-bildrad.js, i laddordning.
-function sandlada({ panel = true } = {}) {
+function sandlada({ panel = true, ytterst = 3 } = {}) {
   const ctx = {
     console,
     document: { readyState: 'complete', addEventListener() {} },
     addEventListener() {},
     renderingar: 0,
+    vantande: [],
   };
   ctx.window = ctx;
+  ctx.setTimeout = fn => { ctx.vantande.push(fn); return ctx.vantande.length; };
   ctx.wh = w => w.__html;          // kedjan under: ger tillbaka den markup provet lägger på w
+  // Som i studion: spellayout.js (rang 3) ligger ytterst när den här installeras. ytterst:null =
+  // ett osorterat omslag (Gift Campaign Aura) ligger ytterst.
+  if (ytterst != null) ctx.wh.__vyraYtter = ytterst;
   ctx.render = () => { ctx.renderingar++; };
   vm.createContext(ctx);
   if (panel) {
@@ -209,5 +214,29 @@ test('laddningen: media.js skript-svans laddar vyra-bildrad.css och .js, även i
   assert.ok(rad, 'laddraden finns');
   assert.match(rad, /vyra-bildrad\.css\?v=\d{8}-\d+/);
   assert.doesNotMatch(rad, /has\('overlay'\)\)return/, 'laddas även i overlay-utgången');
-  assert.match(las('studio.html'), /media\.js\?v=20261023-61/);
+  assert.match(las('studio.html'), /media\.js\?v=20261023-71/);
+});
+
+// ORDNINGEN I KEDJAN (CI 2026-10-23, två gånger): Gift Campaign Aura laddas asynkront och lägger sig
+// ytterst utan rang. Installerades den här då (rang 4) kunde spellayout.js (rang 3) aldrig lägga sig
+// utanför Aura igen, och gamingtemats Gift Campaign ritades av Aura med 0 platser. Den här väntar nu
+// tills rang 1–3 har sorterat sig ytterst.
+test('installeras inte ovanpå ett osorterat omslag — väntar tills spellayout (rang 3) ligger ytterst', () => {
+  const ctx = sandlada({ panel: false, ytterst: null });
+  assert.equal(ctx.wh.__vyraYtter, undefined, 'lade sig ytterst ovanpå Aura — spellayout kommer då aldrig utanför den');
+  assert.ok(ctx.vantande.length >= 1, 'ingen ny kontroll schemalades');
+  // spellayout.js sorterar sig ytterst vid nästa skript-load …
+  const aura = ctx.wh;
+  const spel = function (w) { return aura(w); };
+  spel.__vyraYtter = 3;
+  ctx.wh = spel;
+  ctx.vantande.shift()();
+  // … och först då lägger sig den här utanför den.
+  assert.equal(ctx.wh.__vyraYtter, 4, 'installerades inte när spellayout låg ytterst');
+});
+
+test('installeras ändå efter ~5 s om inget sorterar kedjan', () => {
+  const ctx = sandlada({ panel: false, ytterst: null });
+  for (let i = 0; i < 40 && ctx.wh.__vyraYtter !== 4 && ctx.vantande.length; i++) ctx.vantande.shift()();
+  assert.equal(ctx.wh.__vyraYtter, 4);
 });

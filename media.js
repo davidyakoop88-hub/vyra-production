@@ -1960,4 +1960,4 @@ Promise.resolve().then(()=>{if(new URLSearchParams(location.search).has('overlay
 // Bildstorlek, Radavstånd och Riktning i Ranking, Battle MVP och Top Gifter Podium (2026-10-23).
 // Lägger reglagen i familjernas panelposter och märker widgetens rotnod ytterst i wh-kedjan; en
 // orörd widget får ingen klass och ritas exakt som förut. Laddas även i overlay-laget.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-vy-bildrad]')){let css=document.createElement('link');css.rel='stylesheet';css.href='vyra-bildrad.css?v=20261023-1';css.dataset.vyBildrad='1';document.head.append(css)}let js=document.createElement('script');js.src='vyra-bildrad.js?v=20261023-1';document.body.append(js)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-vy-bildrad]')){let css=document.createElement('link');css.rel='stylesheet';css.href='vyra-bildrad.css?v=20261023-1';css.dataset.vyBildrad='1';document.head.append(css)}let js=document.createElement('script');js.src='vyra-bildrad.js?v=20261023-2';document.body.append(js)});
