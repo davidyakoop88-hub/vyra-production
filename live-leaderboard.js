@@ -14,6 +14,9 @@
   const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
 
   const totals = {}; // username -> {name, profileImage, likes, diamonds, lastLikeAt, present}
+  // Rummets like-total mot det VYRA fått — underlaget för like-uppskattningen, se likeFaktor().
+  const rum = { start: null, senast: 0, mottaget: 0 };
+  const LIKE_FAKTOR_MIN_MOTTAGET = 100, LIKE_FAKTOR_MAX = 20;
 
   // #133 STEG 2: TALET HETER `diamonds`, inte `coins`. Det har alltid varit diamanter (bryggans
   // kallfalt ar `diamondCount`) — bara namnet ljog. Tva saker bar fortfarande det gamla namnet och
@@ -99,6 +102,12 @@
       let sparad = JSON.parse(window.sessionStorage.getItem(STREAM_KEY) || 'null');
       if (!sparad || sparad.sessionId !== session || !sparad.totals) sparad = lasLokal();
       if (!sparad || sparad.sessionId !== session || !sparad.totals) return;
+      // Rumsräkningen bakom like-uppskattningen följer med, annars hade kvoten börjat om från 1
+      // efter en omladdning medan de sparade talen låg kvar.
+      const r = sparad.rum;
+      if (r && typeof r === 'object' && Number(r.start) > 0) {
+        rum.start = Number(r.start); rum.senast = Math.max(rum.start, Number(r.senast) || 0); rum.mottaget = Math.max(0, Number(r.mottaget) || 0);
+      }
       const tg = sparad.topGift;
       if (tg && typeof tg === 'object' && tg.name) {
         senasteTopGift = { name: String(tg.name), profileImage: String(tg.profileImage || ''),
@@ -120,12 +129,12 @@
     const session = aktivSession();
     try {
       if (!session) window.sessionStorage.removeItem(STREAM_KEY);
-      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift }));
+      else window.sessionStorage.setItem(STREAM_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift, rum }));
     } catch (e) {}
     if (STREAM_LS_KEY) {
       try {
         if (!session) window.localStorage.removeItem(STREAM_LS_KEY);
-        else window.localStorage.setItem(STREAM_LS_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift }));
+        else window.localStorage.setItem(STREAM_LS_KEY, JSON.stringify({ sessionId: session, totals, topGift: senasteTopGift, rum }));
       } catch (e) {}
     }
   }
@@ -252,6 +261,7 @@
       // count of 0 stays 0 instead of reaching for the next field.
       const count = Number(e.count ?? e.likes) || 0;
       t.likes += count;
+      noteraRum(e, count);
       t.lastLikeAt = Date.now();
       t.present = true;
       recordDaily(username, t.name, t.profileImage, count, 0);
@@ -296,9 +306,43 @@
   // regel.
   function sortedTop(metric) {
     metric = matt(metric);
-    return Object.values(totals)
+    const lista = Object.values(totals)
       .filter(t => t.present !== false && t[metric] > 0)
       .sort((a, b) => b[metric] - a[metric]);
+    if (metric !== 'likes') return lista;
+    const f = likeFaktor();
+    return f === 1 ? lista : lista.map(t => Object.assign({}, t, { likes: Math.round(t.likes * f) }));
+  }
+
+  // TIKTOK SKICKAR INTE VARJE LIKE (David 2026-10-23, skärmbild från sändningen: Top Likes visade
+  // fadwa 2 929, TikToks profilkort 6 289 för samma sändning). tiktok-live-connector säger det själv:
+  // "For streams with many viewers, this event is not always triggered by TikTok." Like-meddelandet
+  // bär ingen total per tittare — bara inkrementet (`count`) och RUMMETS löpande total (`total`,
+  // hos oss `points` lokalt och `value` på molnvägen, se record()). Det som fattas går därför inte
+  // att läsa, bara uppskatta.
+  //
+  // Uppskattningen: hur mycket rummets total steg sedan VYRA började se den, delat med summan av de
+  // inkrement VYRA faktiskt fick under samma tid. Kvoten är andelen TikTok inte skickade, och varje
+  // tittares tal skalas med den vid VISNING. De lagrade talen (`totals`, dagshinkarna) är de som
+  // verkligen kom — ordningen ändras inte av skalningen, bara talen. Davids val 2026-10-23.
+  //
+  // Golvet (100 mottagna) håller kvoten borta från sändningens första sekunder, där två event ger
+  // vilken kvot som helst. Taket (20) hindrar en felaktig total från att blåsa upp listan.
+  function noteraRum(e, count) {
+    if (e.__test || e.__simulerad || /^test-/.test(String(e.id || ''))) return;
+    const total = Number(e.points ?? e.value);
+    if (!(total > 0)) return;
+    // Första totalen är startpunkten: likes före den räknades av TikTok men inte av oss, så det
+    // egna inkrementet hör inte heller med.
+    if (rum.start === null) { rum.start = total; rum.senast = total; return; }
+    if (total < rum.start) rum.start = total;          // ett event i otakt flyttar bara startpunkten
+    if (total > rum.senast) rum.senast = total;
+    rum.mottaget += count;
+  }
+  function likeFaktor() {
+    const steg = rum.senast - (rum.start ?? rum.senast);
+    if (rum.mottaget < LIKE_FAKTOR_MIN_MOTTAGET || steg <= rum.mottaget) return 1;
+    return Math.min(LIKE_FAKTOR_MAX, steg / rum.mottaget);
   }
 
   // A gift landing while the flip is still running must update the name, value and both pictures
@@ -585,6 +629,7 @@
       saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
       for (const key of Object.keys(totals)) delete totals[key];
       senasteTopGift = null;
+      rum.start = null; rum.senast = 0; rum.mottaget = 0;
       // Ogonblicksbilden skrivs om DIREKT, inte vid nasta tick: ett OBS som river kallan i
       // samma sekund som sandningen borjar skulle annars hitta forra sandningens siffror.
       streamDirty = true;
@@ -595,6 +640,8 @@
 
   window.VyraLeaderboard = {
     getTop: (metric = 'likes', count = 10) => sortedTop(metric).slice(0, count),
-    remove: username => { if (totals[username]) totals[username].present = false; }
+    remove: username => { if (totals[username]) totals[username].present = false; },
+    // Hur mycket TikTok inte skickade: faktorn topplistan skalar likes med, och underlaget för den.
+    likeTackning: () => ({ faktor: likeFaktor(), mottaget: rum.mottaget, rummetSteg: rum.start === null ? 0 : rum.senast - rum.start })
   };
 })();
