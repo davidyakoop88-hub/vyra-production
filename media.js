@@ -1548,13 +1548,13 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='batt
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20261018-klocka';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261023-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261023-21';document.body.append(js)});
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20261020-14';document.body.append(js)});
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261021-11';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261023-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261023-21';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
