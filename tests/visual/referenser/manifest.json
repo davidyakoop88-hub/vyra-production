@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 197,
+ "antal": 199,
  "senaste": {
-  "motiv": "Top Streak Design 1-3: talet lika stort som texten",
-  "nycklar": 162,
-  "filter": null,
-  "tid": "2026-10-21T23:24:27.859Z"
+  "motiv": "Koi Pearl och Masquerade tillbaka i katalogen som WebM med alfa (B-001/B-002 åtgärdat)",
+  "nycklar": 2,
+  "filter": "koiPearl,masquerade",
+  "tid": "2026-10-22T23:59:21.197Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -800,6 +800,14 @@
   },
   "catalog:topstreak:design:3": {
    "matt": "236x245",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:koiPearl:pack:2": {
+   "matt": "432x243",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:masquerade:pack:2": {
+   "matt": "432x243",
    "fyllnad": 100
   }
  }
