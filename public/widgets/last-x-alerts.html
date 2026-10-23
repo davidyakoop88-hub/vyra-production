@@ -300,10 +300,11 @@
   /* royal — full artwork skin: the compact coronation frame (assets/last-x/royal-coronation.png,
      chroma-keyed + trimmed to end just under the gem, 836x811) is the whole widget. The avatar
      sits BEHIND the art at z1 and shows through the keyed medallion hole (centre 49.9%/51.9% of
-     the art, diameter 39.5% of width); the only text is the type label in gold on a slim band
-     under the gem. Fixed gold/purple palette from the artwork itself. */
+     the art, diameter 39.5% of width). Under the gem: the type label in gold and the person's name
+     (shown since 2026-10-23, same as Studio's last-x-alerts.css; the band grew 94 -> 154 units of 836,
+     and a long name ends in an ellipsis). Fixed gold/purple palette from the artwork itself. */
   html[data-design="royal"] #tilt{
-    display:block;min-width:0;width:min(400px,70vw);aspect-ratio:836/905;
+    display:block;min-width:0;width:min(400px,70vw);aspect-ratio:836/965;
     padding:0;background:none;box-shadow:none;
   }
   html[data-design="royal"] #glass{
@@ -314,18 +315,24 @@
   /* the keyed hole is slightly elliptical (40.8% wide, 38.3% tall) — the circular avatar is
      sized past the widest axis so its edge always sits hidden behind the ring, no gaps. */
   html[data-design="royal"] #avatar{
-    position:absolute;z-index:1;left:49.94%;top:46.5%;width:42.5%;height:auto;aspect-ratio:1/1;
+    position:absolute;z-index:1;left:49.94%;top:43.6%;width:42.5%;height:auto;aspect-ratio:1/1;
     transform:translate(-50%,-50%);box-shadow:none;
   }
   html[data-design="royal"] #copy{
-    position:absolute;z-index:3;left:15%;right:15%;top:90.5%;bottom:0;
-    flex:none;align-items:center;justify-content:center;text-align:center;
+    position:absolute;z-index:3;left:12%;right:12%;top:84.9%;bottom:0;
+    flex:none;align-items:center;justify-content:flex-start;gap:3px;text-align:center;
+  }
+  html[data-design="royal"] #name{
+    width:100%;max-width:100%;font-size:21px;font-weight:800;line-height:1.2;letter-spacing:.04em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    color:#fff4d1;background:none;-webkit-text-fill-color:#fff4d1;
+    text-shadow:0 1px 3px rgba(0,0,0,.85),0 0 12px rgba(255,211,93,.4);
   }
   html[data-design="royal"] #label{
     color:#ffd35d;letter-spacing:.3em;font-size:15px;
     text-shadow:0 1px 4px rgba(0,0,0,.7),0 0 14px rgba(255,211,93,.45);
   }
-  html[data-design="royal"] #name,html[data-design="royal"] #value,html[data-design="royal"] #detail,
+  html[data-design="royal"] #value,html[data-design="royal"] #detail,
   html[data-design="royal"] #message,html[data-design="royal"] #emblem{display:none}
   /* Kröningen loopar inte. En Last-X-alert har enter -> hold -> exit, så rörelsen hör till entrén
      och lämnar widgeten stilla under hold — den eviga 3,5-graderspendlingen gjorde den rastlös. */
@@ -461,12 +468,11 @@
   els.label.textContent=labelFor(active[0]);
   els.img.onerror=()=>delete els.avatar.dataset.hasImage;
 
-  // Studio offers exactly these three display times — keep the same set here, or ?hold= would accept
-  // values the Studio panel can no longer show. An unknown ?hold= (including the 4 and 6 that older
-  // OBS links carry) falls back to 5 rather than being clamped into a value nobody picked.
-  const DURATIONS=[5,10,15];
-  const holdParam=Number(VyraWidget.get('hold','5'));
-  const HOLD_MS=(DURATIONS.includes(holdParam)?holdParam:5)*1000;
+  // Same range as Studio's slider (last-x-alerts.js durationOf): whole seconds, 3-30, default 5.
+  // The old list values 5/10/15 mean exactly what they did; a missing or non-numeric ?hold= gives 5.
+  const DURATION_MIN=3,DURATION_MAX=30,DURATION_STANDARD=5;
+  const holdParam=Number(VyraWidget.get('hold',String(DURATION_STANDARD)));
+  const HOLD_MS=(Number.isFinite(holdParam)?Math.max(DURATION_MIN,Math.min(DURATION_MAX,Math.round(holdParam))):DURATION_STANDARD)*1000;
   const ENTER_MS=400,EXIT_MS=360;
 
   // ---- enter → hold → exit phase machine over per-type latest-event slots. "Last X" means
