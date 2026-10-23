@@ -234,9 +234,15 @@
     const username = e.username || e.uniqueId || e.userId || e.name;
     if (!username) return;
     const type = String(e.type || e.event || '').toLowerCase();
-    const t = totals[username] || (totals[username] = { username, name: e.name || username, profileImage: e.profileImage || '', likes: 0, diamonds: 0, lastLikeAt: 0, present: true });
+    // På en chattrad bär `name` KOMMENTAREN, inte namnet (tiktok-bridge/normalizer.js: "name AR
+    // OVERLASTAT MED FLIT"). Utan den här raden skrev varje chattrad över tittarens namn i listan —
+    // Paris stod som 💙 i sändningen 2026-10-23. Molnvägen har kommentaren också i `comment`;
+    // desktopvägen bara i `name`, därav typen.
+    const arChatt = type === 'chat' || type === 'chatcommand' || type === 'comment';
+    const namn = e.name && !arChatt && e.name !== e.comment ? e.name : '';
+    const t = totals[username] || (totals[username] = { username, name: namn || username, profileImage: e.profileImage || '', likes: 0, diamonds: 0, lastLikeAt: 0, present: true });
     streamDirty = true;   // ogonblicksbilden skrivs ner av tickern nedan, inte per handelse
-    if (e.name) t.name = e.name;
+    if (namn) t.name = namn;
     if (e.profileImage) t.profileImage = e.profileImage;
     if (type === 'join' || type.includes('enter')) t.present = true;
     // ATT LÄMNA SÄNDNINGEN TAR INTE BORT NÅGON. Här satte en rad `present = false` på leave/exit,
