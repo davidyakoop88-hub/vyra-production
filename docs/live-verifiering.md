@@ -331,6 +331,11 @@ OBS egen `GetSourceScreenshot`:
 Det var alltså aldrig videorna det var fel på, utan **provbrowsern**. Undantaget i den visuella
 regressionsvakten står kvar av det skälet — inte för att widgetarna är trasiga.
 
+**Sedan 2026-10-23** finns MP4-filen inte längre: Koi Pearl och Masquerade är omkodade till VP9-WebM med
+alfa (`koi-pearl/glove.webm` m.fl., KlingAI-stämpeln beskuren bort, svarten nycklad till genomskinligt) —
+samma format som Pink Princess, Royal Ruby och Cloud Fox redan spelar i OBS. Undantaget ovan är borta.
+**Ej mätt i OBS** för just de nya filerna; läs av ett Koi-klipp i en browser source före nästa sändning.
+
 ### Ursprunglig fråga (besvarad ovan)
 
 **Ingen automat kan svara på det här.** Glove Snipes åtta katalogvarianter visar effekten som en

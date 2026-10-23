@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 197,
+ "antal": 199,
  "senaste": {
-  "motiv": "Heart Me-teman dark/ocean/midnight/citrus fick egna färger och Last-X Royal visar namnet",
-  "nycklar": 6,
-  "filter": "catalog:heartgoal:dark,catalog:heartgoal:ocean,catalog:heartgoal:midnight,catalog:heartgoal:citrus,catalog:lastx:royal",
-  "tid": "2026-10-22T23:49:25.328Z"
+  "motiv": "Koi Pearl och Masquerade: ny silhuettnyckel, inget grått dis eller grå kantglöd",
+  "nycklar": 2,
+  "filter": "koiPearl,masquerade",
+  "tid": "2026-10-23T00:44:48.666Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -800,6 +800,14 @@
   },
   "catalog:topstreak:design:3": {
    "matt": "236x245",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:koiPearl:pack:2": {
+   "matt": "432x243",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:masquerade:pack:2": {
+   "matt": "432x243",
    "fyllnad": 100
   }
  }
