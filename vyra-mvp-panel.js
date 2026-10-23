@@ -38,9 +38,10 @@
   //     sökvägsfältet för profilbilden och märket "4 DESIGNER" är borta.
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
   //
-  // BILDSTORLEK (spec 5.18, sektion 3) är INTE gjord: profilbilden sitter i ramens och firandets hål
-  // (fasta procentmått per motiv) och i de klassiska stilarna i ett emblem med egen form per stil. En
-  // storlek kräver ändrade renderare och CSS per stil, och hör till en egen PR.
+  // BILDSTORLEK, RADAVSTÅND OCH RIKTNING (spec 5.18, sektion 3) finns i de sex klassiska stilarna:
+  // vyra-bildrad.js lägger dem i posterna nedan och ritar dem (emblemet zoomas, avståndet och bilden
+  // bredvid/ovanför texten). Ramarna och firandena får dem inte: profilbilden sitter i motivets hål
+  // (fasta procentmått per motiv), så där finns ingen bild att förstora och inga rader att flytta.
   //
   // EGEN TEXT OCH LIVEDATA. Namn, poäng och profilbild kommer från matchens MVP i sändningen
   // (triggerBattleMvp). Panelen har varken exempeldata eller bildväljare för profilbilden (David

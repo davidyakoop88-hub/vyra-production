@@ -303,10 +303,10 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const alert = plats('vyra-alert-panel.js', '20261020-23');
   assert.ok(alert > reg && alert > testspel && alert < ordning, 'alertfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
   // Battle MVP:s poster (vyra-mvp-panel.js, PR 7) på samma sätt.
-  const mvp = plats('vyra-mvp-panel.js', '20261020-23');
+  const mvp = plats('vyra-mvp-panel.js', '20261023-1');
   assert.ok(mvp > reg && mvp > testspel && mvp < ordning, 'Battle MVP:s poster laddas efter registret och testmotorn, före panelordningen');
   // Rankingens poster (vyra-ranking-panel.js, PR 8) på samma sätt.
-  const ranking = plats('vyra-ranking-panel.js', '20261021-7');
+  const ranking = plats('vyra-ranking-panel.js', '20261023-1');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
   const mal = plats('vyra-mal-panel.js', '20261020-26');  // 20261020-26: Gift Campaigns gåvor i en flikrad (vyra-kampanj-gavoval.js)

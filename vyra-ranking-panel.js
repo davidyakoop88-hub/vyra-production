@@ -43,9 +43,10 @@
   //   * flikarna Content/Design/Animation byggs inte (toplike-studio.js frågar VyraPanelram.ager()).
   // Fälten ligger kvar i state — ingenting byter namn och ingenting raderas.
   //
-  // INTE GJORT (spec 5.1, sektion 3): Radavstånd, Bildstorlek och Riktning i fyra lägen. De kräver
-  // ändrad geometri i ranking-sixpack.css per design (sex designer med egna mått och läsbarhetsläge)
-  // och hör till en egen PR. Riktningen har kvar det som fungerar: Spegla riktningen.
+  // BILDSTORLEK, RADAVSTÅND OCH RIKTNING (spec 5.1, sektion 3) läggs i posterna av vyra-bildrad.js
+  // (laddas senare, från media.js skript-svans), direkt efter Position — och ritas av samma fil och
+  // vyra-bildrad.css. Riktningen är listans (lodrät/vågrät, Prism horisontal även rak rad), Spegla
+  // riktningen vänder den som förut. I kompaktläget (liten widget) visas de tre inte.
   //
   // EGEN TEXT OCH LIVEDATA. Listan kommer från sändningen (live-leaderboard.js) eller, för
   // Top Points, från Actions & Events (VyraPoints). Rubriken är egen text. Panelen har inget
