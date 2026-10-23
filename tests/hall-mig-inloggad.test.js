@@ -152,7 +152,10 @@ test('valet och lösenordet sparas aldrig i webbläsaren', async () => {
 test('cachebustarna höjdes med filerna', () => {
   const index = las('index.html'), studio = las('studio.html');
   assert.match(index, /landing-login\.js\?v=20261021-\d+"/);
-  assert.match(index, /styles\.css\?v=20261021-\d+"/);
+  // Minst den version som bar "Håll mig inloggad" — en senare ändring i styles.css (prisraden
+  // 2026-10-23) får höja den utan att det här provet faller.
+  const stil = (index.match(/styles\.css\?v=(\d{8})-\d+"/) || [])[1] || '';
+  assert.ok(stil >= '20261021', 'styles.css har en äldre cachebust än Håll mig inloggad: ' + stil);
   assert.match(studio, /auth-client\.js\?v=20261021-\d+"/);
   assert.match(studio, /auth-client\.css\?v=20261021-\d+"/);
 });
