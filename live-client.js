@@ -468,6 +468,7 @@ if(!localRuntime){
   // widgets open their own EventSource, but the Studio canvas had no source at all — so widgets
   // sat on their placeholder data and only the auto-play flip animation moved.
   let stream = null, streamGeneration = 0, onLiveMessage = null, tappad = false;
+  let forsok = 0, ateranslutTimer = null;
   // Namngiven callback med generationsvakt. Bada behovs: en anonym pil kan inte tas bort med
   // removeEventListener, och close() garanterar inte att redan kolagda meddelanden uteblir - sa
   // vakten sitter i callbacken, inte i strommen.
@@ -478,6 +479,8 @@ if(!localRuntime){
       stream.onerror = null;
       try { stream.close() } catch (_) {}
     }
+    if (ateranslutTimer) { clearTimeout(ateranslutTimer); ateranslutTimer = null }
+    forsok = 0;
     stream = null; onLiveMessage = null; activeUsers.clear();
   }
   function openStream() {
@@ -496,9 +499,25 @@ if(!localRuntime){
     // Ateranslutning efter ett tapp = mat om klockan (en sovande dator kan ha stallts om). Forsta
     // oppningen behover ingen egen skur: den vid sidladdningen pagar redan.
     stream.addEventListener('open', () => { if (mine !== streamGeneration || !tappad) return; tappad = false; klocka.nollstall(); klocka.skur(KLOCK_URL) });
-    // EventSource reconnects on its own; drop the handle if the workspace goes away so a later
-    // login can open a fresh one rather than reusing a stream bound to the previous workspace.
-    stream.onerror = () => { tappad = true; if (stream && stream.readyState === EventSource.CLOSED) stream = null };
+    // EN STÄNGD STRÖM ÖPPNAS IGEN AV OSS, INTE AV WEBBLÄSAREN. EventSource återansluter själv bara
+    // efter ett nätverkstapp; svarar servern med något annat än 200 (502 under en deploy, 401, 429)
+    // ger den upp för gott och går till CLOSED. Studion stod då döv tills sidan laddades om, medan
+    // OBS-widgetarna — som har egen backoff i base-widget.js — fortsatte som vanligt. TTS-chatten
+    // och Spotify-kommandona körs bara i studion och tystnade därför efter första deployen
+    // (David 2026-10-24: "funkade en gång"). Samma backoff som widgetarna: 1 s, 2 s, 4 s … högst 30 s.
+    stream.addEventListener('open', () => { if (mine === streamGeneration) forsok = 0 });
+    stream.onerror = () => {
+      tappad = true;
+      if (mine !== streamGeneration || !stream || stream.readyState !== EventSource.CLOSED) return;
+      try { stream.close() } catch (_) {}
+      stream = null;
+      planeraAteranslutning(mine);
+    };
+  }
+  function planeraAteranslutning(mine) {
+    if (ateranslutTimer) return;
+    const vanta = Math.min(30000, 1000 * 2 ** forsok++);
+    ateranslutTimer = setTimeout(() => { ateranslutTimer = null; if (mine === streamGeneration) openStream() }, vanta);
   }
   window.VyraSessionState?.registerTeardown?.('live-client', closeStream);
   addEventListener('vyra-session-ended', closeStream);
