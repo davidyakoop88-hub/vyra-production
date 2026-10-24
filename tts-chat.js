@@ -100,15 +100,16 @@
   }
 
   // Ett löfte som håller tills rösten faktiskt tystnat — det är kontraktet VyraTal.koa vilar på.
-  function spelaUpp(text, opts) {
+  // `forhamtat` är ett redan startat hämtningslöfte för molnljudet (se enqueueSpeech), annars null.
+  function spelaUpp(text, opts, forhamtat) {
     if (isCloudVoice(opts.voice)) {
-      return speakCloud(text, opts).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err) });
+      return speakCloud(text, opts, forhamtat).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err) });
     }
     return new Promise(klar => speakLocal(text, opts, klar));
   }
   function playNext() {
     if (speaking || !queue.length) return;
-    const { text, opts } = queue.shift();
+    const { text, opts, forhamtat } = queue.shift();
     speaking = true;
     let finished = false;
     const done = () => { if (finished) return; finished = true; speaking = false; playNext() };
@@ -117,7 +118,7 @@
     // forever and the whole queue jams permanently until the page is reloaded.
     const safety = setTimeout(done, Math.max(8000, text.length * 120));
     const wrappedDone = () => { clearTimeout(safety); done() };
-    spelaUpp(text, opts).then(wrappedDone, wrappedDone);
+    spelaUpp(text, opts, forhamtat).then(wrappedDone, wrappedDone);
   }
   function speakLocal(text, opts, done) {
     const u = new SpeechSynthesisUtterance(text);
@@ -133,14 +134,23 @@
     u.onend = u.onerror = done;
     try { speechSynthesis.speak(u) } catch { done() }
   }
-  async function speakCloud(text, opts) {
+  // MOLNLJUDET HÄMTAS NÄR KOMMENTAREN KÖAS, INTE NÄR DEN SKA LÄSAS (David 2026-10-24: "kan vi
+  // inte göra det snabbare"). Varje molnröst är ett eget anrop till server/tts.js, som öppnar en ny
+  // anslutning mot rösttjänsten och väntar in hela ljudfilen. Det anropet startade först när
+  // föregående kommentar tystnat, så varje kommentar i kön fick en tyst paus lika lång som anropet.
+  // Nu hämtas ljudet medan kön väntar, och nästa kommentar kan börja direkt.
+  // Ryms inom serverns gräns (20 per 30 s): kön är högst maxQueueLength lång.
+  function hamtaMolnljud(text, opts) {
     const workspaceId = currentWorkspaceId();
-    if (!workspaceId || !window.VyraAuth) throw new Error('Molnröster kräver ett inloggat workspace');
-    const result = await window.VyraAuth.api(`/api/workspaces/${workspaceId}/tts/synthesize`, {
+    if (!workspaceId || !window.VyraAuth) return Promise.reject(new Error('Molnröster kräver ett inloggat workspace'));
+    return Promise.resolve(window.VyraAuth.api(`/api/workspaces/${workspaceId}/tts/synthesize`, {
       method: 'POST',
       body: JSON.stringify({ text, languageCode: opts.language || undefined, voiceName: cloudVoiceName(opts.voice), speed: opts.speed, pitch: opts.pitch })
-    });
-    const audio = new Audio('data:audio/mpeg;base64,' + result.audioContent);
+    })).then(result => result.audioContent);
+  }
+  async function speakCloud(text, opts, forhamtat) {
+    const audioContent = await (forhamtat || hamtaMolnljud(text, opts));
+    const audio = new Audio('data:audio/mpeg;base64,' + audioContent);
     audio.volume = (Number(opts.volume) ?? 80) / 100;
     pagaendeLjud = audio;
     try {
@@ -158,13 +168,19 @@
     if (!text) return false;
     if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
     if (!hasQueueRoom(maxQueueLength)) return false;
+    let forhamtat = null;
+    if (isCloudVoice(opts.voice)) {
+      forhamtat = hamtaMolnljud(text, opts);
+      // Felet tas om hand i speakCloud när posten spelas; här tystas bara "unhandled rejection".
+      forhamtat.catch(() => {});
+    }
     const tal = window.VyraTal;
     if (tal?.koa) return tal.koa({ kalla: 'tts-chat', maxKo: maxQueueLength, maxMs: text.length * 120,
-      spela: () => spelaUpp(text, opts),
+      spela: () => spelaUpp(text, opts, forhamtat),
       // Hur just DEN har posten tystas. Lokal rost stoppas av speechSynthesis.cancel(); molnrosten
       // ar ett <audio>-element som pausas. Loftet i spela() loser sig da av sig sjalvt.
       avbryt: () => tystaPagaende() });
-    queue.push({ text, opts });
+    queue.push({ text, opts, forhamtat });
     playNext();
     return true;
   }
