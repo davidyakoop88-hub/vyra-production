@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 203,
+ "antal": 212,
  "senaste": {
-  "motiv": "Boxgame-klocka utan studions standardlåda (12 px padding flyttade och klippte klockan)",
-  "nycklar": 1,
-  "filter": "boxgame",
-  "tid": "2026-10-25T13:01:17.124Z"
+  "motiv": "Hjärtan & moln: nio nya katalognycklar (heartcloud) behöver referensbilder",
+  "nycklar": 9,
+  "filter": "heartcloud",
+  "tid": "2026-10-25T18:39:15.238Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -824,6 +824,42 @@
   },
   "catalog:boxgame": {
    "matt": "340x245",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:blixt": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:fallande": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:glodande": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:hjartmoln": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:kristall": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:levande": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:organiskt": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:profilhjartan": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:heartcloud:stjarnstoft": {
+   "matt": "432x768",
    "fyllnad": 100
   }
  }
