@@ -4,6 +4,10 @@
    2 · Ikon som öppnas — rund ikon som öppnas till kapsel på 1,6 s, texten tonas in, stängs på 0,36 s.
    Måtten är designens (260 px bred); --sa-z skalar allt med widgetens bredd. */
 .widget.vyra-social{position:absolute;box-sizing:border-box;overflow:visible;font-family:Arial,Helvetica,sans-serif}
+/* Studions standardlåda (.widget i studio.css: padding, lila kant, bakgrund, minst 150 px) och dess
+   `.widget b{display:block;font-size:12px}` gäller inte här — samma nollställning som Boxgame-klockan. */
+.widget.vyra-social{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-width:0!important}
+.vyra-social .sa-rubrik b{display:inline;font-size:inherit}
 .vyra-social .sa-vard{zoom:var(--sa-z,1);width:260px;min-height:64px;display:grid;place-items:center}
 .vyra-social .sa-tom{font-size:12px;text-align:center;color:#8093aa;padding:10px;border:1px dashed #3a4656;border-radius:8px}
 

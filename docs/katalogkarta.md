@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `fb161fcb`
+Commit: `50b32024`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **177** |
-| Sektioner | 27 |
-| Med katalognyckel | 177 / 177 |
-| Med shadow DOM-miniatyr | 138 / 177  ⚠️ |
-| Ritar sin design | 177 / 177 |
+| Kort totalt | **179** |
+| Sektioner | 28 |
+| Med katalognyckel | 179 / 179 |
+| Med shadow DOM-miniatyr | 140 / 179  ⚠️ |
+| Ritar sin design | 179 / 179 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -64,7 +64,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
-| BOXGAME | 1 | 1/1 | 1/1 | 1/1 | — | — |
+| BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | — |
+| SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | — |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 
@@ -366,7 +367,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Boxgame-klocka | `catalog:boxgame` | ✓ | ✓ | — | — |
+| Boxgame-klocka | `catalog:boxgame` | ✓ | ✓ | 2026-10-25 | — |
+
+### SOCIAL-ALERT
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Social-alert · 1 · Glanskort | `catalog:socialalert:glans` | ✓ | ✓ | 2026-10-25 | — |
+| Social-alert · 2 · Ikon som öppnas | `catalog:socialalert:kapsel` | ✓ | ✓ | 2026-10-25 | — |
 
 ### SKATTKISTA · LIVE
 
