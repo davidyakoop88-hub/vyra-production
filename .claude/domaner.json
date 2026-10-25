@@ -437,6 +437,7 @@
         "tests/browser/ae-dialog-fokus.browser.test.js",
         "tests/browser/ae-poang-antal-dolt.browser.test.js",
         "tests/action-avancerade-val.test.js",
+        "tests/action-event-lila.test.js",
         "tests/browser/ae-dialog-fokus.browser.test.js"
       ],
       "matning": [],

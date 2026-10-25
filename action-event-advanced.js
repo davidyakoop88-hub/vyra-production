@@ -240,6 +240,42 @@
   const VISAR_POANGNIVA=new Set(['chatCommand']);
   const attr=v=>VyraSafe.text(String(v==null?'':v));
 
+  // Beskrivning under varje "Vem får trigga"-kort. Ren text om vad valet redan gör i allowed().
+  const AUDIENCE_TEXT={everyone:'Alla kan trigga eventet.',follower:'Endast följare kan trigga.',subscriber:'Endast prenumeranter kan trigga.',moderator:'Endast moderatorer kan trigga.',topGifter:'Endast den som är Top Gifter kan trigga.',specificUser:'Endast en användare du anger.'};
+  // CTRL-FLERVAL BLIR KRYSSRUTOR, MEN <select multiple> ÄR KVAR SOM SANNING.
+  //
+  // collect() läser `selectedOptions`, tests/event-bakatkompatibilitet.test.js läser
+  // `option:checked`, och gamla events med bara `actionId` lyfts in via `selected` ovan. Därför
+  // ritas listan som synliga kryssrutor som skriver rakt in i varje <option>.selected, och själva
+  // selecten göms (och tas ur tabbordningen). De två listorna är oberoende — samma Action kan stå
+  // i båda, precis som förut.
+  function flervalsSpegel(select,rubrikId){
+    if(!select||select.dataset.spegel)return;
+    select.dataset.spegel='1';
+    select.hidden=true;select.tabIndex=-1;select.setAttribute('aria-hidden','true');
+    const lista=document.createElement('div');
+    lista.className='ae-flerval';
+    lista.setAttribute('role','group');
+    lista.setAttribute('aria-labelledby',rubrikId);
+    const opts=[...select.options];
+    lista.innerHTML=opts.length
+      ? opts.map((o,i)=>'<label class="ae-check ae-flerval-val"><input type="checkbox" data-index="'+i+'"'+(o.selected?' checked':'')+'><span>'+attr(o.textContent)+'</span></label>').join('')
+      : '<p class="ae-flerval-tom">Inga Actions ännu.</p>';
+    const rakna=document.createElement('p');
+    rakna.className='ae-flerval-antal';
+    rakna.setAttribute('aria-live','polite');
+    const visaAntal=()=>{const n=opts.filter(o=>o.selected).length;rakna.textContent=n?(n===1?'1 vald':n+' valda'):'Ingen vald'};
+    lista.addEventListener('change',ev=>{
+      const ruta=ev.target.closest('input[data-index]');
+      if(!ruta)return;
+      opts[+ruta.dataset.index].selected=ruta.checked;
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+      visaAntal();
+    });
+    visaAntal();
+    select.after(lista,rakna);
+  }
+
   function mountEventPanel(modal,befintligt,state){
     const vard=modal&&modal.querySelector('.ae-event-slot');
     if(!vard||vard.querySelector('.ae-event-advanced'))return;
@@ -258,26 +294,32 @@
     const vald=(lista,id)=>(lista||[]).includes(id)?' selected':'';
     const actionOpts=lista=>state.actions.map(a=>'<option value="'+a.id+'"'+vald(lista,a.id)+'>'+attr(a.name)+'</option>').join('');
     const storlek=Math.min(6,Math.max(2,state.actions.length||2));
+    // LILA DESIGNEN (2026-10-19). Samma radiogrupper och samma <select multiple> som förut — det är
+    // dem collect() läser, så sparformatet rör sig inte. Radioknapparna ritas som valkort, och de två
+    // listorna får var sin kryssruteslista ovanpå (flervalsSpegel nedan) i stället för Ctrl-klick.
+    const rubrik=(nr,text,id)=>'<h4 class="ae-sek-rubrik" id="'+id+'"><span class="ae-sek-nr" aria-hidden="true">'+nr+'</span>'+text+'</h4>';
     const p=document.createElement('div');
     p.className='ae-event-advanced';
     p.innerHTML=
-      '<section><h4>Vem får trigga eventet?</h4><div class="ae-radio-list">'
-      + audiences.map(a=>'<label class="ae-check"><input type="radio" name="aeAudience" value="'+a[0]+'"'+(a[0]===valdAudience?' checked':'')+'> '+a[1]+'</label>').join('')
+      '<section class="ae-sek">'+rubrik(1,'Vem får trigga eventet?','aeAudienceRubrik')+'<div class="ae-radio-list ae-valkort-lista" role="radiogroup" aria-labelledby="aeAudienceRubrik">'
+      + audiences.map(a=>'<label class="ae-check ae-valkort"><input type="radio" name="aeAudience" value="'+a[0]+'"'+(a[0]===valdAudience?' checked':'')+'><span class="ae-valkort-text"><b>'+a[1]+'</b><small>'+(AUDIENCE_TEXT[a[0]]||'')+'</small></span></label>').join('')
       + '</div><div id="aeSpecificUserWrap"'+(valdAudience==='specificUser'?'':' hidden')+'><label>Användarnamn<input id="aeSpecificUser" placeholder="@användarnamn" value="'+attr(e.specificUser||'')+'"></label>'+renderUserPickerHtml()+'</div>'
       + '<label class="ae-check ae-exclude-anon"><input id="aeExcludeAnonymous" type="checkbox"'+(e.excludeAnonymous?' checked':'')+'> Exkludera anonyma tittare</label></section>'
-      + '<section><h4>Vad ska trigga eventet?</h4><div class="ae-radio-list">'
-      + triggers.map(t=>'<label class="ae-check"><input type="radio" name="aeAdvancedTrigger" value="'+t[0]+'"'+(t[0]===valdTrigger?' checked':'')+'> '+t[1]+'</label>').join('')
+      + '<section class="ae-sek">'+rubrik(2,'Vad ska trigga eventet?','aeTriggerRubrik')+'<div class="ae-radio-list ae-trigger-lista" role="radiogroup" aria-labelledby="aeTriggerRubrik">'
+      + triggers.map(t=>'<label class="ae-check ae-valchip"><input type="radio" name="aeAdvancedTrigger" value="'+t[0]+'"'+(t[0]===valdTrigger?' checked':'')+'><span>'+t[1]+'</span></label>').join('')
       + '</div><div id="aeTriggerDetails" class="ae-trigger-details"></div></section>'
-      + '<section><h4>Nivåkrav och Actions</h4>'
+      + '<section class="ae-sek">'+rubrik(3,'Nivåkrav och Actions','aeNivaRubrik')
       + '<label class="ae-inline" id="aeTeamLevelRad">Nödvändig TikTok-teamnivå<input id="aeTeamLevel" type="number" min="0" max="50" value="'+(Number(e.teamLevel)||0)+'"></label>'
       + '<small class="ae-hjalp" id="aeTeamLevelHjalp">Ange 0 för att tillåta personer som inte är med i teamet.</small>'
       + '<label class="ae-inline" id="aePointsLevelRad">Nödvändig poängnivå<input id="aeMinPointsLevel" type="number" min="0" value="'+(Number(e.minPointsLevel)||0)+'"></label>'
       + '<small class="ae-hjalp" id="aePointsLevelHjalp">Ange 0 för att tillåta vilken poängnivå som helst.</small>'
       + '<label class="ae-inline">Poängkostnad<input id="aePointsCost" type="number" min="0" value="'+(Number(e.pointsCost)||0)+'"></label>'
       + '<small class="ae-hjalp">Dras från användarens poäng när eventet triggas. 0 = gratis.</small>'
-      + '<label>Kör alla dessa Actions<select id="aeAllActions" multiple size="'+storlek+'">'+actionOpts(allaValda)+'</select><small>Håll Ctrl för att välja flera.</small></label>'
-      + '<label>Kör en av dessa Actions slumpmässigt<select id="aeRandomActions" multiple size="'+storlek+'">'+actionOpts(e.randomActionIds)+'</select></label></section>';
+      + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeAllActionsRubrik">Kör alla dessa Actions</span><select id="aeAllActions" multiple size="'+storlek+'">'+actionOpts(allaValda)+'</select><small>Kryssa i en eller flera. Alla körs när eventet triggas.</small></div>'
+      + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeRandomActionsRubrik">Kör en av dessa Actions slumpmässigt</span><select id="aeRandomActions" multiple size="'+storlek+'">'+actionOpts(e.randomActionIds)+'</select><small>Kryssa i en eller flera. En av dem väljs slumpmässigt.</small></div></section>';
     vard.append(p);
+    flervalsSpegel(p.querySelector('#aeAllActions'),'aeAllActionsRubrik');
+    flervalsSpegel(p.querySelector('#aeRandomActions'),'aeRandomActionsRubrik');
 
     const sparatVarde=String(e.triggerValue||e.condition||'');
     const sync=()=>{
