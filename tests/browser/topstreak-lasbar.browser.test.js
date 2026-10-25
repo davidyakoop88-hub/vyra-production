@@ -45,18 +45,18 @@ test.after(async () => { if (browser) await browser.close(); if (server) server.
 
 const BREDDER = [120, 160, 200, 260, 320];
 
-async function mat(modell) {
+async function mat(modell, kompakt = false) {
   const sida = await browser.newPage({ viewport: { width: 1400, height: 800 } });
   try {
     await sida.goto(`${bas}/studio.html?overlay=1`, { waitUntil: 'load' });
     await sida.waitForFunction(() => window.VyraPlaygroundWidgets && typeof render === 'function', null, { timeout: 60000 });
     await sida.waitForTimeout(400);
-    return await sida.evaluate(async ({ modell, BREDDER }) => {
+    return await sida.evaluate(async ({ modell, BREDDER, kompakt }) => {
       const st = window.eval('state'); st.widgets.length = 0;
       let x = 10; const ids = [];
       for (const b of BREDDER) {
         const w = VyraWidgets.create('catalog:pgstreak:' + modell);
-        w.x = x; w.y = 10; w.width = b; st.widgets.push(w); ids.push(w.id); x += b + 40;
+        w.x = x; w.y = 10; w.width = b; w.kompaktLage = kompakt; st.widgets.push(w); ids.push(w.id); x += b + 40;
       }
       try { window.eval('selected=null') } catch (e) {}
       render();
@@ -81,15 +81,25 @@ async function mat(modell) {
           avatarPx: av.getBoundingClientRect().width,
         };
       });
-    }, { modell, BREDDER });
+    }, { modell, BREDDER, kompakt });
   } finally { await sida.close(); }
 }
 
 // royal-gold (gåvan i en egen liten cirkel) togs bort 2026-10-17 med de andra sex av den sorten;
 // alla fem som finns kvar visar profil och gåva i samma cirkel. Två av dem provas.
+// Kompaktläget är ett uttryckligt val (w.kompaktLage, granskningen 2026-10-25): utan valet behåller
+// varje bredd ramkonsten, med valet ger smal bredd den stora ringen.
 for (const modell of ['royal-wings', 'rose-wings']) {
-  test(`Top Streak ${modell}: platta, textgolv och kompakt läge vid smal bredd`, { skip, timeout: 120000 }, async () => {
-    const rader = await mat(modell);
+  test(`Top Streak ${modell}: utan valt kompaktläge behåller varje bredd ramkonsten`, { skip, timeout: 120000 }, async () => {
+    for (const r of await mat(modell)) {
+      const id = `${modell} @ ${r.bredd} px: ${JSON.stringify(r)}`;
+      assert.equal(r.namn, 'NovaStorm_99', id);
+      assert.equal(r.ramSyns, true, `ramkonsten försvann av storleken — ${id}`);
+      assert.ok(r.plattaAlfa >= 0.8, `plattan bakom namnet saknas — ${id}`);
+    }
+  });
+  test(`Top Streak ${modell}: platta, textgolv och valt kompaktläge vid smal bredd`, { skip, timeout: 120000 }, async () => {
+    const rader = await mat(modell, true);
     for (const r of rader) {
       const id = `${modell} @ ${r.bredd} px: ${JSON.stringify(r)}`;
       assert.equal(r.namn, 'NovaStorm_99', id);
@@ -97,13 +107,10 @@ for (const modell of ['royal-wings', 'rose-wings']) {
       assert.ok(r.sifferPx >= 12 - 0.05, `räknaren under 12 designpx — ${id}`);
       assert.ok(r.plattaAlfa >= 0.8, `plattan bakom namnet saknas eller är för genomskinlig — ${id}`);
       assert.ok(r.plattaKant >= 0.9, `plattans kant syns inte — ${id}`);
-      if (r.bredd <= 200) {
-        assert.equal(r.ramSyns, false, `ornamentramen ska ge plats åt ringen i kompakt läge — ${id}`);
-        assert.ok(r.avatarPx >= 0.55 * r.bredd, `profilbilden under 55 % av bredden — ${id}`);
-        assert.ok(r.namnPx >= 14 - 0.05, `namnet ska vara större i kompakt läge — ${id}`);
-      } else {
-        assert.equal(r.ramSyns, true, `stor vy ska behålla ramkonsten — ${id}`);
-      }
+      // Valt kompaktläge gäller i alla bredder — det är ett val, inte en tröskel.
+      assert.equal(r.ramSyns, false, `ornamentramen ska ge plats åt ringen i kompakt läge — ${id}`);
+      assert.ok(r.avatarPx >= 0.55 * r.bredd, `profilbilden under 55 % av bredden — ${id}`);
+      assert.ok(r.namnPx >= 14 - 0.05, `namnet ska vara större i kompakt läge — ${id}`);
     }
   });
 }

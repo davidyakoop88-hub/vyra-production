@@ -231,27 +231,31 @@ test('ranking-sixpack.css laddas i studio.html efter toppoints-v2.css', () => {
 // LÄSBARHETSLÄGET (2026-10-12): skalan är zoom för alla tre familjerna, och kompaktläget väljs ur
 // den synliga bredden (designens uppmätta grundmått gånger widgetScale). Mätt i riktig Chromium i
 // tests/browser/topplistor-lasbar.browser.test.js — här låses besluten i renderaren.
-test('alla tre familjerna bär widgetScale som zoom och --rk6-z', () => {
+// --rk6-z bär textgolven. Utanför det valda kompaktläget är den 1, så att zoomen skalar texten med
+// resten av kompositionen (granskningen 2026-10-25: golven gjorde lådan bredare vid liten storlek).
+test('alla tre familjerna bär widgetScale som zoom; textgolven följer bara det valda kompaktläget', () => {
   for (const w of FAMILJ('voltage')) {
     const el = nod({ ...w, widgetScale: 0.9 });
-    assert.match(el.getAttribute('style'), /zoom:0\.9;--rk6-z:0\.9;/, `${w.type}: ${el.getAttribute('style')}`);
+    assert.match(el.getAttribute('style'), /zoom:0\.9;--rk6-z:1;--rk6-mot:1;/, `${w.type}: ${el.getAttribute('style')}`);
     assert.equal((el.getAttribute('style').match(/zoom:/g) || []).length, 1, 'en zoom, inte två');
+    assert.match(nod({ ...w, widgetScale: 0.9, kompaktLage: true }).getAttribute('style'), /zoom:0\.9;--rk6-z:0\.9;/);
   }
 });
 
-test('kompaktläget: av i full storlek, på när den synliga bredden blir smal', () => {
+// STORLEKEN VÄLJER ALDRIG DESIGN (granskningen 2026-10-25): kompaktläget slog förr till av sig självt
+// vid liten skala och bytte bort kronor, ringar och metallkomposition. Nu är det bara ett uttryckligt val.
+test('kompaktläget: aldrig av storleken, bara när streamern valt det', () => {
   for (const id of SIXPACK) {
     for (const w of FAMILJ(id)) {
-      assert.ok(!nod({ ...w, widgetScale: 1 }).classList.contains('rk6-kompakt'), `${w.type} ${id} kompakt i full storlek`);
-      assert.ok(nod({ ...w, widgetScale: 0.4 }).classList.contains('rk6-kompakt'), `${w.type} ${id} inte kompakt vid skala 0,4`);
+      for (const z of [1, 0.75, 0.5, 0.3, 0.2, 2])
+        assert.ok(!nod({ ...w, widgetScale: z }).classList.contains('rk6-kompakt'), `${w.type} ${id} blev kompakt av skala ${z}`);
+      assert.ok(nod({ ...w, widgetScale: 1, kompaktLage: true }).classList.contains('rk6-kompakt'), `${w.type} ${id}: det valda kompaktläget syns inte`);
     }
   }
   const l = sixpackRigg().window.VyraRankingSixpack.lasbarhet;
-  assert.equal(l('voltage', 5, 0.87).kompakt, false, 'Voltage vid 200 synliga px: foto 36,5 px, inte kompakt');
-  assert.equal(l('voltage', 5, 0.7).kompakt, true, 'Voltage vid 160 synliga px: kompakt');
-  assert.equal(l('celestial', 5, 0.82).kompakt, false, 'Celestial vid 320 synliga px: inte kompakt');
-  assert.equal(l('celestial', 5, 0.67).kompakt, false, 'Celestial vid 260 synliga px: fem kolumner à 52 px, namnen ryms på två rader');
-  assert.equal(l('celestial', 5, 0.51).kompakt, true, 'Celestial vid 200 synliga px: kompakt');
+  assert.equal(l('voltage', 5, 0.2).kompakt, false, 'skala 0,2 ska inte ge kompaktläge');
+  assert.equal(l('voltage', 5, 1, true).kompakt, true, 'valt kompaktläge ska gälla i full storlek');
+  assert.equal(l('celestial', 5, 0.5).synlig, Math.round((4 * 78 + 70 + 8) * 0.5), 'måtten följer fortfarande skalan');
 });
 
 test('en myntsymbol: Top Gift får guldmyntet i stället för ◉', () => {
@@ -261,7 +265,11 @@ test('en myntsymbol: Top Gift får guldmyntet i stället för ◉', () => {
   const ut = rs.enkelLasbar(html, { type: 'templateTopGift', theme: 'royal', widgetScale: 0.5 });
   assert.ok(!ut.includes('◉'), 'cirkeln ska vara ersatt');
   assert.ok(ut.includes(rs.mynt), 'guldmyntet saknas');
-  assert.match(ut, /class="[^"]*\brk-lasbar rk-kompakt\b/);
+  // Royal vid skala 0,5 behåller sin design (förr blev den kompakt här); kompakt bara när det är valt.
+  assert.match(ut, /class="[^"]*\brk-lasbar"/);
+  assert.match(rs.enkelLasbar(html, { type: 'templateTopGift', theme: 'royal', widgetScale: 0.5, kompaktLage: true }), /class="[^"]*\brk-lasbar rk-kompakt\b/);
+  // Neon är kompakt i sin egen design (136 px grund) — i alla storlekar, inte bara i en.
+  for (const z of [0.3, 1, 2]) assert.match(rs.enkelLasbar(html.replace('topgift-royal', 'topgift-neon'), { type: 'templateTopGift', theme: 'neon', widgetScale: z }), /\brk-kompakt\b/);
   assert.match(ut, /font-size:max\(20px,calc\(12px \/ var\(--rk-z,1\)\)\)/, 'namnet får golvet 12 synliga px');
   assert.equal(rs.enkelLasbar('<div class="widget">x</div>', { type: 'templateTopLike' }), '<div class="widget">x</div>');
 });

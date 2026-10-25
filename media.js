@@ -1538,7 +1538,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261012-1';document.body.append(js)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261025-1';document.body.append(js);let kl=document.createElement('script');kl.src='kompakt-lage.js?v=20261025-2';kl.async=false;document.body.append(kl)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
    alls: enda anroparna av triggern var panelens testknapp har i media.js och kowrappern i
    runtime-controls.js. Kommentaren i tiktok-bridge/bridge.js pastod att klientsidan redan var klar
@@ -1809,7 +1809,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261025-1';
+  const version='20261025-2';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');
@@ -1877,7 +1877,7 @@ const giftJarProps=props;props=function(){let w=liveWidget(selected);if(!w||w.ty
 const giftJarBind=bind;bind=function(){giftJarBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftJar')return;let set=(id,key,num=false)=>{let el=document.querySelector(id);if(el)el.onchange=e=>{w[key]=num?+e.target.value:e.target.value;save();render()}};set('#jarCapacity','jarCapacity',true);set('#jarAutoReset','jarAutoResetMs',true);set('#jarAccent','jarAccent');set('#jarLight','jarLight');document.querySelector('#jarShowCounter')?.addEventListener('change',e=>{w.jarShowCounter=e.target.checked;save();render()});document.querySelector('#jarModel')?.addEventListener('change',e=>{let m=GIFT_JAR_MODELS[e.target.value];w.jarModel=e.target.value;w.jarAccent=m.accent;w.jarLight=m.light;w.jarSymbol=m.symbol;save();render()});document.querySelector('#jarDropTest')?.addEventListener('click',()=>triggerGiftJarDrop({type:'gift',giftName:'Rose',giftImage:'assets/gifts/events/0001_Rose.png',__amount:5}));document.querySelector('#jarReset')?.addEventListener('click',()=>resetGiftJar(w));document.querySelector('#jarDefaults')?.addEventListener('click',()=>{let m=GIFT_JAR_MODELS.lion;Object.assign(w,{jarModel:'lion',jarAccent:m.accent,jarLight:m.light,jarSymbol:m.symbol,jarCapacity:50,jarShowCounter:false,jarAutoResetMs:0});resetGiftJar(w);save();render()})};
 const giftJarCatalogBind=bind;bind=function(){giftJarCatalogBind();if(view!=='editor'&&view!=='overlay')return;let catalog=document.querySelector('.widget-catalog');if(!catalog||catalog.querySelector('[data-gift-jar]'))return;let section=document.createElement('section');section.dataset.giftJar='1';section.className='gift-jar-template-section';let rubrik=document.createElement('h4');rubrik.textContent='GIFT JAR \u00b7 VARJE MODELL SEPARAT';section.append(rubrik);Object.entries(GIFT_JAR_MODELS).forEach(([model,m])=>{let button=document.createElement('button');button.style.setProperty('--swatch',m.accent);let ikon=document.createElement('i');ikon.textContent=m.symbol;let text=document.createElement('span'),namn=document.createElement('b'),under=document.createElement('small');namn.textContent=m.label;under.textContent='Live gifts \u00b7 transparent';text.append(namn,under);button.append(ikon,text);button.dataset.jarModel=model;button.dataset.catalogKey='catalog:giftjar:'+model;/* Nyckeln skrivs EN gang och lases tillbaka ur knappen. Att upprepa strangen i create() gor att den publicerade nyckeln och den anvanda kan sara sig — ett prov vaktar just det. */button.onclick=()=>{let created=VyraWidgets.create(button.dataset.catalogKey);state.widgets.push(created);selected=created.id;save();render();toast(m.label+' skapad')};section.append(button)});catalog.prepend(section)};
 
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebrations]')){let css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261018-1';css.dataset.mvpCelebrations='1';document.head.append(css)}let js=document.createElement('script');js.src='battle-mvp-celebrations.js?v=20261020-23';document.body.append(js)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebrations]')){let css=document.createElement('link');css.rel='stylesheet';css.href='battle-mvp-celebrations.css?v=20261025-1';css.dataset.mvpCelebrations='1';document.head.append(css)}let js=document.createElement('script');js.src='battle-mvp-celebrations.js?v=20261020-23';document.body.append(js)});
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
@@ -1888,7 +1888,7 @@ Promise.resolve().then(()=>{
 
 // Playground-widgetar: Top Gifter Podium, Top Streak Flip, Goal Pro (egen renderare + HD-ramar i assets/playground/).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261020-20';css.dataset.playgroundWidgets='1';document.head.append(css)}
+  if(!document.querySelector('link[data-playground-widgets]')){let css=document.createElement('link');css.rel='stylesheet';css.href='playground-widgets.css?v=20261025-1';css.dataset.playgroundWidgets='1';document.head.append(css)}
   const files=['playground-assets.js?v=20261008-1','playground-widgets.js?v=20261022-2'];
   const next=i=>{if(i>=files.length)return;const s=document.createElement('script');s.src=files[i];s.async=false;s.onload=()=>next(i+1);s.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(s)};
   next(0);
@@ -1940,7 +1940,7 @@ Promise.resolve().then(()=>{const css=document.createElement('link');css.rel='st
 
 // Fan Level 50-tavlan: milstolpe-kort med live-roster + manuell lista. Renderaren definierar
 // VyraFanLevel50, sessionen matar den — ladda i den ordningen.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261014-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261020-23','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const css=document.createElement('link');css.rel='stylesheet';css.href='fan-level-50.css?v=20261025-1';css.dataset.fl50='1';document.head.append(css)}const files=['fan-level-50.js?v=20261020-23','fan-level-50-session.js?v=20260929-1'];const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0)});
 
 // Dold betyder dold, oavsett vilken renderare som ritade widgeten. Laddas sist i svansen men beror
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
@@ -1978,4 +1978,4 @@ Promise.resolve().then(()=>{if(new URLSearchParams(location.search).has('overlay
 // Bildstorlek, Radavstånd och Riktning i Ranking, Battle MVP och Top Gifter Podium (2026-10-23).
 // Lägger reglagen i familjernas panelposter och märker widgetens rotnod ytterst i wh-kedjan; en
 // orörd widget får ingen klass och ritas exakt som förut. Laddas även i overlay-laget.
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-vy-bildrad]')){let css=document.createElement('link');css.rel='stylesheet';css.href='vyra-bildrad.css?v=20261023-1';css.dataset.vyBildrad='1';document.head.append(css)}let js=document.createElement('script');js.src='vyra-bildrad.js?v=20261023-2';document.body.append(js)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-vy-bildrad]')){let css=document.createElement('link');css.rel='stylesheet';css.href='vyra-bildrad.css?v=20261023-1';css.dataset.vyBildrad='1';document.head.append(css)}let js=document.createElement('script');js.src='vyra-bildrad.js?v=20261025-1';document.body.append(js)});

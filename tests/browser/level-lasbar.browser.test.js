@@ -9,11 +9,11 @@
 // smala kolumner.
 //
 // Proven låser:
-//   1. minsta namn- och nivåstorlek, 12 designpixlar EFTER zoom, i alla layouter och storlekar
+//   1. minsta namn- och nivåstorlek, 12 designpixlar EFTER zoom, i alla layouter — med valt kompaktläge
 //   2. namnplattan (mörk, rundad, tunn kant, fet vit text) vid smal bredd
 //   3. att duo-layouterna inte klipps och att profilbilden syns i båda
-//   4. kompaktläget: tänds under tröskeln (bredd ELLER zoom), profilbild >= 55 % av bredden,
-//      nivån som "LV. 9" — och tänds INTE i stor vy
+//   4. kompaktläget är ett uttryckligt val (w.kompaktLage, granskningen 2026-10-25): storleken tänder
+//      det aldrig och kortet krymper likformigt; valt ger det profilbild >= 55 % och "LV. 9"
 //
 // VARFÖR RIKTIG WEBBLÄSARE: allt här är pixelmått och container-enheter; jsdom svarar 0.
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -70,10 +70,10 @@ test.after(async () => {
 
 /* Bygger widgeten ur katalogen, tänder den utan kön (klassen sätts direkt — det är synligheten
    och layouten som mäts, inte triggern) och läser av allt som proven behöver. */
-function mat(nyckel, bredd, zoom) {
-  return sida.evaluate(([nyckel, bredd, zoom]) => {
+function mat(nyckel, bredd, zoom, over) {
+  return sida.evaluate(([nyckel, bredd, zoom, over]) => {
     state.widgets.length = 0;
-    const w = VyraWidgets.create(nyckel);
+    const w = Object.assign(VyraWidgets.create(nyckel), over || {});
     w.x = 20; w.y = 20; if (bredd) w.width = bredd; w.widgetScale = zoom;
     w.gifterName = w.fanName = 'NovaStorm_99'; w.gifterLevel = w.fanLevel = 9;
     state.widgets.push(w); selected = null; render();
@@ -99,14 +99,18 @@ function mat(nyckel, bredd, zoom) {
       rubrik: text(box.querySelector('h2')), under: text(box.querySelector('p')),
       bild: bild ? { b: bild.width, vanster: bild.left - br.left, hoger: br.right - bild.right } : null,
       nivaText: nivaEl ? nivaEl.textContent.trim() : null };
-  }, [nyckel, bredd, zoom]);
+  }, [nyckel, bredd, zoom, over || null]);
 }
 
-test('minsta storlek: namn och nivå är minst 12 designpixlar efter zoom i alla layouter', { skip }, async () => {
+// KOMPAKTLÄGET ÄR ETT VAL (granskningen 2026-10-25). Golvet på 12 px och den stora bilden gäller när
+// streamern valt Kompakt läge; utan valet krymper hela kortet likformigt med storleken.
+const VALT = { kompaktLage: true };
+
+test('minsta storlek med valt kompaktläge: namn och nivå är minst 12 designpixlar efter zoom i alla layouter', { skip }, async () => {
   const fel = [];
   for (const nyckel of NYCKLAR) {
     for (const [bredd, zoom] of [[120, 1], [160, 1], [200, 1], [260, 1], [320, 1], [0, 0.5], [0, 0.7]]) {
-      const m = await mat(nyckel, bredd, zoom);
+      const m = await mat(nyckel, bredd, zoom, VALT);
       const fall = `${nyckel} bredd ${bredd || 'standard'} zoom ${zoom}`;
       if (!m.namn) fel.push(`${fall}: namnet syns inte`);
       else if (m.namn.px < 11.95) fel.push(`${fall}: namnet ${m.namn.px} px`);
@@ -149,10 +153,24 @@ test('duo-layouterna klipps inte och visar profilbilden', { skip }, async () => 
   }
 });
 
-test('kompaktläget: tänds vid smal bredd och vid liten zoom, stor bild, LV. 9', { skip }, async () => {
+test('utan valt kompaktläge: inget kompakt i någon storlek, och namnet krymper med kortet', { skip }, async () => {
+  const fel = [];
+  for (const nyckel of NYCKLAR) {
+    const hel = await mat(nyckel, 0, 1);
+    for (const [bredd, zoom] of [[120, 1], [160, 1], [0, 0.5], [0, 0.7]]) {
+      const m = await mat(nyckel, bredd, zoom);
+      const fall = `${nyckel} bredd ${bredd || 'standard'} zoom ${zoom}`;
+      if (m.kompakt) fel.push(`${fall}: kompaktläget tändes av storleken`);
+      if (!bredd && hel.namn && m.namn && Math.abs(m.namn.px / hel.namn.px - zoom) > zoom * 0.06 + 0.3 / hel.namn.px) fel.push(`${fall}: namnet ${hel.namn.px} → ${m.namn.px} px, inte likformigt`);
+    }
+  }
+  assert.deepEqual(fel, []);
+});
+
+test('valt kompaktläge: stor bild och LV. 9 vid smal bredd och liten zoom', { skip }, async () => {
   for (const nyckel of NYCKLAR) {
     for (const [bredd, zoom] of [[120, 1], [160, 1], [200, 1], [0, 0.5], [0, 0.6]]) {
-      const m = await mat(nyckel, bredd, zoom);
+      const m = await mat(nyckel, bredd, zoom, VALT);
       const fall = `${nyckel} bredd ${bredd || 'standard'} zoom ${zoom}`;
       assert.ok(m.kompakt, `${fall}: kompaktläget tändes inte`);
       assert.ok(m.bild && m.bild.b >= 0.55 * m.bredd - 0.5, `${fall}: profilbilden ${m.bild && m.bild.b.toFixed(1)} av ${m.bredd.toFixed(1)}`);

@@ -37,7 +37,9 @@
 
   function rot(w, d, o, inner) {
     const k = ((Number(w.width) || BAS[d]) / BAS[d]).toFixed(3);
-    const z = ((Number(w.widgetScale) || 1) * k).toFixed(3);
+    // SAMMA KOMPOSITION I ALLA STORLEKAR (granskningen 2026-10-25): golven i CSS:en gäller designen i
+    // full storlek, inte den totala förstoringen — annars växer texten relativt resten när widgeten krymps.
+    const z = '1';
     const g = ((w.streakGlow ?? 55) / 55 * 0.8).toFixed(3);
     // Gift-redigerarens kryssrutor och typsnitt (media.js "GIFT EDITOR · VISA / TA BORT") gäller även här.
     const utan = [['showGift', 'utan-gava'], ['showProfile', 'utan-profil'], ['showDataName', 'utan-namn'], ['showDataValue', 'utan-varde']]

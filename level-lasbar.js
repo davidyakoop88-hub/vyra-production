@@ -35,16 +35,28 @@
 
   function tal(v, reserv) { const n = Number(v); return Number.isFinite(n) && n > 0 ? n : reserv; }
 
-  /* Effektiv bredd i designpixlar och den bredd kortet ska ritas med (före zoom). */
+  /* Effektiv bredd i designpixlar och den bredd kortet ska ritas med (före zoom).
+   *
+   * STORLEKEN VÄLJER ALDRIG DESIGN (granskningen 2026-10-25). lv-kompakt tändes förr av sig självt
+   * under 210 effektiva designpixlar — vid Storlek 75 % på Fan Level Hero försvann vingar, hjärtan,
+   * banner och pulskurvor och kortet blev en kolumn. Nu är kompaktläget bara ett uttryckligt val
+   * (`w.kompaktLage`, kompakt-lage.js). En förminskning skalar hela kortet likformigt med zoom.
+   *
+   * BREDD-FÄLTET under designens minsta bredd (KOMPAKT_UNDER) ger inte längre en annan layout. Kortet
+   * ritas i minsta bredden och krymps med en extra zoom (`extra`), så att det tar den begärda platsen
+   * med samma komposition. Layouter med fast bredd ritas alltid i sin egen bredd utanför kompaktläget. */
   function matt(w) {
     const typ = w && w.type;
     const layout = typ === 'templateGifterLevel' ? (w.gifterLayout || 'profile') : (w.fanLayout || 'hero');
     const fast = (FAST[typ] || {})[layout];
+    const kompakt = w.kompaktLage === true;
     const begard = tal(w.width, STANDARD[typ] || 260);
-    const bas = fast ? (begard < KOMPAKT_UNDER ? begard : fast) : begard;
+    // Fasta layouter ritas i sin egen bredd som förut (Bredd-fältet låses av CSS:en), oavsett om fältet
+    // säger mer eller mindre — under KOMPAKT_UNDER krymps det fasta kortet i stället med zoom.
+    const bas = kompakt ? (fast ? (begard < KOMPAKT_UNDER ? begard : fast) : begard) : (fast || Math.max(begard, KOMPAKT_UNDER));
+    const extra = kompakt || begard >= KOMPAKT_UNDER ? 1 : begard / KOMPAKT_UNDER;
     const z = Math.max(0.1, tal(w.widgetScale, 1));
-    const effektiv = bas * z;
-    return { bas, z, effektiv, kompakt: effektiv < KOMPAKT_UNDER };
+    return { bas, z, extra, effektiv: bas * z * extra, kompakt };
   }
 
   const tidigareWh = window.wh;
@@ -52,9 +64,17 @@
     const html = tidigareWh.apply(this, arguments);
     if (!w || (w.type !== 'templateGifterLevel' && w.type !== 'templateFanLevel') || typeof html !== 'string') return html;
     const m = matt(w);
-    return html
+    let ut = html
       .replace('class="widget ', `class="widget lv-las${m.kompakt ? ' lv-kompakt' : ''} `)
-      .replace('style="', `style="--lv-z:${+m.z.toFixed(3)};--lv-b:${Math.round(m.bas)}px;`);
+      // --lv-z bär textgolven (aldrig under 12 synliga px). Utanför det valda kompaktläget är den 1, så att
+      // golven gäller kortet i full storlek och zoomen skalar hela kompositionen likformigt.
+      .replace('style="', `style="--lv-z:${m.kompakt ? +(m.z * m.extra).toFixed(3) : 1};--lv-b:${Math.round(m.bas)}px;`);
+    // Smalare än designens minsta bredd: samma kort, krympt med zoom (zoom multiplicerar med widgetScale).
+    if (m.extra !== 1) {
+      ut = ut.replace(/(style="[^"]*?)\bzoom:\s*([\d.]+)/, (_, a, z) => `${a}zoom:${+(Number(z) * m.extra).toFixed(4)}`)
+        .replace(/(style="[^"]*?(?:^|;|"))\s*width:\s*[\d.]+px/, (_, a) => `${a}width:${Math.round(m.bas)}px`);
+    }
+    return ut;
   };
 
   /* NIVÅTEXTEN I DELAR. gifterSattNiva skrev "LV. 1 → 9" som en enda textnod, så kompaktläget

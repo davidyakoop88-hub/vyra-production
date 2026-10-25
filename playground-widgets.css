@@ -468,24 +468,24 @@
 .pgw .stk-nm{font-size:max(54px,calc(var(--nmmin) / var(--pgs,1)));color:var(--t,#fff);max-width:100%;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;line-height:1.18;text-shadow:0 2px 6px #000c}
 .pgw .stk-info .stk-pill b{font-size:max(44px,calc(var(--cntmin) / var(--pgs,1)))}
-@container pgstreak (max-width:220px){
-  .pgw .stk{--nmmin:14px;--cntmin:13px}
-  .pgw .stk-stage{height:660px}
-  .pgw .stk-frame{display:none}
-  .pgw .stk-ring{display:none}
-  .pgw .stk-av{left:70px!important;top:20px!important;width:620px!important;height:620px!important;border-radius:50%;
+/* Kompaktläget är ett uttryckligt val (w.kompaktLage → .vyra-kompaktlage, kompakt-lage.js), aldrig storleken. */
+.widget.templatePgStreak.vyra-kompaktlage .pgw .stk{--nmmin:14px;--cntmin:13px}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-stage{height:660px}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-frame{display:none}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-ring{display:none}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-av{left:70px!important;top:20px!important;width:620px!important;height:620px!important;border-radius:50%;
     box-shadow:0 0 0 12px #fff,0 0 0 40px var(--a),0 0 0 48px rgba(10,6,16,.6),
       0 0 70px 44px color-mix(in srgb,var(--a) 60%,transparent)}
-  .pgw .stk-gift{left:520px!important;top:470px!important;width:190px!important;height:190px!important;
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-gift{left:520px!important;top:470px!important;width:190px!important;height:190px!important;
     box-shadow:0 0 0 10px #fff,0 0 0 26px var(--a),0 0 30px 14px rgba(0,0,0,.6)}
-  .pgw .stk-gift .ge{width:150px!important;height:150px!important}
-  .pgw .stk.roar .stk-av{animation:pg-stkroarc calc(.55s/var(--sp)) ease-out}
-  .pgw .stk-info{padding:14px 26px 16px;border-radius:40px;gap:2px;max-width:900px;position:relative;left:50%;transform:translateX(-50%);margin:8px 0 0;
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-gift .ge{width:150px!important;height:150px!important}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk.roar .stk-av{animation:pg-stkroarc calc(.55s/var(--sp)) ease-out}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-info{padding:14px 26px 16px;border-radius:40px;gap:2px;max-width:900px;position:relative;left:50%;transform:translateX(-50%);margin:8px 0 0;
     border-width:max(5px,calc(1.5px / var(--pgs,1)))}
-  .pgw .stk-info .stk-pill{background:none;border:0;box-shadow:none;padding:0;gap:14px}
-  .pgw .stk-info .stk-pill small{display:none}
-  .pgw .stk-info .stk-pill svg{width:calc(var(--cntmin) * .9 / var(--pgs,1));height:calc(var(--cntmin) * .9 / var(--pgs,1))}
-}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-info .stk-pill{background:none;border:0;box-shadow:none;padding:0;gap:14px}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-info .stk-pill small{display:none}
+  .widget.templatePgStreak.vyra-kompaktlage .pgw .stk-info .stk-pill svg{width:calc(var(--cntmin) * .9 / var(--pgs,1));height:calc(var(--cntmin) * .9 / var(--pgs,1))}
+
 @keyframes pg-stkroarc{0%{filter:brightness(1)}30%{filter:brightness(1.3) drop-shadow(0 0 40px var(--a))}100%{filter:brightness(1)}}
 
 /* ===== Top Gifter Podium, justerat i playgrounden 2026-10-17 =====

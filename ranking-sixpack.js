@@ -102,12 +102,16 @@
   });
   const MIN_FOTO = 36, MIN_KOLUMN = 44, MIN_KOMPAKT_BREDD = 112;
   const skalaFor = w => { const z = Number(w && w.widgetScale); return Number.isFinite(z) && z > 0 ? Math.min(4, Math.max(0.2, z)) : 1; };
-  function lasbarhet(id, n, z) {
+  // STORLEKEN VÄLJER ALDRIG DESIGN (granskningen 2026-10-25, 176 modeller). Kompaktläget slog förr
+  // till av sig självt när foto/kolumn × zoom blev för litet — Guld/Silver/Brons tappade kronor och
+  // metallkomposition vid 50 %, Voltage bytte utseende vid 75 %. Nu skalar en förminskning hela
+  // kompositionen likformigt (zoom), och kompaktläget finns bara som ett uttryckligt val i panelen
+  // (`w.kompaktLage`, kompakt-lage.js). `kompaktVal` är det valet; skalan påverkar bara måtten.
+  function lasbarhet(id, n, z, kompaktVal) {
     const g = GEOMETRI[id];
     if (!g) return { z, synlig: 0, kompakt: false };
     const grund = g.bredd || ((n - 1) * (g.kolumn + g.gap) + (g.etta || g.kolumn) + g.kant);
-    const kompakt = g.foto ? g.foto * z < MIN_FOTO : g.kolumn * z < MIN_KOLUMN;
-    return { z, synlig: Math.round(grund * z), kompakt };
+    return { z, synlig: Math.round(grund * z), kompakt: kompaktVal === true };
   }
 
 
@@ -280,14 +284,17 @@
     // Top Points skalade med sina egna klasser (topcoins-v2.css/toppoints-v2.css transform), och
     // de klasserna tas bort ovan. Uppmätt 2026-10-12: Top Coins Voltage var 228 px bred vid varje
     // skala, och handtagets dragning hoppade tillbaka vid nästa render(). En zoom, en sanning.
-    const l = lasbarhet(id, antal(w), skalaFor(w));
+    const l = lasbarhet(id, antal(w), skalaFor(w), w.kompaktLage);
     open = open.replace(/style="([^"]*)"/, (_, st) => {
       // --tc-scale/--tp-scale följer med från topcoins-v2/toppoints-v2 men läses inte längre av
       // någon regel (klasserna är borta). Kvar i stilen fick de VyraTransform.satSkala att skriva
       // variabeln i stället för zoomen: under handtagsdraget syntes ingenting och widgeten hoppade
       // vid släppet (Royal Rose 65 px, verifieringen 2026-10-18).
       const utan = st.replace(/(^|;)\s*(?:zoom|--tc-scale|--tp-scale):[^;]*;?/g, '$1');
-      return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${l.z};--rk6-mot:${+(1 / l.z).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
+      // --rk6-z bär textgolven (aldrig under 12 synliga px). Utanför det valda kompaktläget är den 1:
+      // golven gäller designen i full storlek och zoomen skalar hela kompositionen likformigt.
+      const gz = l.kompakt ? l.z : 1;
+      return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${gz};--rk6-mot:${+(1 / gz).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
     });
     if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');
     if (profilram(w)) {
@@ -316,11 +323,14 @@
     const mynt = w.type === 'templateTopCoins' && /\bvyra-topcoins-new\b/.test(html);
     if (!gava && !mynt) return html;
     // Halo/Signal Orbit skalar med transform (--tc-scale), Top Gift med zoom — samma fält.
+    // Kompakt avgörs av DESIGNEN i full storlek, aldrig av skalan eller bredden: Top Gift neon
+    // (136 px) är kompakt redan vid 100 % och förblir det i alla storlekar; royal (222) och
+    // Halo/Signal Orbit (230) är det aldrig, utom när streamern själv valt kompaktläget.
     const z = skalaFor(w);
-    const grund = gava ? (KORT_GRUND[w.theme] || KORT_GRUND.royal) : Math.max(150, Number(w.width) || 230);
-    const kompakt = grund * z < KORT_KOMPAKT;
+    const grund = gava ? (KORT_GRUND[w.theme] || KORT_GRUND.royal) : 230;
+    const kompakt = w.kompaktLage === true || grund < KORT_KOMPAKT;
     let ut = html.replace(/^(\s*<div\b[^>]*?)class="([^"]*)"/, (_, a, cls) => `${a}class="${cls} rk-lasbar${kompakt ? ' rk-kompakt' : ''}"`)
-      .replace(/^(\s*<div\b[^>]*?)style="/, `$1style="--rk-z:${z};`);
+      .replace(/^(\s*<div\b[^>]*?)style="/, `$1style="--rk-z:${w.kompaktLage === true ? z : 1};`);
     if (gava) {
       // Namnets storlek är streamerns eget val (dataSize, inline) — det står kvar, men aldrig under
       // 12 synliga px. Myntet ersätter "◉" i värdet.

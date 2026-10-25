@@ -42,11 +42,11 @@ test('ingen klientfil pekar längre på den gamla PNG:n som profilreserv', () =>
 
 test('cachebustarna höjdes med filerna', () => {
   const media = las('media.js'), html = las('studio.html');
-  assert.match(media, /const version='20261025-1'/, 'premiumbunten (premium-final, runtime-controls)');
+  assert.match(media, /const version='20261025-2'/, 'premiumbunten (premium-final, runtime-controls)');
   assert.match(media, /playground-widgets\.js\?v=20261022-2/);
-  assert.match(media, /playground-widgets\.css\?v=20261020-20/, 'streak-pillens siffra');
+  assert.match(media, /playground-widgets\.css\?v=20261025-1/, 'streak-pillens siffra');
   assert.match(las('playground-widgets.css'), /\.stk-pill b\{[^}]*font:800 44px\/1 var\(--font\)\}/);
   assert.match(media, /last-x-alerts\.js\?v=20261023-15/);  // 20261020-9: svenska standardmeddelanden
   assert.match(media, /gift-fireworks\.js\?v=20261021-7/);  // 20261019-1: fwSpelaPa (PR 12)
-  assert.match(html, /media\.js\?v=20261025-15/);
+  assert.match(html, /media\.js\?v=20261025-16/);
 });
