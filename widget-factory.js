@@ -365,6 +365,13 @@
       boxMinuter: 5, boxKvarMs: 300000, boxKor: false, boxSlut: 0, boxRond: 1,
       boxVolym: 70, boxRost: true, boxRostFran: 10, boxKlocka: true, boxVisaKlocka: true, boxAlertSkala: 100
     }),
+    // Hjärtan & moln (hjartmoln.js): en transparent 9:16-effekt över hela duken (432 × 768) som
+    // spelas vid likes tills streamern väljer annat. Profilhjärtan har porträttlagret påslaget.
+    'heartcloud': v => ({
+      type: 'templateHeartCloud', x: 0, y: 0, width: 432, title: 'Hjärtan & moln · ' + v.label,
+      hmVariant: v.variant, hmLage: 'likes', hmMinLikes: 1, hmHall: 8, hmProfiler: v.variant === 'profilhjartan',
+      hmOpacitet: 100, hmHastighet: 1, hmSpegla: false
+    }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
@@ -717,6 +724,12 @@
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
     'boxgame': () => ['boxgame', {}],
+    'heartcloud': parts => {
+      const namn = { profilhjartan: 'Profilhjärtan', fallande: 'Fallande hjärtan', hjartmoln: 'Hjärtmoln', glodande: 'Glödande hjärtmoln',
+        kristall: 'Kristallhjärtan', stjarnstoft: 'Stjärnstoft', blixt: 'Blixtmoln', organiskt: 'Organiskt moln', levande: 'Levande moln' };
+      if (!namn[parts[0]]) throw new Error('Okänd variant för Hjärtan & moln: ' + parts[0]);
+      return ['heartcloud', { variant: parts[0], label: namn[parts[0]] }];
+    },
     'pgpodium': parts => parts[0] ? ['pgpodium', { frameId: parts[0], frame: pick('pgpodium.frame', parts[0], 'HD-ram för Top Gifter Podium') }] : ['pgpodium', {}],
     'pgstreak': parts => parts[0] ? ['pgstreak', { modelId: parts[0], model: pick('pgstreak.model', parts[0], 'modell för Top Streak Flip') }] : ['pgstreak', {}],
     'pggoal': parts => parts[0] ? ['pggoal', { designId: parts[0], design: pick('pggoal.design', parts[0], 'design för Goal Pro') }] : ['pggoal', {}],

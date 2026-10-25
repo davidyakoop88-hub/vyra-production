@@ -216,6 +216,8 @@
       // delade gruppen fanns Typsnitt två gånger, Textstorlek två gånger (100 % och 32px) och
       // Skugga X/Y två gånger i samma panel. Två reglage för samma sak är ett glapp.
       if (w.type === 'templateCustomText') return ut;
+      // HJÄRTAN & MOLN (hjartmoln.js) är ett videoklipp och porträtt utan text — gruppen hade inget att styra.
+      if (w.type === 'templateHeartCloud') return ut;
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.

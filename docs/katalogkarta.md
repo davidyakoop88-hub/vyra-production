@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `c14a90d0`
+Commit: `373300fd`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **177** |
-| Sektioner | 27 |
-| Med katalognyckel | 177 / 177 |
-| Med shadow DOM-miniatyr | 138 / 177  ⚠️ |
-| Ritar sin design | 177 / 177 |
+| Kort totalt | **186** |
+| Sektioner | 28 |
+| Med katalognyckel | 186 / 186 |
+| Med shadow DOM-miniatyr | 147 / 186  ⚠️ |
+| Ritar sin design | 186 / 186 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -65,6 +65,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
+| HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | — | — |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 
@@ -367,6 +368,20 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Boxgame-klocka | `catalog:boxgame` | ✓ | ✓ | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
+
+### HJÄRTAN & MOLN
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Profilhjärtan | `catalog:heartcloud:profilhjartan` | ✓ | ✓ | — | — |
+| Fallande hjärtan | `catalog:heartcloud:fallande` | ✓ | ✓ | — | — |
+| Hjärtmoln | `catalog:heartcloud:hjartmoln` | ✓ | ✓ | — | — |
+| Glödande hjärtmoln | `catalog:heartcloud:glodande` | ✓ | ✓ | — | — |
+| Kristallhjärtan | `catalog:heartcloud:kristall` | ✓ | ✓ | — | — |
+| Stjärnstoft | `catalog:heartcloud:stjarnstoft` | ✓ | ✓ | — | — |
+| Blixtmoln | `catalog:heartcloud:blixt` | ✓ | ✓ | — | — |
+| Organiskt moln | `catalog:heartcloud:organiskt` | ✓ | ✓ | — | — |
+| Levande moln | `catalog:heartcloud:levande` | ✓ | ✓ | — | — |
 
 ### SKATTKISTA · LIVE
 

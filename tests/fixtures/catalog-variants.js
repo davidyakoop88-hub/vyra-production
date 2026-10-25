@@ -19,6 +19,9 @@ const CONTRACT = [
   { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
   { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Boxgame-klocka', key: 'catalog:boxgame' },
+  // Hjärtan & moln (hjartmoln.js): en nyckel per gallerivariant, samma fabriksbyggare.
+  { name: 'Hjärtan & moln · Profilhjärtan', key: 'catalog:heartcloud:profilhjartan' },
+  { name: 'Hjärtan & moln · Glödande hjärtmoln', key: 'catalog:heartcloud:glodande' },
   { name: 'Top Gifter Podium', key: 'catalog:pgpodium' },
   { name: 'Top Streak Flip', key: 'catalog:pgstreak' },
   { name: 'Goal Pro', key: 'catalog:pggoal' },

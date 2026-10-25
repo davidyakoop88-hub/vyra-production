@@ -270,7 +270,7 @@ body{background:radial-gradient(circle at 18% -10%,#6c15962b,transparent 32%),ra
 html.overlay-output,html.overlay-output body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:transparent!important}
 html.overlay-output body{display:block!important;grid-template-columns:none!important}
 html.overlay-output body>aside,html.overlay-output body>main>header,html.overlay-output body>dialog,html.overlay-output .toast,html.overlay-output .overlay-link-bar,html.overlay-output .elements,html.overlay-output .properties,html.overlay-output .editor-toolbar{display:none!important}
-html.overlay-output body>main,html.overlay-output #view,html.overlay-output .editor-shell,html.overlay-output .workarea{display:block!important;position:static!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;overflow:hidden!important}
+html.overlay-output body>main,html.overlay-output #view,html.overlay-output .editor-shell,html.overlay-output .workarea{display:block!important;position:static!important;width:100%!important;height:100%!important;min-width:0!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;overflow:hidden!important;box-shadow:none!important}
 html.overlay-output .canvas{position:absolute!important;margin:0!important;border:0!important;outline:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important;transform-origin:top left!important}
 html.overlay-output .widget.selected{outline:0!important}
 html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none!important}

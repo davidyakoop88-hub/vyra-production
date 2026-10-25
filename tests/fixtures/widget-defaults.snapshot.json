@@ -675,5 +675,35 @@
     "giftCount": 6,
     "spelTema": "fortnite",
     "spelDel": "kampanj"
+  },
+  "catalog:heartcloud:profilhjartan": {
+    "type": "templateHeartCloud",
+    "x": 0,
+    "y": 0,
+    "width": 432,
+    "title": "Hjärtan & moln · Profilhjärtan",
+    "hmVariant": "profilhjartan",
+    "hmLage": "likes",
+    "hmMinLikes": 1,
+    "hmHall": 8,
+    "hmProfiler": true,
+    "hmOpacitet": 100,
+    "hmHastighet": 1,
+    "hmSpegla": false
+  },
+  "catalog:heartcloud:glodande": {
+    "type": "templateHeartCloud",
+    "x": 0,
+    "y": 0,
+    "width": 432,
+    "title": "Hjärtan & moln · Glödande hjärtmoln",
+    "hmVariant": "glodande",
+    "hmLage": "likes",
+    "hmMinLikes": 1,
+    "hmHall": 8,
+    "hmProfiler": false,
+    "hmOpacitet": 100,
+    "hmHastighet": 1,
+    "hmSpegla": false
   }
 }
