@@ -570,3 +570,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Hjärtan & moln: nio nya katalognycklar (heartcloud) behöver referensbilder
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 9 av 177 (filter: heartcloud) — catalog:heartcloud:blixt, catalog:heartcloud:fallande, catalog:heartcloud:glodande, catalog:heartcloud:hjartmoln, catalog:heartcloud:kristall, catalog:heartcloud:levande, catalog:heartcloud:organiskt, catalog:heartcloud:profilhjartan, catalog:heartcloud:stjarnstoft
+
+## 2026-10-25 — 2 referenser skrivna
+
+- **Motiv:** Social-alert: två nya katalognycklar (Glanskort och Ikon som öppnas)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 170 (filter: socialalert) — catalog:socialalert:glans, catalog:socialalert:kapsel

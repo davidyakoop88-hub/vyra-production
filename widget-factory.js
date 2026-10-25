@@ -372,6 +372,16 @@
       hmVariant: v.variant, hmLage: 'likes', hmMinLikes: 1, hmHall: 8, hmProfiler: v.variant === 'profilhjartan',
       hmOpacitet: 100, hmHastighet: 1, hmSpegla: false
     }),
+    // Social-alert (social-alert.js): växlar mellan streamerns sociala konton. Två designer.
+    'socialalert': v => ({
+      type: 'templateSocialAlert', x: 40, y: 80, width: 260, title: 'Social-alert',
+      saDesign: v.design, saSekunder: 5, saRotera: true, saStart: 0, saIndex: 0,
+      saKonton: [
+        { id: 'k1', plattform: 'Instagram', namn: '@dittnamn', lank: '', aktiv: true },
+        { id: 'k2', plattform: 'TikTok', namn: '@dittnamn', lank: '', aktiv: true },
+        { id: 'k3', plattform: 'YouTube', namn: '@dinkanal', lank: '', aktiv: true }
+      ]
+    }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
@@ -729,6 +739,11 @@
         kristall: 'Kristallhjärtan', stjarnstoft: 'Stjärnstoft', blixt: 'Blixtmoln', organiskt: 'Organiskt moln', levande: 'Levande moln' };
       if (!namn[parts[0]]) throw new Error('Okänd variant för Hjärtan & moln: ' + parts[0]);
       return ['heartcloud', { variant: parts[0], label: namn[parts[0]] }];
+    },
+    'socialalert': parts => {
+      const design = parts[0] || 'kapsel';
+      if (design !== 'glans' && design !== 'kapsel') throw new Error('Okänd design för Social-alert "' + design + '" — giltiga: glans, kapsel');
+      return ['socialalert', { design }];
     },
     'pgpodium': parts => parts[0] ? ['pgpodium', { frameId: parts[0], frame: pick('pgpodium.frame', parts[0], 'HD-ram för Top Gifter Podium') }] : ['pgpodium', {}],
     'pgstreak': parts => parts[0] ? ['pgstreak', { modelId: parts[0], model: pick('pgstreak.model', parts[0], 'modell för Top Streak Flip') }] : ['pgstreak', {}],

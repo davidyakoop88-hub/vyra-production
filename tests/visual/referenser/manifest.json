@@ -6,7 +6,7 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 212,
+ "antal": 214,
  "senaste": {
   "motiv": "Hjärtan & moln: nio nya katalognycklar (heartcloud) behöver referensbilder",
   "nycklar": 9,
@@ -860,6 +860,14 @@
   },
   "catalog:heartcloud:stjarnstoft": {
    "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:socialalert:glans": {
+   "matt": "260x64",
+   "fyllnad": 100
+  },
+  "catalog:socialalert:kapsel": {
+   "matt": "260x64",
    "fyllnad": 100
   }
  }

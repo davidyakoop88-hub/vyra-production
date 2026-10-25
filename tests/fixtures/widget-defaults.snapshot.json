@@ -411,6 +411,76 @@
     "boxVisaKlocka": true,
     "boxAlertSkala": 100
   },
+  "catalog:socialalert:glans": {
+    "type": "templateSocialAlert",
+    "x": 40,
+    "y": 80,
+    "width": 260,
+    "title": "Social-alert",
+    "saDesign": "glans",
+    "saSekunder": 5,
+    "saRotera": true,
+    "saStart": 0,
+    "saIndex": 0,
+    "saKonton": [
+      {
+        "id": "k1",
+        "plattform": "Instagram",
+        "namn": "@dittnamn",
+        "lank": "",
+        "aktiv": true
+      },
+      {
+        "id": "k2",
+        "plattform": "TikTok",
+        "namn": "@dittnamn",
+        "lank": "",
+        "aktiv": true
+      },
+      {
+        "id": "k3",
+        "plattform": "YouTube",
+        "namn": "@dinkanal",
+        "lank": "",
+        "aktiv": true
+      }
+    ]
+  },
+  "catalog:socialalert:kapsel": {
+    "type": "templateSocialAlert",
+    "x": 40,
+    "y": 80,
+    "width": 260,
+    "title": "Social-alert",
+    "saDesign": "kapsel",
+    "saSekunder": 5,
+    "saRotera": true,
+    "saStart": 0,
+    "saIndex": 0,
+    "saKonton": [
+      {
+        "id": "k1",
+        "plattform": "Instagram",
+        "namn": "@dittnamn",
+        "lank": "",
+        "aktiv": true
+      },
+      {
+        "id": "k2",
+        "plattform": "TikTok",
+        "namn": "@dittnamn",
+        "lank": "",
+        "aktiv": true
+      },
+      {
+        "id": "k3",
+        "plattform": "YouTube",
+        "namn": "@dinkanal",
+        "lank": "",
+        "aktiv": true
+      }
+    ]
+  },
   "catalog:pgpodium": {
     "type": "templatePgPodium",
     "x": 26,

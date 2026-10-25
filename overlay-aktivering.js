@@ -46,7 +46,7 @@
   const AV = !OVERLAY || window.__vyraVisaUtanAktivering === true;
 
   // Boxgame-klockan visar streamerns egen rond, ingen handelse - den star i OBS fran forsta bildrutan.
-  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock']);
+  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock', 'templateSocialAlert']);
   const NYCKEL = 'vyra-aktiverade-widgetar';
   // Utan sandningsidentitet (lokalt lage, flaggan av) finns ingen live:start som nollstaller.
   // Da galler aktiveringen hogst en arbetsdag.
