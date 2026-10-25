@@ -108,3 +108,38 @@ test('like-grenen refererar inte value alls', { timeout: 5000 }, () => {
   assert.match(branch, /Number\(e\.count \?\? e\.likes\)/);
   assert.ok(!/e\.value/.test(branch), 'like-grenen läser value igen — det är rumstotalen');
 });
+
+// TIKTOK SKICKAR INTE VARJE LIKE (David 2026-10-23: Top Likes 2 929 mot TikToks 6 289 för samma
+// tittare). Rumstotalen används ALDRIG som inkrement — men hur mycket den steg mot det som kom
+// fram är andelen TikTok inte skickade, och den skalar talen vid visning.
+test('topplistan skalar likes med rummets total när TikTok bara skickat en del', { timeout: 5000 }, () => {
+  const board = leaderboard();
+  let total = 5000;
+  board.like({ username: 'fadwa', count: 1, value: total });           // startpunkten
+  for (let i = 0; i < 60; i++) {
+    total += 6; board.like({ username: 'fadwa', count: 1, value: total });   // rummet steg 6, vi fick 1 + 2
+    board.like({ username: 'zeus', count: 2, points: total });          // lokala vägen bär points
+  }
+  // Mottaget 180, rummet steg 360: hälften kom fram.
+  assert.equal(board.likesFor('fadwa'), 122, 'fadwa: (1 + 60) × 2');
+  assert.equal(board.likesFor('zeus'), 240, 'zeus: 120 × 2');
+});
+
+test('ingen skalning förrän 100 likes kommit fram, och aldrig över ×20', { timeout: 5000 }, () => {
+  const fa = leaderboard();
+  fa.like({ count: 1, value: 1000 });
+  for (let i = 1; i <= 50; i++) fa.like({ count: 1, value: 1000 + i * 9 });
+  assert.equal(fa.likesFor(), 51, '50 mottagna räcker inte för en kvot');
+
+  const tak = leaderboard();
+  tak.like({ count: 1, value: 1000 });
+  for (let i = 1; i <= 100; i++) tak.like({ count: 1, value: 1000 + i * 500 });
+  assert.equal(tak.likesFor(), 101 * 20, 'en orimlig total blåste upp listan förbi taket');
+});
+
+test('test- och simulerade likes rör inte rumsräkningen', { timeout: 5000 }, () => {
+  const board = leaderboard();
+  board.like({ count: 1, value: 1000 });
+  for (let i = 1; i <= 120; i++) board.like({ count: 1, value: 1000 + i * 5, __simulerad: true });
+  assert.equal(board.likesFor(), 121, 'en simulerad total skalade de riktiga talen');
+});

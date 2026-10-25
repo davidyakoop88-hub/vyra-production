@@ -67,6 +67,9 @@
   // Treats only null/undefined/'' as "unset" — unlike `||`, this correctly keeps an explicit 0
   // (e.g. a special user's pitch deliberately set to the lowest allowed value).
   function numOrFallback(v, fallback) { return (v === '' || v === null || v === undefined) ? fallback : v; }
+  // Ett tal ur en inställning, eller reserven när den saknas eller inte är ett tal. Till skillnad
+  // från numOrFallback blir resultatet alltid ett ändligt tal — det kräver SpeechSynthesis och <audio>.
+  function talEller(v, reserv) { const n = Number(v); return (v === '' || v === null || v === undefined || !Number.isFinite(n)) ? reserv : n; }
 
   // --- Speech queue: the browser can only speak one utterance cleanly at a time, so a burst of
   // matching chat messages has to queue rather than overlap. maxQueueLength mirrors the same
@@ -103,7 +106,14 @@
   // `forhamtat` är ett redan startat hämtningslöfte för molnljudet (se enqueueSpeech), annars null.
   function spelaUpp(text, opts, forhamtat) {
     if (isCloudVoice(opts.voice)) {
-      return speakCloud(text, opts, forhamtat).catch(err => { console.warn('[VYRA TTS Chat] molnröst misslyckades', err) });
+      // EN MISSLYCKAD MOLNRÖST FÅR INTE BLI TYSTNAD (David 2026-10-23: kommentarer räknades som
+      // upplästa men hördes aldrig). Svarar servern inte, eller går ljudet inte att spela, läser
+      // datorns egen röst upp samma rad i stället.
+      return speakCloud(text, opts, forhamtat).catch(err => {
+        console.warn('[VYRA TTS Chat] molnröst misslyckades — lokal röst läser upp i stället', err);
+        if (!window.speechSynthesis) return;
+        return new Promise(klar => speakLocal(text, Object.assign({}, opts, { voice: '' }), klar));
+      });
     }
     return new Promise(klar => speakLocal(text, opts, klar));
   }
@@ -124,8 +134,10 @@
     const u = new SpeechSynthesisUtterance(text);
     if (opts.language) u.lang = opts.language;
     u.rate = Number(opts.speed) || 1;
-    u.pitch = Number(opts.pitch) ?? 1;
-    u.volume = (Number(opts.volume) ?? 80) / 100;
+    // `Number(undefined) ?? 1` är NaN, inte 1 — och NaN får webbläsaren att kasta på `pitch`, så
+    // rösten tystnade utan ett ljud när tonhöjden inte var satt (en Action, reservrösten nedan).
+    u.pitch = talEller(opts.pitch, 1);
+    u.volume = talEller(opts.volume, 80) / 100;
     const voices = speechSynthesis.getVoices();
     if (voices.length) {
       if (opts.randomVoice) u.voice = voices[Math.floor(Math.random() * voices.length)];
@@ -151,7 +163,7 @@
   async function speakCloud(text, opts, forhamtat) {
     const audioContent = await (forhamtat || hamtaMolnljud(text, opts));
     const audio = new Audio('data:audio/mpeg;base64,' + audioContent);
-    audio.volume = (Number(opts.volume) ?? 80) / 100;
+    audio.volume = Math.max(0, Math.min(1, talEller(opts.volume, 80) / 100));
     pagaendeLjud = audio;
     try {
       await new Promise((resolve, reject) => {
@@ -263,7 +275,10 @@
       if (!window.VyraPoints || !window.VyraPoints.spend(username, settings.costPerMessage)) return;
     }
     cooldowns[key] = now;
-    const nickname = ev.name || username;
+    // `name` bär KOMMENTAREN på chattrader (tiktok-bridge/normalizer.js: "name AR OVERLASTAT MED
+    // FLIT"). Är det samma text som läses upp är det inget namn — annars blev "{name} säger
+    // {comment}" kommentaren två gånger.
+    const nickname = (ev.name && ev.name !== text ? ev.name : '') || username;
     const announcedName = settings.nameFormat === 'none' ? ''
       : settings.nameFormat === 'username' ? username : nickname;
     // "Inget namn" ska vara verkligen rent även när streamern använder VYRAs standardmall.

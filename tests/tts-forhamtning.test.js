@@ -62,7 +62,7 @@ test('nästa kommentar börjar direkt — ljudet hämtades medan den väntade i 
   }
 });
 
-test('en hämtning som misslyckas tystar bara sin egen kommentar', async () => {
+test('en hämtning som misslyckas läses upp av datorns röst, de andra spelas som vanligt', async () => {
   const w = await studio();
   const api = w.VyraAuth.api;
   w.VyraAuth.api = (url, opt) => JSON.parse(opt.body).text.includes('trasig')
@@ -71,4 +71,6 @@ test('en hämtning som misslyckas tystar bara sin egen kommentar', async () => {
   chatta(w, 'bo', 'hel');
   await vanta(HAMTNING_MS + 2 * UPPLASNING_MS + 400);
   assert.deepEqual(w.__starter.map(s => s.text), ['bo säger hel']);
+  // Reservvägen från 2026-10-23: molnrösten föll, datorns röst läser samma rad.
+  assert.deepEqual(w.__tal.map(t => t.text), ['anna säger trasig']);
 });

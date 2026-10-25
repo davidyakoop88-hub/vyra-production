@@ -513,7 +513,19 @@
     });
     if ((el = q('[data-spk-ny]'))) el.onclick = function () { utkast.gavor.push({ id: 'g' + Date.now().toString(36), gava: null, lat: '', on: true }); omrita(); };
     if ((el = q('[data-spk-tom-lista]'))) el.onclick = function () { LISTA = []; listanAndrades(); };
-    if ((el = q('[data-spk-testa-song]'))) el.onclick = function () { latText().then(function (l) { toast(mening(l)); }); };
+    // TESTET VISAR SPOTIFYS RIKTIGA SVAR. latText() gör ett fel till "Ingen låt spelas just nu" med
+    // flit — så ska !song svara i chatten — men här dolde det varför: ett utgånget konto, ett
+    // nätverksfel och tystnad såg likadana ut (David 2026-10-23).
+    if ((el = q('[data-spk-testa-song]'))) el.onclick = function () {
+      var s = root.VyraSpotify;
+      if (!s || typeof s.current !== 'function' || !harToken()) return toast('Spotify är inte anslutet');
+      Promise.resolve().then(function () { return s.current(); }).then(function (c) {
+        if (!c || !c.item) return toast('Spotify svarar: ingen låt spelas just nu');
+        var vem = (c.item.artists || []).map(function (a) { return a && a.name; }).filter(Boolean).join(', ');
+        var lat = { titel: String(c.item.name || ''), artist: vem };
+        toast(c.is_playing === false ? 'Pausad: ' + kort(lat) : mening(lat));
+      }, function (err) { toast('Spotify-fel: ' + (err && err.message || 'Spotify svarade inte')); });
+    };
   }
   function oppnaValjare(knapp, rad) {
     var gammal = doc.querySelector('.spk-valjare'); if (gammal) gammal.remove();
