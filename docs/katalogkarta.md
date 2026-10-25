@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `214f1e60`
+Commit: `5533a499`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -66,7 +66,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | — |
-| SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | — | — |
+| SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 
@@ -388,8 +388,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Social-alert · 1 · Glanskort | `catalog:socialalert:glans` | ✓ | ✓ | — | — |
-| Social-alert · 2 · Ikon som öppnas | `catalog:socialalert:kapsel` | ✓ | ✓ | — | — |
+| Social-alert · 1 · Glanskort | `catalog:socialalert:glans` | ✓ | ✓ | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
+| Social-alert · 2 · Ikon som öppnas | `catalog:socialalert:kapsel` | ✓ | ✓ | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 
 ### SKATTKISTA · LIVE
 
