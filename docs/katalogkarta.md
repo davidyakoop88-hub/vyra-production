@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5533a499`
+Commit: `9180fc9a`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -65,7 +65,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
-| HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | — |
+| HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -374,15 +374,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Profilhjärtan | `catalog:heartcloud:profilhjartan` | ✓ | ✓ | 2026-10-25 | — |
-| Fallande hjärtan | `catalog:heartcloud:fallande` | ✓ | ✓ | 2026-10-25 | — |
-| Hjärtmoln | `catalog:heartcloud:hjartmoln` | ✓ | ✓ | 2026-10-25 | — |
-| Glödande hjärtmoln | `catalog:heartcloud:glodande` | ✓ | ✓ | 2026-10-25 | — |
-| Kristallhjärtan | `catalog:heartcloud:kristall` | ✓ | ✓ | 2026-10-25 | — |
-| Stjärnstoft | `catalog:heartcloud:stjarnstoft` | ✓ | ✓ | 2026-10-25 | — |
-| Blixtmoln | `catalog:heartcloud:blixt` | ✓ | ✓ | 2026-10-25 | — |
-| Organiskt moln | `catalog:heartcloud:organiskt` | ✓ | ✓ | 2026-10-25 | — |
-| Levande moln | `catalog:heartcloud:levande` | ✓ | ✓ | 2026-10-25 | — |
+| Profilhjärtan | `catalog:heartcloud:profilhjartan` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Fallande hjärtan | `catalog:heartcloud:fallande` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Hjärtmoln | `catalog:heartcloud:hjartmoln` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Glödande hjärtmoln | `catalog:heartcloud:glodande` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Kristallhjärtan | `catalog:heartcloud:kristall` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Stjärnstoft | `catalog:heartcloud:stjarnstoft` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Blixtmoln | `catalog:heartcloud:blixt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Organiskt moln | `catalog:heartcloud:organiskt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| Levande moln | `catalog:heartcloud:levande` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 
 ### SOCIAL-ALERT
 
