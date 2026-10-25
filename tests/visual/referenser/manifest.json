@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 199,
  "senaste": {
-  "motiv": "Koi Pearl och Masquerade: ny silhuettnyckel, inget grått dis eller grå kantglöd",
+  "motiv": "Låtönskningar: kommandot visas som !play i stället för !önska (#704)",
   "nycklar": 2,
-  "filter": "koiPearl,masquerade",
-  "tid": "2026-10-23T00:44:48.666Z"
+  "filter": "latonskningar",
+  "tid": "2026-10-25T00:32:55.444Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
