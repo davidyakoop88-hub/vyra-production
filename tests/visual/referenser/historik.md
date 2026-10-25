@@ -564,3 +564,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Boxgame-klocka utan studions standardlåda (12 px padding flyttade och klippte klockan)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 168 (filter: boxgame) — catalog:boxgame
+
+## 2026-10-25 — 2 referenser skrivna
+
+- **Motiv:** Social-alert: två nya katalognycklar (Glanskort och Ikon som öppnas)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 2 av 170 (filter: socialalert) — catalog:socialalert:glans, catalog:socialalert:kapsel
