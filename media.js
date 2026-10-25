@@ -1538,7 +1538,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
-Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261025-1';document.body.append(js);let kl=document.createElement('script');kl.src='kompakt-lage.js?v=20261025-1';kl.async=false;document.body.append(kl)});
+Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261025-1';document.body.append(js);let kl=document.createElement('script');kl.src='kompakt-lage.js?v=20261025-2';kl.async=false;document.body.append(kl)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
    alls: enda anroparna av triggern var panelens testknapp har i media.js och kowrappern i
    runtime-controls.js. Kommentaren i tiktok-bridge/bridge.js pastod att klientsidan redan var klar

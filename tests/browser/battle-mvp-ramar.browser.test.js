@@ -147,10 +147,11 @@ test('ett uttryckligt mvpShowName:false doljer fortfarande namnet', { skip }, as
 // Provet later det som gor ramen lasbar pa en telefon:
 //   * namnet star pa en mork platta (rgba(10,6,16,.85)) med kant och rundning — i ALLA bredder
 //   * namnet ritas aldrig under 12 designpixlar, aven nar panelens minsta namnstorlek (9) ar vald
-//   * vid smal bredd (<= 240 px) doljs ornamentet och profilbilden ar minst 55 % av bredden
-//   * vid 300 px (fabrikens bredd) syns ornamentet fortfarande — stor vy ar orord
+//   * utan valt kompaktlage syns ornamentet i varje bredd — storleken valjer aldrig design
+//     (granskningen 2026-10-25)
+//   * med valt kompaktlage (w.kompaktLage) doljs ornamentet och profilbilden ar minst 55 % av bredden
 // 150 ar den minsta bredd en widget faktiskt far (studio.css .widget{min-width:150px}).
-test('lasbarhetslaget: platta, minsta namnstorlek och kompakt lage vid smal bredd', { skip, timeout: 180000 }, async () => {
+test('lasbarhetslaget: platta, minsta namnstorlek, och kompakt lage bara nar det ar valt', { skip, timeout: 180000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null,
@@ -158,18 +159,18 @@ test('lasbarhetslaget: platta, minsta namnstorlek och kompakt lage vid smal bred
   await page.waitForTimeout(2500);
   const matt = await page.evaluate((ramar) => {
     const ut = [];
-    for (const ram of ramar) for (const bredd of [150, 200, 240, 300]) {
+    for (const kompakt of [false, true]) for (const ram of ramar) for (const bredd of [150, 200, 240, 300]) {
       state.widgets.length = 0;
       const w = window.VyraWidgets.create('catalog:battlemvp:frame:' + ram);
-      Object.assign(w, { x: 24, y: 60, width: bredd, mvpName: 'NovaStorm_99', mvpNameSize: 9 });
+      Object.assign(w, { x: 24, y: 60, width: bredd, mvpName: 'NovaStorm_99', mvpNameSize: 9, kompaktLage: kompakt });
       state.widgets.push(w); selected = w.id; render();
       const box = document.querySelector(`[data-id="${w.id}"]`);
-      if (!box) { ut.push({ ram, bredd, fel: 'widgeten renderades inte' }); continue }
+      if (!box) { ut.push({ ram, bredd, kompakt, fel: 'widgeten renderades inte' }); continue }
       const rad = box.querySelector('.mvpf-row'), namn = box.querySelector('.mvpf-row strong');
       const foto = box.querySelector('.mvpf-photo'), konst = box.querySelector('.mvpf-art');
       const rc = getComputedStyle(rad), nc = getComputedStyle(namn);
       const bb = box.getBoundingClientRect(), nb = namn.getBoundingClientRect();
-      ut.push({ ram, bredd,
+      ut.push({ ram, bredd, kompakt,
         namnPx: parseFloat(nc.fontSize), vikt: parseInt(nc.fontWeight, 10), farg: nc.color,
         platta: rc.backgroundColor, kant: parseFloat(rc.borderTopWidth), rundning: parseFloat(rc.borderTopLeftRadius),
         konst: getComputedStyle(konst).display,
@@ -180,10 +181,10 @@ test('lasbarhetslaget: platta, minsta namnstorlek och kompakt lage vid smal bred
   }, RAMAR);
   await page.close();
 
-  assert.equal(matt.length, RAMAR.length * 4);
+  assert.equal(matt.length, RAMAR.length * 8);
   assert.deepEqual(matt.filter(m => m.fel), []);
   for (const m of matt) {
-    const vem = `${m.ram} @ ${m.bredd} px`;
+    const vem = `${m.ram} @ ${m.bredd} px${m.kompakt ? ' (valt kompaktlage)' : ''}`;
     assert.ok(m.namnPx >= 12, `${vem}: namnet ar ${m.namnPx} px — golvet ar 12 designpixlar`);
     assert.ok(m.vikt >= 700, `${vem}: namnet ar inte fett (vikt ${m.vikt})`);
     assert.equal(m.farg, 'rgb(255, 255, 255)', `${vem}: namnet ar inte vitt`);
@@ -191,12 +192,12 @@ test('lasbarhetslaget: platta, minsta namnstorlek och kompakt lage vid smal bred
     assert.ok(m.kant >= 1, `${vem}: plattan saknar kant i accentfargen`);
     assert.ok(m.rundning > 0, `${vem}: plattan ar inte rundad`);
     assert.ok(m.inuti, `${vem}: namnet ligger utanfor widgeten`);
-    if (m.bredd <= 240) {
+    if (m.kompakt) {
       assert.equal(m.konst, 'none', `${vem}: ornamentet ska vara dolt i kompakt lage`);
       assert.ok(m.fotoAndel >= 0.55, `${vem}: profilbilden ar ${Math.round(m.fotoAndel * 100)} % av bredden — minst 55 %`);
       assert.ok(m.namnPx >= 15, `${vem}: kompakt lage ska ge ett storre namn (${m.namnPx} px)`);
     } else {
-      assert.notEqual(m.konst, 'none', `${vem}: stor vy ska behalla ornamentet`);
+      assert.notEqual(m.konst, 'none', `${vem}: ornamentet forsvann av storleken`);
     }
   }
 });

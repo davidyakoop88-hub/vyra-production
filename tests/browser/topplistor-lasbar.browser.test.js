@@ -65,10 +65,10 @@ test.after(async () => {
 
 // Ritar EN widget i editorn med given skala och mäter i SYNLIGA pixlar (zoomen inräknad med en
 // 1000 px bred sond, så avrundade offsetmått inte spelar in).
-async function mat(nyckel, skala) {
-  return page.evaluate(([nyckel, skala]) => {
+async function mat(nyckel, skala, over) {
+  return page.evaluate(([nyckel, skala, over]) => {
     state.widgets.length = 0;
-    const w = window.VyraWidgets.create(nyckel);
+    const w = Object.assign(window.VyraWidgets.create(nyckel), over || {});
     w.x = 10; w.y = 40; w.widgetScale = skala;
     state.widgets.push(w); selected = null; render();
     const rot = document.querySelector(`.canvas [data-id="${w.id}"]`);
@@ -93,8 +93,11 @@ async function mat(nyckel, skala) {
       platta: platta ? { bg: platta.backgroundColor, kant: platta.borderTopWidth, kantstil: platta.borderTopStyle, hojd: platta.height, display: platta.display } : null,
       mynt: !!rot.querySelector('em svg'), cirkel: (varde && varde.textContent || '').includes('◉')
     };
-  }, [nyckel, skala]);
+  }, [nyckel, skala, over || null]);
 }
+// LIKFORMIGT (granskningen 2026-10-25): utan valt kompaktläge krymper texten med resten av designen.
+const likformig = (stor, liten, z, del) => assert.ok(Math.abs(liten / stor - z) <= z * 0.06 + 0.25 / stor,
+  `${del}: ${stor} → ${liten} synliga px vid skala ${z} — inte likformigt`);
 
 const PLATTA = 'rgba(10, 6, 16, 0.85)';
 
@@ -102,9 +105,10 @@ for (const [nyckel, skala] of [
   ['catalog:toplike:voltage', 0.52], ['catalog:toplike:celestial', 0.31],
   ['catalog:ranking:templateTopCoins:prism-horizontal', 0.31], ['catalog:ranking:templateTopPoints:basic-v2', 0.54]
 ]) {
-  test(`${nyckel} vid ~120 synliga px: kompakt, plattan bakom namn och siffra, inget under 12 px`, { skip }, async () => {
-    const m = await mat(nyckel, skala);
-    assert.match(m.klass, /\brk6-kompakt\b/, `kompaktläget slog inte till vid skala ${skala}: ${m.klass}`);
+  // Kompaktläget är ett uttryckligt val i panelen (w.kompaktLage) — här valt.
+  test(`${nyckel} vid ~120 synliga px med valt kompaktläge: plattan bakom namn och siffra, inget under 12 px`, { skip }, async () => {
+    const m = await mat(nyckel, skala, { kompaktLage: true });
+    assert.match(m.klass, /\brk6-kompakt\b/, `det valda kompaktläget syns inte vid skala ${skala}: ${m.klass}`);
     assert.ok(m.bredd <= 140, `widgeten ska följa sin skala (synlig bredd ${m.bredd} px)`);
     assert.equal(m.rader, 5, 'kompaktläget behåller alla fem platserna (granskningen av #604)');
     for (const [del, v] of [['namn', m.namn], ['siffra', m.varde], ['plats', m.rang]]) {
@@ -149,18 +153,23 @@ test('Prism horisontal ryms på 432-duken från riggens x=40', { skip }, async (
 
 // Läsbarhetslagret (ranking-sixpack.js) gäller originalmarkupen, som Design 1 (neon) bär sedan
 // 2026-10-17. Design 2 och 3 har egen markup och ett eget golv i topgift-designer.css; provet under.
-test('Top Gift Design 1 liten: guldmyntet i stället för ◉, namn och siffra på plattan, minst 12 px', { skip }, async () => {
+test('Top Gift Design 1 liten: guldmyntet i stället för ◉, namn och siffra på plattan, samma design som i full storlek', { skip }, async () => {
+  const hel = await mat('catalog:topgift:premium:neon', 1);
   const m = await mat('catalog:topgift:premium:neon', 0.54);
-  assert.match(m.klass, /\brk-kompakt\b/);
+  assert.match(hel.klass, /\brk-kompakt\b/, 'neon är kompakt i sin design');
+  assert.match(m.klass, /\brk-kompakt\b/, '… i alla storlekar');
   assert.ok(m.mynt && !m.cirkel, 'värdet ska bära guldmyntet, inte ◉');
-  assert.ok(m.namn >= 11.9 && m.varde >= 11.9, `namn ${m.namn} / siffra ${m.varde} synliga px`);
+  likformig(hel.namn, m.namn, 0.54, 'namn'); likformig(hel.varde, m.varde, 0.54, 'siffra');
   assert.equal(m.platta.bg, PLATTA);
+  const valt = await mat('catalog:topgift:premium:neon', 0.54, { kompaktLage: true });
+  assert.ok(valt.namn >= 11.9 && valt.varde >= 11.9, `valt kompaktläge: namn ${valt.namn} / siffra ${valt.varde} synliga px`);
 });
 
 for (const [nyckel, skala] of [['catalog:topgift:premium:royal', 0.54], ['catalog:topgift:premium:fokus', 0.54], ['catalog:topgift:premium:fokus', 0.35]]) {
-  test(`${nyckel} vid ${skala}: namn och siffra minst 12 synliga px`, { skip }, async () => {
-    const m = await mat(nyckel, skala);
-    assert.ok(m.namn >= 11.9 && m.varde >= 11.9, `namn ${m.namn} / siffra ${m.varde} synliga px`);
+  test(`${nyckel} vid ${skala}: namn och siffra krymper med designen`, { skip }, async () => {
+    const hel = await mat(nyckel, 1), m = await mat(nyckel, skala);
+    assert.ok(hel.namn >= 11.9 && hel.varde >= 11.9, `full storlek: namn ${hel.namn} / siffra ${hel.varde} px`);
+    likformig(hel.namn, m.namn, skala, 'namn'); likformig(hel.varde, m.varde, skala, 'siffra');
   });
 }
 
@@ -169,10 +178,11 @@ for (const [nyckel, skala] of [['catalog:topgift:premium:royal', 0.54], ['catalo
 // två rader, och ingen ellips så länge två rader räcker.
 for (const [nyckel, skala] of [['catalog:toplike:celestial', 0.67], ['catalog:toplike:royal-rose', 0.67], ['catalog:toplike:royal-rose', 0.82]]) {
   test(`${nyckel} vid skala ${skala}: inte kompakt, fem platser, inga klippta namn`, { skip }, async () => {
+    const hel = await mat(nyckel, 1);
     const m = await mat(nyckel, skala);
-    assert.doesNotMatch(m.klass, /\brk6-kompakt\b/, 'fem platser i 12 px ryms här — kompaktläget ska inte slå till');
+    assert.doesNotMatch(m.klass, /\brk6-kompakt\b/, 'storleken väljer aldrig kompaktläget');
     assert.equal(m.rader, 5);
-    assert.ok(m.namn >= 11.9, `namn ${m.namn} px`);
+    likformig(hel.namn, m.namn, skala, 'namn');
     const klippta = await page.evaluate(() => [...document.querySelectorAll('.canvas .toplike-row .rk6-namn>strong')]
       .filter(s => s.textContent && (s.scrollHeight > s.clientHeight + 1 || s.scrollWidth > s.clientWidth + 1)).map(s => s.textContent));
     assert.deepEqual(klippta, [], `klippta namn: ${klippta.join(', ')}`);

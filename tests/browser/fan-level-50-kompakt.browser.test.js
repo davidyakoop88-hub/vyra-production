@@ -57,11 +57,11 @@ test.after(async () => { if (browser) await browser.close(); if (server) server.
 
 // Renderar en Fan Level 50 med ett riktigt namn och en lokal profilbild och mater forsta kortet.
 // Matten ar i designpixlar (duken ar 432 bred i en 432 bred vy, skala 1).
-function mat({ bredd, zoom = 1, mode = 'slideshow' }) {
-  return sida.evaluate(async ({ bredd, zoom, mode }) => {
+function mat({ bredd, zoom = 1, mode = 'slideshow', kompakt = false }) {
+  return sida.evaluate(async ({ bredd, zoom, mode, kompakt }) => {
     const st = window.eval('state'); st.widgets = [];
     const w = VyraWidgets.create('catalog:fanlevel50:royal');
-    Object.assign(w, { x: 8, y: 8, width: bredd, widgetScale: zoom, fanl50Mode: mode, fanl50Source: 'manual',
+    Object.assign(w, { x: 8, y: 8, width: bredd, widgetScale: zoom, fanl50Mode: mode, fanl50Source: 'manual', kompaktLage: kompakt,
       fanl50Manual: [{ name: 'Sara Lindqvist', avatar: 'assets/images/test-profile.svg' }] });
     st.widgets.push(w); render();
     await new Promise(r => setTimeout(r, 700));
@@ -83,7 +83,7 @@ function mat({ bredd, zoom = 1, mode = 'slideshow' }) {
       namnCqw: parseFloat(getComputedStyle(namn).fontSize) * egenZoom / skala / (r(card).width / skala) * 100,
       mallOrord: konst.transform === 'none' && konst.filter === 'none'
     };
-  }, { bredd, zoom, mode });
+  }, { bredd, zoom, mode, kompakt });
 }
 
 const SMALA = [
@@ -94,9 +94,16 @@ const SMALA = [
   { namn: 'bandet, standardbredd dragen till 60 % (zoom)', bredd: 300, zoom: 0.6, mode: 'band' }
 ];
 
+// KOMPAKTLÄGET ÄR ETT VAL (granskningen 2026-10-25): det stora fotot gäller när streamern valt Kompakt
+// läge. Utan valet behåller ett litet kort mallens proportioner — fotot sitter kvar i ringen.
 for (const fall of SMALA) {
-  test(`kompakt: ${fall.namn} — fotot och namnet bar kortet`, { skip }, async () => {
+  test(`utan valt kompaktläge: ${fall.namn} — samma mall och fotoproportion som i stora vyn`, { skip }, async () => {
     const m = await mat(fall);
+    assert.ok(m.mallOrord, 'mallen ska synas orord');
+    assert.ok(m.foto < m.kort * 0.22, `fotot växte ur ringen av storleken: ${m.foto.toFixed(1)} av ${m.kort.toFixed(1)} px`);
+  });
+  test(`valt kompaktläge: ${fall.namn} — fotot och namnet bär kortet`, { skip }, async () => {
+    const m = await mat({ ...fall, kompakt: true });
     assert.ok(m.kort < 190, `kortet skulle vara smalt men ar ${m.kort.toFixed(1)} px`);
     assert.ok(m.mallOrord, 'mallen ska synas orord — ingen inzoomning eller dampning av bilden');
     assert.ok(m.foto >= m.kort * 0.30, `fotot ar ${m.foto.toFixed(1)} px av ${m.kort.toFixed(1)} px kort — under 30 %`);
@@ -148,11 +155,11 @@ test('bandet bar ingen will-change — annars blir kortet suddigt nar overlayen 
   assert.deepEqual(wc, []);
 });
 
-test('kort med kort namn far storre text i litet kort an i stora vyn', { skip }, async () => {
+test('valt kompaktläge: kort med kort namn far storre text i litet kort an i stora vyn', { skip }, async () => {
   const m = await sida.evaluate(async () => {
     const st = window.eval('state'); st.widgets = [];
     const w = VyraWidgets.create('catalog:fanlevel50:royal');
-    Object.assign(w, { x: 8, y: 8, width: 160, fanl50Source: 'manual', fanl50Manual: [{ name: 'kurdiia6', avatar: '' }] });
+    Object.assign(w, { x: 8, y: 8, width: 160, kompaktLage: true, fanl50Source: 'manual', fanl50Manual: [{ name: 'kurdiia6', avatar: '' }] });
     st.widgets.push(w); render(); await new Promise(r => setTimeout(r, 700));
     const box = document.querySelector(`[data-id="${w.id}"]`);
     const namn = box.querySelector('.fl50-name span'), card = box.querySelector('.fl50-card');

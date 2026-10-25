@@ -13,7 +13,7 @@
  * rk-kompakt, lv-kompakt), så deras CSS är orörd. */
 (function () {
   'use strict';
-  if (typeof window === 'undefined' || typeof window.wh !== 'function' || window.VyraKompaktLage) return;
+  if (typeof window === 'undefined' || typeof window.render !== 'function' || window.VyraKompaktLage) return;
 
   // Familjer vars CSS-kompaktläge nu hänger på rotklassen (tidigare @container).
   const ROTKLASS = new Set(['templateBattleMvp', 'templateFanLevel50', 'templatePgStreak']);
@@ -26,13 +26,26 @@
     return false;
   };
 
-  const tidigareWh = window.wh;
-  window.wh = function (w) {
-    const html = tidigareWh.apply(this, arguments);
-    if (!w || w.kompaktLage !== true || !ROTKLASS.has(w.type) || typeof html !== 'string') return html;
-    // Sist i klasslistan: andra led i wh-kedjan ersätter på exakta början ('class="widget battle-mvp').
-    return html.replace(/^(\s*<div\b[^>]*?\bclass="[^"]*)"/, '$1 vyra-kompaktlage"');
-  };
+  // ROTKLASSEN SÄTTS EFTER RENDER, INTE I wh. fan-level-50.js och battle-mvp-celebrations.js lindar wh
+  // och svarar för sina typer utan att anropa tidigare led — laddas de efter den här filen når en
+  // wh-omslutning härifrån aldrig deras markup (uppmätt: valet gav ingen klass på Fan Level 50).
+  // Klassen läggs därför på de färdiga lådorna, synkront efter render() och i en observer för
+  // livepatchar som byter en enskild låda.
+  function markera() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets) || typeof document === 'undefined') return;
+    for (const w of state.widgets) {
+      if (!w || !ROTKLASS.has(w.type)) continue;
+      document.querySelectorAll(`[data-id="${String(w.id).replace(/["\\]/g, '\\$&')}"]`).forEach(rot => {
+        if (!rot.classList.contains('widget')) return;
+        if (rot.classList.contains('vyra-kompaktlage') !== (w.kompaktLage === true)) rot.classList.toggle('vyra-kompaktlage', w.kompaktLage === true);
+      });
+    }
+  }
+  if (typeof render === 'function') {
+    const tidigareRender = render;
+    render = function () { const ut = tidigareRender.apply(this, arguments); try { markera(); } catch (_) {} return ut; };
+  }
+  try { new MutationObserver(() => { try { markera(); } catch (_) {} }).observe(document.documentElement, { childList: true, subtree: true }); } catch (_) {}
 
   if (typeof bind === 'function') {
     const tidigareBind = bind;
