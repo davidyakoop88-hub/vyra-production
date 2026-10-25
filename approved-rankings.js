@@ -7,7 +7,7 @@
   // Bade denna lista OCH toplike-design.js:s VYRA_TOPLIKE_STYLES maste innehalla samma sex ID:n,
   // annars renderas Celestial/Royal Rose/etc alltid som Clean Bar i overlay - matt i riktig
   // Chromium, katalogkorten saknades helt tills detta lades till.
-  const LIKE_SKINS = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const LIKE_SKINS = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
   const LIKE_LABELS = Object.freeze({
     'clean-bar': 'VYRA Clean Bar',
     'soft-stack': 'VYRA Soft Stack',
@@ -18,7 +18,8 @@
     'prism-vertical': 'VYRA Prism (vertikal)',
     'prism-horizontal': 'VYRA Prism (horisontal)',
     celestial: 'VYRA Celestial',
-    'royal-rose': 'VYRA Royal Rose'
+    'royal-rose': 'VYRA Royal Rose',
+    metall: 'VYRA Guld · Silver · Brons'
   });
   let installed = false;
 

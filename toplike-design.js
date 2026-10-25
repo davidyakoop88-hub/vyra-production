@@ -14,7 +14,8 @@
     Object.freeze(['prism-vertical', 'VYRA Prism (vertikal)']),
     Object.freeze(['prism-horizontal', 'VYRA Prism (horisontal)']),
     Object.freeze(['celestial', 'VYRA Celestial']),
-    Object.freeze(['royal-rose', 'VYRA Royal Rose'])
+    Object.freeze(['royal-rose', 'VYRA Royal Rose']),
+    Object.freeze(['metall', 'VYRA Guld · Silver · Brons'])
   ]);
   const defaults = Object.freeze({
     'clean-bar': Object.freeze({
@@ -57,6 +58,9 @@
     }),
     'royal-rose': Object.freeze({
       id: 'royal-rose', name: 'VYRA Royal Rose', layout: 'clean', frame: 'none', count: 5
+    }),
+    metall: Object.freeze({
+      id: 'metall', name: 'VYRA Guld · Silver · Brons', layout: 'clean', frame: 'none', count: 5
     })
   });
 

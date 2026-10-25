@@ -41,7 +41,13 @@
     celestial: Object.freeze({ label: 'Celestial', riktning: 'rad',
       tiers: [['#ffd54a', '#b98fff'], ['#6fb7ff', '#ffd54a'], ['#b98fff', '#6fb7ff'], ['#ffd54a', '#6fb7ff'], ['#6fb7ff', '#b98fff']] }),
     'royal-rose': Object.freeze({ label: 'Royal Rose', riktning: 'rad',
-      tiers: [['#ffd54a', '#6fae6f'], ['#e8b7c4', '#ffd54a'], ['#6fae6f', '#e8b7c4'], ['#ffd54a', '#e8b7c4'], ['#6fae6f', '#ffd54a']] })
+      tiers: [['#ffd54a', '#6fae6f'], ['#e8b7c4', '#ffd54a'], ['#6fae6f', '#e8b7c4'], ['#ffd54a', '#e8b7c4'], ['#6fae6f', '#ffd54a']] }),
+    // GULD · SILVER · BRONS (design nr 4, byggd och provad i OBS av David 2026-10-24). Metallen följer
+    // placeringen: [metall, ljus kant]. Plats 4 och nedåt får samma neutrala metall — tio rader, så
+    // att `i % tiers.length` aldrig ger plats 5 guld igen. Mörka kanten står i ranking-sixpack.css.
+    metall: Object.freeze({ label: 'Guld · Silver · Brons', riktning: 'lista',
+      tiers: [['#f5c34f', '#fff1b2'], ['#dbe5f2', '#ffffff'], ['#ce905f', '#ffe1bd'],
+        ...Array(7).fill(['#a9b6c5', '#edf2f7'])] })
   });
   const IDS = Object.keys(DESIGNS);
 
@@ -91,7 +97,8 @@
     'prism-vertical': { bredd: 235, foto: 44 },
     'prism-horizontal': { kolumn: 68, etta: 84, gap: 3.9, kant: 8 },
     celestial: { kolumn: 70, gap: 8, kant: 8 },
-    'royal-rose': { kolumn: 70, gap: 8, kant: 8 }
+    'royal-rose': { kolumn: 70, gap: 8, kant: 8 },
+    metall: { bredd: 250, foto: 55 }
   });
   const MIN_FOTO = 36, MIN_KOLUMN = 44, MIN_KOMPAKT_BREDD = 112;
   const skalaFor = w => { const z = Number(w && w.widgetScale); return Number.isFinite(z) && z > 0 ? Math.min(4, Math.max(0.2, z)) : 1; };
@@ -216,7 +223,10 @@
       // Layout och växer inte när första händelsen kommer. Ingenting syns och textContent är tomt.
       const plats = t => !p && nolla && t ? ` data-noll-plats="${esc(t)}"` : '';
       const bild = p && p.bild ? esc(p.bild) : foto;
-      const krona = (id === 'voltage' && i === 0) || (id === 'prism-horizontal' && i < 3) ? `<i class="rk6-krona">${KRONA}</i>` : '';
+      // Guld · Silver · Brons bär designens egen guldkrona (en bild, ritad som bakgrund: livedatan tar
+      // radens första <img> som foto, och en krona som <img> hade kunnat bli det).
+      const krona = (id === 'voltage' && i === 0) || (id === 'prism-horizontal' && i < 3) ? `<i class="rk6-krona">${KRONA}</i>`
+        : id === 'metall' && i === 0 ? '<i class="rk6-krona rk6-metallkrona"></i>' : '';
       const ordning = d.riktning === 'podium' ? PODIUM.indexOf(i) : i;
       html += `<div class="toplike-row rank-${i + 1}"${p ? ` data-prov="${esc(p.namn)}"` : ''} style="--c:${c};--c2:${c2};--rk6-ordning:${ordning < 0 ? i : ordning}">`
         + `<i class="rk6-av"${avStil ? ` style="${avStil}"` : ''}><i class="rk6-ring"></i><i class="rk6-karna"><i class="rk6-glod"></i>`
@@ -446,6 +456,72 @@
     }).observe(document.body, { subtree: true, childList: true, characterData: true });
   }
   planera();
+
+  // GULD · SILVER · BRONS LEVER MED LISTAN (design nr 4). Två saker prototypen gör som ingen annan
+  // design gör, båda räknade ur det live-leaderboard.js redan skriver — ingen ny krok i livevägen:
+  //   - AKTIV: när en persons värde ökar lyser just den personens rad i två sekunder (ljus, snabbare
+  //     kantreflex, namnglans och puls — ranking-sixpack.css .rk6-aktiv).
+  //   - GLID: live-leaderboard.js skriver om raderna på plats (plats 1 = rad 1), så en omkörning syns
+  //     som att namnen byter rad. Raden där personen hamnade glider därför från sin gamla plats (FLIP).
+  // Raderna känns igen på NAMNET, per widget (data-id), eftersom en render() bygger nya noder. Testa
+  // widget-klonen (data-prov) glider redan själv i vyra-ranking-panel.js och får bara ljuset härifrån.
+  const AKTIV_MS = 2000, GLID_MS = 900;
+  const metallMinne = new Map();
+  const talAv = em => {
+    const t = (em && em.lastChild && em.lastChild.nodeType === 3 ? em.lastChild.nodeValue : (em && em.textContent) || '').replace(/[\s ]/g, '');
+    // formatNum() i live-leaderboard.js: "12 345" (hårt mellanslag) eller "1,2 mn" från en miljon.
+    if (/mn$/i.test(t)) return (parseFloat(t.replace(',', '.')) || 0) * 1e6;
+    return Number(t.replace(/\D/g, '')) || 0;
+  };
+  const stillaRorelse = () => typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function metallLev(rot) {
+    const id = rot.dataset.id || '';
+    const minne = metallMinne.get(id) || { plats: new Map(), varde: new Map(), aktivTill: new Map(), timer: 0 };
+    metallMinne.set(id, minne);
+    const rader = [...rot.querySelectorAll('.rk6-lista>.toplike-row')];
+    const nu = Date.now();
+    const plats = new Map(), varde = new Map();
+    rader.forEach((rad, i) => {
+      const namn = (rad.querySelector('strong')?.textContent || '').trim();
+      if (!namn || rad.style.display === 'none') return;
+      const v = talAv(rad.querySelector('em'));
+      plats.set(namn, i); varde.set(namn, v);
+      if (minne.varde.has(namn) && v > minne.varde.get(namn)) minne.aktivTill.set(namn, nu + AKTIV_MS);
+      const forut = minne.plats.get(namn);
+      if (forut != null && forut !== i && !rad.dataset.prov && rader[forut] && typeof rad.animate === 'function' && !stillaRorelse()) {
+        const dy = rader[forut].offsetTop - rad.offsetTop;
+        if (dy) rad.animate([{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0)' }], { duration: GLID_MS, easing: 'cubic-bezier(.22,.8,.25,1)' });
+      }
+    });
+    minne.plats = plats; minne.varde = varde;
+    let nasta = Infinity;
+    rader.forEach(rad => {
+      const till = minne.aktivTill.get((rad.querySelector('strong')?.textContent || '').trim()) || 0;
+      const aktiv = till > nu;
+      if (rad.classList.contains('rk6-aktiv') !== aktiv) rad.classList.toggle('rk6-aktiv', aktiv);
+      if (aktiv) nasta = Math.min(nasta, till);
+    });
+    clearTimeout(minne.timer);
+    if (nasta < Infinity) minne.timer = setTimeout(() => {
+      const r = [...document.querySelectorAll('.widget.rk6-metall')].find(el => (el.dataset.id || '') === id);
+      if (r) metallLev(r);
+    }, nasta - nu + 20);
+  }
+  // En vanlig timer, inte requestAnimationFrame: rAF står still i en dold OBS-källa eller flik, och då
+  // hade ljuset aldrig kommit. live-leaderboard.js skriver själv med setInterval.
+  let metallTimer = 0;
+  const metallAlla = () => { metallTimer = 0; document.querySelectorAll('.widget.rk6-metall').forEach(metallLev); };
+  if (typeof MutationObserver === 'function' && typeof document !== 'undefined' && document.body) {
+    new MutationObserver(muts => {
+      if (metallTimer) return;
+      for (const m of muts) {
+        const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        if ((t && t.closest && t.closest('.rk6-metall')) || [...(m.addedNodes || [])].some(n => n.nodeType === 1 && (n.matches('.rk6-metall') || n.querySelector('.rk6-metall')))) {
+          metallTimer = setTimeout(metallAlla, 16); return;
+        }
+      }
+    }).observe(document.body, { subtree: true, childList: true, characterData: true });
+  }
 
   window.VyraRankingSixpack = Object.freeze({ designs: DESIGNS, ids: IDS, pension: PENSION, designFor, render: omsluten, katalog,
     mynt: MYNT, geometri: GEOMETRI, lasbarhet, enkelLasbar, antal, ikoner: IKONER });

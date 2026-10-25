@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `68653baf`
+Commit: `61d19f71`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **173** |
+| Kort totalt | **176** |
 | Sektioner | 26 |
-| Med katalognyckel | 173 / 173 |
-| Med shadow DOM-miniatyr | 134 / 173  ⚠️ |
-| Ritar sin design | 173 / 173 |
+| Med katalognyckel | 176 / 176 |
+| Med shadow DOM-miniatyr | 137 / 176  ⚠️ |
+| Ritar sin design | 176 / 176 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -40,7 +40,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
-| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 18 | 18/18 | 18/18 | 18/18 | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 21 | 21/21 | 21/21 | 21/21 | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
@@ -91,6 +91,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Top Like | `catalog:toplike:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | Top Coins | `catalog:ranking:templateTopCoins:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 | Top Points | `catalog:ranking:templateTopPoints:royal-rose` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Like | `catalog:toplike:metall` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Coins | `catalog:ranking:templateTopCoins:metall` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
+| Top Points | `catalog:ranking:templateTopPoints:metall` | ✓ | ✓ | 2026-10-19 | [#659](https://github.com/davidyakoop88-hub/vyra-production/pull/659) |
 
 ### VYRA TOP STREAK
 

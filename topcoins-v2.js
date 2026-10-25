@@ -12,9 +12,10 @@
     'prism-vertical': { label: 'Prism', accent: '#ffb703', width: 230 },
     'prism-horizontal': { label: 'Prism horisontal', accent: '#ffb703', width: 230 },
     celestial: { label: 'Celestial', accent: '#ffd54a', width: 230 },
-    'royal-rose': { label: 'Royal Rose', accent: '#ffd54a', width: 230 }
+    'royal-rose': { label: 'Royal Rose', accent: '#ffd54a', width: 230 },
+    metall: { label: 'Guld · Silver · Brons', accent: '#f5c34f', width: 250 }
   });
-  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
 
   const designId = w => Object.prototype.hasOwnProperty.call(DESIGNS, w.topCoinsDesign)
     ? w.topCoinsDesign
