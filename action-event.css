@@ -292,3 +292,144 @@
 .ae-modal-action .ae-avancerat>summary small{margin-left:8px;font-weight:500;color:#b9a3c4}
 .ae-modal-action .ae-avancerat>summary:focus-visible{outline:2px solid #c64dea;outline-offset:2px;border-radius:6px}
 .ae-modal-action .ae-avancerat[open]>summary{border-bottom:1px solid #2a1730;margin-bottom:4px}
+
+/* ══ LILA DESIGNEN FÖR NY ACTION OCH NYTT EVENT (godkänd 2026-10-19) ═══════════════════════════
+   Ett gemensamt komponentlager för de två formulären: plommonlila panel, ljusare kort, tydliga
+   fältkanter, ljus text och lila accent. Värdena är designpaketets design-tokens.css. Allt är
+   scopat till `.ae-modal.ae-lila` — timerdialogen och gåvoväljaren använder också .ae-modal och
+   ska inte ändras härifrån. design-system.css sätter `.ae-modal button/input/select` med
+   !important, därför bär fält- och knappreglerna här också !important. */
+.ae-modal.ae-lila{--ae-background:#120b1c;--ae-panel:#241a30;--ae-card:#30243e;--ae-card-vald:#3a2a4c;--ae-input:#1d1529;--ae-border:#62516f;--ae-line:#3d2f4c;
+  --ae-text:#faf7ff;--ae-text-secondary:#c9bfd4;--ae-accent:#a13bfa;--ae-focus:#c084fc;--ae-radius-panel:20px;--ae-radius-card:12px;--ae-radius-control:8px;--ae-control-height:44px;
+  background:#120b1cd9;color:var(--ae-text);color-scheme:dark}
+.ae-modal.ae-lila>div{box-sizing:border-box;width:min(960px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:28px;border:1px solid #4a3a5a;border-radius:var(--ae-radius-panel);
+  background:var(--ae-panel);box-shadow:0 30px 80px #000a;color:var(--ae-text);font-size:15px;line-height:1.45}
+.ae-modal.ae-lila>div>header{position:sticky;top:-28px;z-index:3;margin:-28px -28px 24px;padding:22px 28px 16px;border-bottom:1px solid var(--ae-line);background:var(--ae-panel);border-radius:var(--ae-radius-panel) var(--ae-radius-panel) 0 0}
+.ae-modal.ae-lila>div>header h3{margin:0;font-size:26px;font-weight:600;letter-spacing:0;color:var(--ae-text)}
+.ae-modal.ae-lila>div>footer{position:sticky;bottom:-28px;z-index:3;display:flex;justify-content:space-between;gap:12px;margin:24px -28px -28px;padding:16px 28px;border-top:1px solid var(--ae-line);background:var(--ae-panel)}
+
+/* Sektioner: numrerad rubrik, tunn avdelare, 24 px rytm */
+.ae-modal.ae-lila .ae-sek{display:block;min-width:0;margin:0 0 24px;padding:0 0 24px;border:0;border-bottom:1px solid var(--ae-line);border-radius:0;background:none}
+.ae-modal.ae-lila .ae-event-advanced>.ae-sek:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.ae-modal.ae-lila .ae-sek-rubrik{display:flex;align-items:center;gap:12px;margin:0 0 16px;padding:0;font-size:17px;font-weight:600;line-height:1.3;color:var(--ae-text);letter-spacing:0;text-transform:none}
+.ae-modal.ae-lila legend.ae-sek-rubrik{float:left;width:100%}
+.ae-modal.ae-lila legend.ae-sek-rubrik+*{clear:both}
+.ae-modal.ae-lila .ae-sek-nr{flex:none;display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ae-accent);color:#fff;font-size:14px;font-weight:700}
+.ae-modal.ae-lila .ae-sek-hjalp{margin:-8px 0 16px 40px;font-size:14px;color:var(--ae-text-secondary)}
+
+/* Etiketter och fält */
+.ae-modal.ae-lila label{margin:0;font-size:14px;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila .ae-sek-rad{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:16px;align-items:end}
+.ae-modal.ae-lila .ae-sek-rad>label{display:flex;flex-direction:column;gap:8px}
+.ae-modal.ae-lila input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),.ae-modal.ae-lila select,.ae-modal.ae-lila textarea{
+  box-sizing:border-box;min-height:var(--ae-control-height);padding:10px 12px;margin:0;background:var(--ae-input)!important;border:1px solid var(--ae-border)!important;
+  border-radius:var(--ae-radius-control)!important;color:var(--ae-text)!important;font-size:15px;box-shadow:none!important}
+.ae-modal.ae-lila .ae-sek-rad input{width:100%}
+.ae-modal.ae-lila input::placeholder,.ae-modal.ae-lila textarea::placeholder{color:#a597b3;opacity:1}
+.ae-modal.ae-lila input:focus-visible,.ae-modal.ae-lila select:focus-visible,.ae-modal.ae-lila textarea:focus-visible{outline:2px solid var(--ae-focus);outline-offset:1px;border-color:var(--ae-focus)!important}
+.ae-modal.ae-lila small,.ae-modal.ae-lila .ae-hjalp{color:var(--ae-text-secondary);font-size:13px;line-height:1.45}
+.ae-modal.ae-lila [hidden]{display:none!important}
+
+/* Knappar: lugn sekundär, lila primär, samma höjd */
+.ae-modal.ae-lila button:not(.ae-ik):not(.ae-user-choice):not(.ae-emote-choice):not(.primary){min-height:40px;padding:8px 16px;border-radius:var(--ae-radius-control)!important;background:var(--ae-card)!important;
+  border:1px solid var(--ae-border)!important;color:var(--ae-text)!important;box-shadow:none!important;font-size:14px;font-weight:500}
+.ae-modal.ae-lila>div>footer button:not(.ae-ik){min-height:var(--ae-control-height);padding:0 28px;font-size:15px}
+.ae-modal.ae-lila>div>footer .ae-avbryt{background:transparent!important}
+.ae-modal.ae-lila>div>footer button.primary{background:var(--ae-accent)!important;border:1px solid var(--ae-accent)!important;border-radius:var(--ae-radius-control)!important;box-shadow:none!important;color:#fff!important;font-weight:600}
+.ae-modal.ae-lila>div>footer button.primary:hover{background:#8f2ee6!important}
+.ae-modal.ae-lila>div>footer button.primary:disabled{opacity:.6;cursor:progress}
+.ae-modal.ae-lila button:focus-visible{outline:2px solid var(--ae-focus)!important;outline-offset:2px}
+
+/* Gemensam valmarkering för kort, chips och kryssrutor. Inputen är kvar som riktig kontroll. */
+.ae-modal.ae-lila .ae-fn-kort input[type=checkbox],.ae-modal.ae-lila .ae-valkort input[type=radio],.ae-modal.ae-lila .ae-valchip input[type=radio],
+.ae-modal.ae-lila .ae-flerval-val input[type=checkbox],.ae-modal.ae-lila .ae-exclude-anon input[type=checkbox]{
+  -webkit-appearance:none;appearance:none;flex:none;margin:0;padding:0;min-height:0;cursor:pointer;background:transparent no-repeat center/70%!important;border:1.5px solid var(--ae-border)!important;box-shadow:none!important}
+.ae-modal.ae-lila .ae-fn-kort input[type=checkbox]{order:3;margin-left:auto;width:32px;height:32px;border-radius:50%!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23faf7ff' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E")!important}
+.ae-modal.ae-lila .ae-flerval-val input[type=checkbox],.ae-modal.ae-lila .ae-exclude-anon input[type=checkbox]{width:20px;height:20px;border-radius:5px!important}
+.ae-modal.ae-lila .ae-fn-kort input[type=checkbox]:checked,.ae-modal.ae-lila .ae-flerval-val input[type=checkbox]:checked,.ae-modal.ae-lila .ae-exclude-anon input[type=checkbox]:checked{
+  background-color:var(--ae-accent)!important;border-color:var(--ae-accent)!important;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")!important}
+.ae-modal.ae-lila .ae-valkort input[type=radio],.ae-modal.ae-lila .ae-valchip input[type=radio]{width:20px;height:20px;border-radius:50%!important}
+.ae-modal.ae-lila .ae-valkort input[type=radio]:checked,.ae-modal.ae-lila .ae-valchip input[type=radio]:checked{border-color:var(--ae-focus)!important;background:radial-gradient(circle,var(--ae-focus) 0 45%,transparent 50%)!important}
+.ae-modal.ae-lila :is(.ae-fn-kort,.ae-valkort,.ae-valchip,.ae-flerval-val,.ae-exclude-anon):has(input:focus-visible){outline:2px solid var(--ae-focus);outline-offset:2px}
+.ae-modal.ae-lila :is(.ae-fn-kort,.ae-valkort,.ae-valchip,.ae-flerval-val,.ae-exclude-anon) input:focus-visible{outline:none}
+
+/* Ny Action: effektkorten. Ett valt kort breddas över raden och visar sin lucka under sig. */
+.ae-modal.ae-lila .ae-fn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ae-modal.ae-lila .ae-fn{display:block;min-width:0;padding:0;border:0}
+.ae-modal.ae-lila .ae-fn:has(input[data-fn-check]:checked){grid-column:1/-1}
+.ae-modal.ae-lila label.ae-fn-kort{display:flex;align-items:center;gap:12px;min-height:76px;margin:0;padding:12px 14px;background:var(--ae-card);border:1px solid #4a3a5a;border-radius:var(--ae-radius-card);color:var(--ae-text);cursor:pointer;transition:border-color .15s,background .15s}
+.ae-modal.ae-lila label.ae-fn-kort:hover{border-color:var(--ae-border)}
+.ae-modal.ae-lila label.ae-fn-kort:has(input:checked){background:var(--ae-card-vald);border-color:var(--ae-focus)}
+.ae-modal.ae-lila .ae-fn-ikon{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:#a13bfa2e;color:#dcc2ff}
+.ae-modal.ae-lila .ae-fn-ikon svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ae-modal.ae-lila .ae-fn-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ae-modal.ae-lila .ae-fn-text b{display:block;font-size:15px;font-weight:600;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-fn-text small{display:block;font-size:13px;line-height:1.35;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila .ae-fn-slot{gap:12px;margin:8px 0 0;padding:16px;background:#2a1f37;border:1px solid #4a3a5a;border-radius:var(--ae-radius-card)}
+.ae-modal.ae-lila .ae-fn-slot label:not(.ae-check):not(.ao-color){display:flex;flex-direction:column;gap:8px}
+.ae-modal.ae-lila :is(.ae-fn-slot,.ae-trigger-details,#aeSpecificUserWrap) label.ae-check{display:flex;flex-direction:row;align-items:center;gap:10px;min-height:40px;margin:0;color:var(--ae-text)}
+.ae-modal.ae-lila :is(.ae-fn-slot,.ae-trigger-details,#aeSpecificUserWrap) label.ae-check input[type=checkbox]{flex:none;width:20px;height:20px;min-height:0;margin:0;accent-color:var(--ae-accent)}
+.ae-modal.ae-lila .ae-fn-slot input:not([type=checkbox]):not([type=range]):not([type=color]),.ae-modal.ae-lila .ae-fn-slot select{width:100%;font-size:14px}
+.ae-modal.ae-lila .ae-fn-slot small{font-size:13px;color:var(--ae-text-secondary)}
+
+/* Ny Action: skärm och avancerade val */
+.ae-modal.ae-lila .ae-sek-skarm .ae-scene-settings>h4{display:none}
+.ae-modal.ae-lila .ae-scene-settings{margin:0;padding:16px;background:var(--ae-card);border:1px solid #4a3a5a;border-radius:var(--ae-radius-card)}
+.ae-modal.ae-lila .ae-scene-settings .ae-scene-row,.ae-modal.ae-lila .ae-scene-settings .ae-position-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:12px}
+.ae-modal.ae-lila .ae-scene-settings label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila .ae-scene-settings input,.ae-modal.ae-lila .ae-scene-settings select{width:100%}
+.ae-modal.ae-lila .ae-avancerat{margin:0;padding:0 16px;background:var(--ae-card);border:1px solid #4a3a5a;border-radius:var(--ae-radius-card)}
+.ae-modal.ae-lila .ae-avancerat>summary{min-height:var(--ae-control-height);display:flex;align-items:center;gap:8px;padding:12px 0;font-size:16px;font-weight:600;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-avancerat>summary small{margin:0;font-size:13px;font-weight:400;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila .ae-avancerat[open]>summary{border-bottom:1px solid var(--ae-line);margin-bottom:16px}
+.ae-modal.ae-lila .ae-avancerat .ae-block{margin:0 0 16px;padding:0;border:0}
+.ae-modal.ae-lila .ae-avancerat .ae-block h4{margin:0 0 12px;font-size:14px;font-weight:600;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-avancerat .ae-grid>label,.ae-modal.ae-lila .ae-points-row{grid-template-columns:minmax(0,1fr) 180px;gap:16px;font-size:14px;color:var(--ae-text-secondary);margin:0 0 12px}
+.ae-modal.ae-lila .ae-avancerat .ae-grid>label input:not([type=checkbox]),.ae-modal.ae-lila .ae-points-row input[type=number]{width:100%}
+.ae-modal.ae-lila .ae-avancerat label.ae-check{display:flex;align-items:center;gap:10px;min-height:var(--ae-control-height);color:var(--ae-text)}
+.ae-modal.ae-lila .ae-avancerat label.ae-check input{width:20px;height:20px;accent-color:var(--ae-accent)}
+.ae-modal.ae-lila output{color:#dcc2ff}
+
+/* Nytt Event: valkort, valchips och kryssruteslistor */
+.ae-modal.ae-lila .ae-valkort-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.ae-modal.ae-lila label.ae-valkort{display:flex;align-items:center;gap:12px;min-height:64px;margin:0;padding:12px 16px;background:var(--ae-card);border:1px solid #4a3a5a;border-radius:var(--ae-radius-card);cursor:pointer}
+.ae-modal.ae-lila .ae-valkort input{order:2;margin-left:auto!important}
+.ae-modal.ae-lila .ae-valkort-text{display:flex;flex-direction:column;gap:2px}
+.ae-modal.ae-lila .ae-valkort-text b{display:block;font-size:15px;font-weight:600;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-valkort-text small{display:block;font-size:13px;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila label.ae-valkort:has(input:checked),.ae-modal.ae-lila label.ae-valchip:has(input:checked){background:var(--ae-card-vald);border-color:var(--ae-focus);box-shadow:inset 0 0 0 1px var(--ae-focus)}
+.ae-modal.ae-lila .ae-trigger-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.ae-modal.ae-lila label.ae-valchip{display:flex;align-items:center;gap:10px;min-height:var(--ae-control-height);margin:0;padding:8px 12px;background:var(--ae-card);border:1px solid #4a3a5a;border-radius:var(--ae-radius-control);font-size:14px;color:var(--ae-text);cursor:pointer}
+.ae-modal.ae-lila label.ae-exclude-anon{display:flex;align-items:center;gap:12px;min-height:var(--ae-control-height);margin:12px 0 0;font-size:15px;color:var(--ae-text);cursor:pointer}
+.ae-modal.ae-lila #aeSpecificUserWrap{margin-top:12px;padding:16px;background:#2a1f37;border:1px solid #4a3a5a;border-radius:var(--ae-radius-card)}
+.ae-modal.ae-lila #aeSpecificUserWrap label,.ae-modal.ae-lila .ae-trigger-details label{display:flex;flex-direction:column;gap:8px}
+.ae-modal.ae-lila .ae-trigger-details{margin-top:16px;padding:16px;background:#2a1f37;border:1px solid #4a3a5a;border-radius:var(--ae-radius-card)}
+.ae-modal.ae-lila .ae-trigger-details:empty{display:none}
+.ae-modal.ae-lila .ae-trigger-details .ae-inline input,.ae-modal.ae-lila .ae-picker-row input{width:100%}
+.ae-modal.ae-lila .ae-event-advanced .ae-inline{display:grid;grid-template-columns:minmax(0,1fr) 180px;align-items:center;gap:16px;margin:0 0 4px;font-size:14px;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-event-advanced .ae-inline input{width:100%}
+.ae-modal.ae-lila .ae-event-advanced .ae-hjalp{display:block;margin:0 0 16px}
+.ae-modal.ae-lila .ae-flerval-falt{margin:24px 0 0}
+.ae-modal.ae-lila .ae-falt-etikett{display:block;margin:0 0 8px;font-size:15px;font-weight:600;color:var(--ae-text)}
+.ae-modal.ae-lila .ae-flerval{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;max-height:264px;overflow:auto;padding:2px}
+.ae-modal.ae-lila label.ae-flerval-val{display:flex;align-items:center;gap:10px;min-height:var(--ae-control-height);margin:0;padding:8px 12px;background:var(--ae-input);border:1px solid var(--ae-border);border-radius:var(--ae-radius-control);font-size:14px;color:var(--ae-text);cursor:pointer}
+.ae-modal.ae-lila label.ae-flerval-val:has(input:checked){background:var(--ae-card-vald);border-color:var(--ae-focus)}
+.ae-modal.ae-lila .ae-flerval-val span{min-width:0;overflow-wrap:anywhere}
+.ae-modal.ae-lila .ae-flerval-antal{margin:8px 0 4px;font-size:13px;font-weight:600;color:#dcc2ff}
+.ae-modal.ae-lila .ae-flerval-tom{margin:0;font-size:14px;color:var(--ae-text-secondary)}
+.ae-modal.ae-lila .ae-flerval-falt>small{display:block;margin:0}
+
+/* Telefon: en kolumn, full bredd med sidomarginal, vertikal scroll */
+@media (max-width:640px){
+  .ae-modal.ae-lila>div{width:calc(100vw - 16px);max-height:calc(100dvh - 16px);padding:16px}
+  .ae-modal.ae-lila>div>header{top:-16px;margin:-16px -16px 16px;padding:14px 16px 12px}
+  .ae-modal.ae-lila>div>header h3{font-size:22px}
+  .ae-modal.ae-lila>div>footer{bottom:-16px;margin:16px -16px -16px;padding:12px 16px}
+  .ae-modal.ae-lila>div>footer button:not(.ae-ik){flex:1;padding:0 12px}
+  .ae-modal.ae-lila .ae-sek-rad,.ae-modal.ae-lila .ae-event-advanced .ae-inline,.ae-modal.ae-lila .ae-avancerat .ae-grid>label,.ae-modal.ae-lila .ae-points-row{grid-template-columns:minmax(0,1fr)}
+  .ae-modal.ae-lila .ae-fn-grid,.ae-modal.ae-lila .ae-valkort-lista,.ae-modal.ae-lila .ae-trigger-lista,.ae-modal.ae-lila .ae-flerval{grid-template-columns:minmax(0,1fr)}
+  .ae-modal.ae-lila .ae-sek-hjalp{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){.ae-modal.ae-lila label.ae-fn-kort{transition:none}}
