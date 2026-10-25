@@ -51,9 +51,10 @@
     const fast = (FAST[typ] || {})[layout];
     const kompakt = w.kompaktLage === true;
     const begard = tal(w.width, STANDARD[typ] || 260);
-    const golv = fast || KOMPAKT_UNDER;
-    const bas = kompakt ? (fast ? (begard < KOMPAKT_UNDER ? begard : fast) : begard) : Math.max(begard, golv);
-    const extra = kompakt || begard >= golv ? 1 : begard / golv;
+    // Fasta layouter ritas i sin egen bredd som förut (Bredd-fältet låses av CSS:en), oavsett om fältet
+    // säger mer eller mindre — under KOMPAKT_UNDER krymps det fasta kortet i stället med zoom.
+    const bas = kompakt ? (fast ? (begard < KOMPAKT_UNDER ? begard : fast) : begard) : (fast || Math.max(begard, KOMPAKT_UNDER));
+    const extra = kompakt || begard >= KOMPAKT_UNDER ? 1 : begard / KOMPAKT_UNDER;
     const z = Math.max(0.1, tal(w.widgetScale, 1));
     return { bas, z, extra, effektiv: bas * z * extra, kompakt };
   }
