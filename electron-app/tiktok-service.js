@@ -21,6 +21,8 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
   // MVP fran MOTSTANDARENS lag i var egen overlay ar varre an ingen MVP alls. Samma varde som
   // bryggan laser (bridge.js:665), ur fetchRoomInfo().data.owner.
   let mittAnkarId = '';
+  // Öppna gåvostreaks (streaknyckel → när giftstreak skickades). Se GIFT-hanteraren nedan.
+  const oppnaStreaks = new Map();
 
   function emit(type, fields, data) {
     onEvent({ type, eventKey: eventKey(type, data, fields), source: 'tiktok-live', ...fields });
@@ -55,8 +57,7 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       // v3 keeps the type in gift.type and repeatEnd as a number; older shapes kept both flat.
       const streakable = (data?.gift?.type ?? data?.giftType ?? data?.giftDetails?.giftType) === 1;
       const finalFrame = data?.repeatEnd === undefined ? true : !!Number(data.repeatEnd);
-      if (streakable && !finalFrame) return;
-      emit('gift', {
+      const falt = {
         ...baseUser(data),
         // PARITET MED MOLNVÄGEN. Desktop skickade tidigare inget giftId alls, bara namnet — så
         // lärläget (docs/gavoidentitet-inlarning.md) hade varit omöjligt över den här vägen: utan
@@ -87,7 +88,21 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         diamonds: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         coins: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         count: number(data?.repeatCount || 1, 1e7)
-      }, data);
+      };
+      // GÅVAN SYNS VID FÖRSTA TAPPET — samma regel som tiktok-bridge/bridge.js. Streakens första frame
+      // går direkt som `giftstreak` (bara visning, räknas aldrig); slutframen är `gift` som förut och
+      // bär samma streakId. Nyckeln: tittare + gåva + TikToks groupId (normalizer.js streakNyckel).
+      const nyckel = `${text(data?.user?.idStr || data?.user?.userId || data?.userId || data?.uniqueId || '', 80)}:${falt.giftId}:${text(data?.groupId || '', 60)}`;
+      if (streakable && !finalFrame) {
+        if (!oppnaStreaks.has(nyckel)) {
+          oppnaStreaks.set(nyckel, Date.now());
+          emit('giftstreak', { ...falt, streakId: nyckel }, data);
+        }
+        return;
+      }
+      const startad = oppnaStreaks.delete(nyckel);
+      for (const [k, at] of oppnaStreaks) if (Date.now() - at > 120000) oppnaStreaks.delete(k);
+      emit('gift', { ...falt, ...(startad ? { streakId: nyckel } : {}) }, data);
     });
     connection.on(WebcastEvent.FOLLOW, data => emit('follow', baseUser(data), data));
     connection.on(WebcastEvent.SHARE, data => emit('share', baseUser(data), data));

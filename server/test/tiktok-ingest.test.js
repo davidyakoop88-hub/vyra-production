@@ -31,8 +31,10 @@ test('TIKTOK_INGEST_TYPES covers every type tiktok-bridge actually emits',()=>{
   // Vidgad 2026-09-27 med 'chatcommand': rader som börjar med "!", i en egen takthink (se ingestTikTokEvent).
   // Vidgad 2026-10-12 med 'superfan': super fan-entrén ur BARRAGE (#361 fynd 2), en persontyp.
   // Vidgad 2026-09-27 med 'envelope': skattkistan ur ENVELOPE (tiktok-bridge normalizer envelopeFields).
+  // Vidgad 2026-10-26 med 'giftstreak': en gåvostreaks första frame, ett rent visningsbesked som går
+  // rakt till overlayn och aldrig räknas (se ingestTikTokEvent). En persontyp.
   assert.deepEqual([...TIKTOK_INGEST_TYPES].sort(),
-    ['battle','battle_mvp','chat','chatcommand','envelope','fanlevelup','follow','gift','glove','guardian','like','likes','member','share','subscribe','subscriberemote','superfan','viewer']);
+    ['battle','battle_mvp','chat','chatcommand','envelope','fanlevelup','follow','gift','giftstreak','glove','guardian','like','likes','member','share','subscribe','subscriberemote','superfan','viewer']);
 });
 
 test('validateTikTokIngestPayload accepterar guardian med anvandare och avvisar utan',()=>{

@@ -217,6 +217,9 @@
     });
   }
   window.addEventListener('vyra-live-event', ev => { try { hantera(ev && ev.detail); } catch (err) { console.warn('[VYRA] Hjärtan & moln', err); } });
+  // En gåvostreaks första frame (live-client.js visaGavostreak) startar effekten direkt i gåvolägena,
+  // i stället för när TikTok skickat repeatEnd. Slutframen förlänger den bara — inget räknas här.
+  window.addEventListener('vyra-gava-tidig', ev => { try { hantera(ev && ev.detail); } catch (err) { console.warn('[VYRA] Hjärtan & moln', err); } });
 
   // ▶ Testa här: spelar i DEN HÄR fliken, aldrig i OBS. Porträttet är testbilden (en tecknad siluett),
   // inte ett påhittat ansikte, och det finns bara i studion.

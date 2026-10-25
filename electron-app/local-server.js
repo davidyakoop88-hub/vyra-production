@@ -137,6 +137,8 @@ function startLocalServer(root, port = 4173, options = {}) {
     // stryks det i sista ledet och MVP-sessionen oppnas aldrig. #350 pastod att det stroks av
     // vitlistan redan da; det var fel, men det ar ratt nu, och darfor star det med.
     giftId: text(d.giftId, 160),
+    // Gåvostreakens identitet (giftstreak + slutframens gift), så en alert uppdaterar i stället för att visas igen.
+    streakId: text(d.streakId, 200),
     battleStatus: text(d.battleStatus, 64),
     fanClubLevel: number(d.fanClubLevel, 0, 50),
     gifterLevel: number(d.gifterLevel, 0, 50),
@@ -217,7 +219,8 @@ function startLocalServer(root, port = 4173, options = {}) {
   // i molnet 2026-08-14 och nadde aldrig hit; `guardian` (#304) och `subscriberemote` (#307) kom i
   // natt. tests/desktop-paritet.test.js provar numera REGELN — molnets typer minus chat — i
   // stallet for att jamfora mot en hardkodad kopia som kan glida igen.
-  const TILL_MOLNET = new Set(['gift', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
+  // giftstreak (2026-10-26): streakens första frame, ett rent visningsbesked som molnet aldrig räknar.
+  const TILL_MOLNET = new Set(['gift', 'giftstreak', 'like', 'likes', 'follow', 'share', 'member', 'subscribe',
     'viewer', 'battle', 'glove', 'guardian', 'superfan', 'subscriberemote', 'fanlevelup',
     // battle_mvp tillkom 2026-09-07 (#350). Skrivbordsappen SANDER den inte an — tiktok-service.js
     // emitterar elva typer och battle_mvp ar inte en av dem — men listan sager vad som FAR speglas,

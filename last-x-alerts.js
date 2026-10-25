@@ -576,6 +576,8 @@
     routeLiveBattleEvent = function (event = {}) {
       lastXRoute(event);
       const t = String(event.type || event.event || '').toLowerCase();
+      // Slutframen av en visad streak (event.streakVisad) går också hit: ett gifterkort som står på
+      // skärmen byts på plats till slutsumman, ett som hunnit gå visar slutsumman. Se nedan.
       if (t.includes('gift')) showLastX('gifter', event);
       if (t.includes('like')) showLastX('liker', event);
       if (t.includes('share')) showLastX('sharer', event);
@@ -583,6 +585,9 @@
       if (t === 'follow' || t === 'follower' || t === 'new_follower') showLastX('follower', event);
     };
   }
+  // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). Streakens första frame (live-client.js visaGavostreak)
+  // kommer på en egen kanal och visar gifterkortet direkt, i stället för när TikTok skickat repeatEnd.
+  addEventListener('vyra-gava-tidig', ev => { if (ev && ev.detail) showLastX('gifter', ev.detail); });
   // NY SANDNING => de vantande korten kastas. `slots` bar den forra sandningens senaste gavor och
   // foljare per typ, och `order` deras tur att visas — visades de efter bytet skulle den nya
   // sandningen inledas med namn fran den gamla. Ett kort som redan star pa skarmen far spela klart:

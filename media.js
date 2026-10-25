@@ -1443,7 +1443,7 @@ document.addEventListener('load',e=>{
 //
 // onload racker inte som halsotecken: ett skript som KASTAR under korning utloser onload anda.
 // Darfor kontrolleras VyraLive, inte bara att filen kom fram.
-Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261024-1';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261022-1';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
+Promise.resolve().then(()=>{const doda=skal=>{console.error('VYRA: TikTok-anslutningen kunde inte laddas -',skal);if(typeof toast==='function')toast('TikTok-anslutningen kunde inte laddas. Ladda om sidan.')};let falt=document.createElement('script');falt.src='cloud-fields.js?v=20261011-1';falt.onerror=()=>doda('cloud-fields.js gick inte att hamta');falt.onload=()=>{if(!window.VyraCloudFields)return doda('cloud-fields.js kastade under korning');let live=document.createElement('script');live.src='live-client.js?v=20261026-1';live.onerror=()=>doda('live-client.js gick inte att hamta');live.onload=()=>{if(!window.VyraLive)return doda('live-client.js kastade under korning');let ui=document.createElement('script');ui.src='studio-live.js?v=20261022-1';ui.onerror=()=>doda('studio-live.js gick inte att hamta');document.body.append(ui)};document.body.append(live)};document.body.append(falt)});
 const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='editor')return;let w=liveWidget(selected);if(!w||w.type!=='templateGiftCampaign')return;/* En valjare, ett stalle. Har lag tre bind-omslag runt samma knapp: det har som SKAPAR den, plus tva byte-identiska som markte om den och kopplade den till openPagedGiftPicker. Omslagen kor innerst-forst, sa det sista vann alltid - anvandaren fick redan den sidindelade valjaren over hela listan, och den inbyggda 150-modalen som byggdes har hann aldrig anvandas. Bada ar borttagna; knappen kopplas nu direkt dar den skapas. Loopen foljer campaignGiftCount(w) och inte 4: panelen erbjuder upp till sex gavor, och gava 5 och 6 fick annars ingen knapp alls medan deras sokvagsfalt lamnades synligt. */for(let i=0;i<campaignGiftCount(w);i++){let input=document.querySelector('#giftImage'+i),group=input?.closest('.campaign-gift-editor');if(!group||group.querySelector('.open-gift-picker'))continue;let button=document.createElement('button');button.type='button';button.className='open-gift-picker';button.textContent='Öppna alla '+campaignGiftList().length+' gifts';input.closest('label').style.display='none';group.prepend(button);button.onclick=()=>openPagedGiftPicker(w,i)}};
 
 
@@ -1481,7 +1481,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='toplike-studio.css?v=20261011-1';document.head.append(css);let js=document.createElement('script');js.src='toplike-studio.js?v=20261021-7';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='standalone-widgets.js?v=20260801-2';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20261023-14';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261023-15';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='last-x-alerts.css?v=20261023-14';document.head.append(css);let js=document.createElement('script');js.src='last-x-alerts.js?v=20261026-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='gift-alert-frames.css?v=3';document.head.append(css);let js=document.createElement('script');js.src='gift-alert-frames.js?v=20261019-1';document.body.append(js)});
 // Inträdeseffekten för alla widgetar (vyra-intro.js, 2026-10-11): laddas EFTER studio.html:s
 // statiska skript, så dess renderkrok ligger utanför approved-rankings.js:s vakt och når även
@@ -1919,7 +1919,7 @@ Promise.resolve().then(()=>{
 // Hjärtan & moln - transparenta hjärt- och molneffekter som spelas vid likes, gåvor eller följare (hjartmoln.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-hjartmoln]')){let css=document.createElement('link');css.rel='stylesheet';css.href='hjartmoln.css?v=20261025-2';css.dataset.hjartmoln='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='hjartmoln.js?v=20261025-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda hjartmoln.js');document.body.append(s);
+  const s=document.createElement('script');s.src='hjartmoln.js?v=20261026-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda hjartmoln.js');document.body.append(s);
 });
 
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).
@@ -1946,7 +1946,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
 // Aktiveringsregeln (overlay-aktivering.js: dold i sandningen tills forsta riktiga handelsen) laddas
 // FORE vakten, sa att vaktens forsta svep redan vet vilka widgetar som vantar.
-Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261025-12';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
+Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261026-1';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
 // ▶ Testa widget aven i OBS, bara nar ingen sandning pagar (overlay-testspel.js). Eget meddelandeslag, aldrig en livehandelse.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-testspel.js?v=20261021-5';document.body.append(js)});
 

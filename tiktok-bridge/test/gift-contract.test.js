@@ -16,8 +16,10 @@ const DESKTOP = fs.readFileSync(
 // The desktop service builds its gift payload inline in the GIFT handler. Lift the coins expression
 // as written, so a fix there is what turns this green.
 function desktopCoinsExpression() {
-  const at = DESKTOP.indexOf("emit('gift'");
-  assert.notEqual(at, -1, 'hittade ingen gift-emit i tiktok-service.js');
+  // Ankaret är GIFT-hanteraren, inte emit('gift': sedan 2026-10-26 byggs fälten en gång i `falt` och
+  // går ut både som giftstreak (första framen) och som gift (slutframen) — samma coins-uttryck.
+  const at = DESKTOP.indexOf('WebcastEvent.GIFT');
+  assert.notEqual(at, -1, 'hittade ingen GIFT-hanterare i tiktok-service.js');
   const line = DESKTOP.slice(at, DESKTOP.indexOf('\n', DESKTOP.indexOf('coins:', at)));
   const expr = /coins:\s*(.+?)(?:,\s*)?$/.exec(line.slice(line.indexOf('coins:')));
   assert.ok(expr, 'hittade inget coins-uttryck');

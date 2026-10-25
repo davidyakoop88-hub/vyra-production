@@ -348,6 +348,25 @@ function gateFor(){
   }
   return eventGate;
 }
+// GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). Bryggan skickar en gåvostreaks första frame direkt som
+// `giftstreak` i stället för att vänta på TikToks repeatEnd. Det är ett rent VISNINGSbesked: det får
+// aldrig nå `vyra-live-event`, VyraLive.on-lyssnarna, widgetkedjan eller Actions — där räknas gåvor,
+// och streaken räknas när slutframen kommer som vanlig `gift`. I stället får de visuella alerterna det
+// på en egen kanal, `vyra-gava-tidig` (Last-X, Gift Fireworks, Gift Bubbles, Hjärtan & moln). Slutframen
+// bär samma streakId och märks `streakVisad`, så en alert som redan visat streaken inte visar den igen.
+// Historik (live-leaderboard.js spelar upp /api/events vid laddning) är äldre än STREAK_FARSKT_MS och
+// visas inte — annars dök kvällens gåvor upp som alerts vid varje omladdning.
+const STREAK_FARSKT_MS=15000,visadeStreaks=new Map();
+function streakVisad(id){const at=id&&visadeStreaks.get(String(id));return !!at&&Date.now()-at<300000}
+function visaGavostreak(e){
+  if(!e||!e.streakId)return;
+  const at=Number(e.at||(e.timestamp&&Date.parse(e.timestamp)));
+  if(Number.isFinite(at)&&at>0&&klocka.serverNu()-at>STREAK_FARSKT_MS)return;
+  visadeStreaks.set(String(e.streakId),Date.now());
+  if(visadeStreaks.size>300)visadeStreaks.delete(visadeStreaks.keys().next().value);
+  dispatchEvent(new CustomEvent('vyra-gava-tidig',{detail:{...e,type:'gift',streakTidig:true}}));
+}
+window.VyraGavoStreak={visad:streakVisad,FARSKT_MS:STREAK_FARSKT_MS};
 function ingest(e,frameId){
   // SANDNINGSBESKED AR INTE LIVEEVENT. `live:start`/`live:end` kommer pa samma kanal som gavor och
   // likes (publishInternal lagger dem i samma strom), men de ar KONTROLLbesked: de ska aldrig
@@ -363,6 +382,9 @@ function ingest(e,frameId){
   // Skarpa profilbilder: byter 72 px-avataren mot profilsidans 1080 px när den är känd, annars
   // köar ett uppslag (vyra-stor-avatar.js). Synkront, så widgetarna nedströms ser den stora.
   if(window.VyraStorAvatar)window.VyraStorAvatar.forbattra(e);
+  // Streakens första frame: bara de visuella alerterna, aldrig räknarna. Se visaGavostreak ovan.
+  if(e&&e.type==='giftstreak'){visaGavostreak(e);return}
+  if(e&&e.type==='gift'&&e.streakId&&streakVisad(e.streakId))e.streakVisad=true;
   // TESTHANDELSER NAR ALDRIG SANDNINGENS RAKNARE (Davids regel 2026-10-21: inga exempelnamn i OBS).
   // Simulatorns `__simulerad`, `__test`-anrop och serverns testevent (`id: test-...`, POST
   // /api/test/event) bar TestGifter och liknande. I overlay-utgangen skickas de darfor inte som

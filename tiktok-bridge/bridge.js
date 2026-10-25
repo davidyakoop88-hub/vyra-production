@@ -167,6 +167,9 @@ if (require.main === module) {
   // Streamerns eget userId, hamtat med fetchRoomInfo vid connect. Se blocket dar det satts.
   let mittAnkarId = '';
   const recentEventKeys = new Map();
+  // Öppna gåvostreaks: streakNyckel → när första framen skickades som `giftstreak`. En streak vars
+  // slutframe aldrig kom (tappad anslutning) glöms efter två minuter (N.streakBeslut).
+  const oppnaStreaks = new Map();
   const proxyManager = createProxyManager();
   let currentProxy = null;
 
@@ -392,11 +395,22 @@ if (require.main === module) {
     });
 
     connection.on(WebcastEvent.GIFT, data => {
-      // Cumulative frames: forward only the last one, or the streak is counted as a triangular number.
-      if (N.isStreakable(data) && !N.isFinalFrame(data)) return;
+      // Cumulative frames: only the last one is a `gift`, or the streak is counted as a triangular number.
+      //
+      // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). Varje gåva — även en enstaka (repeatCount 1,1,
+      // repeatEnd 0,1, uppmätt i test/fixtures/gift-frames.js) — väntade förr tills TikTok skickat
+      // repeatEnd, ofta flera sekunder. Nu skickas streakens FÖRSTA frame direkt som `giftstreak`:
+      // ett rent visningsbesked som molnet aldrig räknar i mål, poäng eller topplistor. Bara EN per
+      // streak, inte en per tapp. Slutframen går ut som `gift` precis som förut och bär samma
+      // streakId, så en alert som redan visat streaken uppdaterar sig i stället för att visas igen.
+      // Beslutet är en ren funktion (normalizer.js streakBeslut), provad mot de uppmätta framen.
+      const beslut = N.streakBeslut(oppnaStreaks, data);
+      if (!beslut.typ) return;
       // mittAnkarId aven har: i ett flervardsrum gar en del gavor till en MEDVARD, och bara
       // bryggan vet vem varden ar. Se giftFields. #360
-      sendEvent('gift', N.giftFields(data, mittAnkarId), data);
+      const falt = N.giftFields(data, mittAnkarId);
+      if (beslut.typ === 'giftstreak') sendEvent('giftstreak', { ...falt, streakId: beslut.streakId }, data);
+      else sendEvent('gift', beslut.streakId ? { ...falt, streakId: beslut.streakId } : falt, data);
     });
 
     connection.on(WebcastEvent.FOLLOW, data => sendEvent('follow', N.baseUser(data), data));
