@@ -3,6 +3,11 @@
    och den stora 10→1-alerten med TIME’S UP! vid noll. Måtten är designens (klockan 340 px bred);
    --bgx-z skalar allt med widgetens bredd, --bgx-alert alerten för sig. */
 .widget.vyra-boxgame{position:absolute;box-sizing:border-box;overflow:visible;font-family:Arial,Helvetica,sans-serif;isolation:isolate}
+/* Studions standardlåda (.widget i studio.css: 12 px padding, lila kant, mörk bakgrund, rundning, minst
+   150 px bred) ritades runt klockan i Layout. Samma nollställning som rankinglistorna gör på sin rot.
+   `.widget span` färgar och krymper alla span — klockans egna span får sin färg här. */
+.widget.vyra-boxgame{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-width:0!important}
+.vyra-boxgame .bgx-botten span{color:#75818f;font-size:6px}
 .vyra-boxgame .bgx-klocka{zoom:var(--bgx-z,1);width:340px;box-sizing:border-box;padding:23px 24px 18px;background:#17191f;border:2px solid #e7e8ec;border-radius:5px;
   box-shadow:0 14px 45px #0008,inset 0 4px 0 #e23e43;color:#ef5357;transition:opacity .25s ease}
 .vyra-boxgame .bgx-topp{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:2.5px;font-weight:900;color:#f4f4f7}
