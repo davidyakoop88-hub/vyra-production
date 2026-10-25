@@ -393,6 +393,24 @@
     "hfShowCombo": true,
     "hfDuration": 6
   },
+  "catalog:boxgame": {
+    "type": "templateBoxgameClock",
+    "x": 40,
+    "y": 60,
+    "width": 340,
+    "title": "Boxgame-klocka",
+    "boxMinuter": 5,
+    "boxKvarMs": 300000,
+    "boxKor": false,
+    "boxSlut": 0,
+    "boxRond": 1,
+    "boxVolym": 70,
+    "boxRost": true,
+    "boxRostFran": 10,
+    "boxKlocka": true,
+    "boxVisaKlocka": true,
+    "boxAlertSkala": 100
+  },
   "catalog:pgpodium": {
     "type": "templatePgPodium",
     "x": 26,

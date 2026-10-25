@@ -45,7 +45,8 @@
   // utseende i overlay utan handelser. Reglen sjalv provas i overlay-aktivering.browser.test.js.
   const AV = !OVERLAY || window.__vyraVisaUtanAktivering === true;
 
-  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo']);
+  // Boxgame-klockan visar streamerns egen rond, ingen handelse - den star i OBS fran forsta bildrutan.
+  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock']);
   const NYCKEL = 'vyra-aktiverade-widgetar';
   // Utan sandningsidentitet (lokalt lage, flaggan av) finns ingen live:start som nollstaller.
   // Da galler aktiveringen hogst en arbetsdag.

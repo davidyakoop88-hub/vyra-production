@@ -302,7 +302,10 @@
   align-content:center!important;height:68px!important;column-gap:0!important;row-gap:0!important}
 .widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .toplike-row.toplike-row::before{content:none!important;display:none!important}
 .widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .toplike-row>.rk6-av{grid-row:1/3!important;grid-column:1!important}
-.widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .toplike-row>.rk6-namn{grid-row:1!important;grid-column:2!important;align-self:end!important;gap:0;margin:0 0 2px -13px!important}
+/* Namnspalten har en minsta bredd: listan byter inte bredd när ett kort namn ersätts av ett långt mitt
+   i sändningen, och katalogkortet fyller sin bildyta (med fabrikens korta exempelnamn var listan så
+   smal att Top Coins-kortet täckte 21 % av bildytan, under katalogvaktens 22 %). */
+.widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .toplike-row>.rk6-namn{grid-row:1!important;grid-column:2!important;align-self:end!important;gap:0;margin:0 0 2px -13px!important;min-width:132px!important}
 .widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .toplike-row>em{grid-row:2!important;grid-column:2!important;align-self:start!important;justify-self:start!important;margin:0 0 0 -13px!important}
 /* Det stilla ljuset bakom profilbilden: ljusbilden genom en rund mask, tonad efter metallen. */
 .widget.vyra-toplike.rk6.rk6-metall:not(.rk6-kompakt) .rk6-ring::before{

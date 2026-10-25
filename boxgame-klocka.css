@@ -1,0 +1,66 @@
+/* BOXGAME-KLOCKA (boxgame-klocka.js). Davids playground "boxgame-clock", sista lagret av varje regel:
+   vit ringhörna med röd överkant, Arial Black-siffror, röd puls de sista 20 sekunderna, domarräkning
+   och den stora 10→1-alerten med TIME’S UP! vid noll. Måtten är designens (klockan 340 px bred);
+   --bgx-z skalar allt med widgetens bredd, --bgx-alert alerten för sig. */
+.widget.vyra-boxgame{position:absolute;box-sizing:border-box;overflow:visible;font-family:Arial,Helvetica,sans-serif;isolation:isolate}
+/* Studions standardlåda (.widget i studio.css: 12 px padding, lila kant, mörk bakgrund, rundning, minst
+   150 px bred) ritades runt klockan i Layout. Samma nollställning som rankinglistorna gör på sin rot.
+   `.widget span` färgar och krymper alla span — klockans egna span får sin färg här. */
+.widget.vyra-boxgame{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-width:0!important}
+.vyra-boxgame .bgx-botten span{color:#75818f;font-size:6px}
+.vyra-boxgame .bgx-klocka{zoom:var(--bgx-z,1);width:340px;box-sizing:border-box;padding:23px 24px 18px;background:#17191f;border:2px solid #e7e8ec;border-radius:5px;
+  box-shadow:0 14px 45px #0008,inset 0 4px 0 #e23e43;color:#ef5357;transition:opacity .25s ease}
+.vyra-boxgame .bgx-topp{display:flex;align-items:center;gap:8px;font-size:10px;letter-spacing:2.5px;font-weight:900;color:#f4f4f7}
+.vyra-boxgame .bgx-lampa{width:6px;height:6px;border-radius:50%;background:#ef454b;color:#ef454b;box-shadow:0 0 8px currentColor}
+.vyra-boxgame .bgx-rond{margin-left:auto;color:#d7d8df;font-size:8px;letter-spacing:1px}
+.vyra-boxgame .bgx-tid{text-align:center;font-family:'Arial Black',Arial,sans-serif;font-size:80px;line-height:1.2;letter-spacing:-4px;font-weight:900;
+  font-variant-numeric:tabular-nums;color:#fff;margin:24px 0 4px}
+.vyra-boxgame .bgx-status{text-align:center;font-size:10px;color:#8c9aaa;min-height:14px}
+.vyra-boxgame .bgx-spar{height:5px;background:#353840;margin:25px 0 15px;overflow:hidden}
+.vyra-boxgame .bgx-spar>div{height:100%;background:currentColor;transition:width .3s linear}
+.vyra-boxgame .bgx-botten{display:flex;justify-content:space-between;font-size:6px;letter-spacing:1px;font-weight:700;color:#75818f}
+.vyra-boxgame.bgx-skarp .bgx-klocka{color:#ff916e;border-color:#f35458;box-shadow:0 0 30px #e62e3728,inset 0 4px 0 #e23e43}
+.vyra-boxgame.bgx-skarp .bgx-tid{color:#ff5c61;text-shadow:0 0 14px #f33b4230}
+.vyra-boxgame.bgx-klar .bgx-klocka{color:#e9bd6c}
+.vyra-boxgame.bgx-klar .bgx-tid{color:#f2eeee}
+.vyra-boxgame .bgx-domarrad{display:flex;justify-content:center;align-items:center;gap:10px;color:#d6dce4;font-size:9px;letter-spacing:1.5px;margin:6px 0 12px}
+.vyra-boxgame .bgx-domarrad b{font-size:21px;color:#fff}
+.vyra-boxgame .bgx-klocka:has(.bgx-domarrad) .bgx-tid{margin-top:12px;margin-bottom:0}
+
+/* Alerten ligger över klockan, centrerad, och får gå utanför widgetens låda. Under alerten tonas
+   klockan bort helt, så att 10→1 och TIME’S UP! är det enda som syns — designens OBS-vy. Nedtonad
+   till 18 % syntes klockans egen siffra och domarräkning igenom den stora siffran. */
+.vyra-boxgame .bgx-alertlager{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;overflow:visible;z-index:2}
+.vyra-boxgame.bgx-alert-pa .bgx-klocka{opacity:0}
+.vyra-boxgame.bgx-bara-alert{min-height:calc(360px * var(--bgx-z,1))}
+.vyra-boxgame .bgx-vila{font-size:11px;color:#617080;text-align:center;padding:25px;border:1px dashed #3a4350;border-radius:8px}
+.vyra-boxgame .bgx-nedalert,.vyra-boxgame .bgx-slutalert{zoom:calc(var(--bgx-z,1) * var(--bgx-alert,1));position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;white-space:nowrap}
+.vyra-boxgame .bgx-kicker{font-size:9px;font-weight:800;letter-spacing:4px;color:#ff777d}
+.vyra-boxgame .bgx-nedalert strong{font-family:'Arial Black',Arial,sans-serif;font-size:180px;line-height:1.13;font-weight:900;letter-spacing:-9px;color:#fff7f3;
+  -webkit-text-stroke:2px #e74950;text-shadow:0 5px 0 #901f29,0 9px 0 #46151d,0 0 35px #ed45474d}
+.vyra-boxgame .bgx-rad{font-size:9px;letter-spacing:5px;color:#a5abb6;margin-top:12px}
+.vyra-boxgame .bgx-nedalert::before{content:'';position:absolute;width:290px;height:3px;background:#ff5c63;box-shadow:0 0 30px 8px #ff31313b;top:50%;z-index:-1;opacity:0}
+.vyra-boxgame .bgx-slutalert strong{font-family:'Arial Black',Arial,sans-serif;font-size:66px;line-height:.95;letter-spacing:-3px;color:#fff7f3;text-shadow:0 4px 0 #9e2632,0 0 35px #ed45474d;margin-top:20px}
+/* Utan rörelse står slutalerten kvar tills den tas bort (3,2 s efter noll, boxgame-klocka.js). */
+
+@keyframes bgx-puls{50%{text-shadow:0 0 22px #f33b4260}}
+@keyframes bgx-domare{from{transform:scale(1.15);opacity:.5}to{transform:scale(1);opacity:1}}
+@keyframes bgx-slag{0%{transform:scale(1.7);opacity:0;filter:blur(5px)}14%{transform:scale(.95);opacity:1;filter:blur(0)}30%{transform:scale(1.02)}80%{opacity:1;transform:scale(1)}100%{opacity:.25;transform:scale(.98)}}
+@keyframes bgx-blixt{0%{opacity:1;transform:scaleX(.4)}100%{opacity:0;transform:scaleX(1.3)}}
+@keyframes bgx-etikett{0%{opacity:0}25%,100%{opacity:1}}
+@keyframes bgx-slut{0%{opacity:0;transform:scale(1.25)}10%,75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.98)}}
+@media(prefers-reduced-motion:no-preference){
+  .vyra-boxgame.bgx-skarp .bgx-tid{animation:bgx-puls 1s ease-in-out infinite}
+  .vyra-boxgame .bgx-domarrad{animation:bgx-domare .35s ease-out}
+  .vyra-boxgame .bgx-kicker{animation:bgx-etikett .8s ease-out both}
+  .vyra-boxgame .bgx-nedalert strong{animation:bgx-slag .9s cubic-bezier(.16,.8,.2,1) both}
+  .vyra-boxgame .bgx-nedalert::before{animation:bgx-blixt .7s ease-out both}
+  .vyra-boxgame .bgx-slutalert{animation:bgx-slut 3.2s ease-out both}
+}
+
+/* Panelen i studion */
+.bgx-panel .bgx-paneltid{font-family:'Arial Black',Arial,sans-serif;font-size:34px;font-weight:900;text-align:center;letter-spacing:-1px;font-variant-numeric:tabular-nums;margin:2px 0 10px}
+.bgx-panel .bgx-knappar{display:flex;gap:8px;margin-bottom:10px}
+.bgx-panel .bgx-knappar button{flex:1}
+.bgx-panel .bgx-primar{background:#ee4c52;border-color:#ee4c52;color:#fff;font-weight:700}
+.bgx-varde{float:right;opacity:.8}

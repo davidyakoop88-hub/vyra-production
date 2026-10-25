@@ -138,6 +138,11 @@ const LIB = () => {
     return { sx: 1, sy: 1 };
   };
   const olika = (a, b, tol) => Math.abs(a - b) > tol * Math.max(Math.abs(a), Math.abs(b), 1e-6);
+  // EN 3D-VINKEL ÄR INGEN STRÄCKNING (2026-10-25). Guld · Silver · Brons vinklar profilbilden med
+  // perspective(240px) rotateY(28deg) — designens medaljong. Det ger en matrix3d med perspektivterm
+  // (m14/m24/m34 ≠ 0), och dess kolumnlängder skiljer per axel utan att något sträcks: bilden står
+  // rund i sitt eget plan och vrids mot betraktaren. En platt skalning har aldrig de termerna.
+  const perspektiv = t => { const m3 = /matrix3d\(([^)]+)\)/.exec(t || ''); if (!m3) return false; const v = m3[1].split(',').map(Number); return [v[3], v[7], v[11]].some(x => Math.abs(x) > 1e-6); };
   const dold = e => {
     for (let n = e; n && n !== document.documentElement; n = n.parentElement) {
       const cs = getComputedStyle(n);
@@ -183,10 +188,14 @@ const LIB = () => {
       // 2. runda profilbilder
       const rad = cs.borderTopLeftRadius;
       const rund = /^50%/.test(rad) || (parseFloat(rad) > 0 && !/%/.test(rad) && parseFloat(rad) >= Math.min(c.offsetWidth, c.offsetHeight) / 2 - 0.5 && Math.min(c.offsetWidth, c.offsetHeight) > 0);
-      if (rund && (c.tagName === 'IMG' || c.querySelector('img')) && c.offsetWidth >= 16 && c.offsetHeight >= 16) {
+      // En PILLER med en bild i (skattkistans sk-pill, 316x52) är ingen profilbild: rundad i ändarna,
+      // inte en cirkel. Bara det som är ungefär kvadratiskt mäts — en oval profilbild är aldrig 2:1.
+      const ungefarKvadrat = c.tagName === 'IMG' || Math.max(c.offsetWidth, c.offsetHeight) <= 2 * Math.min(c.offsetWidth, c.offsetHeight);
+      if (rund && ungefarKvadrat && (c.tagName === 'IMG' || c.querySelector('img')) && c.offsetWidth >= 16 && c.offsetHeight >= 16) {
         const kv = c.offsetWidth / c.offsetHeight;
         if (Math.abs(kv - 1) > 0.02 && rad !== '50% / 50%' ) fel.push(`oval profilbild ${c.tagName.toLowerCase()}.${String(c.className).split(' ')[0]} ${c.offsetWidth}x${c.offsetHeight}`);
         for (let n = c; n && n !== el; n = n.parentElement) {
+          if (perspektiv(getComputedStyle(n).transform)) continue;
           const s = matris(getComputedStyle(n).transform);
           if (olika(s.sx, s.sy, 0.02)) { fel.push(`profilbilden sträcks av ${n.tagName.toLowerCase()}.${String(n.className).split(' ')[0]}: ${getComputedStyle(n).transform}`); break; }
         }
@@ -255,6 +264,7 @@ const LIB = () => {
     const t = matris(getComputedStyle(el).transform);
     return { finns: true, fel, info, bilder, klippt, fonter, handtag, text: synligText(el), cls: String(el.className),
       kompakt: /\b(rk-kompakt|rk6-kompakt|lv-kompakt)\b/.test(el.className),
+      rk6vb: /\brk6-kompakt\b/.test(el.className) ? parseFloat(getComputedStyle(el).getPropertyValue('--rk6-vb')) || 0 : 0,
       v: r.left, h: r.right, o: r.top, u: r.bottom, b: r.width / k, hh: r.height / k, mx: r.left + r.width / 2, my: r.top + r.height / 2,
       ow: el.offsetWidth, oh: el.offsetHeight, z, ts, sx: t.sx, sy: t.sy, visB: el.offsetWidth * z * ts, visH: el.offsetHeight * z * ts,
       pw: +((document.querySelector('#propWidth') || {}).value), ph: +((document.querySelector('#propHeight') || {}).value),
@@ -378,7 +388,12 @@ async function matNyckel(nyckel) {
           // bredden och den likformiga skalan mäts ändå.
           if (e.kompakt && !f.kompakt) {
             info.add(`${namn}: läsbarhetsläget slår till (avsiktlig layout) — höjden x${(e.hh / f.hh).toFixed(3)}`);
-            if (Math.abs(e.b / f.b - pct / 100) > 0.02) fel.push(`${namn}: bredden x${(e.b / f.b).toFixed(3)}, väntade ${pct / 100}`);
+            // Rankinglistornas kompaktläge ritar listan i designens uppmätta grundbredd gånger skalan
+            // (ranking-sixpack.js GEOMETRI, --rk6-vb, golv 112 px) — inte i innehållets bredd. Med
+            // exempelnamnen är listan i full storlek smalare än grundbredden, så kvoten mot den blev
+            // 0,59 för Voltage vid 50 %. Det som lovas är --rk6-vb; det mäts.
+            if (e.rk6vb) { if (Math.abs(e.b - e.rk6vb) > 0.03 * e.rk6vb) fel.push(`${namn}: kompaktlistan är ${e.b.toFixed(0)} px, --rk6-vb lovar ${e.rk6vb}`); }
+            else if (Math.abs(e.b / f.b - pct / 100) > 0.02) fel.push(`${namn}: bredden x${(e.b / f.b).toFixed(3)}, väntade ${pct / 100}`);
           } else if (golv(f, e)) {
             info.add(`${namn}: textens läsbarhetsgolv (12 synliga px) ändrar layouten — X ${(e.b / f.b).toFixed(3)} Y ${(e.hh / f.hh).toFixed(3)}`);
             if (Math.sign(e.b - f.b) !== Math.sign(pct - 100)) fel.push(`${namn}: storleken gick åt fel håll (${f.b.toFixed(0)} -> ${e.b.toFixed(0)})`);

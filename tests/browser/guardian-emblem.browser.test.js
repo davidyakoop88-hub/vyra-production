@@ -444,6 +444,11 @@ async function entreUnderLaddordning(lage, nyckel) {
   const lo = await serveraLaddordning(lage, { widgets: [w] });
   const sida = await browser.newPage({ viewport: { width: 1080, height: 1000 }, locale: 'sv-SE' });
   const fel = []; sida.on('pageerror', e => fel.push(e.message));
+  // Kontrollmätningen läser laddtiderna ur performance-bufferten, som rymmer 250 resurser som
+  // standard. Overlayn fyller den (uppmätt 2026-10-25: exakt 250), och fas-filen — som riggen
+  // fördröjer över en sekund — kom efter att bufferten var full och syntes aldrig i mätningen,
+  // fast den laddats. Större buffert innan sidan laddas, så mätningen ser hela ordningen.
+  await sida.addInitScript(() => { try { performance.setResourceTimingBufferSize(2000) } catch (_) {} });
   try {
     await sida.goto(`${lo.bas}/overlay.html?access=${LO_TOKEN}`, { waitUntil: 'load' });
     await sida.waitForFunction(() => !!window.VyraGuardianModels && !!window.VyraGuardian && !!window.VyraAlertQueue

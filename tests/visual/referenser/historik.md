@@ -552,3 +552,15 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Guld · Silver · Brons (design nr 4): tre nya katalognycklar för Top Like, Top Coins och Top Points (#705)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 3 av 167 (filter: metall) — catalog:ranking:templateTopCoins:metall, catalog:ranking:templateTopPoints:metall, catalog:toplike:metall
+
+## 2026-10-25 — 4 referenser skrivna
+
+- **Motiv:** Boxgame-klocka (ny katalognyckel) och Guld · Silver · Brons med minsta namnbredd
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 4 av 168 (filter: metall,boxgame) — catalog:boxgame, catalog:ranking:templateTopCoins:metall, catalog:ranking:templateTopPoints:metall, catalog:toplike:metall
+
+## 2026-10-25 — 1 referenser skrivna
+
+- **Motiv:** Boxgame-klocka utan studions standardlåda (12 px padding flyttade och klippte klockan)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 168 (filter: boxgame) — catalog:boxgame

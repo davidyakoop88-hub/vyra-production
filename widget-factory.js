@@ -359,6 +359,12 @@
       type: 'templateHeartFireworks', x: 36, y: 120, width: 320, title: 'Heart Fireworks',
       hfMin: 1, hfGold: true, hfShowCombo: true, hfDuration: 6
     }),
+    // Boxgame-klocka (boxgame-klocka.js): rondtimer, 5 minuter, står still tills streamern startar.
+    'boxgame': () => ({
+      type: 'templateBoxgameClock', x: 40, y: 60, width: 340, title: 'Boxgame-klocka',
+      boxMinuter: 5, boxKvarMs: 300000, boxKor: false, boxSlut: 0, boxRond: 1,
+      boxVolym: 70, boxRost: true, boxRostFran: 10, boxKlocka: true, boxVisaKlocka: true, boxAlertSkala: 100
+    }),
     'topgift.premium': v => ({
       type: 'templateTopGift', theme: v.theme, x: 70, y: 140, width: 340, title: 'Top Gifter',
       templateTitle: 'TOP GIFTER', dataName: '@StreamQueen', dataValue: '44 999',
@@ -710,6 +716,7 @@
     'followeralert': parts => parts[0] ? ['followeralert', { themeId: parts[0], theme: pick('followeralert.theme', parts[0], 'tema för Follower Spotlight') }] : ['followeralert', {}],
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
+    'boxgame': () => ['boxgame', {}],
     'pgpodium': parts => parts[0] ? ['pgpodium', { frameId: parts[0], frame: pick('pgpodium.frame', parts[0], 'HD-ram för Top Gifter Podium') }] : ['pgpodium', {}],
     'pgstreak': parts => parts[0] ? ['pgstreak', { modelId: parts[0], model: pick('pgstreak.model', parts[0], 'modell för Top Streak Flip') }] : ['pgstreak', {}],
     'pggoal': parts => parts[0] ? ['pggoal', { designId: parts[0], design: pick('pggoal.design', parts[0], 'design för Goal Pro') }] : ['pggoal', {}],
