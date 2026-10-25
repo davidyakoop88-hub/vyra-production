@@ -28,9 +28,10 @@
     'prism-vertical': Object.freeze({ label: 'Prism', etikett: 'Stil 7 · Prism', accent: '#ffb703', width: 260 }),
     'prism-horizontal': Object.freeze({ label: 'Prism horisontal', etikett: 'Stil 8 · Prism horisontal', accent: '#ffb703', width: 340 }),
     celestial: Object.freeze({ label: 'Celestial', etikett: 'Stil 9 · Celestial', accent: '#ffd54a', width: 340 }),
-    'royal-rose': Object.freeze({ label: 'Royal Rose', etikett: 'Stil 10 · Royal Rose', accent: '#ffd54a', width: 340 })
+    'royal-rose': Object.freeze({ label: 'Royal Rose', etikett: 'Stil 10 · Royal Rose', accent: '#ffd54a', width: 340 }),
+    metall: Object.freeze({ label: 'Guld · Silver · Brons', etikett: 'Stil 11 · Guld · Silver · Brons', accent: '#f5c34f', width: 250 })
   });
-  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const SIXPACK = new Set(['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
   // Pensionerade 2026-09-24 (Davids beslut) — inte valbara längre; ranking-sixpack.js ritar en
   // sparad widget med någon av dem som närmaste nya design.
   const PENSIONERADE = new Set(['clean', 'center', 'podium', 'neon']);

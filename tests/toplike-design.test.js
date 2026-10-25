@@ -17,7 +17,7 @@ test('Top Like exposes the six VYRA designs in the picker — the four originals
   // ranking-sixpack.css for deras CSS och toplike-design.js for tabellen.
   const root = load();
   assert.deepEqual(Array.from(root.VYRA_TOPLIKE_STYLES, ([id]) => id),
-    ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+    ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
   assert.ok(root.VYRA_TOPLIKE_DEFAULTS['clean-bar'], 'presetet behovs fortfarande for sparade widgetar');
 });
 

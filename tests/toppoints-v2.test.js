@@ -42,7 +42,7 @@ test('katalogens fyra ursprungliga nycklar finns kvar, och ingen delar id', () =
     ['center', 'clean', 'neon', 'podium'].every(id => ids.includes(id)), true,
     'nagon av de fyra ursprungliga designnycklarna forsvann');
   assert.equal(new Set(ids).size, ids.length, 'tva designer delar samma id');
-  assert.equal(ids.length, 10);
+  assert.equal(ids.length, 11);   // + Guld · Silver · Brons (2026-10-25)
 });
 
 // KARNPROVET. Det ar exakt det har paret som foll ihop i produktionen.

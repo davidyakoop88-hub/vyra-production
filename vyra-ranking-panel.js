@@ -57,11 +57,11 @@
   if (!R || typeof R.definiera !== 'function') return;
 
   const TYPER = ['templateTopLike', 'templateTopCoins', 'templateTopPoints'];
-  const IDS = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose'];
+  const IDS = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall'];
   const NAMN = { voltage: 'Voltage', 'basic-v2': 'Basic v2', 'prism-vertical': 'Prism vertikal',
-    'prism-horizontal': 'Prism horisontal', celestial: 'Celestial', 'royal-rose': 'Royal Rose' };
+    'prism-horizontal': 'Prism horisontal', celestial: 'Celestial', 'royal-rose': 'Royal Rose', metall: 'Guld · Silver · Brons' };
   const FORM = { voltage: 'lista', 'basic-v2': 'lista', 'prism-vertical': 'lista', 'prism-horizontal': 'podium',
-    celestial: 'rad', 'royal-rose': 'rad' };
+    celestial: 'rad', 'royal-rose': 'rad', metall: 'lista' };
   // Samma pension som ranking-sixpack.js PENSION.
   const PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal',
     clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
@@ -112,7 +112,8 @@
       { sektion: 2, typ: 'tal', falt: 'likeCount', etikett: 'Antal personer', enhet: 'st', legacyId: ids.antal },
       { sektion: 2, typ: 'kryss', falt: 'showDataName', etikett: 'Visa namn', legacyId: ids.namn },
       { sektion: 2, typ: 'kryss', falt: 'showProfile', etikett: 'Visa profilbilder', legacyId: ids.bild },
-      ...(id !== 'royal-rose' ? [{ sektion: 2, typ: 'kryss', falt: 'showRank', etikett: 'Visa placeringar', legacyId: '#rkVisaPlats' }] : []),
+      // Royal Rose och Guld · Silver · Brons visar ingen placering — metallen är placeringen.
+      ...(id !== 'royal-rose' && id !== 'metall' ? [{ sektion: 2, typ: 'kryss', falt: 'showRank', etikett: 'Visa placeringar', legacyId: '#rkVisaPlats' }] : []),
       { sektion: 2, typ: 'kryss', falt: 'showDataValue', etikett: 'Visa värden', legacyId: ids.varde },
       // Avstängd riktig aktivitet (demolistan även i sändningen) går att slå på igen; påslagen är den
       // det normala och syns inte som ett val.

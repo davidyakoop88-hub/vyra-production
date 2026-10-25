@@ -20,7 +20,7 @@
   // efter VyraWidgets.create() for sina egna katalogknappar, sa dessa tva listor blockerar inte
   // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
   // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
-  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
   // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
   // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
   // podium ...) bygger i stället närmaste nya design, så inget gammalt val sparas i state eller molnet.
@@ -31,7 +31,7 @@
   const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
   const RAD_DESIGNER = new Set(['prism-horizontal', 'celestial', 'royal-rose']);
   const RAD_X = 20;
-  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose']);
+  const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
 
   // Battle MVP-stilar med egen fasmaskin. De sju aldre stilarna har ingen entre alls och behaller
   // sin 7-sekundersvisning; de har kor 0,9 s entre, 5 s hall och 0,9 s exit, och renderas med ett

@@ -8,7 +8,8 @@ const fs = require('node:fs');
 const { createDom, closeAll } = require('./helpers/dom-harness.js');
 test.after(closeAll);
 
-const SIXPACK = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose'];
+// Sju sedan 2026-10-25: Guld · Silver · Brons (design nr 4) lades till sist.
+const SIXPACK = ['voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall'];
 
 let harness = null;
 function rigg() {
