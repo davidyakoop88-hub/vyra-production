@@ -72,6 +72,18 @@ test('!önska via riktiga live-client: läggs i Spotify-kön exakt en gång, äv
   assert.deepEqual(anrop(w, 'queue'), [['queue', 'blinding lights']]);
 });
 
+// David 2026-10-25: "!önska / byt till !Play". !play är kommandot som visas; skiftläget spelar ingen
+// roll, och !önska finns kvar så att tittare med gamla vanor inte tystnar.
+test('!play lägger låten i kön, även skrivet !Play, och !önska fungerar fortfarande', async () => {
+  const w = studio();
+  chatt(w, { username: 'a', comment: '!play blinding lights' });
+  chatt(w, { username: 'b', comment: '!Play Levitating' });
+  chatt(w, { username: 'c', comment: '!önska flowers' });
+  chatt(w, { username: 'd', comment: '!playlist' });
+  await vanta(50);
+  assert.deepEqual(anrop(w, 'queue').map(a => a[1]).sort(), ['Levitating', 'blinding lights', 'flowers']);
+});
+
 test('!sr och !låt fungerar, ett tomt kommando och vanlig chatt gör ingenting', async () => {
   const w = studio();
   chatt(w, { username: 'a', comment: '!sr levitating' });
@@ -298,7 +310,7 @@ test('Spotify-sidan: rutorna säger Aktiv när Spotify är anslutet, och gåva �
     assert.equal(r.querySelector('small'), r.firstElementChild.nextElementSibling, 'förklaringen ska stå direkt under kommandot');
   }
   const status = () => Object.fromEntries(rutor.length ? [...w.document.querySelectorAll('.music-rules > article')].map(a => [a.firstElementChild.textContent, a.querySelector('[data-spk-status]').textContent]) : []);
-  assert.deepEqual(status(), { '!önska <låt>': 'Aktiv', '!song': 'Aktiv', '!skip': 'Aktiv', 'Gåva → låt': 'Välj gåva och låt', 'Önskningar': 'Tom' });
+  assert.deepEqual(status(), { '!play <låt>': 'Aktiv', '!song': 'Aktiv', '!skip': 'Aktiv', 'Gåva → låt': 'Välj gåva och låt', 'Önskningar': 'Tom' });
 
   w.document.querySelector('[data-spk-valj="0"]').click();
   const val = [...w.document.querySelectorAll('.spk-valjare [data-spk-gava]')];
@@ -409,7 +421,7 @@ test('önskelistan: en synlig Låtönskningar-widget tar !önska, och då säger
   chatt(w, { username: 'lina', comment: '!önska Blinding Lights' });
   await vanta(30);
   assert.equal(rader(w).length, 0);
-  assert.match(w.document.querySelector('[data-spk-onskningar]').textContent, /Låtönskningar-widgeten tar emot !önska/);
+  assert.match(w.document.querySelector('[data-spk-onskningar]').textContent, /Låtönskningar-widgeten tar emot !play/);
 });
 
 test('önskelistan: tittarens text kan inte injicera HTML', async () => {

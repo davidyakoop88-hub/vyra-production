@@ -1,4 +1,4 @@
-// LÅTÖNSKNINGAR — tittarna skriver "!önska <låt>" i TikTok-chatten och låten spelas automatiskt.
+// LÅTÖNSKNINGAR — tittarna skriver "!play <låt>" i TikTok-chatten och låten spelas automatiskt.
 //
 // Davids beslut 2026-09-27: BÅDA källorna, valda i panelen (YouTube eller Spotify). Alla i chatten
 // får önska. Låtarna spelas automatiskt, utan godkännande.
@@ -45,7 +45,7 @@
   var tal = function (v, min, max, forval) { var n = Number(v); return Number.isFinite(n) ? Math.max(min, Math.min(max, Math.round(n))) : forval; };
   var installning = function (w) {
     return {
-      kommando: String((w && w.latKommando) || '!önska').trim().toLowerCase() || '!önska',
+      kommando: String((w && w.latKommando) || '!play').trim().toLowerCase() || '!play',
       maxKo: tal(w && w.latMaxKo, 1, 50, 10),
       cooldownMs: tal(w && w.latCooldown, 0, 3600, 60) * 1000,
       maxSek: tal(w && w.latMaxMinuter, 1, 30, 8) * 60,
@@ -56,10 +56,11 @@
   function tid(sek) { sek = Math.max(0, Math.round(sek || 0)); return Math.floor(sek / 60) + ':' + (sek % 60 < 10 ? '0' : '') + (sek % 60); }
 
   // ---- CHATTEN --------------------------------------------------------------------------------
-  // Kommandot plus några vanliga former, så att "!onska" och "!sr" också fungerar.
+  // Kommandot plus några vanliga former, så att "!önska" och "!sr" också fungerar — även efter bytet
+  // till !play (David 2026-10-25), så en widget sparad med !önska och tittare med gamla vanor inte tystnar.
   function tolka(text, w) {
     var t = String(text || '').trim(), k = installning(w).kommando;
-    var former = [k, '!önska', '!onska', '!sr', '!songrequest', '!låt', '!lat'];
+    var former = [k, '!play', '!önska', '!onska', '!sr', '!songrequest', '!låt', '!lat'];
     for (var i = 0; i < former.length; i++) {
       var f = former[i];
       if (t.toLowerCase().indexOf(f + ' ') === 0) return { fraga: t.slice(f.length).trim().slice(0, 120) };
@@ -334,7 +335,7 @@
       if (!w.title || STANDARDNAMN.indexOf(w.title) >= 0) w.title = w.latKalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube';
       spara();
     };
-    if ((el = q('#latKommando'))) el.onchange = function (e) { var v = String(e.target.value || '').trim().toLowerCase(); w.latKommando = /^!\S{1,19}$/.test(v) ? v : '!önska'; spara(); };
+    if ((el = q('#latKommando'))) el.onchange = function (e) { var v = String(e.target.value || '').trim().toLowerCase(); w.latKommando = /^!\S{1,19}$/.test(v) ? v : '!play'; spara(); };
     [['#latCooldown', 'latCooldown'], ['#latMaxKo', 'latMaxKo'], ['#latMaxMinuter', 'latMaxMinuter']].forEach(function (p) {
       var f = q(p[0]); if (f) f.onchange = function (e) { w[p[1]] = Number(e.target.value); spara(false); };
     });
@@ -356,8 +357,8 @@
     var sektion = document.createElement('section');
     sektion.dataset.latonskningar = '1';
     sektion.innerHTML = '<h4>LÅTÖNSKNINGAR · LIVE</h4>';
-    [['catalog:latonskningar:youtube', 'Låtönskningar · YouTube', '!önska i chatten · spelas i OBS'],
-      ['catalog:latonskningar:spotify', 'Låtönskningar · Spotify', '!önska i chatten · läggs i din Spotify-kö']].forEach(function (n) {
+    [['catalog:latonskningar:youtube', 'Låtönskningar · YouTube', '!play i chatten · spelas i OBS'],
+      ['catalog:latonskningar:spotify', 'Låtönskningar · Spotify', '!play i chatten · läggs i din Spotify-kö']].forEach(function (n) {
       var knapp = document.createElement('button');
       knapp.type = 'button'; knapp.dataset.catalogKey = n[0];
       knapp.innerHTML = '<i>🎵</i><span><b>' + n[1] + '</b><small>' + n[2] + '</small></span>';
@@ -414,10 +415,10 @@
     var vy = document.querySelector('#view'), titel = document.querySelector('#title');
     if (!vy) return;
     if (titel) titel.textContent = 'YouTube';
-    vy.innerHTML = '<div class="page-header section-head"><div><h2>YouTube</h2><p>Låtönskningar via YouTube: tittarna skriver !önska &lt;låt&gt; i chatten och låten spelas i OBS-overlayn.</p></div></div>'
+    vy.innerHTML = '<div class="page-header section-head"><div><h2>YouTube</h2><p>Låtönskningar via YouTube: tittarna skriver !play &lt;låt&gt; i chatten och låten spelas i OBS-overlayn.</p></div></div>'
       + '<article class="card spotify-card youtube-card"><div class="spotify-connect"><i class="yt-ikon">▶</i><span><b>YouTube</b><small id="ytStatus">Kontrollerar kopplingen…</small></span><button id="ytLaggTill" type="button">＋ Lägg till Låtönskningar · YouTube</button></div>'
       + '<h3>Så fungerar det</h3><div class="music-rules">'
-      + '<article><b>!önska &lt;låt&gt;</b><small>Tittaren önskar en låt i chatten — även !sr fungerar</small></article>'
+      + '<article><b>!play &lt;låt&gt;</b><small>Tittaren önskar en låt i chatten — även !önska och !sr fungerar</small></article>'
       + '<article><b>Spelas i OBS</b><small>Låten spelas i overlayn och syns i widgeten, en i taget</small></article>'
       + '<article><b>!skip</b><small>Moderatorer hoppar över låten som spelas</small></article>'
       + '</div><p class="yt-not">Kvoten från Google räcker till ungefär 100 nya låtsökningar per dygn. En låt som redan önskats kostar ingenting.</p></article>';

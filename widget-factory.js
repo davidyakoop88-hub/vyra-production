@@ -578,7 +578,7 @@
     'latonskningar': v => ({
       type: 'templateSongRequests', latKalla: v.kalla, x: 46, y: 470, width: 340,
       title: v.kalla === 'spotify' ? 'Låtönskningar · Spotify' : 'Låtönskningar · YouTube',
-      latKommando: '!önska', latCooldown: 60, latMaxKo: 10, latMaxMinuter: 8, latVisa: 3, latVolym: 70,
+      latKommando: '!play', latCooldown: 60, latMaxKo: 10, latMaxMinuter: 8, latVisa: 3, latVolym: 70,
       latFarg: v.kalla === 'spotify' ? '#1db954' : '#ff3b7a', layer: 25
     }),
 
