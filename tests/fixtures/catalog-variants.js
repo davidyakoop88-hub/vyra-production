@@ -18,6 +18,7 @@ const CONTRACT = [
   { name: 'Fan Level 50 · Fly Love · Royal', key: 'catalog:fanlevel50:royal' },
   { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
   { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
+  { name: 'Boxgame-klocka', key: 'catalog:boxgame' },
   { name: 'Top Gifter Podium', key: 'catalog:pgpodium' },
   { name: 'Top Streak Flip', key: 'catalog:pgstreak' },
   { name: 'Goal Pro', key: 'catalog:pggoal' },
