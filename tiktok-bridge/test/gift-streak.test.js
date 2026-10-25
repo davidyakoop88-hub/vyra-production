@@ -140,7 +140,7 @@ test('protokontraktet som fixturen vilar på gäller fortfarande', { timeout: 50
 });
 
 // ---- gåvan syns vid första tappet (2026-10-26) ----------------------------------------------------
-// Bryggan skickar en streaks FÖRSTA frame direkt som `giftstreak` (bara visning) och slutframen som
+// Bryggan skickar en streaks FÖRSTA frame direkt som `streakstart` (bara visning) och slutframen som
 // `gift` (den enda som räknas). Provet kör de uppmätta framen genom samma beslut som bridge.js gör.
 function genomBryggan(list, oppna = new Map(), nu = () => 1_000) {
   const ut = [];
@@ -152,9 +152,9 @@ function genomBryggan(list, oppna = new Map(), nu = () => 1_000) {
 }
 
 for (const measured of MEASURED) {
-  test(`${measured.name}: en giftstreak vid första framen, en gift vid slutet, samma streakId`, { timeout: 5000 }, () => {
+  test(`${measured.name}: en streakstart vid första framen, en gift vid slutet, samma streakId`, { timeout: 5000 }, () => {
     const ut = genomBryggan(frames(measured));
-    assert.deepEqual(ut.map(e => e.typ), ['giftstreak', 'gift'], 'en start och en slutsumma — inte en per tapp');
+    assert.deepEqual(ut.map(e => e.typ), ['streakstart', 'gift'], 'en start och en slutsumma — inte en per tapp');
     assert.ok(ut[0].streakId && ut[0].streakId === ut[1].streakId, 'slutframen ska bära startens streakId');
     assert.equal(ut[1].count, measured.expectCount, 'slutsumman är oförändrad');
     assert.equal(ut[0].count, measured.repeatCounts[0], 'starten visar första framens antal');
@@ -167,14 +167,14 @@ test('det som räknas är oförändrat: bara gift, 19 gifts och 28 diamanter fö
   assert.equal(gavor.length, 3);
   assert.equal(sum(gavor, 'count'), 19);
   assert.equal(sum(gavor, 'coins'), 28);
-  assert.equal(ut.filter(e => e.typ === 'giftstreak').length, 3, 'en start per streak');
+  assert.equal(ut.filter(e => e.typ === 'streakstart').length, 3, 'en start per streak');
 });
 
 test('två tittare i samma streak-ögonblick hålls isär, och groupId skiljer två kombon åt', { timeout: 5000 }, () => {
   const ram = (anv, groupId, repeatCount, repeatEnd) => ({ gift: { id: '5655', name: 'Rose', type: 1, diamondCount: 1 }, giftId: '5655',
     groupId, repeatCount, repeatEnd, user: { idStr: anv, displayId: anv } });
   const ut = genomBryggan([ram('a', 'g1', 1, 0), ram('b', 'g9', 1, 0), ram('a', 'g1', 4, 0), ram('b', 'g9', 2, 1), ram('a', 'g1', 5, 1)]);
-  assert.deepEqual(ut.map(e => `${e.typ}:${e.username || e.uniqueId || ''}`.split(':')[0]), ['giftstreak', 'giftstreak', 'gift', 'gift']);
+  assert.deepEqual(ut.map(e => `${e.typ}:${e.username || e.uniqueId || ''}`.split(':')[0]), ['streakstart', 'streakstart', 'gift', 'gift']);
   assert.notEqual(ut[0].streakId, ut[1].streakId, 'två tittare fick samma streak');
   assert.equal(ut[2].streakId, ut[1].streakId, 'b:s slutframe ska höra till b:s start');
   assert.equal(ut[3].streakId, ut[0].streakId, 'a:s slutframe ska höra till a:s start');

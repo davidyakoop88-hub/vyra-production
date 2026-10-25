@@ -21,7 +21,7 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
   // MVP fran MOTSTANDARENS lag i var egen overlay ar varre an ingen MVP alls. Samma varde som
   // bryggan laser (bridge.js:665), ur fetchRoomInfo().data.owner.
   let mittAnkarId = '';
-  // Öppna gåvostreaks (streaknyckel → när giftstreak skickades). Se GIFT-hanteraren nedan.
+  // Öppna gåvostreaks (streaknyckel → när streakstart skickades). Se GIFT-hanteraren nedan.
   const oppnaStreaks = new Map();
 
   function emit(type, fields, data) {
@@ -90,13 +90,13 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         count: number(data?.repeatCount || 1, 1e7)
       };
       // GÅVAN SYNS VID FÖRSTA TAPPET — samma regel som tiktok-bridge/bridge.js. Streakens första frame
-      // går direkt som `giftstreak` (bara visning, räknas aldrig); slutframen är `gift` som förut och
+      // går direkt som `streakstart` (bara visning, räknas aldrig); slutframen är `gift` som förut och
       // bär samma streakId. Nyckeln: tittare + gåva + TikToks groupId (normalizer.js streakNyckel).
       const nyckel = `${text(data?.user?.idStr || data?.user?.userId || data?.userId || data?.uniqueId || '', 80)}:${falt.giftId}:${text(data?.groupId || '', 60)}`;
       if (streakable && !finalFrame) {
         if (!oppnaStreaks.has(nyckel)) {
           oppnaStreaks.set(nyckel, Date.now());
-          emit('giftstreak', { ...falt, streakId: nyckel }, data);
+          emit('streakstart', { ...falt, streakId: nyckel }, data);
         }
         return;
       }

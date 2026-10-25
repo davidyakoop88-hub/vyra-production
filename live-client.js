@@ -349,7 +349,7 @@ function gateFor(){
   return eventGate;
 }
 // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). Bryggan skickar en gåvostreaks första frame direkt som
-// `giftstreak` i stället för att vänta på TikToks repeatEnd. Det är ett rent VISNINGSbesked: det får
+// `streakstart` i stället för att vänta på TikToks repeatEnd. Det är ett rent VISNINGSbesked: det får
 // aldrig nå `vyra-live-event`, VyraLive.on-lyssnarna, widgetkedjan eller Actions — där räknas gåvor,
 // och streaken räknas när slutframen kommer som vanlig `gift`. I stället får de visuella alerterna det
 // på en egen kanal, `vyra-gava-tidig` (Last-X, Gift Fireworks, Gift Bubbles, Hjärtan & moln). Slutframen
@@ -383,7 +383,7 @@ function ingest(e,frameId){
   // köar ett uppslag (vyra-stor-avatar.js). Synkront, så widgetarna nedströms ser den stora.
   if(window.VyraStorAvatar)window.VyraStorAvatar.forbattra(e);
   // Streakens första frame: bara de visuella alerterna, aldrig räknarna. Se visaGavostreak ovan.
-  if(e&&e.type==='giftstreak'){visaGavostreak(e);return}
+  if(e&&e.type==='streakstart'){visaGavostreak(e);return}
   if(e&&e.type==='gift'&&e.streakId&&streakVisad(e.streakId))e.streakVisad=true;
   // TESTHANDELSER NAR ALDRIG SANDNINGENS RAKNARE (Davids regel 2026-10-21: inga exempelnamn i OBS).
   // Simulatorns `__simulerad`, `__test`-anrop och serverns testevent (`id: test-...`, POST

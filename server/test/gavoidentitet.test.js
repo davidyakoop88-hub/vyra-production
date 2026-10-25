@@ -362,17 +362,17 @@ prov('lärläget rör inte mål eller statistik', async () => {
 test('vakt: MOLNBRYGGAN filtrerar bort mellanframes i en streak', () => {
   const fs = require('node:fs'), path = require('node:path');
   // Sedan 2026-10-26 bor beslutet i normalizer.js streakBeslut (gåvan syns vid första tappet): en
-  // mellanframe blir aldrig `gift` — streakens första blir `giftstreak`, som molnet publicerar förbi
+  // mellanframe blir aldrig `gift` — streakens första blir `streakstart`, som molnet publicerar förbi
   // lärläget (index.js), och resten ingenting. Vakten provar därför både anropet och regeln.
   const kall = fs.readFileSync(path.join(__dirname, '..', '..', 'tiktok-bridge', 'bridge.js'), 'utf8');
   assert.ok(/N\.streakBeslut\(oppnaStreaks, data\)/.test(kall), 'bridge.js går inte längre genom streakBeslut');
   const N = require('../../tiktok-bridge/normalizer');
   const oppna = new Map(), ram = (repeatCount, repeatEnd) => ({ gift: { id: '1', type: 1 }, giftId: '1', repeatCount, repeatEnd, user: { idStr: 'u' } });
   const typer = [ram(1, 0), ram(3, 0), ram(3, 1)].map(f => N.streakBeslut(oppna, f).typ);
-  assert.deepEqual(typer, ['giftstreak', null, 'gift'], 'en mellanframe blev gift — lärläget kan då fånga den i molnvägen');
+  assert.deepEqual(typer, ['streakstart', null, 'gift'], 'en mellanframe blev gift — lärläget kan då fånga den i molnvägen');
   const index = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
-  const gren = index.slice(index.indexOf("==='giftstreak'"), index.indexOf("==='chatcommand'"));
-  assert.ok(gren.includes('return raw;') && !gren.includes('Gavoidentitet'), 'giftstreak når lärläget i molnet');
+  const gren = index.slice(index.indexOf("==='streakstart'"), index.indexOf("==='chatcommand'"));
+  assert.ok(gren.includes('return raw;') && !gren.includes('Gavoidentitet'), 'streakstart når lärläget i molnet');
 });
 
 test('vakt: ELECTRON-APPEN filtrerar bort mellanframes i en streak', () => {

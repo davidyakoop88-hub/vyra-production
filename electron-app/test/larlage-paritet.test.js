@@ -200,18 +200,18 @@ test('slutframe-regeln gäller även över desktopvägen', async () => {
   await medStubbadConnector(async (skapa, hanterare) => {
     const tjanst = skapa({ onStatus() {}, onEvent: e => utsanda.push(e) });
     await tjanst.connect('provkonto');
-    hanterare.get('gift')(raGava({ repeatEnd: 0 }));           // första framen — giftstreak, bara visning
+    hanterare.get('gift')(raGava({ repeatEnd: 0 }));           // första framen — streakstart, bara visning
     hanterare.get('gift')(raGava({ repeatEnd: 0 }));           // nästa mellanframe — ingenting
     hanterare.get('gift')(raGava({ repeatEnd: 1 }));           // slutframen — den enda `gift`
   });
 
-  // Sedan 2026-10-26 går streakens första frame ut som `giftstreak` (alerten syns vid första tappet),
+  // Sedan 2026-10-26 går streakens första frame ut som `streakstart` (alerten syns vid första tappet),
   // men det räknas aldrig. Invarianten är oförändrad: EN `gift` per streak, så räknaren inte dubbelräknar.
-  const gavor = utsanda.filter(e => e.type === 'gift'), starter = utsanda.filter(e => e.type === 'giftstreak');
+  const gavor = utsanda.filter(e => e.type === 'gift'), starter = utsanda.filter(e => e.type === 'streakstart');
   assert.equal(gavor.length, 1, 'en mellanframe slapp igenom som gift');
   assert.equal(gavor[0].giftId, '9001');
-  assert.equal(starter.length, 1, 'streakens första frame ska ge exakt en giftstreak, inte en per tapp');
-  assert.ok(starter[0].streakId && starter[0].streakId === gavor[0].streakId, 'giftstreak och slutframen ska bära samma streakId');
+  assert.equal(starter.length, 1, 'streakens första frame ska ge exakt en streakstart, inte en per tapp');
+  assert.ok(starter[0].streakId && starter[0].streakId === gavor[0].streakId, 'streakstart och slutframen ska bära samma streakId');
 });
 
 test('en icke-streakbar gåva passerar utan repeatEnd', async () => {

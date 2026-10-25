@@ -580,10 +580,10 @@ dem? var studion och OBS överens? Koden: `live-leaderboard.js` (`aterstallTopGi
 `gift-event-images.js` (`records.bedom`), `overlay-access.js` (`konfigSync`, `onopen`),
 `cloud-sync.js` (`foljMolnet`).
 
-## 16. Syns gåvan vid första tappet, och räknas den bara en gång? (`giftstreak`, 2026-10-26)
+## 16. Syns gåvan vid första tappet, och räknas den bara en gång? (`streakstart`, 2026-10-26)
 
 **Byggt och mätt i labbet, aldrig sett live.** Bryggan skickar nu en gåvostreaks första frame direkt
-som `giftstreak` (bara visning) och slutframen som `gift` (den enda som räknas), båda med samma
+som `streakstart` (bara visning) och slutframen som `gift` (den enda som räknas), båda med samma
 `streakId`. I labbet, med de uppmätta frameformerna och en antagen kombo-takt (tappar i 2 s,
 repeatEnd 1 s efter sista tappet), gick första tapp → synligt gifterkort i OBS från **3 036 ms till
 9 ms** för en kombo och från **1 034 ms till 9 ms** för en enstaka gåva. Kortet uppdateras sedan på

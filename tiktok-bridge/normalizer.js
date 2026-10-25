@@ -106,16 +106,19 @@ function streakNyckel(data){
   return `${anv}:${gava}:${text(data?.groupId||data?.gift?.groupId||'',60)}`;
 }
 // VAD EN GÅVOFRAME SKA BLI. `oppna` är bryggans karta över öppna streaks (nyckel → ms). Streakens
-// första frame blir `giftstreak` (visning direkt), följande mellanframes ingenting, och slutframen
+// första frame blir `streakstart` (visning direkt), följande mellanframes ingenting, och slutframen
 // `gift` — bara den räknas, och den bär streakId om streaken visats. En streak vars slutframe aldrig
 // kom glöms efter STREAK_GLOMS_MS. Ren funktion: provas mot de uppmätta framen i test/gift-streak.test.js.
+// NAMNET SAKNAR "gift" MED FLIT. Äldre klientkod matchar `type.includes('gift')` (Battle MVP räknar
+// gåvor så, Top Gift-rekorden likaså). En OBS-källa som kör cachad kod från före den här ändringen hade
+// räknat starten som en extra gåva — med ett namn utan "gift" ignorerar den det i stället.
 const STREAK_GLOMS_MS=120000;
 function streakBeslut(oppna,data,nu=Date.now()){
   const nyckel=streakNyckel(data);
   if(isStreakable(data)&&!isFinalFrame(data)){
     if(oppna.has(nyckel))return{typ:null,streakId:nyckel};
     oppna.set(nyckel,nu);
-    return{typ:'giftstreak',streakId:nyckel};
+    return{typ:'streakstart',streakId:nyckel};
   }
   const startad=oppna.delete(nyckel);
   for(const[k,at]of oppna)if(nu-at>STREAK_GLOMS_MS)oppna.delete(k);
@@ -538,7 +541,7 @@ function battleProbe(data){
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
 // 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén, samma BARRAGE-ror. Ocksa en person.
-const TILL_MOLNET=new Set(['gift','giftstreak','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
+const TILL_MOLNET=new Set(['gift','streakstart','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
   // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
   // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt sedan
   // 2026-10-22 på samma sätt (TIKTOK_CHATT_RATE_LIMIT) — utan den var TTS Chat tyst i webbversionen.

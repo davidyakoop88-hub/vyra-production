@@ -167,7 +167,7 @@ if (require.main === module) {
   // Streamerns eget userId, hamtat med fetchRoomInfo vid connect. Se blocket dar det satts.
   let mittAnkarId = '';
   const recentEventKeys = new Map();
-  // Öppna gåvostreaks: streakNyckel → när första framen skickades som `giftstreak`. En streak vars
+  // Öppna gåvostreaks: streakNyckel → när första framen skickades som `streakstart`. En streak vars
   // slutframe aldrig kom (tappad anslutning) glöms efter två minuter (N.streakBeslut).
   const oppnaStreaks = new Map();
   const proxyManager = createProxyManager();
@@ -399,7 +399,7 @@ if (require.main === module) {
       //
       // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). Varje gåva — även en enstaka (repeatCount 1,1,
       // repeatEnd 0,1, uppmätt i test/fixtures/gift-frames.js) — väntade förr tills TikTok skickat
-      // repeatEnd, ofta flera sekunder. Nu skickas streakens FÖRSTA frame direkt som `giftstreak`:
+      // repeatEnd, ofta flera sekunder. Nu skickas streakens FÖRSTA frame direkt som `streakstart`:
       // ett rent visningsbesked som molnet aldrig räknar i mål, poäng eller topplistor. Bara EN per
       // streak, inte en per tapp. Slutframen går ut som `gift` precis som förut och bär samma
       // streakId, så en alert som redan visat streaken uppdaterar sig i stället för att visas igen.
@@ -409,7 +409,7 @@ if (require.main === module) {
       // mittAnkarId aven har: i ett flervardsrum gar en del gavor till en MEDVARD, och bara
       // bryggan vet vem varden ar. Se giftFields. #360
       const falt = N.giftFields(data, mittAnkarId);
-      if (beslut.typ === 'giftstreak') sendEvent('giftstreak', { ...falt, streakId: beslut.streakId }, data);
+      if (beslut.typ === 'streakstart') sendEvent('streakstart', { ...falt, streakId: beslut.streakId }, data);
       else sendEvent('gift', beslut.streakId ? { ...falt, streakId: beslut.streakId } : falt, data);
     });
 

@@ -1,7 +1,7 @@
 'use strict';
 // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26) — klientens halva.
 //
-// Bryggan skickar en gåvostreaks första frame som `giftstreak` och slutframen som `gift` med samma
+// Bryggan skickar en gåvostreaks första frame som `streakstart` och slutframen som `gift` med samma
 // streakId (tiktok-bridge/test/gift-streak.test.js provar bryggans halva mot de uppmätta framen).
 // Här provas att live-client.js håller isär de två:
 //   · starten når BARA de visuella alerterna (`vyra-gava-tidig`) — aldrig `vyra-live-event`,
@@ -37,7 +37,7 @@ function fonster() {
   w.VyraLive.on(e => w.__on.push(e));
   return w;
 }
-const start = (over = {}) => ({ id: 's1', type: 'giftstreak', username: 'lisa', giftName: 'Rose', giftId: '5655', count: 1, coins: 1,
+const start = (over = {}) => ({ id: 's1', type: 'streakstart', username: 'lisa', giftName: 'Rose', giftId: '5655', count: 1, coins: 1,
   streakId: 'u1:5655:g1', at: Date.now(), ...over });
 const slut = (over = {}) => ({ id: 'g1', type: 'gift', username: 'lisa', giftName: 'Rose', giftId: '5655', count: 10, coins: 10,
   streakId: 'u1:5655:g1', at: Date.now(), ...over });
@@ -64,6 +64,15 @@ test('slutframen räknas en gång och märks streakVisad', () => {
   assert.equal(w.__kedja.length, 1);
   assert.ok(w.__actions.some(([t]) => t === 'gift'), 'slutframen ska köra Actions som förut');
   assert.equal(w.__tidig.length, 1, 'slutframen ska inte ge en andra tidig visning');
+});
+
+test('streakstartens typnamn innehåller inte "gift" — äldre cachad kod räknar sådana typer', () => {
+  // battle-mvp-session.js och gift-event-images.js matchar type.includes('gift'). En OBS-källa med
+  // kod från före ändringen hade räknat starten som en extra gåva om namnet innehöll "gift".
+  const N = require('../tiktok-bridge/normalizer.js');
+  const typ = N.streakBeslut(new Map(), { gift: { id: '1', type: 1 }, giftId: '1', repeatCount: 1, repeatEnd: 0, user: { idStr: 'u' } }).typ;
+  assert.equal(typ, 'streakstart');
+  assert.ok(!typ.includes('gift'));
 });
 
 test('en gåva utan visad start är orörd', () => {
