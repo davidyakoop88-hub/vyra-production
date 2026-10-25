@@ -33,7 +33,7 @@ const NYCKLAR = [...new Set(
   fs.readFileSync(path.join(ROOT, 'docs/katalogkarta.md'), 'utf8')
     .match(/catalog:[A-Za-z0-9:._-]+/g) || [])].sort();
 // Boxgame-klockan (2026-10-25) är streamerns egen rond, ingen händelse: den står i OBS från början.
-const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock']);
+const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock', 'templateSocialAlert']);
 
 function rigg() {
   const lada = { version: 1, state: { widgets: [] }, session: undefined, hamtningar: 0 };
