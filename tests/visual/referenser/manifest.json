@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 203,
  "senaste": {
-  "motiv": "Boxgame-klocka (ny katalognyckel) och Guld · Silver · Brons med minsta namnbredd",
-  "nycklar": 4,
-  "filter": "metall,boxgame",
-  "tid": "2026-10-25T12:50:36.415Z"
+  "motiv": "Boxgame-klocka utan studions standardlåda (12 px padding flyttade och klippte klockan)",
+  "nycklar": 1,
+  "filter": "boxgame",
+  "tid": "2026-10-25T13:01:17.124Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -823,7 +823,7 @@
    "fyllnad": 100
   },
   "catalog:boxgame": {
-   "matt": "340x272",
+   "matt": "340x245",
    "fyllnad": 100
   }
  }
