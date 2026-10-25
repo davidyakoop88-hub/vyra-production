@@ -1,0 +1,46 @@
+/* HJÄRTAN & MOLN (hjartmoln.js). Lådan är effektens 9:16-ram; videon och profilhjärtan fyller den.
+   I overlayn är lådan genomskinlig tills effekten startar (hm-pa) och tonas bort igen när det blir
+   tyst. I studion syns affischen (en transparent WebP ur klippet) i vila, så det går att placera. */
+.widget.vyra-hjartmoln{position:absolute;box-sizing:border-box;overflow:hidden;isolation:isolate;
+  padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-width:0!important}
+.vyra-hjartmoln .hm-vard{position:absolute;inset:0;opacity:0;transition:opacity .8s ease;pointer-events:none}
+.vyra-hjartmoln.hm-pa .hm-vard{opacity:var(--hm-opacitet,1);transition-duration:.45s}
+.vyra-hjartmoln .hm-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block;background:transparent}
+.vyra-hjartmoln.hm-spegla .hm-video,.vyra-hjartmoln.hm-spegla .hm-affisch{transform:scaleX(-1)}
+.vyra-hjartmoln .hm-affisch{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:calc(var(--hm-opacitet,1) * .9);pointer-events:none;user-select:none;transition:opacity .4s}
+.vyra-hjartmoln.hm-pa .hm-affisch{opacity:0}
+.vyra-hjartmoln.hm-studio{outline:1px dashed #ffffff26;outline-offset:-1px}
+.vyra-hjartmoln .hm-chip{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:4px 10px;border-radius:999px;background:#120b1ccc;border:1px solid #ffffff2a;color:#f3eafa!important;font:600 10px/1.4 Inter,Arial,sans-serif!important;pointer-events:none}
+
+/* Profilhjärtan: originalets bana i 720×1280 — start y 270 (21 %), 325 px fall (25,4 %) på 2,75 s,
+   porträtt 84 px (11,7 % av bredden), lila kant och ett glitterspår. */
+.vyra-hjartmoln .hm-profiler{position:absolute;inset:0;container-type:size;pointer-events:none}
+.vyra-hjartmoln .hm-ph{position:absolute;top:21.1%;width:11.7cqw;aspect-ratio:1;margin-left:-5.85cqw;margin-top:-5.85cqw;
+  filter:drop-shadow(0 0 .6cqw #e7a8ff) drop-shadow(0 0 1.6cqw #c76bff99)}
+.vyra-hjartmoln .hm-ph img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 43%;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.6 10.6 20.3C5.4 15.6 2 12.5 2 8.6 2 5.5 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.5 22 8.6c0 3.9-3.4 7-8.6 11.7z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.6 10.6 20.3C5.4 15.6 2 12.5 2 8.6 2 5.5 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.5 22 8.6c0 3.9-3.4 7-8.6 11.7z'/%3E%3C/svg%3E") center/contain no-repeat}
+.vyra-hjartmoln .hm-ph i{position:absolute;left:50%;bottom:92%;width:1.4cqw;height:9cqw;margin-left:-.7cqw;border-radius:1cqw;
+  background:radial-gradient(circle at 50% 10%,#ffe6ff 0 18%,transparent 22%) 0 0/100% 22% repeat-y;opacity:.85;filter:blur(.15cqw)}
+@media(prefers-reduced-motion:no-preference){
+  .vyra-hjartmoln .hm-ph{animation:hm-fall 2.75s linear both}
+  .vyra-hjartmoln .hm-ph i{animation:hm-glitter .6s linear infinite}
+}
+@media(prefers-reduced-motion:reduce){.vyra-hjartmoln .hm-ph{animation:hm-tona 2.75s linear both}}
+@keyframes hm-fall{
+  0%{opacity:0;transform:translate(0,0)}
+  7%{opacity:1}
+  25%{transform:translate(var(--hm-vagg,2cqw),11.3cqw)}
+  50%{transform:translate(0,22.6cqw)}
+  75%{transform:translate(calc(var(--hm-vagg,2cqw) * -1),33.8cqw)}
+  78%{opacity:1}
+  100%{opacity:0;transform:translate(0,45.1cqw)}
+}
+@keyframes hm-glitter{to{background-position:0 22%}}
+@keyframes hm-tona{0%,100%{opacity:0}10%,80%{opacity:1}}
+
+/* Panelen och katalogen i studion */
+.hm-panel .hm-panelbild{display:block;width:96px;aspect-ratio:9/16;object-fit:contain;margin:0 auto 10px;border-radius:8px;background:#120b1c}
+.hm-katalog button{display:flex;align-items:center;gap:10px;text-align:left}
+.hm-katalog .hm-katalogbild{flex:none;width:34px;height:60px;object-fit:contain;border-radius:6px;background:#120b1c}

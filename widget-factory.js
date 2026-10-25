@@ -365,6 +365,13 @@
       boxMinuter: 5, boxKvarMs: 300000, boxKor: false, boxSlut: 0, boxRond: 1,
       boxVolym: 70, boxRost: true, boxRostFran: 10, boxKlocka: true, boxVisaKlocka: true, boxAlertSkala: 100
     }),
+    // Hjärtan & moln (hjartmoln.js): en transparent 9:16-effekt över hela duken (432 × 768) som
+    // spelas vid likes tills streamern väljer annat. Profilhjärtan har porträttlagret påslaget.
+    'heartcloud': v => ({
+      type: 'templateHeartCloud', x: 0, y: 0, width: 432, title: 'Hjärtan & moln · ' + v.label,
+      hmVariant: v.variant, hmLage: 'likes', hmMinLikes: 1, hmHall: 8, hmProfiler: v.variant === 'profilhjartan',
+      hmOpacitet: 100, hmHastighet: 1, hmSpegla: false
+    }),
     // Social-alert (social-alert.js): växlar mellan streamerns sociala konton. Två designer.
     'socialalert': v => ({
       type: 'templateSocialAlert', x: 40, y: 80, width: 260, title: 'Social-alert',
@@ -727,6 +734,12 @@
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
     'boxgame': () => ['boxgame', {}],
+    'heartcloud': parts => {
+      const namn = { profilhjartan: 'Profilhjärtan', fallande: 'Fallande hjärtan', hjartmoln: 'Hjärtmoln', glodande: 'Glödande hjärtmoln',
+        kristall: 'Kristallhjärtan', stjarnstoft: 'Stjärnstoft', blixt: 'Blixtmoln', organiskt: 'Organiskt moln', levande: 'Levande moln' };
+      if (!namn[parts[0]]) throw new Error('Okänd variant för Hjärtan & moln: ' + parts[0]);
+      return ['heartcloud', { variant: parts[0], label: namn[parts[0]] }];
+    },
     'socialalert': parts => {
       const design = parts[0] || 'kapsel';
       if (design !== 'glans' && design !== 'kapsel') throw new Error('Okänd design för Social-alert "' + design + '" — giltiga: glans, kapsel');

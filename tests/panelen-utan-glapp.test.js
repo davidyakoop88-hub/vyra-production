@@ -106,7 +106,7 @@ test('cachebustarna höjdes i samma commit som filerna', () => {
   assert.match(media, /toplike-studio\.css\?v=20261011-1/);
   assert.match(media, /gift-campaign-aura\.js\?v=20261020-15/);  // 20261019-1: Ärv färgschema (accent och text), PR 9
   assert.match(media, /gift-supernova-panel\.js\?v=20261021-7/);  // 20261019-1: enheter i <b>, Rundning 0 och färgraden #fwFarger, PR 12
-  assert.match(html, /vyra-textgrupp\.js\?v=20261020-20/);
+  assert.match(html, /vyra-textgrupp\.js\?v=20261025-1/);
   assert.match(html, /approved-rankings\.js\?v=20261025-10/);
-  assert.match(html, /media\.js\?v=20261025-14/);
+  assert.match(html, /media\.js\?v=20261025-16/);
 });

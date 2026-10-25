@@ -153,6 +153,10 @@
       case 'templateHeartGoal':
         return ['gift'];
       case 'templateLikeFountain': return ['like'];
+      // Hjärtan & moln (hjartmoln.js) väntar på det slag som startar effekten. Läget "alltid" är
+      // ett undantag (arUndantag nedan): då loopar effekten och har ingen händelse att vänta på.
+      case 'templateHeartCloud':
+        return ({ gavor: ['gift'], 'likes-gavor': ['like', 'gift'], foljare: ['follow'] })[w.hmLage] || ['like'];
       case 'templateFollowerAlert': return ['follow'];
       case 'templateGuardianEmblem': return ['guardian'];
       case 'templateBattleMvp': return ['battle'];
@@ -195,7 +199,7 @@
   }
 
   // ---- regeln -------------------------------------------------------------------------------------
-  function arUndantag(w) { return !w || UNDANTAG.has(w.type); }
+  function arUndantag(w) { return !w || UNDANTAG.has(w.type) || (w.type === 'templateHeartCloud' && w.hmLage === 'alltid'); }
   function aktiverad(w) { return !!w && post.ids.indexOf(String(w.id)) !== -1; }
   function vantar(w) { return !AV && !!w && w.id != null && !arUndantag(w) && !aktiverad(w); }
 
