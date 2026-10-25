@@ -35,7 +35,7 @@
     // (goal-client.js) och timers (action-timers.js) som egna funktioner, sa de gar att styra.
     // De ovriga fem i facit gor det inte: Minecraft och Simulate Keystrokes kan bara kora i
     // desktopappen, och Third-Party, Voicemod och Streamer.bot kraver program pa kundens dator.
-    ['goal','Styr ett mal'],
+    ['goal','Styr ett mål'],
     ['timer','Styr en timer']
   ];
   // Kolumnerna Animation/Bild/Ljud/Video i listan (facit §1) är en AVLÄSNING av `types`, inte egna
@@ -404,6 +404,28 @@
     radera:svgIkon('<path d="M4 6.5h16M9.5 6.5V4.5h5v2M6 6.5l1 13a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5l1-13M10 11v6M14 11v6"/>'),
     stang:svgIkon('<path d="M6 6l12 12M18 6L6 18"/>')
   };
+  // EFFEKTKORTEN I NY ACTION (godkänd lila design 2026-10-19). Ikon och en kort beskrivning per
+  // funktion som VERKLIGEN finns i actionTypes — designbildens nio kort kom från en konkurrent, och
+  // OBS Studio/Streamer.bot/Tangenttryckning finns inte här. Samma linjeikonfamilj som IKON ovan.
+  const FN_KORT={
+    animation:['Spelar en animation i overlayn.','<path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>'],
+    picture:['Visar en bild eller GIF.','<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M20.5 16l-5-5-8.5 8.5"/>'],
+    audio:['Spelar en ljudfil.','<path d="M4.5 9.5h3l4.5-4v13l-4.5-4h-3z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>'],
+    video:['Spelar en videofil i overlayn.','<rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M10.5 9.5v5l4-2.5z"/>'],
+    alert:['Visar användarens namn och din text.','<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>'],
+    tts:['Läser upp en text med röst.','<path d="M4.5 5.5h15v10h-8l-4.5 3.5v-3.5h-2.5z"/><path d="M8.5 9.5h7M8.5 12.5h4"/>'],
+    chat:['Skickar ett meddelande i chatten.','<path d="M20.5 4l-17 7 6.5 2.5L12.5 20z"/><path d="M10 13.5L20.5 4"/>'],
+    obsScene:['Byter till en scen i OBS.','<rect x="3.5" y="5.5" width="11" height="8" rx="1.5"/><rect x="9.5" y="10.5" width="11" height="8" rx="1.5"/>'],
+    obsSource:['Visar en källa i OBS.','<path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>'],
+    webhook:['Skickar eventets data till en URL.','<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>'],
+    overlay:['Visar en widget i overlayn.','<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'],
+    spotify:['Spelar en låt via Spotify.','<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>'],
+    goal:['Nollställer eller ändrar ett mål.','<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>'],
+    timer:['Startar, pausar eller nollställer en timer.','<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M9.5 2.5h5"/>']
+  };
+  // Numrerad sektionsrubrik, delad av Ny Action och Nytt Event. Siffran är dekor (aria-hidden):
+  // skärmläsaren läser rubriken, inte "1".
+  const sekRubrik=(nr,text,tagg='h4',id='')=>`<${tagg} class="ae-sek-rubrik"${id?` id="${id}"`:''}><span class="ae-sek-nr" aria-hidden="true">${nr}</span>${text}</${tagg}>`;
   // Modalens stängknapp: samma neutrala kryss i alla A&E-modaler (se action-timers.js).
   const STANG_KNAPP=`<button type="button" class="ae-ik ae-ik--stang" data-close-ae title="Stäng" aria-label="Stäng">${IKON.stang}</button>`;
   function actionRow(a){
@@ -478,13 +500,21 @@
     // från standard — en satt cooldown får aldrig gömmas för den som redigerar. Fälten har kvar sina
     // id:n, så saveAction läser dem som förut (tests/action-avancerade-val.test.js).
     const avanceradOppen=!!editing&&(vald('addPoints')||vald('removePoints')||volume!==100||Number(editing.cooldown)>0||Number(editing.userCooldown)>0||!editing.fade||!!editing.repeatCombo||!!editing.skipOnNext);
-    const rutor=actionTypes.map(([value,label])=>`<div class="ae-fn" data-fn="${value}"><label class="ae-check"><input type="checkbox" data-fn-check value="${value}"${vald(value)?' checked':''}> ${label}</label><div class="ae-fn-slot" data-slot="${value}"${vald(value)?'':' hidden'}></div></div>`).join('');
-    document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-action"><div>
+    // Varje funktion är ett kort: kryssrutan är kvar som riktig <input> (samma data-fn-check och
+    // värde som förut), men ritas som en rund Lägg till-knapp. Ett valt kort breddas över hela
+    // raden och visar sin lucka under sig — luckorna fylls av leverantörerna som tidigare.
+    const rutor=actionTypes.map(([value,label])=>{
+      const [text,ikon]=FN_KORT[value]||['',''];
+      return `<div class="ae-fn" data-fn="${value}"><label class="ae-check ae-fn-kort"><span class="ae-fn-ikon" aria-hidden="true">${ikon?svgIkon(ikon):''}</span><span class="ae-fn-text"><b>${label}</b>${text?`<small>${text}</small>`:''}</span><input type="checkbox" data-fn-check value="${value}"${vald(value)?' checked':''}></label><div class="ae-fn-slot" data-slot="${value}"${vald(value)?'':' hidden'}></div></div>`;
+    }).join('');
+    document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-action ae-lila"><div>
       <header><h3>${editing?'Redigera Action':'Ny Action'}</h3>${STANG_KNAPP}</header>
-      <label class="ae-field-name">Vad ska actionen heta?<input id="aeActionName" placeholder="Exempel: Prenumerationsanimation" value="${esc(editing?.name||'')}"></label>
-      <fieldset class="ae-fns"><legend>Vad ska hända? Flera val är möjliga.</legend>${rutor}</fieldset>
-      <div class="ae-extra-slot"></div>
-      <section class="ae-block"><h4>Hur länge ska den visas?</h4><label class="ae-inline">Visningstid (sekunder)<input id="aeDuration" type="number" min="1" max="600" value="${Number(editing?.duration)||10}"></label></section>
+      <section class="ae-sek">${sekRubrik(1,'Grundinställningar')}
+        <div class="ae-sek-rad"><label class="ae-field-name">Vad ska actionen heta?<input id="aeActionName" placeholder="Exempel: Prenumerationsanimation" value="${esc(editing?.name||'')}"></label>
+        <label class="ae-falt-kort">Visningstid (sekunder)<input id="aeDuration" type="number" min="1" max="600" value="${Number(editing?.duration)||10}"></label></div>
+      </section>
+      <fieldset class="ae-fns ae-sek">${sekRubrik(2,'Vad ska hända live?','legend')}<p class="ae-sek-hjalp">Välj en eller flera effekter.</p><div class="ae-fn-grid">${rutor}</div></fieldset>
+      <section class="ae-sek ae-sek-skarm">${sekRubrik(3,'Var ska det synas?')}<div class="ae-extra-slot"></div></section>
       <details class="ae-avancerat" data-ae-avancerat${avanceradOppen?' open':''}><summary>Avancerade val <small>poäng, volym, väntetid och fade</small></summary>
       <section class="ae-block ae-points"><h4>Ska användaren som triggar få en belöning, eller betala för den? (valfritt)</h4>
         <div class="ae-points-row"><label class="ae-check"><input id="aeAddPoints" type="checkbox"${vald('addPoints')?' checked':''}> Lägg till poäng</label><input id="aeAddPointsAmount" type="number" min="1" value="${Number(config.addPointsAmount)||10}"${vald('addPoints')?'':' hidden'}></div>
@@ -498,7 +528,7 @@
         <label class="ae-check"><input id="aeRepeatCombo" type="checkbox"${editing?.repeatCombo?' checked':''}> Upprepa med gift-combo</label>
         <label class="ae-check"><input id="aeSkipOnNext" type="checkbox"${editing?.skipOnNext?' checked':''}> Hoppa över vid nästa action</label>
       </div></section></details>
-      <footer><button data-close-ae>✘ Avbryt</button><button id="saveAeAction" class="primary">✔ Spara</button></footer>
+      <footer><button type="button" class="ae-avbryt" data-close-ae>Avbryt</button><button type="button" id="saveAeAction" class="primary">Spara Action</button></footer>
     </div></div>`;
     bindClose();
     const modal=document.querySelector('.ae-modal');
@@ -575,7 +605,7 @@
       window.toast?.(existingId?'Action uppdaterad':'Action sparad');
     }catch(error){
       console.warn('[VYRA] Action kunde inte sparas',error);
-      knapp.disabled=false;knapp.textContent='✔ Spara';
+      knapp.disabled=false;knapp.textContent='Spara Action';
       window.toast?.('Actionen kunde inte sparas');
     }
   }
@@ -583,10 +613,10 @@
     const state=read();
     const editing=existingId?state.events.find(e=>e.id===existingId):null;
     if(!state.actions.length&&!editing)return window.toast?.('Skapa en Action först');
-    document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-event"><div>
+    document.querySelector('#aeModal').innerHTML=`<div class="ae-modal ae-modal-event ae-lila"><div>
       <header><h3>${editing?'Redigera Event':'Nytt Event'}</h3>${STANG_KNAPP}</header>
       <div class="ae-event-slot"></div>
-      <footer><button data-close-ae>✘ Avbryt</button><button id="saveAeEvent" class="primary">✔ Spara</button></footer>
+      <footer><button type="button" class="ae-avbryt" data-close-ae>Avbryt</button><button type="button" id="saveAeEvent" class="primary">Spara Event</button></footer>
     </div></div>`;
     bindClose();
     const modal=document.querySelector('.ae-modal');
@@ -624,7 +654,7 @@
       if(delar.advancedTrigger)delar.trigger=delar.advancedTrigger;
       if(!delar.actionId)delar.actionId=delar.allActionIds?.[0]||delar.randomActionIds?.[0]||'';
       if(!delar.actionId&&!delar.allActionIds?.length&&!delar.randomActionIds?.length){
-        knapp.disabled=false;knapp.textContent='✔ Spara';
+        knapp.disabled=false;knapp.textContent='Spara Event';
         return window.toast?.('Välj minst en Action som eventet ska köra');
       }
       const aktuell=read();
@@ -639,7 +669,7 @@
       window.toast?.(existingId?'Event uppdaterat':'Event kopplat till Action');
     }catch(error){
       console.warn('[VYRA] Event kunde inte sparas',error);
-      knapp.disabled=false;knapp.textContent='✔ Spara';
+      knapp.disabled=false;knapp.textContent='Spara Event';
       window.toast?.('Eventet kunde inte sparas');
     }
   }
