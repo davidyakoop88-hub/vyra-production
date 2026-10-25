@@ -466,13 +466,13 @@ html.overlay-output .battle-mvp.mvp-celebration:not(.mvp-active),
 .battle-mvp.mvp-motion.mvp-framed .mvpf-row{box-sizing:border-box;max-width:94%;padding:.1em .7em .14em;border-radius:999px;
  background:rgba(10,6,16,.85);border:1px solid color-mix(in srgb,var(--mvp),transparent 20%);box-shadow:0 1px 5px rgba(0,0,0,.55)}
 .battle-mvp.mvp-motion.mvp-framed .mvpf-row strong{font-size:max(12px,var(--mvpf-namn,14px))!important;font-weight:700;color:#fff;line-height:1.15}
-@container (max-width:240px){
- .battle-mvp.mvp-motion.mvp-framed .mvpf-art{display:none!important}
- .battle-mvp.mvp-motion.mvp-framed .mvpf-photo{left:17cqw!important;top:4cqw!important;width:66cqw!important;height:66cqw!important;box-sizing:border-box;
+/* Kompaktläget är ett uttryckligt val (w.kompaktLage → .vyra-kompaktlage, kompakt-lage.js), aldrig storleken. */
+.battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-art{display:none!important}
+ .battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-photo{left:17cqw!important;top:4cqw!important;width:66cqw!important;height:66cqw!important;box-sizing:border-box;
   border:max(3px,2.6cqw) solid #fff;box-shadow:0 0 0 max(2px,1.2cqw) var(--mvp),0 3px 12px rgba(0,0,0,.65)}
- .battle-mvp.mvp-motion.mvp-framed .mvpf-plate{left:4cqw!important;width:92cqw!important;top:62cqw!important;height:auto!important;gap:0;justify-content:flex-start}
- .battle-mvp.mvp-motion.mvp-framed .mvpf-plate small{position:relative;z-index:1;margin-bottom:-.3em;padding:.12em .55em;border-radius:999px;
+ .battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-plate{left:4cqw!important;width:92cqw!important;top:62cqw!important;height:auto!important;gap:0;justify-content:flex-start}
+ .battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-plate small{position:relative;z-index:1;margin-bottom:-.3em;padding:.12em .55em;border-radius:999px;
   font:900 max(9px,6.5cqw)/1.1 system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:.12em;color:#140b00;background:var(--mvp);text-shadow:none}
- .battle-mvp.mvp-motion.mvp-framed .mvpf-row{max-width:100%;padding:.22em .65em .2em;border-width:max(1px,.9cqw)}
- .battle-mvp.mvp-motion.mvp-framed .mvpf-row strong{font:800 max(12px,min(10cqw,22px))/1.15 system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:0}
-}
+ .battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-row{max-width:100%;padding:.22em .65em .2em;border-width:max(1px,.9cqw)}
+ .battle-mvp.vyra-kompaktlage.mvp-motion.mvp-framed .mvpf-row strong{font:800 max(12px,min(10cqw,22px))/1.15 system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:0}
+

@@ -106,19 +106,18 @@
    (fran ~26 till ~44 px vid 150 px kort) med en guldkant, och namnet blir storre med kontur.
    Fotots mittpunkt ar kvar i ringens mitt, sa det tacker ringen och inget annat i mallen.
    Troskeln 190: standardkortet (bandet, bredd 300) ar 200 px och ska se ut som forut. */
-@container (width < 190px) {
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-photo {
+/* Kompaktläget är ett uttryckligt val (w.kompaktLage → .vyra-kompaktlage, kompakt-lage.js), aldrig storleken. */
+.fan-level-50.vyra-kompaktlage .fl50-viewport .fl50-card .fl50-photo{
     transform: scale(1.7); transform-origin: 50% 50%; z-index: 3;
     box-shadow: 0 0 0 1.2cqw #e7b33a, 0 0 0 1.8cqw rgba(40, 20, 0, .8), 0 1cqw 3cqw rgba(0, 0, 0, .7);
   }
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-name { left: 38%; right: 9%; }
+  .fan-level-50.vyra-kompaktlage .fl50-viewport .fl50-card .fl50-name{ left: 38%; right: 9%; }
   /* Storre namn — men aldrig mindre an i stora vyn: langa namn krymper med --fl50-nm-ks (fler
-     tecken an 8 far inte plats i den storre storleken) och golvet ar den vanliga storleken. */
-  .fan-level-50 .fl50-viewport .fl50-card .fl50-name span {
+     tecken an 8 far inte plats i den storre storleken) och golvet ar den vanliga storleken. */.fan-level-50.vyra-kompaktlage .fl50-viewport .fl50-card .fl50-name span{
     font-size: max(calc(7.4cqw * var(--fl50-nm-k, 1)), calc(9.5cqw * var(--fl50-nm-ks, 1)));
     font-weight: 900; -webkit-text-stroke: .9cqw #140800; paint-order: stroke fill;
   }
-}
+
 
 /* ---- inspektorn: "lägg till användare"-lista (studio, inte overlay) ---------------------------- */
 .fl50-add { display: flex; gap: 6px; align-items: center; }

@@ -83,9 +83,9 @@ test('den delade live-uppdateringen skriver ingen inline-bredd på goal-motion-f
   // media.js:s patch satte fill.style.width=pct% på alla [data-goal-fill], även goal-motion, vars
   // geometri redan följer --goal-fill i CSS. Det var den ursprungliga stora ringen vid 100 %.
   assert.match(las('media.js'), /if\(fill&&!node\.classList\.contains\('goal-motion'\)\)fill\.style\.width=pct\+'%';/);
-  assert.match(las('studio.html'), /media\.js\?v=20261025-11/);
+  assert.match(las('studio.html'), /media\.js\?v=20261025-14/);
 });
 
 test('premiumbuntens version höjdes med goal-motion-filerna', () => {
-  assert.match(las('media.js'), /const version='20261025-1'/);
+  assert.match(las('media.js'), /const version='20261025-2'/);
 });

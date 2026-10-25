@@ -35,9 +35,11 @@
 
   function rot(w, klass, inner) {
     const k = ((Number(w.width) || 340) / BAS[w.theme]).toFixed(3);
-    // Total förstoring av texten: widgetens zoom gånger designens. CSS:en räknar med den för att
-    // namn och siffra aldrig ska bli under 12 synliga px när widgeten krymps (som topplistorna).
-    const z = ((Number(w.widgetScale) || 1) * k).toFixed(3);
+    // SAMMA KOMPOSITION I ALLA STORLEKAR (granskningen 2026-10-25). Golven i CSS:en (namn och siffra
+    // aldrig under 12 px) räknades förr mot widgetens totala förstoring, så texten växte relativt resten
+    // när widgeten krymptes och lådan blev högre. Nu gäller golven designen i full storlek, och Storlek
+    // och Bredd skalar hela kompositionen likformigt.
+    const z = '1';
     const bild = ((Number(w.giftSize) || 110) / 110).toFixed(3);
     const valt = typeof selected !== 'undefined' && selected === w.id;
     // Gift-redigeraren (media.js, "GIFT EDITOR · VISA / TA BORT") skriver showGift/showProfile/

@@ -69,7 +69,7 @@
     try {
       const id = S.designFor(w);
       const z = Number(w.widgetScale) > 0 ? Math.min(4, Math.max(0.2, Number(w.widgetScale))) : 1;
-      return !!(id && S.lasbarhet(id, S.antal(w), z).kompakt);
+      return !!(id && S.lasbarhet(id, S.antal(w), z, w.kompaktLage).kompakt);
     } catch (_) { return false; }
   }
 
