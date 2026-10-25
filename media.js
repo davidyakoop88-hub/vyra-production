@@ -1492,7 +1492,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra
 Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261021-12';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261025-1';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1502,7 +1502,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260916-facit';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20261012-diamonds';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261024-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261025-2';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=20261020-6';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261020-14';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
