@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 203,
+ "antal": 205,
  "senaste": {
-  "motiv": "Boxgame-klocka utan studions standardlåda (12 px padding flyttade och klippte klockan)",
-  "nycklar": 1,
-  "filter": "boxgame",
-  "tid": "2026-10-25T13:01:17.124Z"
+  "motiv": "Social-alert: två nya katalognycklar (Glanskort och Ikon som öppnas)",
+  "nycklar": 2,
+  "filter": "socialalert",
+  "tid": "2026-10-25T13:29:49.442Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -824,6 +824,14 @@
   },
   "catalog:boxgame": {
    "matt": "340x245",
+   "fyllnad": 100
+  },
+  "catalog:socialalert:glans": {
+   "matt": "260x64",
+   "fyllnad": 100
+  },
+  "catalog:socialalert:kapsel": {
+   "matt": "260x64",
    "fyllnad": 100
   }
  }
