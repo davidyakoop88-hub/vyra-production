@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 199,
+ "antal": 202,
  "senaste": {
-  "motiv": "Låtönskningar: kommandot visas som !play i stället för !önska (#704)",
-  "nycklar": 2,
-  "filter": "latonskningar",
-  "tid": "2026-10-25T00:32:55.444Z"
+  "motiv": "Guld · Silver · Brons (design nr 4): tre nya katalognycklar för Top Like, Top Coins och Top Points (#705)",
+  "nycklar": 3,
+  "filter": "metall",
+  "tid": "2026-10-25T11:09:15.397Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -808,6 +808,18 @@
   },
   "catalog:glovesnipe:masquerade:pack:2": {
    "matt": "432x243",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopCoins:metall": {
+   "matt": "150x372",
+   "fyllnad": 100
+  },
+  "catalog:ranking:templateTopPoints:metall": {
+   "matt": "150x372",
+   "fyllnad": 100
+  },
+  "catalog:toplike:metall": {
+   "matt": "155x372",
    "fyllnad": 100
   }
  }

@@ -546,3 +546,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Låtönskningar: kommandot visas som !play i stället för !önska (#704)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 164 (filter: latonskningar) — catalog:latonskningar:spotify, catalog:latonskningar:youtube
+
+## 2026-10-25 — 3 referenser skrivna
+
+- **Motiv:** Guld · Silver · Brons (design nr 4): tre nya katalognycklar för Top Like, Top Coins och Top Points (#705)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 167 (filter: metall) — catalog:ranking:templateTopCoins:metall, catalog:ranking:templateTopPoints:metall, catalog:toplike:metall
