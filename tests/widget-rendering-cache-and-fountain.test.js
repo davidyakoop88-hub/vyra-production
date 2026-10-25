@@ -446,8 +446,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
-  // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog).
-  assert.match(media, /action-event-advanced\.js\?v=20261021-11/, 'action-event-advanced.js cachebustades inte for gavokatalogen');
+  // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till
+  // 20261025-1 nar eventpanelen fick den lila designen (valkort och kryssrutor i stallet for Ctrl-flerval).
+  assert.match(media, /action-event-advanced\.js\?v=20261025-1/, 'action-event-advanced.js cachebustades inte for den lila eventpanelen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
@@ -458,12 +459,14 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   // 20261020-2: Ny Action fäller de avancerade valen (granskning 2026-10-17 F35).
-  assert.match(media, /action-event\.js\?v=20261020-3/, 'action-event.js cachebustades inte');
+  // 20261025-1: Ny Action och Nytt Event i den lila designen (numrerade sektioner, effektkort).
+  assert.match(media, /action-event\.js\?v=20261025-1/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
   // ... och 2026-10-20 `.ae-modal input[hidden]` så poängrutorna i Ny Action döljs (granskning).
-  assert.match(media, /action-event\.css\?v=20261020-6/, 'action-event.css cachebustades inte');
+  // ... och 2026-10-25 det lila komponentlagret `.ae-modal.ae-lila` för båda formulären.
+  assert.match(media, /action-event\.css\?v=20261025-1/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
