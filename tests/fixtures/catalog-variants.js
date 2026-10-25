@@ -19,6 +19,8 @@ const CONTRACT = [
   { name: 'Gift Bubbles', key: 'catalog:giftbubbles' },
   { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Boxgame-klocka', key: 'catalog:boxgame' },
+  { name: 'Social-alert · Glanskort', key: 'catalog:socialalert:glans' },
+  { name: 'Social-alert · Ikon som öppnas', key: 'catalog:socialalert:kapsel' },
   { name: 'Top Gifter Podium', key: 'catalog:pgpodium' },
   { name: 'Top Streak Flip', key: 'catalog:pgstreak' },
   { name: 'Goal Pro', key: 'catalog:pggoal' },

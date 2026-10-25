@@ -1,0 +1,66 @@
+/* SOCIAL-ALERT (social-alert.js). Davids playground "social-alert", sista lagret av varje regel:
+   1 · Glanskort — kompakt glas 260 x 60, radiell accentglöd, glanssvep var 5:e sekund, infart med
+       oskärpa och utfart uppåt;
+   2 · Ikon som öppnas — rund ikon som öppnas till kapsel på 1,6 s, texten tonas in, stängs på 0,36 s.
+   Måtten är designens (260 px bred); --sa-z skalar allt med widgetens bredd. */
+.widget.vyra-social{position:absolute;box-sizing:border-box;overflow:visible;font-family:Arial,Helvetica,sans-serif}
+.vyra-social .sa-vard{zoom:var(--sa-z,1);width:260px;min-height:64px;display:grid;place-items:center}
+.vyra-social .sa-tom{font-size:12px;text-align:center;color:#8093aa;padding:10px;border:1px dashed #3a4656;border-radius:8px}
+
+/* ---- 1 · Glanskort (original) ---- */
+.vyra-social .sa-kort{position:relative;isolation:isolate;display:flex;align-items:center;gap:9px;box-sizing:border-box;width:100%;height:60px;padding:9px 12px;border-radius:10px;overflow:hidden;
+  background:linear-gradient(125deg,#293747f5 0%,#101925fa 48%,#172333fa);
+  border:1px solid color-mix(in srgb,var(--accent) 28%,#ffffff12);border-left:2px solid var(--accent);
+  box-shadow:0 18px 34px #0006,inset 0 1px 0 #ffffff24,inset 0 -1px 0 #ffffff08}
+.vyra-social .sa-kort::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse at 5% 0%,color-mix(in srgb,var(--accent) 17%,transparent),transparent 65%)}
+.vyra-social .sa-glans{position:absolute;inset:-90% -50%;pointer-events:none;z-index:2;transform:translateX(-65%);
+  background:linear-gradient(110deg,transparent 40%,#ffffff03 44%,#ffffff20 49%,#ffffff04 54%,transparent 59%)}
+.vyra-social .sa-logo{width:35px;height:35px;flex-shrink:0;border-radius:10px;color:var(--accent);display:grid;place-items:center;box-sizing:border-box;
+  background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 23%,#17202c),#101923);
+  border:1px solid color-mix(in srgb,var(--accent) 38%,transparent);
+  box-shadow:inset 0 1px 0 #ffffff30,0 5px 16px #0005,0 0 20px color-mix(in srgb,var(--accent) 10%,transparent)}
+.vyra-social .sa-ikon{width:22px;height:22px;fill:currentColor;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--accent) 32%,transparent))}
+.vyra-social .sa-text{min-width:0;flex:1}
+.vyra-social .sa-rubrik{color:#a5b4c7;font-size:8px;margin-bottom:4px;white-space:nowrap}
+.vyra-social .sa-rubrik b{color:var(--accent);font-weight:600}
+.vyra-social .sa-namn{font-size:17px;letter-spacing:-.3px;font-weight:750;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  background:linear-gradient(110deg,#fff 10%,#dde5ef 45%,#fff 65%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 1px 1px #0008}
+.vyra-social .sa-pil{width:14px;height:14px;flex-shrink:0;fill:var(--accent);opacity:.7}
+.vyra-social .sa-stapel{position:absolute;bottom:0;left:0;height:2px;width:100%;transform-origin:left;
+  background:linear-gradient(90deg,transparent,var(--accent),#fff);box-shadow:0 0 9px var(--accent)}
+.vyra-social .sa-stapel.sa-stilla{opacity:.55}
+
+/* ---- 2 · Ikon som öppnas ---- */
+.vyra-social.sa-kapsel .sa-kort{border-radius:30px;height:56px;padding:7px 11px 7px 7px;gap:10px;transform-origin:center}
+.vyra-social.sa-kapsel .sa-logo{width:40px;height:40px;border-radius:50%;flex:none;box-shadow:inset 0 1px 0 #ffffff40,0 0 15px color-mix(in srgb,var(--accent) 18%,transparent)}
+.vyra-social.sa-kapsel .sa-stapel{left:28px;width:calc(100% - 56px)}
+.vyra-social.sa-kapsel .sa-kort.sa-ut .sa-text,.vyra-social.sa-kapsel .sa-kort.sa-ut .sa-pil{opacity:0;transition:opacity .12s}
+
+@keyframes sa-in{from{opacity:0;transform:translateY(14px) scale(.97);filter:blur(3px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes sa-ut{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-10px) scale(.98);filter:blur(2px)}}
+@keyframes sa-glans{0%,12%{transform:translateX(-65%)}65%,100%{transform:translateX(65%)}}
+@keyframes sa-stapel{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes sa-oppna{0%,18%{width:56px;opacity:0;transform:translateY(4px)}25%{opacity:1;transform:translateY(0);width:56px}100%{opacity:1;width:100%;transform:translateY(0)}}
+@keyframes sa-text-in{0%,40%{opacity:0;transform:translateX(-9px)}100%{opacity:1;transform:translateX(0)}}
+@keyframes sa-stang{0%{width:100%;opacity:1}70%{width:56px;opacity:.8}100%{width:56px;opacity:0;transform:scale(.92)}}
+@media(prefers-reduced-motion:no-preference){
+  .vyra-social .sa-kort{animation:sa-in .7s cubic-bezier(.16,1,.3,1) both}
+  .vyra-social .sa-kort.sa-ut{animation:sa-ut .36s ease-in both}
+  .vyra-social .sa-glans{animation:sa-glans 5s ease-in-out infinite}
+  .vyra-social .sa-stapel:not(.sa-stilla){animation-name:sa-stapel;animation-timing-function:linear;animation-fill-mode:both}
+  .vyra-social.sa-kapsel .sa-kort{animation:sa-oppna 1.6s cubic-bezier(.25,.8,.25,1) both}
+  .vyra-social.sa-kapsel .sa-text,.vyra-social.sa-kapsel .sa-pil{animation:sa-text-in 1.6s cubic-bezier(.25,.8,.25,1) both}
+  .vyra-social.sa-kapsel .sa-kort.sa-ut{animation:sa-stang .36s ease-in both}
+  .vyra-social.sa-kapsel .sa-kort.sa-ut .sa-text,.vyra-social.sa-kapsel .sa-kort.sa-ut .sa-pil{animation:none}
+}
+
+/* Panelen i studion */
+.sa-status{font-size:12px;opacity:.85;margin:0 0 8px}
+.sa-knappar{display:flex;gap:8px;margin-bottom:10px}
+.sa-knappar button{flex:1}
+.sa-konto{border-top:1px solid #ffffff1a;padding:10px 0 4px}
+.sa-konto-topp{display:flex;align-items:center;justify-content:space-between}
+.sa-konto-topp label{display:flex;align-items:center;gap:6px;margin:0}
+.sa-ta-bort{padding:4px 8px;font-size:11px}
+.sa-antal{float:right;opacity:.6;font-weight:400}
