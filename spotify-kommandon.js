@@ -4,7 +4,7 @@
 // text. Det enda som faktiskt pratade med Spotify var Låtönskningar-widgeten (latonskningar.js), och
 // den gör ingenting förrän den ligger i lagret. Den här filen gör åtgärderna verkliga:
 //
-//   !önska / !sr / !låt <låt>  → VyraSpotify.queue(låt). Väntetid 60 s per tittare, högst 10 låtar
+//   !play <låt>                → VyraSpotify.queue(låt). (!önska, !sr och !låt fungerar också.) Väntetid 60 s per tittare, högst 10 låtar
 //                                som väntar, samma låt två gånger inom tio minuter avvisas.
 //   !skip                      → VyraSpotify.next(), bara för moderatorer och streamern själv.
 //   !song                      → chattbotens svar ("Chatbot: !song") hämtar låten som spelas NÄR
@@ -47,7 +47,9 @@
   var DUBBLETT_MS = 10 * 60000;
   var GAVA_COOLDOWN_MS = 15000;     // en gåvokombo ska inte starta om låten för varje tryck
   var SVARSTID_MS = 4000;           // !song väntar högst så här länge på Spotify
-  var ALIAS = ['!önska', '!onska', '!sr', '!songrequest', '!låt', '!lat'];
+  // !play är kommandot som visas (David 2026-10-25: "!önska / byt till !Play"). De gamla formerna
+  // finns kvar så att tittare med gamla vanor och sparade widgetar inte tystnar.
+  var ALIAS = ['!play', '!önska', '!onska', '!sr', '!songrequest', '!låt', '!lat'];
   var STANDARDSVAR = ['Visar låten som spelas på Spotify', 'Visar laten som spelas pa Spotify'];
   var LAT_TOKEN = /\{(?:låt|lat|song)\}/gi;
   var TOKEN_KEY = 'vyra-spotify-token-v1';
@@ -432,13 +434,13 @@
   function sidHtml(u) {
     var s = installningar(u), l = lagen(s);
     var rader = s.gavor.length ? s.gavor : [{ id: 'g1', gava: null, lat: '', on: true }];
-    return '<article><code>!önska &lt;låt&gt;</code><small>Tittaren lägger en låt i din Spotify-kö (även !sr och !låt). 60 s väntetid per tittare, högst 10 låtar i kön.</small>' + status(l.onska) + brytare('spkOnska', s.onska, 'På') + '</article>'
+    return '<article><code>!play &lt;låt&gt;</code><small>Tittaren lägger en låt i din Spotify-kö (även !önska och !sr). 60 s väntetid per tittare, högst 10 låtar i kön.</small>' + status(l.onska) + brytare('spkOnska', s.onska, 'På') + '</article>'
       + '<article><code>!song</code><small>Chattboten svarar med låten som spelas: "Nu spelas: Titel – Artist". Skriv {låt} i ett eget svar.</small>' + status(l.song) + '<button type="button" data-spk-testa-song>Testa</button></article>'
       + '<article><code>!skip</code><small>Moderatorer och du själv kan byta låt</small>' + status(l.skip) + brytare('spkSkip', s.skip, 'På') + '</article>'
       + '<article class="spk-gavokort"><b>Gåva → låt</b><small>Spela vald låt vid gåva</small>' + status(l.gava)
       + '<div class="spk-rader">' + rader.map(radHtml).join('') + '</div>'
       + '<button type="button" class="spk-ny" data-spk-ny>＋ Lägg till gåva</button></article>'
-      + '<article class="spk-onskekort"><b>Önskningar</b><small>Låtar tittarna önskat med !önska, senaste överst.</small>' + status(listLage())
+      + '<article class="spk-onskekort"><b>Önskningar</b><small>Låtar tittarna önskat med !play, senaste överst.</small>' + status(listLage())
       + '<div data-spk-onskningar>' + listaHtml() + '</div>'
       + '<button type="button" data-spk-tom-lista' + (LISTA.length ? '' : ' hidden') + '>Töm listan</button></article>';
   }
@@ -456,9 +458,9 @@
       + '<em class="spk-status' + (aktiv ? ' spk-aktiv' : '') + '">' + saker(STATUSTEXT[o.status] || o.status) + '</em></li>';
   }
   function listaHtml() {
-    if (widgetAgerKommandona()) return '<p class="spk-tom">Låtönskningar-widgeten tar emot !önska just nu. Önskningarna syns i widgeten.</p>';
+    if (widgetAgerKommandona()) return '<p class="spk-tom">Låtönskningar-widgeten tar emot !play just nu. Önskningarna syns i widgeten.</p>';
     return LISTA.length ? '<ol class="spk-lista">' + LISTA.map(onskanHtml).join('') + '</ol>'
-      : '<p class="spk-tom">Inga önskningar än. När en tittare skriver !önska &lt;låt&gt; i chatten syns den här.</p>';
+      : '<p class="spk-tom">Inga önskningar än. När en tittare skriver !play &lt;låt&gt; i chatten syns den här.</p>';
   }
   function listLage() {
     var i = LISTA.filter(function (o) { return o.status === 'ko' || o.status === 'spelas' || o.status === 'soker'; }).length;
