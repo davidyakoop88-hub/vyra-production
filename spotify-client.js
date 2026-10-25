@@ -47,23 +47,38 @@
       body: new URLSearchParams(body)
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error_description || 'Spotify-inloggningen misslyckades');
+    if (!response.ok) {
+      const error = new Error(payload.error_description || 'Spotify-inloggningen misslyckades');
+      error.kod = payload.error || '';
+      throw error;
+    }
     return payload;
   }
 
-  async function refreshToken(token) {
-    if (!token?.refreshToken) return null;
-    try {
-      const payload = await exchange({
-        client_id: CLIENT_ID,
-        grant_type: 'refresh_token',
-        refresh_token: token.refreshToken
-      });
-      return saveToken(payload, token);
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
+  // EN FÖRNYELSE ÅT GÅNGEN, OCH TOKENET RADERAS BARA NÄR SPOTIFY SÄGER NEJ (David 2026-10-24:
+  // "Spotify funkade en gång"). Åtkomsttokenet lever en timme. När det gått ut ropade varje samtidigt
+  // anrop — nu-spelas-pollen, en !önska, en widget — på refreshToken() med SAMMA refresh-token.
+  // Spotify byter refresh-token vid varje förnyelse (PKCE), så det första lyckades och resten fick
+  // invalid_grant — och catch-grenen raderade då tokenet som det första just sparat. Kopplingen
+  // försvann tyst och alla kommandon ignorerades (harToken() blev falsk). Samma radering skedde vid
+  // ett tillfälligt nätverksfel. Nu delar samtidiga anrop ett och samma löfte, och bara ett uttryckligt
+  // invalid_grant på det token vi faktiskt skickade kopplar ifrån.
+  let pagaendeFornyelse = null;
+  function refreshToken(token) {
+    if (!token?.refreshToken) return Promise.resolve(null);
+    if (pagaendeFornyelse) return pagaendeFornyelse;
+    pagaendeFornyelse = exchange({
+      client_id: CLIENT_ID,
+      grant_type: 'refresh_token',
+      refresh_token: token.refreshToken
+    }).then(payload => saveToken(payload, token), error => {
+      // En annan flik kan ha hunnit förnya med samma refresh-token: då ligger ett nytt token redan sparat.
+      const nu = readJson(TOKEN_KEY);
+      if (nu && nu.refreshToken !== token.refreshToken && nu.expiresAt > Date.now()) return nu;
+      if (error && error.kod === 'invalid_grant') localStorage.removeItem(TOKEN_KEY);
       return null;
-    }
+    }).finally(() => { pagaendeFornyelse = null; });
+    return pagaendeFornyelse;
   }
 
   async function validToken() {
