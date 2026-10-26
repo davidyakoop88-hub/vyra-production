@@ -312,12 +312,9 @@
   // regel.
   function sortedTop(metric) {
     metric = matt(metric);
-    const lista = Object.values(totals)
+    return Object.values(totals)
       .filter(t => t.present !== false && t[metric] > 0)
       .sort((a, b) => b[metric] - a[metric]);
-    if (metric !== 'likes') return lista;
-    const f = likeFaktor();
-    return f === 1 ? lista : lista.map(t => Object.assign({}, t, { likes: Math.round(t.likes * f) }));
   }
 
   // TIKTOK SKICKAR INTE VARJE LIKE (David 2026-10-23, skärmbild från sändningen: Top Likes visade
@@ -328,12 +325,14 @@
   // att läsa, bara uppskatta.
   //
   // Uppskattningen: hur mycket rummets total steg sedan VYRA började se den, delat med summan av de
-  // inkrement VYRA faktiskt fick under samma tid. Kvoten är andelen TikTok inte skickade, och varje
-  // tittares tal skalas med den vid VISNING. De lagrade talen (`totals`, dagshinkarna) är de som
-  // verkligen kom — ordningen ändras inte av skalningen, bara talen. Davids val 2026-10-23.
+  // inkrement VYRA faktiskt fick under samma tid. Kvoten är andelen TikTok inte skickade.
   //
-  // Golvet (100 mottagna) håller kvoten borta från sändningens första sekunder, där två event ger
-  // vilken kvot som helst. Taket (20) hindrar en felaktig total från att blåsa upp listan.
+  // KVOTEN SKALAR INTE LÄNGRE LISTAN (David 2026-10-26). Den skalade varje tittares tal vid visning
+  // från 2026-10-23, och i första sändningen därefter visade Top Likes noralyon2 118 517 när
+  // TikToks profilkort sa 42 118 — ×2,8. Kvoten antar att TikTok tappar lika stor andel för alla,
+  // men den som tappar mest fick fram nästan allt medan rummets total steg nästan tre gånger så
+  // fort. Ett för lågt tal går att förklara; ett påhittat gör det inte.
+  // Listan visar därför exakt det som kom fram. Räkningen finns kvar som diagnos i likeTackning().
   function noteraRum(e, count) {
     if (e.__test || e.__simulerad || /^test-/.test(String(e.id || ''))) return;
     const total = Number(e.points ?? e.value);

@@ -55,6 +55,7 @@ function leaderboard() {
       sandbox.dispatchEvent(new sandbox.CustomEvent('vyra-live-event',
         { detail: { type: 'like', username: 'tittare', name: 'Tittare', ...fields } }));
     },
+    tackning: () => sandbox.window.VyraLeaderboard.likeTackning(),
     likesFor(username = 'tittare') {
       const row = sandbox.window.VyraLeaderboard.getTop('likes', 10)
         .find(r => r.username === username);
@@ -109,37 +110,27 @@ test('like-grenen refererar inte value alls', { timeout: 5000 }, () => {
   assert.ok(!/e\.value/.test(branch), 'like-grenen läser value igen — det är rumstotalen');
 });
 
-// TIKTOK SKICKAR INTE VARJE LIKE (David 2026-10-23: Top Likes 2 929 mot TikToks 6 289 för samma
-// tittare). Rumstotalen används ALDRIG som inkrement — men hur mycket den steg mot det som kom
-// fram är andelen TikTok inte skickade, och den skalar talen vid visning.
-test('topplistan skalar likes med rummets total när TikTok bara skickat en del', { timeout: 5000 }, () => {
+// TOPPLISTAN VISAR DET SOM KOM FRAM (David 2026-10-26). Från 2026-10-23 skalades talen med hur
+// mycket rummets total steg mot det som kom fram, och i nästa sändning visade Top Likes noralyon2
+// 118 517 när TikToks profilkort sa 42 118. Rummets total får aldrig blåsa upp en tittares tal.
+test('rummets total skalar inte topplistan, hur fort den än stiger', { timeout: 5000 }, () => {
   const board = leaderboard();
   let total = 5000;
-  board.like({ username: 'fadwa', count: 1, value: total });           // startpunkten
-  for (let i = 0; i < 60; i++) {
-    total += 6; board.like({ username: 'fadwa', count: 1, value: total });   // rummet steg 6, vi fick 1 + 2
-    board.like({ username: 'zeus', count: 2, points: total });          // lokala vägen bär points
+  board.like({ username: 'noralyon2', count: 1, value: total });
+  for (let i = 0; i < 200; i++) {
+    total += 9; board.like({ username: 'noralyon2', count: 2, value: total });   // rummet steg 9, vi fick 2 + 1
+    board.like({ username: 'natalia', count: 1, points: total });                 // lokala vägen bär points
   }
-  // Mottaget 180, rummet steg 360: hälften kom fram.
-  assert.equal(board.likesFor('fadwa'), 122, 'fadwa: (1 + 60) × 2');
-  assert.equal(board.likesFor('zeus'), 240, 'zeus: 120 × 2');
+  assert.equal(board.likesFor('noralyon2'), 401, 'noralyon2: 1 + 200 × 2, inte uppräknat');
+  assert.equal(board.likesFor('natalia'), 200, 'natalia: 200 × 1, inte uppräknat');
 });
 
-test('ingen skalning förrän 100 likes kommit fram, och aldrig över ×20', { timeout: 5000 }, () => {
-  const fa = leaderboard();
-  fa.like({ count: 1, value: 1000 });
-  for (let i = 1; i <= 50; i++) fa.like({ count: 1, value: 1000 + i * 9 });
-  assert.equal(fa.likesFor(), 51, '50 mottagna räcker inte för en kvot');
-
-  const tak = leaderboard();
-  tak.like({ count: 1, value: 1000 });
-  for (let i = 1; i <= 100; i++) tak.like({ count: 1, value: 1000 + i * 500 });
-  assert.equal(tak.likesFor(), 101 * 20, 'en orimlig total blåste upp listan förbi taket');
-});
-
-test('test- och simulerade likes rör inte rumsräkningen', { timeout: 5000 }, () => {
+test('rumsräkningen finns kvar som diagnos', { timeout: 5000 }, () => {
   const board = leaderboard();
   board.like({ count: 1, value: 1000 });
-  for (let i = 1; i <= 120; i++) board.like({ count: 1, value: 1000 + i * 5, __simulerad: true });
-  assert.equal(board.likesFor(), 121, 'en simulerad total skalade de riktiga talen');
+  for (let i = 1; i <= 120; i++) board.like({ count: 1, value: 1000 + i * 3 });
+  assert.equal(board.likesFor(), 121);
+  const t = board.tackning();
+  assert.equal(t.mottaget, 120);
+  assert.equal(t.rummetSteg, 360);
 });
