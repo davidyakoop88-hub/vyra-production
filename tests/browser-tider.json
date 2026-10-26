@@ -24,6 +24,7 @@
     "editor-ui-placering.browser.test.js": 18,
     "verifieringsbanner-plats.browser.test.js": 18,
     "widget-las.browser.test.js": 16,
+    "widget-ordning.browser.test.js": 6,
     "panelram-noop.browser.test.js": 42,
     "mediaval.browser.test.js": 15,
     "testspel-isolering.browser.test.js": 494,

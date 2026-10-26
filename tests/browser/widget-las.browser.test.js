@@ -103,7 +103,8 @@ test('lagerraden är namn + tre ikoner (lås, öga, ta bort), och raden blir int
         textIKnappar: [...rad.querySelectorAll('.layer-lock,.layer-eye,.layer-delete')].map(n => n.innerText.trim()).join(''),
         bredder: [...rad.querySelectorAll('.layer-lock,.layer-eye,.layer-delete')].map(n => Math.round(n.getBoundingClientRect().width)) };
     });
-    assert.deepEqual(m.barn, ['layer-select', 'layer-lock', 'layer-eye', 'layer-delete']);
+    // layer-ordning = ▲▼ från widget-ordning.js (flytta fram/bak), före låset.
+    assert.deepEqual(m.barn, ['layer-select', 'layer-ordning', 'layer-lock', 'layer-eye', 'layer-delete']);
     assert.ok(m.ryms, 'raden ska rymmas i listan');
     assert.equal(m.overlapp, false, 'knapparna får inte överlappa');
     assert.equal(m.titel, 'Lås position och storlek');

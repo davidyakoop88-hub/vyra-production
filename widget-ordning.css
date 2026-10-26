@@ -1,0 +1,12 @@
+/* FLYTTA FRAM / BAK (widget-ordning.js). ▲▼ staplade i en 26 px-kolumn i lagerraden, före låset:
+   namn | ▲▼ | lås | öga | ta bort. Mer specifik än widget-las.css:s tre-kolumnsregel. */
+.live-layer-panel .live-layer-list article:has(>.layer-ordning):has(>.layer-lock){grid-template-columns:minmax(0,1fr) 26px 26px 26px 26px!important}
+.live-layer-panel .live-layer-list article:has(>.layer-ordning):not(:has(>.layer-lock)){grid-template-columns:minmax(0,1fr) 26px 58px 26px!important}
+.live-layer-list .layer-ordning{display:flex;flex-direction:column;width:26px;height:100%;align-self:stretch;border-left:1px solid #2e1a38}
+.live-layer-list .layer-ordning button{
+  flex:1 1 50%;width:26px!important;min-height:0;padding:0!important;display:flex!important;align-items:center;justify-content:center;
+  color:#b9a6c9!important;background:#140b1a!important;border:0!important;cursor:pointer;font-size:0!important;
+}
+.live-layer-list .layer-ordning button+button{border-top:1px solid #2e1a38!important}
+.live-layer-list .layer-ordning button:hover{color:#fff!important;background:#231330!important}
+.live-layer-list .layer-ordning svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
