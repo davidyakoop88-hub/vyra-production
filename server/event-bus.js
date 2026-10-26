@@ -17,7 +17,10 @@ const {CircuitBreaker}=require('./observability');
 // cleanEvent annars kastar den med 400, och står med UNDANTAGET i tests/event-contract.test.js
 // (som annars kräver en bryggproducent för varje tillåten typ). Den bär inga person- eller
 // gåvofält, bara sitt kommando — se sd-blocket i cleanEvent nedan.
-const ALLOWED=new Set(['gift','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','streamdeck']);
+// 'streakstart' tillkom 2026-10-26: en gåvostreaks FÖRSTA frame, skickad direkt så att alerten syns vid
+// första tappet. Ett rent visningsbesked — goal-ingest.js och index.js räknar det aldrig i mål, poäng,
+// nivåer eller statistik; slutframen kommer som 'gift' precis som förut. Bär en person.
+const ALLOWED=new Set(['gift','streakstart','like','follow','share','subscribe','chat','battle','viewer','member','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','streamdeck']);
 // `member` STOD HAR fram till 2026-09-06 och doptes om till 'viewer'. Foljden: klientens
 // liveEventTriggers grenar pa gift/follow/member/join/share/likes/chat — och 'viewer' matchar
 // INGEN av dem, sa varken member- eller join-triggern kunde fyra pa molnvagen. Uppmatt i en skarp
@@ -56,6 +59,9 @@ const event={
     comment:String(input?.comment||(arChatt?input?.name:'')||'').slice(0,500),
     profileUrl:String(input?.profileUrl||input?.profileImage||'').slice(0,1200),
     giftId:String(input?.giftId||'').slice(0,160),
+    // GÅVOSTREAKENS IDENTITET (2026-10-26). `streakstart` (streakens första frame, bara visning) och
+    // slutframens `gift` bär samma streakId, så en alert som redan visat streaken uppdaterar sig.
+    streakId:String(input?.streakId||'').slice(0,200),
     // MOTTAGAREN i ett flervardsrum. `tillVarden` ar HARLEDD av bryggan — servern vet inte
     // streamerns TikTok-id och kan darfor inte rakna ut det sjalv. Forvalet ar TRUE: en aldre
     // brygga som inte skickar faltet ska raknas precis som i dag, inte filtreras bort. #360

@@ -266,8 +266,20 @@
     try { window.VyraDoldaWidgetar?.svep?.(); } catch (_) {}
   }
 
+  // GÅVAN SYNS VID FÖRSTA TAPPET (2026-10-26). En gåvostreaks första frame (live-client.js
+  // visaGavostreak) tänder bara de widgetar som visar den: Last-X och Hjärtan & moln. Topplistor,
+  // Top Gift och mål får sitt värde först med slutframens `gift` och väntar på den — tändes de av
+  // streakstarten hade de stått tomma i OBS tills summan kom.
+  const TIDIGA = new Set(['templateLastX', 'templateHeartCloud']);
+  function taTidig(e) {
+    if (!e || typeof e !== 'object') return;
+    const ids = widgetar().filter(w => w && TIDIGA.has(w.type) && !aktiverad(w) && aktiverarSlag(w, e, 'gift')).map(w => w.id);
+    if (ids.length) aktivera(ids);
+  }
+
   if (!AV) {
     window.addEventListener('vyra-live-event', ev => ta(ev && ev.detail));
+    window.addEventListener('vyra-gava-tidig', ev => taTidig(ev && ev.detail));
     // Samma handelse fran en annan flik i samma webblasare (media.js speglar den till
     // routeLiveBattleEvent via localStorage).
     window.addEventListener('storage', ev => {

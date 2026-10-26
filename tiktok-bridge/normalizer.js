@@ -96,6 +96,34 @@ function baseUser(data){
 function isStreakable(data){return (data?.gift?.type??data?.giftType??data?.giftDetails?.giftType)===1}
 // A gift with no repeatEnd at all is complete on arrival — treating it as unfinished would lose it.
 function isFinalFrame(data){return data?.repeatEnd===undefined?true:!!Number(data.repeatEnd)}
+// EN STREAKS IDENTITET över sina frames (2026-10-26, gåvan syns vid första tappet). Varje frame bär
+// eget msgId, så sourceId duger inte. TikToks WebcastGiftMessage har `groupId` bredvid repeatEnd
+// (tiktok-live-proto v3.d.ts) — samma för hela kombon. Saknas det faller nyckeln tillbaka på tittare
+// + gåva, vilket räcker: en tittares nästa streak av samma gåva öppnas först när den förra stängts.
+function streakNyckel(data){
+  const anv=text(data?.user?.idStr||data?.user?.userId||data?.userId||data?.uniqueId||'',80);
+  const gava=text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id||'',40);
+  return `${anv}:${gava}:${text(data?.groupId||data?.gift?.groupId||'',60)}`;
+}
+// VAD EN GÅVOFRAME SKA BLI. `oppna` är bryggans karta över öppna streaks (nyckel → ms). Streakens
+// första frame blir `streakstart` (visning direkt), följande mellanframes ingenting, och slutframen
+// `gift` — bara den räknas, och den bär streakId om streaken visats. En streak vars slutframe aldrig
+// kom glöms efter STREAK_GLOMS_MS. Ren funktion: provas mot de uppmätta framen i test/gift-streak.test.js.
+// NAMNET SAKNAR "gift" MED FLIT. Äldre klientkod matchar `type.includes('gift')` (Battle MVP räknar
+// gåvor så, Top Gift-rekorden likaså). En OBS-källa som kör cachad kod från före den här ändringen hade
+// räknat starten som en extra gåva — med ett namn utan "gift" ignorerar den det i stället.
+const STREAK_GLOMS_MS=120000;
+function streakBeslut(oppna,data,nu=Date.now()){
+  const nyckel=streakNyckel(data);
+  if(isStreakable(data)&&!isFinalFrame(data)){
+    if(oppna.has(nyckel))return{typ:null,streakId:nyckel};
+    oppna.set(nyckel,nu);
+    return{typ:'streakstart',streakId:nyckel};
+  }
+  const startad=oppna.delete(nyckel);
+  for(const[k,at]of oppna)if(nu-at>STREAK_GLOMS_MS)oppna.delete(k);
+  return{typ:'gift',streakId:startad?nyckel:''};
+}
 // The same received event must keep the same id across every delivery attempt, so this is derived
 // from the message, never minted per retry. v3 nests msgId under common; the rest are older shapes.
 function sourceId(data){return text(data?.common?.msgId||data?.msgId||data?.messageId||data?.logId||data?.id,160)}
@@ -513,7 +541,7 @@ function battleProbe(data){
 // 'guardian' tillkom 2026-09-01, uppmatt i skarp sandning: BARRAGE med subType
 // 'guardian_entrance'. Den bar en PERSON och hor darfor inte hemma i TIKTOK_ROOM_TYPES.
 // 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén, samma BARRAGE-ror. Ocksa en person.
-const TILL_MOLNET=new Set(['gift','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
+const TILL_MOLNET=new Set(['gift','streakstart','like','likes','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope',
   // chatcommand (rader som börjar med "!") sedan 2026-09-27: molnet räknar dem i en EGEN hink
   // (server/index.js TIKTOK_KOMMANDO_RATE_LIMIT), så de kan inte svälta gåvorna. Vanlig chatt sedan
   // 2026-10-22 på samma sätt (TIKTOK_CHATT_RATE_LIMIT) — utan den var TTS Chat tyst i webbversionen.
@@ -820,4 +848,4 @@ function arGloveKort(k,mittAnkarId){
 function kortFordrojningMs(k){
   return boostFordrojningMs(k&&{fonsterStart:k.effektStart,skickatAt:k.skickatAt});
 }
-module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};
+module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,streakNyckel,streakBeslut,STREAK_GLOMS_MS,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};

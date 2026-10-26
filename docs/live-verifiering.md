@@ -580,6 +580,26 @@ dem? var studion och OBS överens? Koden: `live-leaderboard.js` (`aterstallTopGi
 `gift-event-images.js` (`records.bedom`), `overlay-access.js` (`konfigSync`, `onopen`),
 `cloud-sync.js` (`foljMolnet`).
 
+## 16. Syns gåvan vid första tappet, och räknas den bara en gång? (`streakstart`, 2026-10-26)
+
+**Byggt och mätt i labbet, aldrig sett live.** Bryggan skickar nu en gåvostreaks första frame direkt
+som `streakstart` (bara visning) och slutframen som `gift` (den enda som räknas), båda med samma
+`streakId`. I labbet, med de uppmätta frameformerna och en antagen kombo-takt (tappar i 2 s,
+repeatEnd 1 s efter sista tappet), gick första tapp → synligt gifterkort i OBS från **3 036 ms till
+9 ms** för en kombo och från **1 034 ms till 9 ms** för en enstaka gåva. Kortet uppdateras sedan på
+plats till slutsumman ("×10"). Det som INTE gick att mäta utan en riktig sändning:
+
+1. **Bär TikToks gåvor `groupId`?** Det står i tiktok-live-proto men har aldrig loggats skarpt.
+   Starta bryggan med `VYRA_INSPELNING=1` och läs `_raa`-raderna för `gift`: `groupId` ska vara
+   ifyllt och samma på alla frames i en kombo. Saknas det faller nyckeln tillbaka på tittare + gåva,
+   vilket fungerar men kan blanda ihop två snabba kombon av samma gåva från samma tittare.
+2. **Hur lång är en verklig kombo?** I samma inspelning: tiden mellan första framen (`repeatEnd 0`)
+   och slutframen (`repeatEnd 1`) är exakt den tid gåvan förr väntade. Notera några värden.
+3. **Räknas den en gång?** Efter en kombo på t.ex. 10 rosor: Top Coins, Top Gift och mål ska ha
+   ökat med 10, inte 11 eller 20. Läs av topplistan och målet före och efter kombon.
+4. **Syns kortet direkt?** Gifterkortet (Last-X) ska komma på första tappet och byta till slutsumman
+   när kombon är klar, inte visas två gånger.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

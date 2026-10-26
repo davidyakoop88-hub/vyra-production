@@ -107,7 +107,7 @@ function buildTestEvent(rawType,overrides={},now=Date.now()){
 // kommer utan username och far inte krava ett.
 // 'superfan' tillkom 2026-10-12 (#361 fynd 2): super fan-entrén ur BARRAGE. Den bar en PERSON och
 // kraver darfor username, precis som 'guardian'.
-const TIKTOK_INGEST_TYPES=new Set(['gift','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove'])
+const TIKTOK_INGEST_TYPES=new Set(['gift','streakstart','like','likes','chat','follow','share','member','subscribe','viewer','battle','glove','guardian','superfan','subscriberemote','fanlevelup','battle_mvp','envelope','chatcommand']),TIKTOK_ROOM_TYPES=new Set(['viewer','battle','glove'])
 // KISTAN FÅR KOMMA UTAN AVSÄNDARE (uppmätt 2026-10-11, sändningen jrofficialswe): TikToks
 // envelopeInfo bar inget sendUserName, bryggan skickade username '' och molnet svarade 400 på
 // alla tio kistorna — de nådde aldrig overlayn. En kista identifieras av kistaId; avsändarnamnet
@@ -175,7 +175,21 @@ const viewerLevels=createViewerLevels({query:(sql,params)=>pool.query(sql,params
 const streamStats=createStreamStats({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const statsReader=createStatsReader({query:(sql,params)=>pool.query(sql,params)},{log:(...a)=>console.warn('[vyra]',...a)});
 const ingestEvent=createEventIngest({pool,eventBus,goalRuntime:GoalRuntime,goalSse:GoalSse,cleanEvent,viewerLevels,pointsRuntime:PointsRuntime});
+// GÅVOSTREAKENS FÖRSTA FRAME (2026-10-26). `streakstart` är ett rent visningsbesked: alerten ska synas
+// vid första tappet i stället för när TikTok skickar repeatEnd. Det går därför RAKT till overlayn —
+// förbi goal-ingest.js (nivåer, mål, poäng i Postgres) och förbi statistiken nedan, som bara slutframens
+// `gift` får röra. Annars räknades streaken två gånger. Egen hink: en streakstorm kan aldrig äta den
+// budget de riktiga gåvorna lever på.
+const TIKTOK_STREAK_RATE_LIMIT=100;
 async function ingestTikTokEvent(workspaceId,payload){
+  if(String(payload?.type||'').toLowerCase()==='streakstart'){
+    if(await rateLimiter.exceeded(`tiktok-ingest-streak:${workspaceId}`,TIKTOK_STREAK_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
+      throw Object.assign(new Error(`För många gåvostreaks för denna workspace (max ${TIKTOK_STREAK_RATE_LIMIT}/sekund)`),{status:429});
+    validateTikTokIngestPayload(payload);
+    const raw=await eventBus.publish(workspaceId,payload);
+    if(!raw.duplicate)lastTikTokEventAt=Date.now();
+    return raw;
+  }
   if(String(payload?.type||'').toLowerCase()==='chatcommand'){
     if(await rateLimiter.exceeded(`tiktok-ingest-kommando:${workspaceId}`,TIKTOK_KOMMANDO_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
       throw Object.assign(new Error(`För många chattkommandon för denna workspace (max ${TIKTOK_KOMMANDO_RATE_LIMIT}/sekund)`),{status:429});
