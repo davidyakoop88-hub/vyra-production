@@ -39,3 +39,30 @@ test('redan längst fram: ingen flytt, okänt id rör ingenting', () => {
   assert.equal(f(ws, 'saknas', 1).andrad, false);
   assert.deepEqual(lager(ws), { a: 1, b: 2 });
 });
+
+// DRA OCH SLÄPP: placera() lägger widgeten direkt över eller under en annan i stapeln.
+function placera() {
+  const window = {};
+  vm.runInNewContext(SOURCE, { window, document: {}, Number, Math, Object, addEventListener() {} });
+  return window.VyraWidgetOrdning.placera;
+}
+
+test('placera: släppt över eller under en annan rad, de andra behåller sin ordning', () => {
+  const ws = [{ id: 'a', layer: 1 }, { id: 'b', layer: 2 }, { id: 'c', layer: 3 }, { id: 'd', layer: 4 }];
+  const p = placera();
+  let r = p(ws, 'a', 'c', true);           // a,b,c,d -> b,c,a,d
+  assert.deepEqual(lager(ws), { b: 1, c: 2, a: 3, d: 4 });
+  assert.equal(r.plats, 3);
+  r = p(ws, 'd', 'b', false);              // b,c,a,d -> d,b,c,a
+  assert.deepEqual(lager(ws), { d: 1, b: 2, c: 3, a: 4 });
+  assert.equal(r.plats, 1);
+});
+
+test('placera: på sig själv, på samma plats eller mot okänt id flyttar ingenting', () => {
+  const ws = [{ id: 'a', layer: 1 }, { id: 'b', layer: 2 }];
+  const p = placera();
+  assert.equal(p(ws, 'a', 'a', true).andrad, false);
+  assert.equal(p(ws, 'a', 'b', false).flyttad, false);   // a ligger redan direkt under b
+  assert.equal(p(ws, 'a', 'saknas', true).andrad, false);
+  assert.deepEqual(lager(ws), { a: 1, b: 2 });
+});
