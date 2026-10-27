@@ -72,3 +72,18 @@ test('utan inloggat workspace läser datorns röst direkt, utan ett misslyckat m
   await vanta(200);
   assert.deepEqual(w.__tal.map(t => t.text), ['anna säger hej']);
 });
+
+// FLERSPRÅKIGA RÖSTER: när servern listar dem är de med i slumpen och i röstvalet.
+test('slumpen blandar även de flerspråkiga rösterna när röstlistan har dem', async () => {
+  ROSTER.push({ name: 'en-US-AvaMultilingualNeural', languageCodes: ['en-US'], gender: 'FEMALE', multilingual: true },
+    { name: 'en-US-BrianMultilingualNeural', languageCodes: ['en-US'], gender: 'MALE', multilingual: true });
+  try {
+    const w = await studio({ voice: '', randomVoice: true });
+    chatta(w, 'forsta', 'värmer upp röstlistan');
+    await vanta(100);
+    for (let i = 0; i < 40; i++) chatta(w, 'tittare' + i, 'rad ' + i);
+    await vanta(1200);
+    const hordes = new Set(w.__molnroster.slice(1));
+    assert.ok(hordes.has('en-US-AvaMultilingualNeural') && hordes.has('en-US-BrianMultilingualNeural'), [...hordes].join(', '));
+  } finally { ROSTER.length = 2 }
+});

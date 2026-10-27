@@ -72,7 +72,10 @@
   //
   // Valet görs EN gång, innan ljudet förhämtas — annars hade förhämtningen och uppspelningen kunnat
   // slumpa fram olika röster. Reservlistan används tills röstlistan hunnit hämtas första gången.
-  // De flerspråkiga rösterna (Ava, Emma …) är inte med: ingen har lyssnat på dem på svenska än.
+  //
+  // Samma dag: "jag vill ha fler röster tjejer och killar olika". Röstlistan från servern bär nu
+  // även de flerspråkiga rösterna (Ava, Emma, Andrew, Brian …), som servern tvingar att läsa
+  // språket — så slumpen blandar dem också, utan någon ändring här.
   const STANDARD_MOLNROST = { 'sv-SE': 'sv-SE-SofieNeural' };
   const MOLNROSTER_RESERV = { 'sv-SE': ['sv-SE-SofieNeural', 'sv-SE-MattiasNeural'] };
   function molnPool(sprak) {
@@ -496,7 +499,10 @@
     const cloud = cloudVoices.map(v => {
       const value = 'cloud:' + v.name;
       const genderLabel = v.gender === 'FEMALE' ? 'Kvinna' : v.gender === 'MALE' ? 'Man' : '';
-      const label = `☁ ${v.friendlyName || v.name}${genderLabel ? ' · ' + genderLabel : ''}`;
+      // "sv-SE-SofieNeural" -> "Sofie", "en-US-AvaMultilingualNeural" -> "Ava". Tjänstens eget
+      // namn ("Microsoft AvaMultilingual Online (Natural) - English (US)") sa mest "engelska".
+      const kort = (String(v.name).split('-')[2] || '').replace(/(Multilingual)?Neural$/, '') || v.friendlyName || v.name;
+      const label = `☁ ${kort}${genderLabel ? ' · ' + genderLabel : ''}${v.multilingual ? ' · flerspråkig' : ''}`;
       return `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`;
     }).join('');
     return '<option value="">Standardröst (☁ molnröst, annars datorns röst)</option>'

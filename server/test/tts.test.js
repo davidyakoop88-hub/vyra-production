@@ -129,3 +129,44 @@ test('listVoices throws 502 when the underlying voice fetch fails', async () => 
     catch (err) { assert.equal(err.status, 502); }
   });
 });
+
+// FLERSPRÅKIGA RÖSTER (2026-10-27): listas efter språkets egna och tvingas läsa det språket.
+const AVA = { Name: 'Microsoft AvaMultilingual Online (Natural) - English (US)', ShortName: 'en-US-AvaMultilingualNeural', Gender: 'Female', Locale: 'en-US', FriendlyName: 'Microsoft AvaMultilingual Online (Natural) - English (US)' };
+
+test('listVoices tar med de flerspråkiga rösterna efter språkets egna', async () => {
+  const fake = makeFakeMsEdgeTts({ getVoicesImpl: () => FAKE_VOICES.concat(AVA) });
+  await withFakeMsEdgeTts(fake, async (TTS) => {
+    const sv = await TTS.listVoices('sv-SE');
+    assert.deepEqual(sv.map(v => v.name), ['sv-SE-SofieNeural', 'sv-SE-MattiasNeural', 'en-US-AvaMultilingualNeural']);
+    assert.equal(sv[2].multilingual, true);
+    assert.equal(sv[0].multilingual, false);
+    assert.equal((await TTS.listVoices('')).length, 4, 'utan språk: hela listan, inga dubbletter');
+  });
+});
+
+test('standardrösten är fortfarande språkets egen, inte en flerspråkig', async () => {
+  const fake = makeFakeMsEdgeTts({ getVoicesImpl: () => [AVA].concat(FAKE_VOICES) });
+  await withFakeMsEdgeTts(fake, async (TTS) => {
+    await TTS.synthesize({ text: 'hej', languageCode: 'sv-SE' });
+    const inst = fake.instances.find(i => i.setMetadataCalls.length);
+    assert.equal(inst.setMetadataCalls[0].voiceName, 'sv-SE-SofieNeural');
+  });
+});
+
+test('en flerspråkig röst får texten inlindad i <lang> för det begärda språket', async () => {
+  const fake = makeFakeMsEdgeTts();
+  await withFakeMsEdgeTts(fake, async (TTS) => {
+    await TTS.synthesize({ text: 'anna säger hej', languageCode: 'sv-SE', voiceName: 'en-US-AvaMultilingualNeural' });
+    assert.equal(fake.instances[0].toStreamCalls[0].text, '<lang xml:lang="sv-SE">anna säger hej</lang>');
+  });
+});
+
+test('en ogiltig språkkod lindas aldrig in, och texten escapas alltid', async () => {
+  const fake = makeFakeMsEdgeTts();
+  await withFakeMsEdgeTts(fake, async (TTS) => {
+    await TTS.synthesize({ text: 'a & b <c>', languageCode: 'sv"><x', voiceName: 'en-US-AvaMultilingualNeural' });
+    await TTS.synthesize({ text: 'Tom & Jerry', languageCode: 'sv-SE', voiceName: 'sv-SE-SofieNeural' });
+    assert.equal(fake.instances[0].toStreamCalls[0].text, 'a &amp; b &lt;c&gt;');
+    assert.equal(fake.instances[1].toStreamCalls[0].text, 'Tom &amp; Jerry');
+  });
+});
