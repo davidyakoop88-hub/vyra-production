@@ -38,18 +38,32 @@ function pitchToSsmlPitch(pitch) {
   return (pct >= 0 ? '+' : '') + pct + '%';
 }
 
+// FLERSPRÅKIGA RÖSTER (2026-10-27, David: "jag vill ha fler röster tjejer och killar olika").
+// Tjänsten har bara två svenska röster, Sofie och Mattias. De flerspråkiga (Ava, Emma, Andrew …)
+// kan läsa andra språk än sitt eget, så de listas efter språkets egna röster. Vid uppläsning
+// lindas texten i <lang xml:lang="…"> — annars gissar rösten språket själv, och en kort svensk
+// chattrad som "anna säger hej" kan läsas som engelska.
+const isMultilingual = name => /Multilingual/i.test(String(name || ''));
+const SPRAKKOD = /^[a-z]{2,3}-[A-Z]{2}$/;
+const VOICE_LOCALE = /^[a-z]{2,3}-[A-Z]{2}/;
+
 function mapVoice(v) {
   return {
     name: v.ShortName,
     languageCodes: [v.Locale],
     gender: String(v.Gender || '').toUpperCase(),
-    friendlyName: v.FriendlyName || v.ShortName
+    friendlyName: v.FriendlyName || v.ShortName,
+    multilingual: isMultilingual(v.ShortName)
   };
 }
 function filterByLanguage(voices, languageCode) {
   if (!languageCode) return voices;
   return voices.filter(v => v.languageCodes.some(l => l.toLowerCase() === languageCode.toLowerCase()));
 }
+
+// Texten hamnar rakt i SSML-mallen (msedge-tts escapar inte), så en chattrad med & eller < gjorde
+// tidigare hela anropet ogiltigt.
+const xmlEscape = s => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[c]);
 
 async function allVoices() {
   if (voiceCache && Date.now() - voiceCache.at < VOICE_CACHE_TTL_MS) return voiceCache.voices;
@@ -63,11 +77,14 @@ async function allVoices() {
 }
 
 async function listVoices(languageCode = '') {
-  return filterByLanguage(await allVoices(), languageCode);
+  const alla = await allVoices();
+  const egna = filterByLanguage(alla, languageCode);
+  if (!languageCode) return egna;
+  return egna.concat(alla.filter(v => v.multilingual && !egna.includes(v)));
 }
 
 async function defaultVoiceFor(languageCode) {
-  const matches = await listVoices(languageCode);
+  const matches = filterByLanguage(await allVoices(), languageCode);
   if (matches.length) return matches[0].name;
   const any = await allVoices();
   return any[0]?.name || 'en-US-AriaNeural';
@@ -80,7 +97,10 @@ async function synthesize({ text, languageCode = 'sv-SE', voiceName, speed = 1, 
   const client = new MsEdgeTTS();
   try {
     await client.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
-    const { audioStream } = client.toStream(safeText, { rate: speedToSsmlRate(speed), pitch: pitchToSsmlPitch(pitch) });
+    const egetSprak = (VOICE_LOCALE.exec(voice) || [''])[0];
+    const input = isMultilingual(voice) && SPRAKKOD.test(languageCode) && egetSprak !== languageCode
+      ? `<lang xml:lang="${languageCode}">${xmlEscape(safeText)}</lang>` : xmlEscape(safeText);
+    const { audioStream } = client.toStream(input, { rate: speedToSsmlRate(speed), pitch: pitchToSsmlPitch(pitch) });
     const buffer = await streamToBuffer(audioStream);
     if (!buffer.length) throw new Error('Tomt ljudsvar');
     return buffer.toString('base64');
