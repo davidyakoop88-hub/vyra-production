@@ -18,3 +18,10 @@
   .live-layer-panel .live-layer-list article:has(>.layer-ordning) .layer-ikon,
   .live-layer-panel .live-layer-list article:has(>.layer-ordning) .layer-lock{width:20px!important}
 }
+
+/* DRA OCH SLÄPP (widget-ordning.js draOchSlapp). Raden som dras tonas, och en lila linje visar var den
+   hamnar: överkant = framför raden, underkant = bakom. Skuggan tar ingen plats, så raden hoppar inte. */
+.live-layer-list article[draggable="true"]{cursor:grab}
+.live-layer-list article.drar{opacity:.45}
+.live-layer-list article.drop-ovan{box-shadow:inset 0 2px 0 #c86bff}
+.live-layer-list article.drop-under{box-shadow:inset 0 -2px 0 #c86bff}

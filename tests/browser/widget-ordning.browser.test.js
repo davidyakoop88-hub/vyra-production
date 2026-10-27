@@ -91,3 +91,45 @@ test('▲ lägger den undre widgeten överst, ▼ lägger tillbaka den, och rade
     assert.ok(rad.namnBredd >= 60, `namnet ska få plats: ${rad.namnBredd}px`);
   } finally { await page.close(); }
 });
+
+// LISTAN I STAPELORDNING, DRA OCH SLÄPP, Ctrl+↑/↓. Tre widgetar; listan ska stå översta lagret först
+// och följa varje flytt, oavsett om den görs med musen, genom att dra eller med tangentbordet.
+test('listan står i stapelordning och följer drag och Ctrl+↑/↓', { skip, timeout: 60000 }, async () => {
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  try {
+    await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
+    await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
+    await page.waitForTimeout(2500);
+    await page.evaluate(() => window.VyraSessionState?.projectLocalSession?.());
+    await seedaStudioState(page, ['catalog:topgift', 'catalog:toplike:center', 'catalog:topgift']);
+    await page.waitForFunction(() => document.querySelectorAll('.live-layer-list article[data-layer-id]').length >= 3,
+      null, { timeout: 15000, polling: 100 });
+
+    const ids = await page.evaluate(() => {
+      state.widgets.forEach((w, i) => { w.layer = i + 1 });
+      save(); render();
+      return state.widgets.map(w => w.id);
+    });
+    const lista = () => page.evaluate(() => [...document.querySelectorAll('.live-layer-list article[data-layer-id]')].map(r => r.dataset.layerId));
+    const stapel = () => page.evaluate(() => state.widgets.slice().sort((a, b) => (a.layer || 1) - (b.layer || 1)).map(w => w.id).reverse());
+    const [a, b, c] = ids;
+    assert.deepEqual(await lista(), [c, b, a], 'översta lagret först');
+
+    // Dra a (längst ner) och släpp den på övre halvan av c (översta raden): a läggs längst fram.
+    await page.dragAndDrop(`.live-layer-list article[data-layer-id="${a}"] .layer-select`,
+      `.live-layer-list article[data-layer-id="${c}"]`, { targetPosition: { x: 20, y: 3 } });
+    await page.waitForFunction(id => state.widgets.find(w => w.id === id).layer === 3, a, { timeout: 5000 });
+    assert.deepEqual(await stapel(), [a, c, b]);
+    assert.deepEqual(await lista(), [a, c, b], 'listan följer draget');
+
+    // Ctrl+↓ på den valda widgeten flyttar den ett steg bak; Ctrl+Skift+↑ längst fram.
+    await page.evaluate(id => { selected = id; document.activeElement?.blur?.() }, a);
+    await page.keyboard.press('Control+ArrowDown');
+    await page.waitForFunction(id => state.widgets.find(w => w.id === id).layer === 2, a, { timeout: 5000 });
+    assert.deepEqual(await lista(), [c, a, b]);
+    await page.evaluate(id => { selected = id; document.activeElement?.blur?.() }, b);
+    await page.keyboard.press('Control+Shift+ArrowUp');
+    await page.waitForFunction(id => state.widgets.find(w => w.id === id).layer === 3, b, { timeout: 5000 });
+    assert.deepEqual(await lista(), [b, c, a]);
+  } finally { await page.close(); }
+});
