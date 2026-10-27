@@ -64,6 +64,39 @@
     } catch { return [] }
   }
 
+  // STANDARDRÖSTEN OCH SLUMPEN ÄR MOLNRÖSTER (2026-10-27, David: "Varför har vi bara killar och
+  // alla är samma?"). Datorns egen svenska röst är på Windows oftast bara Microsoft Bengt, så
+  // "Standardröst" och "Slumpad röst" — som bara valde bland datorns röster — lät alltid som samma
+  // man. Nu är standard Sofie och slumpen blandar språkets molnröster. Datorns röst finns kvar som
+  // reserv: utan inloggat workspace väljs den direkt, och faller molnet läser spelaUpp() med den.
+  //
+  // Valet görs EN gång, innan ljudet förhämtas — annars hade förhämtningen och uppspelningen kunnat
+  // slumpa fram olika röster. Reservlistan används tills röstlistan hunnit hämtas första gången.
+  // De flerspråkiga rösterna (Ava, Emma …) är inte med: ingen har lyssnat på dem på svenska än.
+  const STANDARD_MOLNROST = { 'sv-SE': 'sv-SE-SofieNeural' };
+  const MOLNROSTER_RESERV = { 'sv-SE': ['sv-SE-SofieNeural', 'sv-SE-MattiasNeural'] };
+  function molnPool(sprak) {
+    const lista = cloudVoiceCache[sprak];
+    if (lista && lista.length) return lista.map(v => v.name);
+    return MOLNROSTER_RESERV[sprak] || [];
+  }
+  function valjRost(opts) {
+    if (!opts || isCloudVoice(opts.voice) || (opts.voice && !opts.randomVoice)) return opts;
+    if (!currentWorkspaceId() || !window.VyraAuth) return opts;
+    const sprak = opts.language || 'sv-SE';
+    if (!cloudVoiceCache[sprak]) fetchCloudVoices(sprak);
+    let namn = null;
+    if (opts.randomVoice) {
+      const pool = molnPool(sprak);
+      namn = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+    } else {
+      namn = STANDARD_MOLNROST[sprak]
+        || (cloudVoiceCache[sprak] || []).find(v => v.gender === 'FEMALE')?.name
+        || (cloudVoiceCache[sprak] || [])[0]?.name || null;
+    }
+    return namn ? Object.assign({}, opts, { voice: 'cloud:' + namn, randomVoice: false }) : opts;
+  }
+
   // Treats only null/undefined/'' as "unset" — unlike `||`, this correctly keeps an explicit 0
   // (e.g. a special user's pitch deliberately set to the lowest allowed value).
   function numOrFallback(v, fallback) { return (v === '' || v === null || v === undefined) ? fallback : v; }
@@ -178,6 +211,7 @@
   }
   function enqueueSpeech(text, opts, maxQueueLength) {
     if (!text) return false;
+    opts = valjRost(opts);
     if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
     if (!hasQueueRoom(maxQueueLength)) return false;
     let forhamtat = null;
@@ -331,7 +365,7 @@
   // Uppspelningen exponerad. action-runtime.js:s tts() anropar den har for att na SAMMA vag som
   // chatten — inklusive molnrosterna, som var oatkomliga for Actions eftersom `cloud:`-prefixet
   // inte sager speechSynthesis nagonting. Serialiseringen skoter VyraTal; det har ar bara talandet.
-  window.VyraTtsChat = { tala: (text, opts) => spelaUpp(text, opts || {}), installningar: getSettings };
+  window.VyraTtsChat = { tala: (text, opts) => spelaUpp(text, valjRost(opts || {})), installningar: getSettings };
 
   addEventListener('vyra-live-event', e => {
     const ev = e.detail || {};
@@ -465,7 +499,7 @@
       const label = `☁ ${v.friendlyName || v.name}${genderLabel ? ' · ' + genderLabel : ''}`;
       return `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`;
     }).join('');
-    return '<option value="">Standardröst (lokal)</option>'
+    return '<option value="">Standardröst (☁ molnröst, annars datorns röst)</option>'
       + (local ? `<optgroup label="Lokala röster (den här datorn)">${local}</optgroup>` : '')
       + (cloud ? `<optgroup label="☁ Molnröster (ingår i Premium, funkar överallt)">${cloud}</optgroup>` : '');
   }
@@ -572,8 +606,9 @@
       const text = root.querySelector('#ttsTesterText').value.trim();
       if (!text) return window.toast?.('Skriv en text att testa');
       const s = getSettings();
-      const opts = { language: s.language, voice: s.voice, randomVoice: s.randomVoice, speed: s.speed, pitch: s.pitch, volume: s.volume };
-      if (isCloudVoice(s.voice)) {
+      // Samma röstval som chatten, så testknappen låter som det tittarna hör.
+      const opts = valjRost({ language: s.language, voice: s.voice, randomVoice: s.randomVoice, speed: s.speed, pitch: s.pitch, volume: s.volume });
+      if (isCloudVoice(opts.voice)) {
         const btn = root.querySelector('#ttsTesterPlay');
         btn.disabled = true; btn.textContent = 'Laddar…';
         try { await speakCloud(text, opts) }
