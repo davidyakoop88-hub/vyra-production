@@ -159,6 +159,20 @@
     const heartbeat=()=>localStorage.setItem(heartbeatKey,String(Date.now()));
     heartbeat();setInterval(heartbeat,2000);
     addEventListener('beforeunload',()=>localStorage.removeItem(heartbeatKey));
+  } else if (params.has('overlay') && params.get('access') && !params.get('widget')) {
+    // HUVUDLÄNKEN ÄR SCEN 1 (David 2026-10-29: "vi skickar giften i live men ljudet aktivera inte").
+    // Overlaylänken utan `scene` är den streamern klistrar in i TikTok Studio och OBS. Den satte
+    // aldrig VYRA_OVERLAY_SCENE, så allowed() i action-runtime.js sa nej till varje action: gåvan
+    // kom fram, Sound Alerten matchade, och ingenting spelades. Uppmätt mot riktiga overlayn: med
+    // `&scene=1` spelade DJ Airhorn, utan den ingenting. Scen 1 är också förvalet varje Action får.
+    //
+    // UNDANTAGET ÄR EN ÖPPEN SCEN 1-LÄNK. Har streamern dessutom scen 1:s egen länk i samma
+    // OBS/TikTok Studio (de delar localStorage) skickar den sitt hjärtslag, och då lämnar
+    // huvudlänken scen 1 åt den — exakt som före ändringen. Annars spelades varje ljud två gånger.
+    // Huvudlänken skickar därför inget eget hjärtslag: det är så den skiljs från den riktiga.
+    const egenScen1Lever = () => { try { return Date.now() - Number(localStorage.getItem('vyra-scene-heartbeat-1') || 0) < 6000 } catch { return false } };
+    Object.defineProperty(window, 'VYRA_OVERLAY_SCENE', { configurable: true, get: () => (egenScen1Lever() ? 0 : 1) });
+    document.documentElement.dataset.overlayScene = '1';
   }
   setInterval(updateSceneStatuses,2000);
   addEventListener('storage',event=>{if(event.key?.startsWith('vyra-scene-heartbeat-'))updateSceneStatuses()});
