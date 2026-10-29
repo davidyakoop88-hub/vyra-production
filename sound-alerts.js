@@ -196,7 +196,31 @@ function saEsc(value=''){const el=document.createElement('span');el.textContent=
 function saReadLibrary(){try{const items=JSON.parse(localStorage.getItem(SA_LIBRARY_KEY)||'[]');return Array.isArray(items)?items:[]}catch{return[]}}
 function saWriteLibrary(items){localStorage.setItem(SA_LIBRARY_KEY,JSON.stringify(items))}
 function saSounds(){return [...Object.values(soundAlerts),...saReadLibrary()]}
-function saConnections(){const state=aeRead();return state.events.filter(event=>event.soundAlertId).map(event=>({event,action:state.actions.find(action=>action.id===event.actionId)})).filter(item=>item.action)}
+/* FRISTÅENDE SOUND ALERTS (David 2026-10-29: "Sound Alerts ska inte behöva nån länk om nån giftar
+   mig den ska funka i bakrunden", "fixa sound ska vara som tikfinty").
+   En alert var tidigare en Action + ett Event i Action & Event, och en Action spelas bara i en
+   overlay med rätt scen. Ljudet hördes därför aldrig utan en öppen scenlänk. Nu är en alert en egen
+   rad — trigger, ljud, volym, väntetid, på/av — och spelas direkt i VYRA på datorn (studiofliken
+   eller skrivbordsappen), som TikFinitys Sound Alerts. Action & Event rörs inte.
+   Raderna bor i 'vyra-extras' (VyraExtras.data.soundAlerts), samma nyckel som Spotify-
+   inställningarna: den följer redan med till molnet och mellan datorer, och en ny nyckel hade
+   behövt stå i fyra listor (se session-state.js) för att nå hela vägen. */
+function saExtras(){try{if(window.VyraExtras?.data)return window.VyraExtras.data}catch{}try{return JSON.parse(localStorage.getItem('vyra-extras')||'{}')||{}}catch{return{}}}
+function saAlerts(){const s=saExtras().soundAlerts;return Array.isArray(s?.alerts)?s.alerts.filter(a=>a&&a.id&&a.soundId):[]}
+async function saWriteAlerts(alerts){
+  const ss=window.VyraSessionState;if(typeof ss?.writeActive!=='function')return false;
+  const data={...saExtras(),soundAlerts:{alerts}};
+  const result=await ss.writeActive('vyra-extras',JSON.stringify(data));if(result?.ok!==true)return false;
+  /* Molnsynkens ticker skickar bara när 'vyra-state' ändras, inte när en sidonyckel gör det. Utan
+     knuffen följde en ny alert med till molnet först vid nästa layoutändring. Svarar push() 'busy'
+     är en skrivning redan ute — ett nytt försök strax efter tar med ändringen. */
+  const knuffa=(n=0)=>Promise.resolve(window.VyraCloudSync?.push?.()).then(r=>{if(r?.reason==='busy'&&n<5)setTimeout(()=>knuffa(n+1),2000)}).catch(()=>{});knuffa();
+  return true;
+}
+/* Raderna visas med samma {event, action}-form som förut, så att listan och korten ritas exakt som
+   tidigare — bara källan är ny. */
+function saAsConnection(a){return{alert:a,event:{id:a.id,trigger:a.trigger,condition:a.condition||'',enabled:a.enabled!==false,soundAlertId:a.soundId},action:{name:saSound(a.soundId)?.name||'Ljudalert',volume:a.volume??80,cooldown:a.cooldown||0}}}
+function saConnections(){return saAlerts().map(saAsConnection)}
 function saSound(soundId){return saSounds().find(sound=>sound.id===soundId)||null}
 function saConnection(soundId){return saConnections().find(item=>item.event.soundAlertId===soundId)||null}
 function saOpenDb(){return new Promise((ok,no)=>{const request=indexedDB.open('vyra-action-media',1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('files'))request.result.createObjectStore('files')};request.onsuccess=()=>ok(request.result);request.onerror=()=>no(request.error)})}
@@ -258,7 +282,7 @@ function saBindGiftPicker(form){
   popover.onclick=event=>{const choice=event.target.closest('.sa-gift-choice');if(!choice)return;selected=choice.dataset.gift||'';opener.dataset.gift=selected;opener.dataset.giftId=choice.dataset.giftId||'';opener.querySelector('span').textContent=selected||'Alla gåvor';opener.querySelector('b').textContent=selected?'Specifik gåva':'Spela ljudet vid varje gåva';popover.hidden=true};
 }
 function saCreateAlert(form){
-  return async event=>{event.preventDefault();const data=new FormData(form),sound=saSound(data.get('sound'));try{const audioMedia=await saGetMediaMeta(sound);if(!audioMedia)throw Error('Ljud saknas');const state=aeRead(),stamp=Date.now(),actionId=`a${stamp}-${sound.id}`,eventId=`e${stamp}-${sound.id}`,gift=form.querySelector('.sa-gift-open')?.dataset.gift||'',giftId=form.querySelector('.sa-gift-open')?.dataset.giftId||'',trigger=data.get('trigger');state.actions.push({id:actionId,name:sound.name,types:['audio'],duration:6,cooldown:Math.max(0,Number(data.get('cooldown'))||0),volume:Math.max(0,Math.min(100,Number(data.get('volume'))||80)),audioMedia,scene:{number:1}});state.events.push({id:eventId,trigger,condition:trigger==='gift'?gift:'',...(trigger==='gift'&&gift&&giftId?{giftId}:{}),actionId,enabled:true,soundAlertId:sound.id});if(!await aeWrite(state))throw Error('Skrivning nekades');window.VyraActionEvent?.refresh?.();toast(`${sound.name} är kopplad till ${SA_TRIGGERS[trigger]||trigger}`);renderSoundAlerts()}catch{toast('Kunde inte spara sound alerten. Öppna VYRA i ett aktivt projekt och försök igen.')}}
+  return async event=>{event.preventDefault();const data=new FormData(form),sound=saSound(data.get('sound'));try{if(!sound||!await saGetMediaMeta(sound))throw Error('Ljud saknas');const gift=form.querySelector('.sa-gift-open')?.dataset.gift||'',giftId=form.querySelector('.sa-gift-open')?.dataset.giftId||'',trigger=data.get('trigger');const alert={id:`sa${Date.now()}-${sound.id}`,trigger,condition:trigger==='gift'?gift:'',...(trigger==='gift'&&gift&&giftId?{giftId}:{}),soundId:sound.id,volume:Math.max(0,Math.min(100,Number(data.get('volume'))||80)),cooldown:Math.max(0,Number(data.get('cooldown'))||0),enabled:true};if(!await saWriteAlerts([...saAlerts(),alert]))throw Error('Skrivning nekades');toast(`${sound.name} är kopplad till ${SA_TRIGGERS[trigger]||trigger}`);renderSoundAlerts()}catch{toast('Kunde inte spara sound alerten. Öppna VYRA i ett aktivt projekt och försök igen.')}}
 }
 function bindSoundAlerts(){
   saPlayingAudio=null;saPlayingBtn=null;
@@ -266,9 +290,9 @@ function bindSoundAlerts(){
   document.querySelectorAll('[data-sa-tab]').forEach(tab=>tab.onclick=()=>{const selected=tab.dataset.saTab;document.querySelectorAll('[data-sa-tab]').forEach(item=>item.classList.toggle('active',item===tab));document.querySelectorAll('[data-sa-pane]').forEach(pane=>pane.classList.toggle('active',pane.dataset.saPane===selected))});
   const modal=document.querySelector('.sa-modal'),openModal=()=>{modal.hidden=false;saBindGiftPicker(modal.querySelector('form'))};document.querySelectorAll('.sa-new-open').forEach(button=>button.onclick=openModal);modal?.querySelector('.sa-modal-close')?.addEventListener('click',()=>modal.hidden=true);modal?.querySelector('.sa-modal-backdrop')?.addEventListener('click',()=>modal.hidden=true);
   const form=document.querySelector('#saNewAlert');if(form){form.onsubmit=saCreateAlert(form);const volume=form.elements.volume;volume.oninput=()=>volume.closest('label').querySelector('output').textContent=`${volume.value}%`;form.querySelector('.sa-test-new').onclick=async()=>{try{await saPlaySound(saSound(new FormData(form).get('sound')),form.querySelector('.sa-test-new'))}catch{toast('Ljudet kunde inte spelas')}}}
-  document.querySelectorAll('.sa-toggle').forEach(toggle=>toggle.onchange=async()=>{const state=aeRead(),event=state.events.find(item=>item.id===toggle.closest('[data-alert]').dataset.alert);if(event){event.enabled=toggle.checked;if(await aeWrite(state))window.VyraActionEvent?.refresh?.();else{toggle.checked=!toggle.checked;toast('Kunde inte spara ändringen')}}});
+  document.querySelectorAll('.sa-toggle').forEach(toggle=>toggle.onchange=async()=>{const id=toggle.closest('[data-alert]').dataset.alert,alerts=saAlerts();if(!alerts.some(a=>a.id===id))return;if(!await saWriteAlerts(alerts.map(a=>a.id===id?{...a,enabled:toggle.checked}:a))){toggle.checked=!toggle.checked;toast('Kunde inte spara ändringen')}});
   document.querySelectorAll('.sa-row-play').forEach(button=>button.onclick=async()=>{try{const item=saConnections().find(connection=>connection.event.id===button.closest('[data-alert]').dataset.alert);await saPlaySound(saSound(item?.event.soundAlertId),button)}catch{toast('Ljudet kunde inte spelas')}});
-  document.querySelectorAll('.sa-remove').forEach(button=>button.onclick=async()=>{const id=button.closest('[data-alert]').dataset.alert,state=aeRead(),removed=state.events.find(event=>event.id===id);state.events=state.events.filter(event=>event.id!==id);if(removed&&!state.events.some(event=>event.actionId===removed.actionId))state.actions=state.actions.filter(action=>action.id!==removed.actionId);if(!await aeWrite(state)){toast('Kunde inte ta bort sound alerten');return}window.VyraActionEvent?.refresh?.();toast('Sound alert borttagen');renderSoundAlerts()});
+  document.querySelectorAll('.sa-remove').forEach(button=>button.onclick=async()=>{const id=button.closest('[data-alert]').dataset.alert;if(!await saWriteAlerts(saAlerts().filter(a=>a.id!==id))){toast('Kunde inte ta bort sound alerten');return}toast('Sound alert borttagen');renderSoundAlerts()});
   const upload=document.querySelector('.sa-upload input');if(upload)upload.onchange=async()=>{const file=upload.files?.[0];if(!file)return;if(!/^audio\//.test(file.type)&&!/\.(mp3|wav|ogg)$/i.test(file.name)){toast('Välj en MP3, WAV eller OGG-fil');return}try{const mediaMeta=await saStoreFile(file),id=`custom-${Date.now()}`;saWriteLibrary([...saReadLibrary(),{id,name:file.name.replace(/\.[^.]+$/,''),mediaMeta}]);toast('Ditt ljud är tillagt i biblioteket');renderSoundAlerts()}catch{toast('Kunde inte spara ljudfilen')}};
   const librarySearch=document.querySelector('.sa-library-search');if(librarySearch)librarySearch.oninput=()=>{const needle=librarySearch.value.trim().toLocaleLowerCase('sv');document.querySelector('.sa-library-grid').innerHTML=saLibraryCards(saSounds().filter(sound=>String(sound.name).toLocaleLowerCase('sv').includes(needle)));bindSoundAlerts()};
 }
@@ -281,3 +305,82 @@ document.addEventListener('click',event=>{
   document.querySelectorAll('[data-view],[data-extra],aside a.active').forEach(item=>item.classList.remove('active'));
   button.classList.add('active');document.querySelector('#title').textContent='Sound Alerts';renderSoundAlerts();
 },true);
+
+/* ---- UPPSPELNINGEN: i VYRA på datorn, aldrig i overlayn ---------------------------------------
+   Lyssnar på 'vyra-live-event', samma signal som topplistor och låtönskningar. Overlayn spelar
+   inte: ljudet hade annars hörts två gånger (TikTok LIVE Studio fångar datorns ljud). Bara EN
+   studioflik spelar, vald med samma masterval som rösten — tre öppna flikar ger ett ljud, inte tre.
+   TikTok-händelsen mappas här och inte via live-client.js liveEventTriggers(): den lägger användaren
+   i sin "första aktivitet"-lista, och anropad härifrån — före Action & Event — hade den stulit
+   triggern från automationen. */
+const SA_HISTORIK_MS=30000,saSedda=new Set(),saSenast={};let saMaster=null,saSparrSagd=false;
+const saIOverlay=()=>/[?&]overlay(=|&|$)/.test(String(location.search||''));
+function saHandelser(e){
+  const t=String(e?.type||e?.event||'').toLowerCase().replace(/[\s_-]/g,'');
+  const info={gift:String(e?.giftName||e?.gift||''),giftId:String(e?.giftId||''),coins:Number(e?.diamonds??e?.coins??e?.diamondCount??0)};
+  if(t==='gift'||t==='giftcombo')return[['gift',info],['giftCoins',info]];
+  const enkla={follow:'follow',member:'member',subscribe:'member',subscription:'member',share:'share',like:'likes',likes:'likes',shoppurchase:'shopPurchase',purchase:'shopPurchase'};
+  if(enkla[t])return[[enkla[t],info]];
+  if(t==='chatcommand'||t==='command')return[['chatCommand',info]];
+  if(t==='chat'||t==='comment'){const text=String(e?.comment||e?.name||'').trim();return text.startsWith('!')?[['chat',info],['chatCommand',info]]:[['chat',info]]}
+  if(t==='subscriberemote'||t==='fanclubsticker'||t==='fansticker')return[[Number(e?.emoteScene)===2||t!=='subscriberemote'?'fanSticker':'subscriberEmote',info]];
+  return[];
+}
+/* Gåvan träffar på namnet, på id:t alerten sparade, eller på id:t katalogen säger att namnet har —
+   samma tre vägar som Action & Event (TikTok skickar "Ros", väljaren kan ha sparat "Rose"). */
+function saTraffar(alert,trigger,info){
+  if(alert.enabled===false||alert.trigger!==trigger)return false;
+  if(trigger==='giftCoins')return info.coins>=Math.max(1,Number(alert.condition)||1);
+  if(trigger!=='gift')return true;
+  const namn=String(alert.condition||'').trim();if(!namn)return true;
+  if(namn.toLowerCase()===info.gift.trim().toLowerCase())return true;
+  if(!info.giftId)return false;
+  if(alert.giftId&&String(alert.giftId)===info.giftId)return true;
+  try{return!!window.VyraGavokatalog?.idn?.(namn)?.has?.(info.giftId)}catch{return false}
+}
+async function saSpelaAlert(alert){
+  const sound=saSound(alert.soundId);if(!sound)return;
+  const meta=await saGetMediaMeta(sound),blob=meta?.packagePath?null:await saReadFile(meta);
+  if(!meta?.packagePath&&!blob)return;
+  const url=meta.packagePath||URL.createObjectURL(blob),audio=new Audio(url),bas=Math.max(0,Math.min(100,Number(alert.volume??80)))/100;
+  if(!meta.packagePath)audio.onended=audio.onerror=()=>URL.revokeObjectURL(url);
+  if(window.VyraTal?.duckaLjud)window.VyraTal.duckaLjud(audio,bas);else audio.volume=bas;
+  await audio.play().catch(()=>{if(!saSparrSagd){saSparrSagd=true;toast('Klicka en gång i VYRA så att webbläsaren tillåter ljud')}});
+}
+function saTaEmot(e){
+  if(!e||saIOverlay())return;
+  const id=String(e.id||e.eventKey||'');if(id){if(saSedda.has(id))return;saSedda.add(id);if(saSedda.size>500)saSedda.delete(saSedda.values().next().value)}
+  const at=Number(e.at)||Number(e.timestamp)||0;if(at&&Date.now()-at>SA_HISTORIK_MS)return;
+  const alerts=saAlerts();if(!alerts.length)return;
+  if(!saMaster&&window.VyraMasterval?.skapa)saMaster=window.VyraMasterval.skapa({nyckel:'vyra-ljudlarm-master',minNiva:()=>2});
+  if(saMaster&&!saMaster.farKora())return;
+  const nu=Date.now(),spelade=new Set();
+  saHandelser(e).forEach(([trigger,info])=>alerts.forEach(alert=>{
+    if(spelade.has(alert.id)||!saTraffar(alert,trigger,info))return;
+    if(alert.cooldown&&nu-(saSenast[alert.id]||0)<alert.cooldown*1000)return;
+    spelade.add(alert.id);saSenast[alert.id]=nu;saSpelaAlert(alert).catch(()=>{});
+  }));
+}
+addEventListener('vyra-live-event',ev=>saTaEmot(ev?.detail));
+
+/* ---- FLYTTEN: gamla alerts ur Action & Event -------------------------------------------------
+   En alert som skapats före ändringen är en Action + ett Event med soundAlertId. Den flyttas hit en
+   gång och tas bort där — annars spelade overlayn den också, och ljudet kom två gånger. Alertraden
+   skrivs FÖRST: misslyckas borttagningen därefter finns ljudet kvar på båda ställena ett tag, men det
+   försvinner aldrig. Raden får eventets id, så ett nytt försök inte lägger in den två gånger.
+   Bara sessionsägaren får skriva; en flik som inte äger sessionen svarar 'not-writable' och
+   försöker igen lite senare. */
+async function saFlyttaFranActionEvent(){
+  const ae=aeRead(),gamla=(ae.events||[]).filter(e=>e&&e.soundAlertId);
+  if(!gamla.length)return true;
+  const finns=new Set(saAlerts().map(a=>a.id)),nya=[];
+  gamla.forEach(e=>{if(finns.has(e.id))return;const action=(ae.actions||[]).find(a=>a.id===e.actionId)||{};nya.push({id:e.id,trigger:e.trigger,condition:e.condition||'',...(e.giftId?{giftId:String(e.giftId)}:{}),soundId:e.soundAlertId,volume:action.volume??80,cooldown:action.cooldown||0,enabled:e.enabled!==false})});
+  if(nya.length&&!await saWriteAlerts([...saAlerts(),...nya]))return false;
+  const ids=new Set(gamla.map(e=>e.id)),events=ae.events.filter(e=>!ids.has(e.id));
+  const actionIds=new Set(gamla.map(e=>e.actionId)),anvanda=new Set(events.flatMap(e=>[e.actionId,...(e.allActionIds||[]),...(e.randomActionIds||[])]));
+  const actions=(ae.actions||[]).filter(a=>!actionIds.has(a.id)||anvanda.has(a.id));
+  if(!await aeWrite({...ae,events,actions}))return false;
+  window.VyraActionEvent?.refresh?.();renderSoundAlerts();
+  return true;
+}
+if(!saIOverlay()){let forsok=0;const flytta=()=>saFlyttaFranActionEvent().then(ok=>{if(!ok&&++forsok<12)setTimeout(flytta,5000)}).catch(()=>{if(++forsok<12)setTimeout(flytta,5000)});setTimeout(flytta,3000)}

@@ -104,11 +104,17 @@ test('en sound alert sparas i ett aktivt VYRA-projekt', async () => {
 
     await studio.saCreateAlert(form)({ preventDefault() {} });
 
-    const saved = JSON.parse(studio.VyraSessionState.readActiveExtra('vyra-action-event-v2'));
-    assert.equal(saved.actions.length, 1, 'ljud-actionen skrevs inte i det aktiva projektet');
-    assert.equal(saved.events.length, 1, 'eventet skrevs inte i det aktiva projektet');
-    assert.equal(saved.events[0].soundAlertId, 'followCheer');
-    assert.equal(saved.actions[0].audioMedia.packagePath, 'assets/sounds/mixkit/follow-cheer.mp3');
+    // FRISTÅENDE SEDAN 2026-10-29: alerten är en egen rad i vyra-extras, inte en Action + ett
+    // Event. Action & Event ska vara orört — annars spelade overlayn ljudet en gång till.
+    const extras = JSON.parse(studio.VyraSessionState.readActiveExtra('vyra-extras'));
+    const alerts = extras.soundAlerts.alerts;
+    assert.equal(alerts.length, 1, 'alerten skrevs inte i det aktiva projektet');
+    assert.equal(alerts[0].soundId, 'followCheer');
+    assert.equal(alerts[0].trigger, 'gift');
+    assert.equal(alerts[0].enabled, true);
+    const ae = JSON.parse(studio.VyraSessionState.readActiveExtra('vyra-action-event-v2') || '{"actions":[],"events":[]}');
+    assert.equal((ae.actions || []).length, 0, 'en Sound Alert får inte längre bli en Action');
+    assert.equal((ae.events || []).length, 0, 'en Sound Alert får inte längre bli ett Event');
     assert.match(studio.__toaster.at(-1), /är kopplad till Gåva mottagen/);
   } finally {
     studio.close();
