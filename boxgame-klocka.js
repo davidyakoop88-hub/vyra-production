@@ -190,7 +190,14 @@
       const s = vad === 'prov10' ? 10 : 20;
       Object.assign(w, { boxKor: true, boxSlut: t + s * 1000 + 300, boxKvarMs: s * 1000 });
     }
-    if (typeof save === 'function') save();
+    const sparat = typeof save === 'function' ? save() : null;
+    // Ett knapptryck skickas direkt. Annars väntar molnsynken på tickern (≤ 1 s) och debouncen
+    // (1,8 s, byggd för reglage som dras), och OBS reagerade uppmätt 2026-10-29 först 2,75 s efter
+    // Start — klockan hoppade då rakt till 4:57. push() läser localStorage, och save() skriver dit
+    // ASYNKRONT (Web Locks i session-state.js): en push direkt efter save() skickade uppmätt det
+    // gamla läget. Därför väntar den på sparningen. Är en skrivning redan ute svarar push() 'busy'
+    // och den vanliga debouncen tar ändringen som förut.
+    Promise.resolve(sparat).then(() => window.VyraCloudSync?.push?.()).catch(() => {});
     if (typeof render === 'function') render();
   }
   function knappText(w) {

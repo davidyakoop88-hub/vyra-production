@@ -87,6 +87,31 @@ test('ljudet spelas bara i overlayn — studion är tyst, så det hörs en gång
   assert.equal(B(obs).ljudagare()?.id, 'b', 'en dold klocka spelar inget ljud');
 });
 
+test('Start, Paus och Återställ skickas direkt till molnet — de väntar inte på debouncen', async () => {
+  const h = rigg();
+  const w = { ...h.window.VyraWidgets.create('catalog:boxgame'), id: 'b4' };
+  sida(h).state.widgets.push(w);
+  // save() skriver asynkront (Web Locks). push() läser localStorage och måste vänta på skrivningen,
+  // annars skickas det gamla läget — uppmätt så mot riktiga servern 2026-10-29.
+  const sess = h.window.VyraSessionState, orig = sess.writeActive;
+  sess.writeActive = () => new Promise(r => { h.window.__slapp = () => { h.window.__sparat = true; r({ ok: true }); }; });
+  const skickat = [];
+  h.window.VyraCloudSync = { push: () => { skickat.push(h.window.__sparat === true); return Promise.resolve({ ok: false, reason: 'busy' }); } };
+  B(h).styr(w, 'start');
+  await new Promise(r => setTimeout(r, 0));
+  assert.deepEqual(skickat, [], 'push() får inte gå före sparningen');
+  h.window.__slapp();
+  await new Promise(r => setTimeout(r, 0));
+  assert.deepEqual(skickat, [true], 'knapptrycket ska skickas direkt efter sparningen, inte efter 1,8 s debounce');
+  // Utan molnsynk (desktopappen utan konto, provriggar) eller med nätfel får styrningen inte kasta.
+  sess.writeActive = orig;
+  h.window.VyraCloudSync = { push: () => Promise.reject(new Error('nät')) };
+  assert.doesNotThrow(() => B(h).styr(w, 'paus'));
+  delete h.window.VyraCloudSync;
+  assert.doesNotThrow(() => B(h).styr(w, 'nollstall'));
+  await new Promise(r => setTimeout(r, 0));
+});
+
 test('klockan syns i OBS från första bildrutan — den väntar inte på en live-händelse', () => {
   const kod = fs.readFileSync('overlay-aktivering.js', 'utf8');
   assert.match(kod, /const UNDANTAG = new Set\(\[[^\]]*'templateBoxgameClock'/);
