@@ -12,8 +12,13 @@
 // Andra mätningen 2026-10-30, fyra sändningar à 5 min (@elmahazoury, @yousaf_razzaq_ahmed,
 // @andrei.ciuciu, @hasank55_): 1033 gåvomeddelanden, 120 med video, 19 olika gåvor med video.
 // Svaret på "varför 1 av 28": gåvor från 99 diamanter och uppåt har video, ingen under 99 har det.
-// Enda undantaget uppåt: Punch Cuddle (400 dm) har asset men ingen video. Alla 19 hämtades med
-// 200 utan headers och cors=*, alla H.264 1440×1280 med samma färg/alfa-upplägg, 3–9 s långa.
+// Alla hämtades med 200 utan headers och cors=*, alla H.264 1440×1280 med samma färg/alfa-upplägg,
+// 3–9 s långa.
+//
+// Tredje mätningen samma dag (10 min per sändning): 28 videor totalt. Ingen gåva under 99 dm har
+// video, men fyra från 99 dm har asset UTAN video: Hat and Mustache (99), Hearts (199), Elephant
+// trunk (299), Punch Cuddle (400). Gå alltså på om videoResourceList finns, inte på priset. Samma
+// gåvonamn kan ha flera id:n med var sin video (Hand Heart: 5660, 5924, 6968) — slå upp per giftId.
 //
 // Kör:  node tiktok-bridge/gavovideo-sond.js <användarnamn som är live> [sekunder=300]
 // Bakom en HTTPS-proxy (HTTPS_PROXY satt) går både anslutningen och nedladdningen genom den.
