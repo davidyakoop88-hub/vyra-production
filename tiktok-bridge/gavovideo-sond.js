@@ -7,8 +7,13 @@
 // Underlaget för gavovideo.js och gavovideo-prov.html.
 //
 // Första mätningen 2026-10-30, @jas_alexis, 5 min: 28 gåvomeddelanden, 1 med asset (gåva 5660),
-// zip med output.mp4 (H.264 1440×1280, färg vänster, alfa höger) och config.json. Öppen fråga:
-// VARFÖR bara 1 av 28. Kör mot en sändning med större gåvor och battles för att svara på den.
+// zip med output.mp4 (H.264 1440×1280, färg vänster, alfa höger) och config.json.
+//
+// Andra mätningen 2026-10-30, fyra sändningar à 5 min (@elmahazoury, @yousaf_razzaq_ahmed,
+// @andrei.ciuciu, @hasank55_): 1033 gåvomeddelanden, 120 med video, 19 olika gåvor med video.
+// Svaret på "varför 1 av 28": gåvor från 99 diamanter och uppåt har video, ingen under 99 har det.
+// Enda undantaget uppåt: Punch Cuddle (400 dm) har asset men ingen video. Alla 19 hämtades med
+// 200 utan headers och cors=*, alla H.264 1440×1280 med samma färg/alfa-upplägg, 3–9 s långa.
 //
 // Kör:  node tiktok-bridge/gavovideo-sond.js <användarnamn som är live> [sekunder=300]
 // Bakom en HTTPS-proxy (HTTPS_PROXY satt) går både anslutningen och nedladdningen genom den.
