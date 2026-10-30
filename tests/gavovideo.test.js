@@ -4,7 +4,7 @@
 // checka in TikToks egen video: zip-filen byggs här med samma två filer och samma komprimering.
 const test = require('node:test'), assert = require('node:assert/strict');
 const path = require('path'), zlib = require('zlib');
-const { lasZip, lasKonfig } = require(path.join(__dirname, '..', 'gavovideo.js'));
+const { lasZip, lasKonfig, fyllGammal } = require(path.join(__dirname, '..', 'gavovideo.js'));
 
 // Exakt config.json ur gåva 5660, h264-varianten.
 const UPPMATT = '{"portrait":{"videoW":1440,"videoH":1280,"h":1280,"w":720,"align":8,"aFrame":[720,0,720,1280],"rgbFrame":[0,0,720,1280],"v":1,"path":"output.mp4","f":90,"has_audio":0}}';
@@ -66,4 +66,24 @@ test('480p-varianten har udda höjd — rutorna gäller ändå', () => {
 test('en config utan rutor ger ett fel, inte en svart ruta', () => {
   assert.throws(() => lasKonfig('{"portrait":{"videoW":1440,"videoH":1280}}'), /rgbFrame/);
   assert.throws(() => lasKonfig('{}'), /rgbFrame/);
+});
+
+// Äldre formatet, exakt config.json ur Love You (6671) och Mystery Firework (7529), 2021–22.
+const GAMMAL = '{"portrait":{"path":"1_720.mp4","align":8}}';
+
+test('äldre config med bara path ger ett gammalt läge i stället för fel', () => {
+  const k = lasKonfig(GAMMAL);
+  assert.equal(k.gammalt, true);
+  assert.equal(k.fil, '1_720.mp4');
+});
+
+test('äldre formatet är spegelvänt: alfa vänster, färg höger, halva bredden var', () => {
+  const k = fyllGammal(lasKonfig(GAMMAL), 1440, 1280);
+  assert.deepEqual([k.b, k.h, k.videoB, k.videoH], [720, 1280, 1440, 1280]);
+  assert.deepEqual(k.alfa, [0, 0, 720, 1280]);
+  assert.deepEqual(k.farg, [720, 0, 720, 1280]);
+});
+
+test('äldre formatet utan känd videostorlek ger ett fel', () => {
+  assert.throws(() => fyllGammal(lasKonfig(GAMMAL), 0, 0), /storlek/);
 });

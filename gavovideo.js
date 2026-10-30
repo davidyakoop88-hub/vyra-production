@@ -58,16 +58,33 @@
   // ---- config.json → var färgen och alfan ligger ----------------------------------------------
   // TikTok har en "portrait"-nyckel; en "landscape" finns troligen för liggande gåvor (omätt). Den
   // första som har giltiga rutor används. Fel form ger ett tydligt fel i stället för en svart ruta.
+  //
+  // ÄLDRE FORMAT (uppmätt 2026-10-30: Love You 6671 och Mystery Firework 7529, filer från 2021–22):
+  // config.json är bara {"portrait":{"path":"1_720.mp4","align":8}} — inga rutor, inga mått. Videon
+  // är ändå 1440×1280 delad på mitten, men SPEGELVÄND: alfan till vänster, färgen till höger. Utan
+  // mått returneras { gammalt: true }; rutorna fylls i av fyllGammal när videons storlek är känd.
   function lasKonfig(text) {
     const j = typeof text === 'string' ? JSON.parse(text) : text;
     const ruta = r => Array.isArray(r) && r.length === 4 && r.every(x => Number.isFinite(x) && x >= 0) && r[2] > 0 && r[3] > 0;
-    for (const lage of ['portrait', 'landscape', ...Object.keys(j || {})]) {
+    const lagen = ['portrait', 'landscape', ...Object.keys(j || {})];
+    for (const lage of lagen) {
       const k = j && j[lage];
       if (!k || !ruta(k.rgbFrame) || !ruta(k.aFrame) || !(k.videoW > 0) || !(k.videoH > 0)) continue;
       return { lage, videoB: k.videoW, videoH: k.videoH, b: k.w || k.rgbFrame[2], h: k.h || k.rgbFrame[3],
         farg: k.rgbFrame.slice(), alfa: k.aFrame.slice(), fil: k.path || 'output.mp4', ljud: !!k.has_audio };
     }
+    for (const lage of lagen) {
+      const k = j && j[lage];
+      if (k && typeof k.path === 'string' && k.path && !k.rgbFrame && !k.aFrame) return { lage, gammalt: true, fil: k.path, ljud: false };
+    }
     throw new Error('config.json saknar rgbFrame/aFrame');
+  }
+
+  // Äldre formatet: halva bredden var, alfa vänster och färg höger.
+  function fyllGammal(konfig, videoB, videoH) {
+    if (!(videoB > 0) || !(videoH > 0)) throw new Error('Videons storlek är okänd');
+    const b = Math.floor(videoB / 2);
+    return { ...konfig, videoB, videoH, b, h: videoH, alfa: [0, 0, b, videoH], farg: [b, 0, b, videoH] };
   }
 
   // ---- hämta och packa upp ---------------------------------------------------------------------
@@ -145,11 +162,15 @@
   // Spelar en gåvovideo i `canvas`. Returnerar { typ, stoppa, video }. `loopa` = börja om när den
   // är slut; annars anropas `klar` en gång efter sista rutan.
   async function spela(canvas, zipUrl, { loopa = true, klar, tvinga2d = false } = {}) {
-    const { konfig, videoUrl } = await hamta(zipUrl);
-    canvas.width = konfig.b; canvas.height = konfig.h;
-    const ritare = (!tvinga2d && webglRitare(canvas, konfig)) || canvas2dRitare(canvas, konfig);
+    let { konfig, videoUrl } = await hamta(zipUrl);
     const video = document.createElement('video');
     video.muted = true; video.playsInline = true; video.loop = loopa; video.src = videoUrl;
+    if (konfig.gammalt) {
+      if (video.readyState < 1) await new Promise((klart, fel) => { video.addEventListener('loadedmetadata', klart, { once: true }); video.addEventListener('error', () => fel(new Error('Videon gick inte att läsa')), { once: true }); });
+      konfig = fyllGammal(konfig, video.videoWidth, video.videoHeight);
+    }
+    canvas.width = konfig.b; canvas.height = konfig.h;
+    const ritare = (!tvinga2d && webglRitare(canvas, konfig)) || canvas2dRitare(canvas, konfig);
     let igang = true, raf = 0;
     const steg = () => {
       if (!igang) return;
@@ -165,7 +186,7 @@
     };
   }
 
-  const api = { lasZip, lasKonfig, hamta, spela };
+  const api = { lasZip, lasKonfig, fyllGammal, hamta, spela };
   root.VyraGavovideo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
