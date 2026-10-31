@@ -88,16 +88,35 @@
   }
 
   // ---- hämta och packa upp ---------------------------------------------------------------------
+  // EN GÅVA HÄMTAS EN GÅNG PER SIDA. På en livlig sändning kommer samma gåva tiotals gånger i
+  // minuten; utan minnet laddades zip-filen (0,5–3 MB) ner och packades upp varje gång. Minnet
+  // håller den uppackade videon som Blob och ger varje uppspelning en egen objekt-URL, eftersom
+  // spela().stoppa() återkallar sin. En misslyckad hämtning glöms så att nästa gåva försöker igen.
+  const MINNE_MAX = 60;
+  const minne = new Map();
+  function hamtaFil(zipUrl) {
+    let p = minne.get(zipUrl);
+    if (!p) {
+      p = (async () => {
+        const svar = await fetch(zipUrl);
+        if (!svar.ok) throw new Error(`Hämtningen svarade ${svar.status}`);
+        const filer = await lasZip(await svar.arrayBuffer(), inflateWebblasare);
+        const konfigFil = Object.keys(filer).find(n => /(^|\/)config\.json$/.test(n));
+        if (!konfigFil) throw new Error('Zip-filen saknar config.json');
+        const konfig = lasKonfig(new TextDecoder().decode(filer[konfigFil]));
+        const videoFil = Object.keys(filer).find(n => n.endsWith(konfig.fil)) || Object.keys(filer).find(n => /\.mp4$/.test(n));
+        if (!videoFil) throw new Error('Zip-filen saknar video');
+        return { konfig, blob: new Blob([filer[videoFil]], { type: 'video/mp4' }) };
+      })();
+      p.catch(() => { if (minne.get(zipUrl) === p) minne.delete(zipUrl); });
+      minne.set(zipUrl, p);
+      if (minne.size > MINNE_MAX) minne.delete(minne.keys().next().value);
+    }
+    return p;
+  }
   async function hamta(zipUrl) {
-    const svar = await fetch(zipUrl);
-    if (!svar.ok) throw new Error(`Hämtningen svarade ${svar.status}`);
-    const filer = await lasZip(await svar.arrayBuffer(), inflateWebblasare);
-    const konfigFil = Object.keys(filer).find(n => /(^|\/)config\.json$/.test(n));
-    if (!konfigFil) throw new Error('Zip-filen saknar config.json');
-    const konfig = lasKonfig(new TextDecoder().decode(filer[konfigFil]));
-    const videoFil = Object.keys(filer).find(n => n.endsWith(konfig.fil)) || Object.keys(filer).find(n => /\.mp4$/.test(n));
-    if (!videoFil) throw new Error('Zip-filen saknar video');
-    return { konfig, videoUrl: URL.createObjectURL(new Blob([filer[videoFil]], { type: 'video/mp4' })) };
+    const { konfig, blob } = await hamtaFil(zipUrl);
+    return { konfig, videoUrl: URL.createObjectURL(blob) };
   }
 
   // ---- ritning ---------------------------------------------------------------------------------
@@ -186,7 +205,7 @@
     };
   }
 
-  const api = { lasZip, lasKonfig, fyllGammal, hamta, spela };
+  const api = { lasZip, lasKonfig, fyllGammal, hamta, spela, glomMinnet: () => minne.clear() };
   root.VyraGavovideo = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

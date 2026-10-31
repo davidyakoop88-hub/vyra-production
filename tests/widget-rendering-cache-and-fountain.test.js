@@ -439,10 +439,11 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-options.js och action-runtime.js gick vidare till 20260926-likefountain nar
   // Action-valet "Top Likes" slutade skicka signalen till Like Fountain.
   // action-options.js gick vidare till 20261018-1 nar textalerten borjade folja scenpanelens
-  // placering (F01); action-runtime.js star kvar.
+  // placering (F01); action-runtime.js star kvar. action-runtime.js och action-event.js gick vidare
+  // till 20261031-gavovideo nar Action-funktionen "Spela gavans animation" kom (Top Gift, PR 719).
   assert.match(media, /action-options\.js\?v=20261018-1/, 'action-options.js cachebustades inte for F01');
   for (const fil of ['action-runtime']) {
-    assert.match(media, new RegExp(`${fil}\\.js\\?v=20261012-diamonds`), `${fil}.js cachebustades inte`);
+    assert.match(media, new RegExp(`${fil}\\.js\\?v=20261031-gavovideo`), `${fil}.js cachebustades inte`);
   }
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
@@ -454,19 +455,19 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261026-1/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261031-gavovideo/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   // 20261020-2: Ny Action fäller de avancerade valen (granskning 2026-10-17 F35).
   // 20261025-1: Ny Action och Nytt Event i den lila designen (numrerade sektioner, effektkort).
-  assert.match(media, /action-event\.js\?v=20261025-1/, 'action-event.js cachebustades inte');
+  assert.match(media, /action-event\.js\?v=20261031-gavovideo/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
   // ... och 2026-10-20 `.ae-modal input[hidden]` så poängrutorna i Ny Action döljs (granskning).
   // ... och 2026-10-25 det lila komponentlagret `.ae-modal.ae-lila` för båda formulären.
-  assert.match(media, /action-event\.css\?v=20261025-1/, 'action-event.css cachebustades inte');
+  assert.match(media, /action-event\.css\?v=20261031-gavovideo/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');

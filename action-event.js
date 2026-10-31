@@ -36,7 +36,10 @@
     // De ovriga fem i facit gor det inte: Minecraft och Simulate Keystrokes kan bara kora i
     // desktopappen, och Third-Party, Voicemod och Streamer.bot kraver program pa kundens dator.
     ['goal','Styr ett mål'],
-    ['timer','Styr en timer']
+    ['timer','Styr en timer'],
+    // TikToks egen animation för gåvan som just kom (Top Gift, PR 719). Ingen fil att välja: länken
+    // följer med i gåvans payload (giftVideo), och action-runtime.js spelar den genomskinligt.
+    ['giftVideo','Spela gåvans animation']
   ];
   // Kolumnerna Animation/Bild/Ljud/Video i listan (facit §1) är en AVLÄSNING av `types`, inte egna
   // fält. Fyra av tolv funktioner har egen kolumn; resten syns bara i Beskrivning.
@@ -81,6 +84,7 @@
     spotify:c=>c.spotify?`Spela ${c.spotify}`:'Spela Spotify',
     goal:c=>c.goalAction==='reset'?'Nollställ målet':c.goalAction==='target'?`Sätt målet till ${c.goalValue||0}`:c.goalAction==='baseline'?`Sätt startvärdet till ${c.goalValue||0}`:'Styr ett mål',
     timer:c=>c.timerAction==='start'?'Starta timern':c.timerAction==='stop'?'Pausa timern':c.timerAction==='reset'?'Nollställ timern':'Styr en timer',
+    giftVideo:()=>'Spela gåvans animation',
     addPoints:c=>`Ge ${c.addPointsAmount||10} poäng`,
     removePoints:c=>`Dra ${c.removePointsAmount||10} poäng`
   };
@@ -421,7 +425,8 @@
     overlay:['Visar en widget i overlayn.','<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>'],
     spotify:['Spelar en låt via Spotify.','<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>'],
     goal:['Nollställer eller ändrar ett mål.','<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>'],
-    timer:['Startar, pausar eller nollställer en timer.','<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M9.5 2.5h5"/>']
+    timer:['Startar, pausar eller nollställer en timer.','<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 2M9.5 2.5h5"/>'],
+    giftVideo:['Spelar TikToks egen animation för gåvan, en i taget.','<rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M3 7h18v3H3zM12 7v13M12 7c-1.5-3-5-3.5-5-1.5S10 7 12 7zM12 7c1.5-3 5-3.5 5-1.5S14 7 12 7z"/>']
   };
   // Numrerad sektionsrubrik, delad av Ny Action och Nytt Event. Siffran är dekor (aria-hidden):
   // skärmläsaren läser rubriken, inte "1".
