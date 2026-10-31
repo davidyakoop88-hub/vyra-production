@@ -17,12 +17,14 @@ const living = [];
 test.after(() => { while (living.length) living.pop().window.close() });
 const vanta = ms => new Promise(r => setTimeout(r, ms));
 
-function sida({ rekord = () => true, motorFel = false, session = null } = {}) {
+function sida({ rekord = () => true, motorFel = false, session = null, form, falt = {} } = {}) {
   const dom = new JSDOM(`<!doctype html><html><body>${WIDGET}</body></html>`,
     { url: 'https://vyralive.app/studio.html?overlay=1', runScripts: 'dangerously', pretendToBeVisual: true });
   living.push(dom);
   const { window } = dom;
   if (session) window.sessionStorage.setItem('vyra-topgift-video', session);
+  // studio.js state (en toppnivå-let); här räcker en global med widgetens fält.
+  window.state = { widgets: [{ id: 'w1', type: 'templateTopGift', ...(form ? { tgVideoForm: form } : {}), ...falt }] };
   window.VyraGiftRecords = { bedom: e => ({ gift: rekord(e), giftVarde: Number(e.diamonds) || 0 }) };
   window.__spelat = [];
   window.VyraGavovideo = {
@@ -55,7 +57,7 @@ test('ett nytt rekord med video spelar animationen i loop ovanpå gåvobilden', 
 });
 
 test('som BetterTok: en ram större än bilden, videon fyller den nedifrån och når upp över den', async () => {
-  const w = sida();
+  const w = sida({ form: 'ram' });
   const b = bild(w);
   // jsdom har ingen layout; ge bilden royal-designens 110 px-ruta.
   for (const [k, v] of Object.entries({ offsetWidth: 110, offsetHeight: 110, offsetLeft: 0, offsetTop: 0 }))
@@ -72,6 +74,169 @@ test('som BetterTok: en ram större än bilden, videon fyller den nedifrån och 
   assert.equal(parseInt(c.style.top) + 255, parseInt(ram.style.top) + 176, 'videons underkant ska stå i ramens underkant');
   assert.match(w.document.getElementById('vyra-topgift-video-stil').textContent, /object-position:50% 100%/,
     'utsnittet ska tas nedifrån, där TikToks motiv står');
+});
+
+const royalRuta = w => { const b = bild(w);
+  for (const [k, v] of Object.entries({ offsetWidth: 110, offsetHeight: 110, offsetLeft: 0, offsetTop: 0 }))
+    Object.defineProperty(b, k, { configurable: true, get: () => v });
+};
+const delar = w => { const a = w.document.querySelector('.vyra-gift-face'); return { ram: a.querySelector('.vyra-topgift-ram'), c: canvasar(w)[0] } };
+
+test('formen Cirkel: rund ram med glöd, hela videon klipps i cirkeln', async () => {
+  const w = sida({ form: 'cirkel' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.display, '', 'cirkeln ska ha ramen med glöd');
+  assert.equal(ram.style.borderRadius, '50%');
+  assert.equal(ram.style.width, '154px', 'cirkeln ska vara 1,4 × gåvobildens ruta');
+  assert.equal(c.style.height, ram.style.height, 'i cirkeln ska ingenting sticka upp');
+  assert.equal(c.style.clipPath, 'inset(0 round 50%)');
+});
+
+test('formen Fri: ingen ram och inget klipp, bara animationen', async () => {
+  const w = sida({ form: 'fri' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.display, 'none', 'den fria formen ritade rutan');
+  assert.equal(c.style.width, '220px', 'den fria formen ska vara 2 × gåvobildens ruta');
+  assert.equal(c.style.clipPath, '');
+});
+
+test('formen I bildrutan: samma storlek som gåvobilden, ingen ram', async () => {
+  const w = sida({ form: 'ruta' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.display, 'none');
+  assert.equal(c.style.width, '110px');
+  assert.equal(c.style.height, '110px');
+});
+
+test('förvalt: videon tar profilsidans ruta, rundning, kant och skugga — samma på båda sidor när kortet vänder', async () => {
+  const w = sida();
+  w.document.querySelector('.vyra-flip').insertAdjacentHTML('afterbegin',
+    '<div class="vyra-profile-face" style="border-radius:50%;border:4px solid rgb(255, 255, 255);box-shadow:rgb(217, 164, 65) 0px 0px 0px 2px"></div>');
+  const pf = w.document.querySelector('.vyra-profile-face');
+  for (const [k, v] of Object.entries({ offsetWidth: 144, offsetHeight: 147 })) Object.defineProperty(pf, k, { configurable: true, get: () => v });
+  const b = bild(w);
+  for (const [k, v] of Object.entries({ offsetWidth: 144, offsetHeight: 147, offsetLeft: 0, offsetTop: 0 }))
+    Object.defineProperty(b, k, { configurable: true, get: () => v });
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.width, '144px', 'videosidan ska vara lika stor som profilsidan');
+  assert.equal(ram.style.height, '147px');
+  assert.equal(ram.style.borderRadius, '50%', 'rund profilbild ska ge rund video');
+  assert.match(ram.style.border, /4px solid/, 'profilsidans kant ska följa med');
+  assert.match(ram.style.boxShadow, /217, 164, 65/, 'profilsidans glöd ska följa med');
+  assert.equal(c.style.width, '136px', 'videon ska ligga innanför kanten');
+  assert.equal(c.style.clipPath, 'inset(0 round 50%)');
+});
+
+test('egna färger: kant och glöd byts på videon, och en kant läggs till där profilbilden saknar en', async () => {
+  const w = sida({ falt: { tgVideoKant: '#ff0000', tgVideoGlod: '#00ff00' } });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.borderColor, 'rgb(255, 0, 0)', 'kantfärgen användes inte');
+  assert.equal(ram.style.borderWidth, '3px', 'utan profilkant ska videon få en egen kant');
+  assert.equal(c.style.width, '104px', 'videon ska krympa innanför den nya kanten');
+  assert.match(ram.style.boxShadow, /#00ff00|rgb(0, 255, 0)/, 'glödfärgen användes inte');
+  assert.equal(ram.style.getPropertyValue('--tgv-glod'), '0 255 0');
+});
+
+test('egna färger i en annan form: glöden byts, kanten blir en kontur utanför ramen', async () => {
+  const w = sida({ form: 'ram', falt: { tgVideoKant: '#ff0000', tgVideoGlod: '#00ff00' } });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram } = delar(w);
+  assert.equal(ram.style.getPropertyValue('--tgv-glod'), '0 255 0');
+  assert.match(ram.style.outline, /3px solid/);
+  assert.equal(ram.style.width, '176px', 'konturen får inte ändra ramens mått');
+});
+
+test('panelen har färgvalen och Återställ utseende tar med dem', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'vyra-topgift-panel.js'), 'utf8');
+  assert.match(src, /falt: 'tgVideoKant', etikett: 'Videons kantfärg'/);
+  assert.match(src, /falt: 'tgVideoGlod', etikett: 'Videons glödfärg'/);
+  assert.match(src, /'tgVideoForm', 'tgVideoKant', 'tgVideoGlod'/);
+});
+
+test('formen Glödande ring: bara kanten, motivet sticker upp och nederkanten följer cirkeln', async () => {
+  const w = sida({ form: 'ring' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.ok(ram.classList.contains('tgv-ring'), 'ringen ritade den mörka ytan');
+  assert.equal(ram.style.width, '165px');
+  assert.ok(parseInt(c.style.height) > 165, 'motivet ska få sticka upp över ringen');
+  assert.equal(c.style.clipPath, 'inset(0 round 0 0 83px 83px)', 'nederkanten ska vara en halvcirkel i px, inte procent av den höga canvasen');
+});
+
+test('formerna Sexhörning och Diamant klipper ytan och videon i samma polygon', async () => {
+  for (const [form, polygon] of [['sexhorning', 'polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%)'], ['diamant', 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)']]) {
+    const w = sida({ form });
+    royalRuta(w);
+    gava(w);
+    await vanta(50);
+    const { ram, c } = delar(w);
+    assert.ok(ram.classList.contains('tgv-polygon'), form);
+    assert.equal(ram.firstChild.style.clipPath.replace(/,\s*/g, ', '), polygon, form + ': ytan');
+    assert.equal(c.style.clipPath.replace(/,\s*/g, ', '), polygon, form + ': videon');
+    assert.equal(c.style.height, ram.style.height, form + ': ingenting ska sticka utanför polygonen');
+  }
+});
+
+test('formen Båge: rund överkant, nästan rak nederkant', async () => {
+  const w = sida({ form: 'bage' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.match(ram.style.borderRadius, /50% 50% 12% 12% \/ 40% 40% 12% 12%/);
+  assert.match(c.style.clipPath, /^inset\(0 round 50% 50% 12% 12% \/ 40% 40% 12% 12%\)$/);
+});
+
+test('formen Bara bild spelar ingen video', async () => {
+  const w = sida({ form: 'bild' });
+  gava(w);
+  await vanta(50);
+  assert.equal(w.__spelat.length, 0);
+  assert.equal(canvasar(w).length, 0);
+  assert.equal(bild(w).style.visibility, '');
+});
+
+test('byter man form medan videon spelar ritas den om i den nya formen inom en sekund', async () => {
+  const w = sida({ form: 'ram' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  w.state.widgets[0].tgVideoForm = 'fri';
+  await vanta(1200);
+  assert.equal(w.__spelat[0].stoppad, true, 'den gamla formens spelare släpptes inte');
+  assert.equal(canvasar(w).length, 1);
+  assert.equal(delar(w).ram.style.display, 'none', 'den nya formen användes inte');
+  w.state.widgets[0].tgVideoForm = 'bild';
+  await vanta(1200);
+  assert.equal(canvasar(w).length, 0, 'Bara bild stoppade inte videon');
+  assert.equal(bild(w).style.visibility, '');
+});
+
+test('panelen visar formerna under Utseende och Återställ utseende tar med dem', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'vyra-topgift-panel.js'), 'utf8');
+  assert.match(src, /falt: 'tgVideoForm', etikett: 'Videons form'/);
+  assert.match(src, /window.VyraTopGiftVideo.former/);
+  assert.match(src, /'topGiftFlipSpeed', 'tgVideoForm'/);
+  const w = sida();
+  assert.equal(w.VyraTopGiftVideo.former.map(f => f[0]).join(' '), 'profil ram cirkel ring sexhorning diamant bage fri ruta bild');
 });
 
 test('en gåva som inte slår rekordet rör ingenting', async () => {
