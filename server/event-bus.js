@@ -32,6 +32,11 @@ const ALLOWED=new Set(['gift','streakstart','like','follow','share','subscribe',
 const TYPE_ALIASES={likes:'like',chatcommand:'chat'};
 const MAX_EVENT_BYTES=64*1024;
 
+// Bara https://*.tiktokcdn.com — samma regel som bryggans giftVideoOf. Allt annat blir ''.
+function giftVideoUrl(v){
+  try{const u=new URL(String(v||''));return u.protocol==='https:'&&/(^|\.)tiktokcdn\.com$/.test(u.hostname)?u.href.slice(0,1200):''}
+  catch{return''}
+}
 function cleanEvent(input){
   // Typen raknas fram FORE litteralen, for tva falt beror pa den. Stod den bara inne i objektet
   // gick den inte att lasa dar den behovs.
@@ -141,6 +146,14 @@ const event={
     event.superfanBadge=String(input?.superfanBadge||'').slice(0,1200);
     event.superfanBakgrund=String(input?.superfanBakgrund||'').slice(0,1200);
     event.superfanBand=String(input?.superfanBand||'').slice(0,1200);
+  }
+  // GÅVANS EGEN ANIMATION (Top Gift, 2026-10-31, se tiktok-bridge/normalizer.js giftVideoOf). En
+  // zip-länk som overlayen hämtar rakt in i OBS. Vakten görs OM här och inte bara i bryggan: ingest
+  // tar emot fler avsändare än bryggan, och utan den kunde vem som helst med en nyckel peka varje
+  // OBS-källa mot valfri adress. Bara gåvotyperna, och bara när länken är godkänd.
+  if(typ==='gift'||typ==='streakstart'){
+    const v=giftVideoUrl(input?.giftVideo);
+    if(v)event.giftVideo=v;
   }
   // STREAM DECK-MOLNVÄGEN (typen streamdeck, se server/streamdeck.js). Bär bara vad knappen gör.
   // Fälten finns BARA på den här typen — en gåva ska aldrig släpa ett sdKommando med sig.
