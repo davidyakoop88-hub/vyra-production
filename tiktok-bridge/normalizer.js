@@ -128,6 +128,21 @@ function streakBeslut(oppna,data,nu=Date.now()){
 // from the message, never minted per retry. v3 nests msgId under common; the rest are older shapes.
 function sourceId(data){return text(data?.common?.msgId||data?.msgId||data?.messageId||data?.logId||data?.id,160)}
 function giftImageOf(data){return text(data?.giftDetails?.giftImage?.urlList?.[0]||data?.gift?.image?.urlList?.[0]||data?.giftPictureUrl||'',1200)}
+// GÅVANS EGEN ANIMATION (Top Gift, 2026-10-31). Gåvor från ~99 dm bär `asset.videoResourceList`:
+// en zip med output.mp4 + config.json som gavovideo.js spelar genomskinligt. Uppmätt över 1058
+// gåvor med video: varje lista hade `h264`, bredvid h264_encrypt, 480p, 480p_bvc1, bytevc1opt och
+// trantor_crop_bvc1. Bara `h264` tas — bvc1/bytevc1 är HEVC som OBS webbläsarkälla inte avkodar,
+// och h264_encrypt kräver en nyckel. Alla länkar låg på sf16-/sf19-webcast.tiktokcdn.com; en länk
+// utanför https://*.tiktokcdn.com blir tom, eftersom overlayen hämtar den rakt in i OBS.
+function giftVideoOf(data){
+  const lista=data?.asset?.videoResourceList;
+  if(!Array.isArray(lista))return'';
+  const v=lista.find(x=>x?.videoTypeName==='h264');
+  for(const url of v?.videoUrl?.urlList||[]){
+    try{const u=new URL(String(url));if(u.protocol==='https:'&&/(^|\.)tiktokcdn\.com$/.test(u.hostname))return text(u.href,1200)}catch{}
+  }
+  return'';
+}
 // MOTTAGAREN. I ett flervardsrum (link mic) gar en del gavor till en MEDVARD, inte till varden —
 // TikTok markerar dem med `toUser`. Fram till 2026-09-07 laste vi det inte, sa de raknades som
 // vardens egna. Uppmatt i en skarp sandning 2026-09-06: 16 av 71 gavor bar `toUser`, och de bar
@@ -184,7 +199,7 @@ function giftFields(data, mittAnkarId){
   // live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
   const diamantsEach=number(data?.giftDetails?.diamondCount??data?.diamondCount??data?.gift?.diamondCount,1e9);
   const coinsEach=diamantsEach;
-  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false,toUserId:text(data?.toUser?.id??data?.toUserId,160),tillVarden:tillVardenAv(data,mittAnkarId)};
+  return{...baseUser(data),giftId:text(data?.giftId||data?.giftDetails?.giftId||data?.gift?.id,160),giftName:text(data?.giftDetails?.giftName||data?.giftName||data?.gift?.name||'Gift',160),giftImage:giftImageOf(data),giftVideo:giftVideoOf(data),diamonds:diamantsEach*repeatCount,coins:coinsEach*repeatCount,count:repeatCount,repeatEnd:data?.repeatEnd!==false,toUserId:text(data?.toUser?.id??data?.toUserId,160),tillVarden:tillVardenAv(data,mittAnkarId)};
 }
 // tiktok-live-proto renamed the like fields in v3, which is the version tiktok-live-connector 2.4.0
 // imports: likeCount -> count, totalLikeCount -> total, and total is now a STRING rather than a
@@ -481,8 +496,10 @@ function arBoostFonster(f){
 //
 // superfanBadge/superfanBakgrund/superfanBand (#361) bars villkorligt, som kistans falt: bara
 // super fan-entrén har dem, och en gava ska inte slapa tre tomma bildfalt med sig.
+//
+// giftVideo bars likasa villkorligt: bara gavor med egen animation har det (se giftVideoOf).
 function cloudEvent(id,type,fields,at=Date.now()){
-  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.remainingSec>0?{remainingSec:number(fields.remainingSec,3600)}:{}),...(fields.durationSec>0?{durationSec:number(fields.durationSec,3600)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.superfanBadge||fields.superfanBakgrund||fields.superfanBand?{superfanBadge:text(fields.superfanBadge,1200),superfanBakgrund:text(fields.superfanBakgrund,1200),superfanBand:text(fields.superfanBand,1200)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
+  return{id:text(id,160),type:text(type,64).toLowerCase(),userId:text(fields.userId||fields.username,160),username:text(fields.username||fields.name,120),name:text(fields.name,500),comment:text(fields.comment,500),profileUrl:text(fields.profileImage,1200),giftId:text(fields.giftId,160),toUserId:text(fields.toUserId,160),tillVarden:fields.tillVarden!==false,giftName:text(fields.giftName,160),giftImage:text(fields.giftImage,1200),...(fields.giftVideo?{giftVideo:text(fields.giftVideo,1200)}:{}),count:number(fields.count,1e9),value:number(fields.coins??fields.points??fields.score,1e12),diamonds:number(fields.diamonds??fields.coins,1e12),scoreUs:number(fields.scoreUs,1e12),scoreThem:number(fields.scoreThem,1e12),multiplier:number(fields.multiplier,100),battleStatus:text(fields.battleStatus,64),...(fields.winsUs!=null?{winsUs:number(fields.winsUs,999)}:{}),...(fields.winsThem!=null?{winsThem:number(fields.winsThem,999)}:{}),...(fields.battleId?{battleId:text(fields.battleId,160)}:{}),...(fields.remainingSec>0?{remainingSec:number(fields.remainingSec,3600)}:{}),...(fields.durationSec>0?{durationSec:number(fields.durationSec,3600)}:{}),...(fields.kistaId?{kistaId:text(fields.kistaId,160),oppnasAt:number(fields.oppnasAt,Number.MAX_SAFE_INTEGER),kistaDold:!!fields.kistaDold}:{}),...(fields.superfanBadge||fields.superfanBakgrund||fields.superfanBand?{superfanBadge:text(fields.superfanBadge,1200),superfanBakgrund:text(fields.superfanBakgrund,1200),superfanBand:text(fields.superfanBand,1200)}:{}),...(fields.ligaText?{ligaText:text(fields.ligaText,32),ligaIkon:text(fields.ligaIkon,1200),ligaFarg:text(fields.ligaFarg,32),ligaBakgrund:text(fields.ligaBakgrund,32),ligaVisa:fields.ligaVisa!==false}:{}),...(fields.ligaPoang!=null?{ligaPoang:number(fields.ligaPoang,1e9)}:{}),emote:text(fields.emote,160),...(fields.emoteScene!=null?{emoteScene:number(fields.emoteScene,99)}:{}),...(fields.emotePaket?{emotePaket:text(fields.emotePaket,64)}:{}),...(fields.fanLevelUp?{fanLevelUp:{from:number(fields.fanLevelUp.from,50),to:number(fields.fanLevelUp.to,50)}}:{}),fanClubLevel:number(fields.fanClubLevel,50),gifterLevel:number(fields.gifterLevel,50),isAnonymous:!!fields.isAnonymous,isModerator:!!fields.isModerator,isFollower:!!fields.isFollower,isSubscriber:!!fields.isSubscriber,at:number(at,Number.MAX_SAFE_INTEGER)};
 }
 // Alla SKALARA varden i en battle-payload, inklusive ett par nivaer ner — utan anvandardata.
 //
