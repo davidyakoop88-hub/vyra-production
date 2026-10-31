@@ -120,3 +120,22 @@ test('en sound alert sparas i ett aktivt VYRA-projekt', async () => {
     studio.close();
   }
 });
+
+// Gåvovalet visade bara de 40 första gåvorna (David 2026-11-01): resten av katalogen gick bara att
+// nå genom att söka. Hela listan ska visas, och bilderna laddas lat så att den inte blir tung.
+test('gåvovalet visar alla gåvor i katalogen, inte de 40 första', () => {
+  const { JSDOM } = require('jsdom');
+  const src = fs.readFileSync(path.join(ROOT, 'sound-alerts.js'), 'utf8');
+  const fn = namn => { const i = src.indexOf('function ' + namn + '('); const j = src.indexOf('\nfunction ', i + 1); return src.slice(i, j); };
+  const dom = new JSDOM('<div class="pop"><div class="sa-gift-results"></div></div>', { runScripts: 'outside-only' });
+  const w = dom.window;
+  w.VyraGavokatalog = { lista: () => Array.from({ length: 120 }, (_, i) => ({ name: 'Gåva ' + i, image: 'g' + i + '.png', coins: i + 1, giftId: String(i) })) };
+  w.eval('const saEsc=s=>String(s);' + fn('saGavor') + fn('saGiftResults'));
+  const pop = w.document.querySelector('.pop');
+  w.saGiftResults(pop, '');
+  assert.equal(pop.querySelectorAll('[data-gift]:not([data-gift=""])').length, 120, 'gåvovalet kapade listan');
+  assert.ok([...pop.querySelectorAll('img')].every(i => i.getAttribute('loading') === 'lazy'), 'bilderna ska laddas lat');
+  w.saGiftResults(pop, 'gåva 11');
+  assert.equal(pop.querySelectorAll('[data-gift]:not([data-gift=""])').length, 11, 'sökningen ska fortfarande filtrera');
+  dom.window.close();
+});
