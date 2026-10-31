@@ -103,6 +103,19 @@ function undersok(zipFil, mapp) {
       console.log(`[gåva] ${s.namn} (${s.diamanter} dm) asset=${s.harAsset} videor=${s.videor.length} förstaGången=${s.isFirstSent}`);
     } else forra.antal++;
   });
+  // Battle-motståndare är också live, ofta lika stora — underlag för bevakaren att hitta nästa
+  // sändare. Var namnet ligger i battle-händelserna är omätt, så hela nyttolasten genomsöks efter
+  // uniqueId/displayId i stället för att lita på ett fältnamn. Skrivs direkt, inte först i rapporten.
+  const motstandare = new Set();
+  const sokNamn = (o, djup = 0) => {
+    if (!o || typeof o !== 'object' || djup > 8) return;
+    for (const [k, v] of Object.entries(o)) {
+      if ((k === 'uniqueId' || k === 'displayId') && typeof v === 'string' && /^[\w.]{2,24}$/.test(v) && v.toLowerCase() !== anv.toLowerCase() && !motstandare.has(v)) {
+        motstandare.add(v); console.log(`[motståndare] ${v}`);
+      } else if (v && typeof v === 'object') sokNamn(v, djup + 1);
+    }
+  };
+  for (const h of ['LINK_MIC_BATTLE', 'LINK_MIC_ARMIES', 'LINK_LAYER', 'LINK_MIC_METHOD']) if (WebcastEvent[h]) conn.on(WebcastEvent[h], sokNamn);
   console.log(`Ansluter till @${anv} …`);
   const st = await conn.connect();
   console.log(`Ansluten, rum ${st.roomId}. Lyssnar ${sek} s.`);
@@ -125,7 +138,7 @@ function undersok(zipFil, mapp) {
     } catch (e) { p.fel = String(e.message).slice(0, 160); }
     prov.push(p);
   }
-  const rapport = { anv, rum: st.roomId, sekunder: sek, meddelanden, medAsset, gavor: [...gavor.values()], prov };
+  const rapport = { anv, rum: st.roomId, sekunder: sek, meddelanden, medAsset, gavor: [...gavor.values()], prov, motstandare: [...motstandare] };
   fs.writeFileSync(path.join(UT, 'rapport.json'), JSON.stringify(rapport, null, 1));
   console.log(`\n${meddelanden} gåvomeddelanden, ${medAsset} med video, ${gavor.size} olika gåvor.`);
   for (const p of prov) console.log(`  ${p.gava}: ${p.status ?? p.fel} cors=${p.cors} ${p.codec || ''} ${p.bredd || ''}×${p.hojd || ''} ${p.sekunder || ''}s`);
