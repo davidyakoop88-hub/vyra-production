@@ -166,6 +166,7 @@
         "gift-alert-frames.css",
         "gift-alert-frames.js",
         "gift-event-images.js",
+        "topgift-video.js",
         "gift-campaign-aura.js",
         "gift-campaign-aura.css",
         "gift-campaign-aura-session.js",
@@ -479,10 +480,13 @@
         "standalone-widgets.js",
         "overlay-dolda.js",
         "overlay-aktivering.js",
-        "overlay-testspel.js"
+        "overlay-testspel.js",
+        "gavovideo.js",
+        "gavovideo-prov.html"
       ],
       "tester": [
         "tests/overlay-sanitize.test.js",
+        "tests/gavovideo.test.js",
         "tests/battle-fx-auto.test.js",
         "tests/overlay-live-leaderboards.test.js",
         "tests/thumb-no-overlay-leak.test.js",

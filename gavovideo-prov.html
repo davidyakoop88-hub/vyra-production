@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VYRA · Prov: gåvovideo</title>
+<!--
+  PROVSIDA FÖR TIKTOKS GÅVOVIDEOR (gavovideo.js). Inte en widget — en mätning av att kedjan håller
+  i OBS innan Top Gift byggs om.
+
+  I webbläsaren:  gavovideo-prov.html                  rutmönster bakom, så genomskinligheten syns
+  I OBS:          gavovideo-prov.html?obs=1            helt genomskinlig, ingen panel
+  Annan gåva:     ?zip=<länk till gåvans zip>          länken ur asset.videoResourceList[].videoUrl
+  Bakgrund:       ?bakgrund=gron | svart | rutor | ingen
+  2D i st. för WebGL: ?ritning=2d
+-->
+<style>
+  :root { --text: #f4f1ff; --dampad: #b9b2d6; --panel: rgba(20, 14, 38, .88); --kant: #3d2f6b; --ok: #4ade80; --fel: #f87171; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; font-family: system-ui, sans-serif; color: var(--text); }
+  body.rutor { background: repeating-conic-gradient(#cfcfcf 0 25%, #f5f5f5 0 50%) 0 0 / 32px 32px; }
+  body.gron { background: #2a6f3a; }
+  body.svart { background: #000; }
+  .scen { position: absolute; inset: 0; display: grid; place-items: center; }
+  canvas { max-width: 100vw; max-height: 100vh; }
+  .panel { position: absolute; left: 16px; top: 16px; max-width: min(420px, calc(100% - 32px)); background: var(--panel);
+    border: 1px solid var(--kant); border-radius: 12px; padding: 12px 14px; font-size: 13px; line-height: 1.45; }
+  .panel h1 { font-size: 14px; margin: 0 0 6px; }
+  .panel dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; }
+  .panel dt { color: var(--dampad); }
+  .panel dd { margin: 0; word-break: break-all; }
+  .ok { color: var(--ok); } .fel { color: var(--fel); }
+  body.obs .panel { display: none; }
+</style>
+</head>
+<body>
+<div class="scen"><canvas id="duk" aria-label="Gåvovideo"></canvas></div>
+<div class="panel" id="panel">
+  <h1>Prov: TikToks gåvovideo</h1>
+  <dl>
+    <dt>Status</dt><dd id="status">Hämtar…</dd>
+    <dt>Ritning</dt><dd id="ritning">–</dd>
+    <dt>Storlek</dt><dd id="storlek">–</dd>
+    <dt>Rutor</dt><dd id="rutor">0</dd>
+  </dl>
+</div>
+<script src="gavovideo.js"></script>
+<script>
+(function () {
+  'use strict';
+  // Mätt gåva 5660 (2026-10-30), h264-varianten. Byt med ?zip=.
+  const STANDARD = 'https://sf16-webcast.tiktokcdn.com/obj/alisg/webcast-sg/faas/fe07c6e719746e983dc0dec1a6c62eda.zip';
+  const q = new URLSearchParams(location.search);
+  const obs = q.has('obs');
+  const bakgrund = q.get('bakgrund') || (obs ? 'ingen' : 'rutor');
+  if (obs) document.body.classList.add('obs');
+  if (bakgrund !== 'ingen') document.body.classList.add(bakgrund);
+  const $ = id => document.getElementById(id);
+  const visa = (text, klass) => { const el = $('status'); el.textContent = text; el.className = klass || ''; document.body.dataset.status = klass || 'arbetar'; };
+
+  window.VyraGavovideo.spela($('duk'), q.get('zip') || STANDARD, { tvinga2d: q.get('ritning') === '2d' })
+    .then(sp => {
+      visa('Spelar', 'ok');
+      $('ritning').textContent = sp.typ === 'webgl' ? 'WebGL' : '2D-canvas';
+      $('storlek').textContent = `${sp.konfig.b}×${sp.konfig.h} (video ${sp.konfig.videoB}×${sp.konfig.videoH})`;
+      let n = 0;
+      const rakna = () => { $('rutor').textContent = String(++n); (sp.video.requestVideoFrameCallback ? sp.video.requestVideoFrameCallback(rakna) : requestAnimationFrame(rakna)); };
+      rakna();
+      document.body.dataset.ritning = sp.typ;
+    })
+    .catch(fel => visa('Fel: ' + fel.message, 'fel'));
+})();
+</script>
+</body>
+</html>

@@ -129,7 +129,7 @@ test('action: numrerade sektioner och ett effektkort per verklig funktion', asyn
   assert.deepEqual([...modal.querySelectorAll('.ae-sek-rubrik')].map(h => h.textContent.replace(/^\d/, '')),
     ['Grundinställningar', 'Vad ska hända live?', 'Var ska det synas?']);
   const kort = [...modal.querySelectorAll('.ae-fn-kort')];
-  assert.equal(kort.length, 14, 'ett kort per funktion i actionTypes — inga påhittade från designbilden');
+  assert.equal(kort.length, 15, 'ett kort per funktion i actionTypes — inga påhittade från designbilden');
   for (const k of kort) {
     assert.ok(k.querySelector('input[type=checkbox][data-fn-check]'), 'kortets kryssruta måste vara kvar som riktig kontroll');
     assert.ok(k.querySelector('.ae-fn-ikon svg'), 'kortet saknar ikon');

@@ -143,12 +143,31 @@
       window.VyraSessionState.writeActive(KEY,JSON.stringify(state));
     }catch(err){console.warn('[VYRA] timern kunde inte styras',err)}
   }
-  async function executeNow(detail){const {action,payload={}}=detail,types=action.types||[],c=action.config||{};if(types.includes('picture'))playMedia(action,'picture',action.pictureMedia);if(types.includes('video'))playMedia(action,'video',action.videoMedia);if(types.includes('audio'))playMedia(action,'audio',action.audioMedia);if(types.includes('alert'))document.dispatchEvent(new CustomEvent('vyra:runtime-alert',{detail:{action,payload}}));if(types.includes('tts'))tts(action,payload);if(types.includes('overlay'))runWidget(action,payload);if(types.includes('animation')){if(c.animationPath)playMedia(action,'video',{packagePath:c.animationPath,name:c.animationName});else runWidget(action,payload)}if(types.includes('chat'))document.dispatchEvent(new CustomEvent('vyra:chatbot-send',{detail:{message:fill(c.chatText,payload),action,payload}}));if(types.includes('spotify'))document.dispatchEvent(new CustomEvent('vyra:spotify-play',{detail:{query:c.spotify,action,payload}}));if(types.includes('obsScene'))document.dispatchEvent(new CustomEvent('vyra:obs-scene',{detail:{scene:c.obsScene,action}}));if(types.includes('obsSource'))document.dispatchEvent(new CustomEvent('vyra:obs-source',{detail:{source:c.obsSource,action}}));if(types.includes('webhook')&&c.webhook)fetch(c.webhook,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>window.toast?.('Webhook kunde inte nås'));if(types.includes('goal'))styrMal(c);if(types.includes('timer'))styrTimer(c);if(types.includes('addPoints'))window.VyraPoints.add(payload.username,c.addPointsAmount||10);if(types.includes('removePoints'))window.VyraPoints.remove(payload.username,c.removePointsAmount||10)}
+  // GÅVANS EGEN ANIMATION (Top Gift, PR 719). Länken kommer från bryggan i payload.giftVideo och är
+  // redan kontrollerad där och i servern (bara https://*.tiktokcdn.com); kollen här är den sista,
+  // för payloaden kan också komma från Studios testknappar. En gåva utan egen animation har inget
+  // fält och då händer ingenting. Löftet löses när videon är slut eller efter GAVOVIDEO_MAX_S, så
+  // kön spelar nästa gåva först efter den här.
+  const GAVOVIDEO_MAX_S=20;
+  function spelaGavovideo(action,payload){
+    const url=String(payload?.giftVideo||''),motor=window.VyraGavovideo;
+    if(!motor||!/^https:\/\/([\w-]+\.)*tiktokcdn\.com\//.test(url))return Promise.resolve();
+    return new Promise(klar=>{
+      const el=stage({...action,duration:GAVOVIDEO_MAX_S}),canvas=document.createElement('canvas');el.append(canvas);
+      let spelare=null,ute=false;
+      const slut=()=>{if(ute)return;ute=true;clearTimeout(vakt);spelare?.stoppa();el.remove();klar()};
+      const vakt=setTimeout(slut,GAVOVIDEO_MAX_S*1000);
+      motor.spela(canvas,url,{loopa:false,klar:slut}).then(s=>{if(ute)return s.stoppa();spelare=s;el.classList.add('loaded')}).catch(slut);
+    });
+  }
+  // Bara gåvans animation (och ev. poäng): kön väntar på videon i stället för visningstiden.
+  const BARA_GAVOVIDEO=types=>types.includes('giftVideo')&&types.every(t=>t==='giftVideo'||t==='addPoints'||t==='removePoints');
+  async function executeNow(detail){const {action,payload={}}=detail,types=action.types||[],c=action.config||{};if(types.includes('giftVideo')){const p=spelaGavovideo(action,payload);if(BARA_GAVOVIDEO(types)){detail.vantaKlar=true;await p}}if(types.includes('picture'))playMedia(action,'picture',action.pictureMedia);if(types.includes('video'))playMedia(action,'video',action.videoMedia);if(types.includes('audio'))playMedia(action,'audio',action.audioMedia);if(types.includes('alert'))document.dispatchEvent(new CustomEvent('vyra:runtime-alert',{detail:{action,payload}}));if(types.includes('tts'))tts(action,payload);if(types.includes('overlay'))runWidget(action,payload);if(types.includes('animation')){if(c.animationPath)playMedia(action,'video',{packagePath:c.animationPath,name:c.animationName});else runWidget(action,payload)}if(types.includes('chat'))document.dispatchEvent(new CustomEvent('vyra:chatbot-send',{detail:{message:fill(c.chatText,payload),action,payload}}));if(types.includes('spotify'))document.dispatchEvent(new CustomEvent('vyra:spotify-play',{detail:{query:c.spotify,action,payload}}));if(types.includes('obsScene'))document.dispatchEvent(new CustomEvent('vyra:obs-scene',{detail:{scene:c.obsScene,action}}));if(types.includes('obsSource'))document.dispatchEvent(new CustomEvent('vyra:obs-source',{detail:{source:c.obsSource,action}}));if(types.includes('webhook')&&c.webhook)fetch(c.webhook,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)}).catch(()=>window.toast?.('Webhook kunde inte nås'));if(types.includes('goal'))styrMal(c);if(types.includes('timer'))styrTimer(c);if(types.includes('addPoints'))window.VyraPoints.add(payload.username,c.addPointsAmount||10);if(types.includes('removePoints'))window.VyraPoints.remove(payload.username,c.removePointsAmount||10)}
   // "Hoppa över om nästa action väntar i kön": if the queue already has something waiting behind
   // this action by the time it starts playing, cut its normal duration-wait short (a small
   // transition buffer instead) so the queue doesn't back up — trades "always play the full
   // duration" for "keep the queue moving" when actions are firing faster than they can display.
-  function next(){if(busy||!queue.length)return;busy=true;const detail=queue.shift();executeNow(detail).finally(()=>{const skip=detail.action.skipOnNext&&queue.length>0;setTimeout(()=>{busy=false;next()},skip?150:Math.max(1,Number(detail.action.duration)||6)*1000)})}
+  function next(){if(busy||!queue.length)return;busy=true;const detail=queue.shift();executeNow(detail).finally(()=>{const skip=detail.action.skipOnNext&&queue.length>0;setTimeout(()=>{busy=false;next()},skip||detail.vantaKlar?150:Math.max(1,Number(detail.action.duration)||6)*1000)})}
   // Per-scene max queue length (set in action-scenes.js's scene table) — reads THIS overlay
   // page's own scene number, since each scene runs its own independent copy of this whole file
   // (its own queue/busy state), not a shared one across scenes.
