@@ -51,8 +51,18 @@
   // 'profil' är förvald (David 2026-10-31): videon tar profilsidans form, storlek, kant och glöd, så
   // att en rund profilbild ger en rund video. I Design 1 vänder kortet mellan sidorna — en större
   // fyrkant på gåvosidan täckte namnkortet och tappade guldringen när kortet vände.
+  //
+  // DAVIDS MODELLER (formade i playgrounden 2026-10-31, byggda in 2026-11-01). Tre fält till:
+  //   dx, dy   flyttar ramen och videon i px, mätt mot en gåvobild på 110 px (skalas med bilden)
+  //   kant     kantens tjocklek i px, glod glödens radie i px — båda i gåvans färg (--tgv-glod)
+  //   text     modellens text: namn- och värdefärg, kontur och glöd runt namnet, och hur långt namnet
+  //            och värdet flyttas ned. Läggs på .topgift-copy strong/em och tas bort med formen.
   var FORMER = {
     profil: { namn: 'Som profilbilden', profil: true },
+    rundglod: { namn: 'Rund med glöd', storlek: 1, uppat: 0, rund: 0.5, ram: true, klipp: 'allt', upp: 0.5, kant: 3, glod: 22 },
+    sexglod: { namn: 'Sexhörning med glöd', storlek: 1.25, uppat: 0, ram: true, klipp: 'allt', upp: 0.5, dx: 16, dy: 4, kant: 10, glod: 60,
+      polygon: '50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%',
+      text: { vikt: 900, namnFarg: '#ffffff', vardeFarg: '#ffe28a', kontur: 3, glod: 24, namnDy: 39, vardeDy: -8 } },
     ram:    { namn: 'Ram med glöd', storlek: 1.6, uppat: 0.45, rund: 0.12, ram: true, klipp: 'nedre', upp: 0.2 },
     cirkel: { namn: 'Cirkel', storlek: 1.4, uppat: 0, rund: 0.5, ram: true, klipp: 'allt', upp: 0.5 },
     ring:   { namn: 'Glödande ring', storlek: 1.5, uppat: 0.45, rund: 0.5, ram: true, ring: true, klipp: 'nedre', upp: 0.3 },
@@ -127,7 +137,37 @@
     (doc.head || doc.documentElement).appendChild(s);
   }
 
+  // MODELLENS TEXT. Bara de egenskaper som skrivs här nollas igen, så panelens egna textval (typsnitt,
+  // färg, skugga) gäller som förut i alla andra former. Värdet står under namnet och följer med när
+  // namnet flyttas, som i playgrounden.
+  var TEXTSTIL = ['color', 'fontWeight', 'webkitTextStroke', 'paintOrder', 'textShadow', 'transform', 'position', 'zIndex'];
+  function text(post, t) {
+    var rot = post.bild.closest ? post.bild.closest('.vyra-topgift') : null;
+    var namn = rot && rot.querySelector('.topgift-copy strong'), varde = rot && rot.querySelector('.topgift-copy em');
+    [namn, varde].forEach(function (e) {
+      if (!e || !e.dataset) return;
+      if (e.dataset.tgvText && !t) { TEXTSTIL.forEach(function (p) { e.style[p] = ''; }); delete e.dataset.tgvText; }
+    });
+    if (!t) return;
+    if (namn) {
+      namn.dataset.tgvText = '1';
+      namn.style.color = t.namnFarg; namn.style.fontWeight = String(t.vikt);
+      namn.style.webkitTextStroke = t.kontur + 'px #0a0614d9'; namn.style.paintOrder = 'stroke fill';
+      namn.style.textShadow = t.glod ? '0 0 ' + t.glod + 'px ' + t.namnFarg + '88' : 'none';
+      namn.style.transform = 'translateY(' + t.namnDy + 'px)';
+      // Namnet flyttas ned över videon och ska stå ovanpå den.
+      namn.style.position = 'relative'; namn.style.zIndex = '5';
+    }
+    if (varde) {
+      varde.dataset.tgvText = '1';
+      varde.style.color = t.vardeFarg; varde.style.fontWeight = String(t.vikt);
+      varde.style.transform = 'translateY(' + (t.namnDy + t.vardeDy) + 'px)';
+      varde.style.position = 'relative'; varde.style.zIndex = '5';
+    }
+  }
+
   function stoppa(post) {
+    text(post, null);
     if (post.spelare) post.spelare.stoppa();
     post.stoppad = true;
     [post.ram, post.canvas].forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
@@ -143,12 +183,18 @@
   function placera(post) {
     var f = FORMER[post.form], b = post.bild;
     var ram = post.ram.style, c = post.canvas.style;
-    ram.border = ''; ram.boxShadow = ''; ram.boxSizing = '';
+    ram.border = ''; ram.boxShadow = ''; ram.boxSizing = ''; ram.filter = '';
+    // Flytten och texten formades mot Design 2 (profil och gåva bredvid varandra, namnet under). I
+    // Design 1 vänder kortet och gåvan står ensam ovanför en namnruta — där sköt de videon snett och
+    // knuffade namnet ur rutan (sett 2026-11-01). Där centreras formen och texten lämnas orörd.
+    var rot = b.closest ? b.closest('.vyra-topgift') : null, design2 = !!(rot && rot.classList.contains('tgd2'));
+    text(post, design2 ? f.text : null);
     if (f.profil) { placeraSomProfil(post); egnaFarger(post, true); return; }
-    var sida = Math.round(Math.max(b.offsetWidth, b.offsetHeight) * f.storlek);
+    var bas = Math.max(b.offsetWidth, b.offsetHeight), sida = Math.round(bas * f.storlek), skala = bas / 110;
     if (!sida) return;
-    var vanster = Math.round(b.offsetLeft + b.offsetWidth / 2 - sida / 2);
-    var topp = Math.round(b.offsetTop - (sida - b.offsetHeight) * f.upp);
+    var dx = design2 ? (f.dx || 0) * skala : 0, dy = design2 ? (f.dy || 0) * skala : 0;
+    var vanster = Math.round(b.offsetLeft + b.offsetWidth / 2 - sida / 2 + dx);
+    var topp = Math.round(b.offsetTop - (sida - b.offsetHeight) * f.upp + dy);
     // 'I bildrutan' tar bildens egen rundning, så videon får samma form som bilden den ersätter.
     var r = f.radie ? f.radie : f.rund < 0 ? ((root.getComputedStyle && root.getComputedStyle(b).borderRadius) || '0px')
       : f.rund >= 0.5 ? '50%' : Math.round(sida * (f.rund || 0)) + 'px';
@@ -161,6 +207,14 @@
     // 'nedre': nederhörnen följer ramens rundning och överkanten klipps inte — där sticker motivet ut.
     // Procent i inset() räknas mot den högre canvasen, så nederhörnen får ramens radie i px.
     var rNedre = Math.round(sida * Math.min(f.rund || 0, 0.5)) + 'px';
+    // Modellens egen kant och glöd ersätter stilmallens. Polygonerna får dem som drop-shadow (en
+    // clip-path klipper bort box-shadow), de rundade som en inre kant och en yttre glöd.
+    if (f.kant != null || f.glod != null) {
+      var g = 'rgb(var(--tgv-glod,217 164 65)', k = (f.kant || 0) * skala, l = (f.glod || 0) * skala;
+      if (f.polygon) ram.filter = [k ? 'drop-shadow(0 0 ' + k / 2 + 'px ' + g + ')) drop-shadow(0 0 ' + k / 2 + 'px ' + g + '))' : '',
+        l ? 'drop-shadow(0 0 ' + l / 2 + 'px ' + g + '/.7))' : ''].join(' ').trim() || 'none';
+      else ram.boxShadow = [k ? 'inset 0 0 0 ' + k + 'px ' + g + ')' : '', l ? '0 0 ' + l + 'px ' + l / 5 + 'px ' + g + '/.6)' : ''].filter(Boolean).join(',') || 'none';
+    }
     egnaFarger(post, false);
     c.clipPath = f.polygon ? 'polygon(' + f.polygon + ')'
       : f.klipp === 'nedre' ? 'inset(0 round 0 0 ' + rNedre + ' ' + rNedre + ')'

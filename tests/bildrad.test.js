@@ -214,7 +214,7 @@ test('laddningen: media.js skript-svans laddar vyra-bildrad.css och .js, även i
   assert.ok(rad, 'laddraden finns');
   assert.match(rad, /vyra-bildrad\.css\?v=\d{8}-\d+/);
   assert.doesNotMatch(rad, /has\('overlay'\)\)return/, 'laddas även i overlay-utgången');
-  assert.match(las('studio.html'), /media\.js\?v=20261101-1/);
+  assert.match(las('studio.html'), /media\.js\?v=20261101-2/);
 });
 
 // ORDNINGEN I KEDJAN (CI 2026-10-23, två gånger): Gift Campaign Aura laddas asynkront och lägger sig

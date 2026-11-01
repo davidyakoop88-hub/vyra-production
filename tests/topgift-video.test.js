@@ -17,8 +17,8 @@ const living = [];
 test.after(() => { while (living.length) living.pop().window.close() });
 const vanta = ms => new Promise(r => setTimeout(r, ms));
 
-function sida({ rekord = () => true, motorFel = false, session = null, form, falt = {} } = {}) {
-  const dom = new JSDOM(`<!doctype html><html><body>${WIDGET}</body></html>`,
+function sida({ rekord = () => true, motorFel = false, session = null, form, falt = {}, html = WIDGET } = {}) {
+  const dom = new JSDOM(`<!doctype html><html><body>${html}</body></html>`,
     { url: 'https://vyralive.app/studio.html?overlay=1', runScripts: 'dangerously', pretendToBeVisual: true });
   living.push(dom);
   const { window } = dom;
@@ -205,6 +205,72 @@ test('formen Båge: rund överkant, nästan rak nederkant', async () => {
   assert.match(c.style.clipPath, /^inset\(0 round 50% 50% 12% 12% \/ 40% 40% 12% 12%\)$/);
 });
 
+// Davids två modeller ur playgrounden (2026-10-31), byggda in 2026-11-01.
+const MED_TEXT = WIDGET.replace('</div></div></div>', '</div></div><div class="topgift-copy"><strong>@lisa</strong><em>29 999</em></div></div>')
+  .replace('class="vyra-topgift"', 'class="vyra-topgift tgd tgd2"');
+
+test('modellen Rund med glöd: lika stor som gåvobilden, rund, 3 px kant och 22 px glöd i gåvans färg', async () => {
+  const w = sida({ form: 'rundglod' });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.width, '110px');
+  assert.equal(ram.style.borderRadius, '50%');
+  assert.equal(c.style.clipPath, 'inset(0 round 50%)');
+  assert.match(ram.style.boxShadow, /inset 0 0 0 3px rgb\(var\(--tgv-glod/);
+  assert.match(ram.style.boxShadow, /0 0 22px 4\.4px rgb\(var\(--tgv-glod/);
+});
+
+test('modellen Sexhörning med glöd: 1,25 ×, flyttad 16 px åt höger och 4 px ned, tjock kant och stor glöd', async () => {
+  const w = sida({ form: 'sexglod', html: MED_TEXT });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(ram.style.width, '138px');
+  assert.equal(ram.style.left, Math.round(55 - 69 + 16) + 'px');
+  assert.equal(ram.style.top, Math.round(-14 + 4) + 'px');
+  assert.ok(ram.classList.contains('tgv-polygon'));
+  assert.match(c.style.clipPath, /^polygon\(/);
+  assert.match(ram.style.filter, /drop-shadow\(0 0 5px rgb\(var\(--tgv-glod/);
+  assert.match(ram.style.filter, /drop-shadow\(0 0 30px rgb\(var\(--tgv-glod[^)]*\)\/\.7\)\)/);
+  const namn = w.document.querySelector('.topgift-copy strong'), varde = w.document.querySelector('.topgift-copy em');
+  assert.equal(namn.style.transform, 'translateY(39px)', 'namnet ska flyttas ned under videon');
+  assert.equal(varde.style.transform, 'translateY(31px)', 'värdet följer namnet och flyttas 8 px upp');
+  assert.equal(namn.style.fontWeight, '900');
+  assert.match(namn.style.webkitTextStroke, /^3px/);
+  assert.equal(varde.style.color, 'rgb(255, 226, 138)');
+});
+
+test('Sexhörning med glöd i Design 1 (kortet som vänder): centrerad, och namnrutans text rörs inte', async () => {
+  // Design 1 saknar tgd2; flytten och texten formades mot Design 2 och knuffade namnet ur rutan.
+  const w = sida({ form: 'sexglod', html: MED_TEXT.replace(' tgd tgd2', '') });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  const { ram } = delar(w);
+  assert.equal(ram.style.left, Math.round(55 - 69) + 'px', 'sexhörningen ska stå mitt på gåvan');
+  assert.match(ram.style.filter, /drop-shadow\(0 0 30px/, 'kanten och glöden ska finnas kvar');
+  const namn = w.document.querySelector('.topgift-copy strong');
+  assert.equal(namn.style.transform, '');
+  assert.equal(namn.style.color, '');
+});
+
+test('modellens text tas bort när man byter form — panelens egna textval gäller igen', async () => {
+  const w = sida({ form: 'sexglod', html: MED_TEXT });
+  royalRuta(w);
+  gava(w);
+  await vanta(50);
+  w.state.widgets[0].tgVideoForm = 'cirkel';
+  await vanta(1200);
+  const namn = w.document.querySelector('.topgift-copy strong'), varde = w.document.querySelector('.topgift-copy em');
+  assert.equal(namn.style.transform, '');
+  assert.equal(namn.style.color, '');
+  assert.equal(varde.style.transform, '');
+  assert.equal(delar(w).ram.style.filter, '', 'sexhörningens glöd satt kvar på cirkeln');
+});
+
 test('formen Bara bild spelar ingen video', async () => {
   const w = sida({ form: 'bild' });
   gava(w);
@@ -236,7 +302,7 @@ test('panelen visar formerna under Utseende och Återställ utseende tar med dem
   assert.match(src, /window.VyraTopGiftVideo.former/);
   assert.match(src, /'topGiftFlipSpeed', 'tgVideoForm'/);
   const w = sida();
-  assert.equal(w.VyraTopGiftVideo.former.map(f => f[0]).join(' '), 'profil ram cirkel ring sexhorning diamant bage fri ruta bild');
+  assert.equal(w.VyraTopGiftVideo.former.map(f => f[0]).join(' '), 'profil rundglod sexglod ram cirkel ring sexhorning diamant bage fri ruta bild');
 });
 
 test('en gåva som inte slår rekordet rör ingenting', async () => {
