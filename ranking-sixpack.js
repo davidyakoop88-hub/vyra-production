@@ -297,6 +297,8 @@
       return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${gz};--rk6-mot:${+(1 / gz).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
     });
     if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');
+    // Voltage: värdet under namnet i stället för bredvid (panelens "Värdet under namnet").
+    if (id === 'voltage' && w.rk6VardeUnder === true) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-under"');
     if (profilram(w)) {
       const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(String(w.profileFrame)) : { fit: 0.62 };
       const acc = typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;

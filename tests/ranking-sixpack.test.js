@@ -242,6 +242,26 @@ test('alla tre familjerna bär widgetScale som zoom; textgolven följer bara det
   }
 });
 
+// VOLTAGE · VÄRDET UNDER NAMNET (David 2026-11-01): ett val, inte ett nytt förval — utan kryss ser
+// listan ut exakt som förut, och de andra designerna rörs inte av fältet.
+test('Voltage: "Värdet under namnet" lägger värdet under namnet, bara när det valts', () => {
+  for (const w of FAMILJ('voltage')) {
+    assert.ok(!nod(w).classList.contains('rk6-under'), `${w.type}: värdet flyttades utan att valet gjorts`);
+    assert.ok(nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), `${w.type}: valet syns inte`);
+  }
+  for (const w of FAMILJ('basic-v2'))
+    assert.ok(!nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), 'fältet ska bara gälla Voltage');
+  const css = fs.readFileSync('ranking-sixpack.css', 'utf8');
+  assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>em\{grid-row:2!important;grid-column:2!important/);
+  assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>\.rk6-av\{grid-row:1\/3!important/);
+  // En ruta runt båda, inte två ramar: radens ::before spänner över namn och värde, deras egna ramar tas bort.
+  assert.match(css, /\.rk6\.rk6-voltage\.rk6-under \.toplike-row::before\{content:''!important;display:block!important;[^}]*grid-column:2!important;grid-row:1\/3!important/);
+  assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>:is\(\.rk6-namn,em\)\{[^}]*border:0!important;box-shadow:none!important;background:none!important/);
+  const panel = fs.readFileSync('vyra-ranking-panel.js', 'utf8');
+  assert.match(panel, /falt: 'rk6VardeUnder', etikett: 'Värdet under namnet'/);
+  assert.match(panel, /utseendeFalt: \[[^\]]*'rk6VardeUnder'/);
+});
+
 // STORLEKEN VÄLJER ALDRIG DESIGN (granskningen 2026-10-25): kompaktläget slog förr till av sig självt
 // vid liten skala och bytte bort kronor, ringar och metallkomposition. Nu är det bara ett uttryckligt val.
 test('kompaktläget: aldrig av storleken, bara när streamern valt det', () => {
