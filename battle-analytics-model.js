@@ -3,6 +3,7 @@
   const START=/^(battle_)?(start|started|begin|active|progress|ongoing|running|live)$/i;
   const END=/^(battle_)?(end|ended|finish|finished|over|settle|result|punish|punish_started|punish_finished|complete|close)$/i;
   const TYPES=['glove','hammer','fog','chrono','x2','x3'];
+  const BOOST_RESERV_SEK=60;
   const clean=(v,max=120)=>String(v??'').slice(0,max);
   const score=v=>Number.isFinite(Number(v))&&Number(v)>=0?Math.min(1e12,Number(v)):0;
   function empty(){return {active:null,history:[],boosters:[],seen:[],boost:null}}
@@ -12,11 +13,16 @@
     const eventId=clean(event.id,160);
     if(eventId&&state.seen.includes(eventId))return false;
     if(eventId){state.seen.push(eventId);state.seen=state.seen.slice(-500)}
-    const id=clean(event.battleId,160);
+    // Bryggan skickar battleId på boosten bara när TikTok bär det (tiktok-bridge/bridge.js); saknas
+    // det hör boosten till den pågående matchen, precis som i battle-fx-auto.js.
+    const id=clean(event.battleId,160)||(event.type==='glove'?state.active?.id||'':'');
     if(!id)return false;
     if(event.type==='glove'){
       if(state.active?.id!==id||!(Number(event.multiplier)>1))return false;
-      state.boost={id,multiplier:Math.min(100,Number(event.multiplier)),until:now+Math.max(0,Math.min(3600,Number(event.durationSec)||0))*1000};
+      // durationSec 0 betyder OKÄND längd (server/event-bus.js), inte ett fönster på noll sekunder.
+      // Samma reserv som battle-fx-auto.js: 60 s.
+      const sek=Number(event.durationSec)>0?Math.min(3600,Number(event.durationSec)):BOOST_RESERV_SEK;
+      state.boost={id,multiplier:Math.min(100,Number(event.multiplier)),until:now+sek*1000};
       return true;
     }
     const status=clean(event.battleStatus,64);

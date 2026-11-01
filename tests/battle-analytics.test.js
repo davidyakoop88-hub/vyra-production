@@ -39,3 +39,33 @@ test('battle UI opens, filters manual boosters, and isolates account changes wit
   w.dispatchEvent(new w.CustomEvent('vyra-auth-identity-cleared'));await new Promise(resolve=>setTimeout(resolve,10));assert.equal(d.querySelectorAll('.battle-analytics-tabs').length,1);assert.equal(d.querySelector('[data-battle-add]').disabled,true);
  }finally{dom.window.close()}
 });
+
+// Granskningen 2026-11-01. Bryggans normalizer gör TikToks siffror till ord (action 4 = OPEN,
+// 5 = FINISH, battleSettings.status 3 = PUNISH_STARTED); modellen ska förstå just de orden.
+test('riktiga statusar från bryggans normalizer: öppna, poäng, avsluta, straff — en match, poängvinst',()=>{
+ const {battleFields}=require('../tiktok-bridge/normalizer');
+ const s=M.empty(),ev=(id,raw)=>({type:'battle',id,...battleFields(raw)});
+ assert.equal(ev('x',{action:4,battleId:'7'}).battleStatus,'battle_started','normalizern har bytt ord — modellen måste följa med');
+ M.receive(s,ev('1',{action:4,battleId:'7'}),100);
+ M.receive(s,ev('2',{battleId:'7',battleSettings:{status:1},battleInfo:{hostScore:900,guestScore:400}}),200);
+ assert.equal(s.active.us,900);
+ M.receive(s,ev('3',{action:5,battleId:'7'}),300);
+ M.receive(s,ev('4',{battleId:'7',battleSettings:{status:3}}),400);
+ assert.equal(s.history.length,1);assert.equal(s.history[0].result,'win');assert.equal(s.history[0].us,900);assert.equal(s.active,null);
+ assert.equal(battleFields({battleSettings:{status:0}}).battleStatus,'','NOT_STARTED ska aldrig öppna en match');
+});
+
+test('boost utan battleId hör till den pågående matchen; okänd längd ger 60 s, inte noll',()=>{
+ const s=M.empty();
+ M.receive(s,{type:'battle',id:'1',battleId:'m',battleStatus:'battle_started'},1000);
+ assert.equal(M.receive(s,{type:'glove',id:'2',multiplier:2,durationSec:0},2000),true,'boosten utan id kastades');
+ assert.equal(s.boost.id,'m');assert.equal(s.boost.until,2000+60000,'durationSec 0 betyder okänd längd (server/event-bus.js)');
+ M.receive(s,{type:'glove',id:'3',multiplier:3,durationSec:20},5000);assert.equal(s.boost.until,25000);
+ const tom=M.empty();assert.equal(M.receive(tom,{type:'glove',id:'4',multiplier:2}),false,'utan pågående match finns ingen match att knyta boosten till');
+});
+
+test('flikar och rubrik är på svenska',()=>{
+ const src=fs.readFileSync('battle-analytics.js','utf8');
+ assert.doesNotMatch(src,/General Analytics|Battle Analytics|Battle <em>Analytics/);
+ assert.match(src,/'Översikt'/);assert.match(src,/'Battles'/);
+});

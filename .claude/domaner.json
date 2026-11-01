@@ -1109,6 +1109,9 @@
         "statistics-live.css",
         "statistics-live.js",
         "statistics-supporter.js",
+        "battle-analytics-model.js",
+        "battle-analytics.css",
+        "battle-analytics.js",
         "tests/load/*"
       ],
       "tester": [
