@@ -126,6 +126,17 @@ const SLOT_SQL = `
     diamonds = slot_totals.diamonds + EXCLUDED.diamonds,
     likes    = slot_totals.likes    + EXCLUDED.likes
 `;
+const GIFTER_DAILY_SQL = `
+  INSERT INTO gifter_daily
+    (workspace_id,tiktok_username,viewer_id,day,gifts,diamonds,last_gift_name,last_gift_diamonds,last_gift_at)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+  ON CONFLICT (workspace_id,tiktok_username,viewer_id,day) DO UPDATE SET
+    gifts=gifter_daily.gifts+EXCLUDED.gifts,
+    diamonds=gifter_daily.diamonds+EXCLUDED.diamonds,
+    last_gift_name=CASE WHEN EXCLUDED.last_gift_at >= gifter_daily.last_gift_at THEN EXCLUDED.last_gift_name ELSE gifter_daily.last_gift_name END,
+    last_gift_diamonds=CASE WHEN EXCLUDED.last_gift_at >= gifter_daily.last_gift_at THEN EXCLUDED.last_gift_diamonds ELSE gifter_daily.last_gift_diamonds END,
+    last_gift_at=GREATEST(gifter_daily.last_gift_at,EXCLUDED.last_gift_at)
+`;
 
 // Bryggan skickar GIVARENS namn i payloaden, inte streamerns konto — det senare finns bara i
 // tiktok_connections. En uppslagning per event vore slosaktigt vid 100 events/sekund, sa svaret
@@ -170,6 +181,10 @@ function createStreamStats(pool, options = {}) {
       if (b.gifts || b.diamonds || b.likes) {
         await pool.query(DAILY_SQL, [workspaceId, konto, b.dag, b.gifts, b.diamonds, b.likes]);
         await pool.query(SLOT_SQL, [workspaceId, konto, b.veckodag, b.timme, b.gifts, b.diamonds, b.likes]);
+      }
+      if (b.gifts || b.diamonds) {
+        await pool.query(GIFTER_DAILY_SQL,[workspaceId,konto,b.viewerId,b.dag,b.gifts,b.diamonds,
+          String(event.giftName||'').slice(0,120),b.diamonds,nu]);
       }
       return { skrivet: true };
     } catch (error) {

@@ -715,6 +715,24 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     if(!scoped.rows[0])return send(res,404,{ok:false,error:'Overlay saknas'});
     await openEventStream(req,res,u,workspaceId,null,scoped.rows[0].id);return}
   const eventStream=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/events\/stream$/i);if(eventStream&&req.method==='GET'){const workspaceId=eventStream[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});await openEventStream(req,res,u,workspaceId);return}
+  // SUPPORTERKORTET (2026-11-01): en givares livstid, dagshistorik och streamerns egna anteckningar.
+  // GET for alla medlemmar; PUT (anteckning, fodelsedag) bara for ager/admin/redigerare och passerar
+  // den gemensamma session-raden ovan MED CSRF-krav. Varje fraga avgransas av arbetsyta, nuvarande
+  // TikTok-konto och givarens id (stats-read.js).
+  const supporterRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/stats\/supporters\/([^/]+)$/i);
+  if(supporterRoute){
+    const workspaceId=supporterRoute[1];
+    if(!['GET','PUT'].includes(req.method))return send(res,405,{ok:false,error:'Metoden stöds inte'});
+    const roles=req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor'];
+    if(!await membership(s.user_id,workspaceId,roles))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    let viewerId;try{viewerId=decodeURIComponent(supporterRoute[2])}catch{return send(res,400,{ok:false,error:'Ogiltig supporter'})}
+    if(!viewerId||viewerId.length>80)return send(res,400,{ok:false,error:'Ogiltig supporter'});
+    try{
+      if(req.method==='PUT')return send(res,200,await statsReader.saveSupporter(workspaceId,viewerId,await body(req)),{'cache-control':'no-store'});
+      const supporter=await statsReader.supporter(workspaceId,viewerId);
+      return send(res,supporter?200:404,supporter?{ok:true,supporter}:{ok:false,error:'Supportern saknas'},{'cache-control':'no-store'});
+    }catch(error){return send(res,error.status||500,{ok:false,error:error.status?error.message:'Supporterkortet kunde inte hämtas'},{'cache-control':'no-store'})}
+  }
   // Historiken bakom "All time" pa framsidan. GET, sa den passerar den gemensamma session-raden
   // ovan utan CSRF-krav — den laser och andrar ingenting.
   //
