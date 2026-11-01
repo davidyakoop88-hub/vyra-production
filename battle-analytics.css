@@ -1,0 +1,42 @@
+.statistics-page [hidden]{display:none!important}
+.battle-analytics-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.battle-analytics-tabs button,.battle-analytics-page button{background:#120c1a;border:1px solid #38294a;color:#cbbbda;padding:8px 12px;border-radius:9px;font:inherit;font-size:12px;cursor:pointer}
+.battle-analytics-tabs button[aria-pressed=true],.battle-analytics-filters button[aria-pressed=true]{background:#28153c;border-color:#a65cff;color:#fff;box-shadow:0 0 18px #9c4dff20}
+.battle-analytics-page button:disabled{opacity:.5;cursor:not-allowed}
+.battle-analytics-tabs button:focus-visible,.battle-analytics-page button:focus-visible,.battle-analytics-search input:focus-visible{outline:2px solid #e0b8ff;outline-offset:3px}
+.battle-analytics-page{display:grid;gap:16px;min-width:0}
+.battle-analytics-page .card{border:1px solid #352642;background:#130d1b;border-radius:16px;padding:20px;min-width:0}
+.battle-analytics-head{background:radial-gradient(ellipse at 100% 0,#9c55ff20,transparent 60%),#130d1b!important}
+.battle-analytics-head>small{font-size:10px;letter-spacing:1.5px;color:#b98cff;font-weight:700}
+.battle-analytics-head h2{margin:8px 0;font-size:28px;color:#f5edff}
+.battle-analytics-head em{font-style:normal;color:#b98cff}
+.battle-analytics-page p{color:#b8abc6;font-size:12px;line-height:1.7}
+.battle-analytics-page small{color:#a99db7;font-size:11px}
+.battle-analytics-page h3{font-size:14px;color:#eadcff}
+.battle-analytics-current{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center}
+.battle-analytics-current h2{font-size:36px;margin:0;color:#eadcff;font-variant-numeric:tabular-nums}
+.battle-analytics-current h3,.battle-analytics-current p{margin:0}
+.battle-analytics-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px}
+.battle-analytics-card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.battle-analytics-card-head h3{margin:0}
+.battle-analytics-card-head button{font-size:11px;padding:5px 9px}
+.battle-analytics-filters{display:flex;gap:5px;flex-wrap:wrap;margin:14px 0}
+.battle-analytics-filters button{font-size:11px;padding:6px 9px}
+.battle-analytics-search{display:grid;gap:5px;color:#b8abc6;font-size:11px;margin-bottom:12px}
+.battle-analytics-search input,.battle-analytics-form select{padding:9px 11px;background:#100b17;border:1px solid #38294a;border-radius:9px;color:#f5edff;font:inherit;max-width:100%;min-width:0}
+.battle-analytics-empty{padding:24px 8px;text-align:center}
+.battle-analytics-booster{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;padding:10px 0;border-bottom:1px solid #352642;font-size:12px}
+.battle-analytics-booster button{border:0;padding:0;text-align:left;overflow-wrap:anywhere;color:#d9adff;background:transparent;text-decoration:underline}
+.battle-analytics-booster small{grid-column:1/-1}
+.battle-analytics-badge{padding:5px 10px;border-radius:8px;background:#28153c;color:#d9adff;font-size:12px}
+.battle-analytics-history summary{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;cursor:pointer;color:#eadcff;font-size:13px}
+.battle-analytics-history summary span{color:#b8abc6;font-size:11px}
+.battle-analytics-history ol{list-style:none;padding:0;margin:12px 0 0}
+.battle-analytics-history-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;padding:12px 0;border-bottom:1px solid #352642;color:#d5c7e0;font-size:12px}
+.battle-analytics-history-row>span:first-child{overflow-wrap:anywhere}
+.battle-analytics-history-row small{display:block;margin-top:4px}
+.battle-analytics-result.win{color:#8addba}.battle-analytics-result.loss{color:#ffb5c2}
+.battle-analytics-storage{font-size:11px!important;margin:0}
+@media(max-width:800px){.battle-analytics-grid{grid-template-columns:1fr}}
+@media(max-width:440px){.battle-analytics-page .card{padding:15px}.battle-analytics-history-row{grid-template-columns:1fr auto}.battle-analytics-result{grid-column:1/-1}.battle-analytics-current h2{font-size:28px}}
+@media(pointer:coarse){.battle-analytics-page button,.battle-analytics-tabs button{min-height:44px}}
