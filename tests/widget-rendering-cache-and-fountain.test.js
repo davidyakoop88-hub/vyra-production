@@ -415,7 +415,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
   // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
-  assert.match(media, /sound-alerts\.js\?v=20261021-11/, 'sound-alerts.js cachebustades inte');
+  assert.match(media, /sound-alerts\.js\?v=20261101-1/, 'sound-alerts.js cachebustades inte');
   for (const fil of ['vyra-tal']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
   }

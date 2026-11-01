@@ -270,8 +270,9 @@ function saGavor(){
 function saGiftResults(popover,query=''){
   const all=saGavor();
   const needle=query.trim().toLocaleLowerCase('sv');
-  const gifts=(needle?all.filter(gift=>String(gift.name).toLocaleLowerCase('sv').includes(needle)):all).slice(0,40);
-  popover.querySelector('.sa-gift-results').innerHTML=`<button type="button" class="sa-gift-choice" data-gift=""><span class="sa-gift-fallback">★</span><b>Alla gåvor</b><small>Spela ljudet vid varje gåva</small></button>${gifts.map(gift=>`<button type="button" class="sa-gift-choice" data-gift="${saEsc(gift.name)}" data-gift-id="${saEsc(gift.giftId||'')}"><img src="${saEsc(gift.image)}" alt="" data-fallback-applied="1"><b>${saEsc(gift.name)}</b>${Number(gift.coins)>0?`<small>${saEsc(String(gift.coins))} coins</small>`:''}</button>`).join('')||'<p class="sa-gift-none">Ingen gåva hittades.</p>'}`;
+  /* ALLA GÅVOR (David 2026-11-01): listan var kapad vid 40, så resten av katalogen gick bara att nå genom att söka. Bilderna laddas lat. */
+  const gifts=needle?all.filter(gift=>String(gift.name).toLocaleLowerCase('sv').includes(needle)):all;
+  popover.querySelector('.sa-gift-results').innerHTML=`<button type="button" class="sa-gift-choice" data-gift=""><span class="sa-gift-fallback">★</span><b>Alla gåvor</b><small>Spela ljudet vid varje gåva</small></button>${gifts.map(gift=>`<button type="button" class="sa-gift-choice" data-gift="${saEsc(gift.name)}" data-gift-id="${saEsc(gift.giftId||'')}"><img src="${saEsc(gift.image)}" alt="" loading="lazy" data-fallback-applied="1"><b>${saEsc(gift.name)}</b>${Number(gift.coins)>0?`<small>${saEsc(String(gift.coins))} coins</small>`:''}</button>`).join('')||'<p class="sa-gift-none">Ingen gåva hittades.</p>'}`;
 }
 function saBindGiftPicker(form){
   const picker=form.querySelector('.sa-gift-picker');if(!picker)return;
