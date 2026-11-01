@@ -19,3 +19,16 @@ test('profile does not fabricate boosters or fill missing daily history with lif
  const out=await reader.supporter('ws','anna');assert.equal(out.diamonds,10000);assert.equal(out.boosters,null);assert.deepEqual(out.dagar,[]);assert.equal(out.senasteGava,null);
  for(const call of calls.slice(1))assert.deepEqual(call.params,['ws','creator','anna']);
 });
+
+// PLACERINGEN (2026-11-01): rutten hamnade en gång i ingestkoden, där `p` och sessionen inte finns —
+// "ReferenceError: p is not defined" i varje Postgres-prov som startar servern. Den ska ligga efter
+// den gemensamma session-raden (CSRF för PUT) och före statistikrutten, i samma request-hanterare.
+test('supporterrutten ligger efter session/CSRF-raden och före statistikrutten', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '..', 'index.js'), 'utf8');
+  const session = src.indexOf("const s=await session(req,{csrf:req.method!=='GET'})");
+  const supporter = src.indexOf('const supporterRoute=p.match(');
+  const stats = src.indexOf('const statsRoute=p.match(');
+  assert.ok(session > 0 && supporter > 0 && stats > 0, 'en av raderna saknas');
+  assert.ok(session < supporter && supporter < stats, `fel ordning: session ${session}, supporter ${supporter}, stats ${stats}`);
+  assert.equal(src.indexOf('const supporterRoute=p.match(', supporter + 1), -1, 'rutten finns två gånger');
+});
