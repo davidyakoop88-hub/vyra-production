@@ -896,7 +896,7 @@
     'Behöver minst 3 aktiva dagar för samma veckodag för att jämföra snitt. Dagar räknas i UTC.': 'Needs at least 3 active days for the same weekday to compare averages. Days are counted in UTC.',
     'TID FÖR DIAMANTER': 'TIME OF DIAMONDS',
     'Diamanter per tidsintervall': 'Diamonds per time slot',
-    'All tid · UTC': 'All time · UTC',
+    'All tid · UTC': 'Lifetime · UTC',
     'Historiska totalsummor i UTC. De visar när diamanter registrerats, inte vilken tid som säkert ger bäst resultat.': 'Historical totals in UTC. They show when diamonds were recorded, not which time is sure to give the best result.',
     'Ingen data': 'No data',
     'DIN SUPPORTERBAS': 'YOUR SUPPORTER BASE',
@@ -1316,7 +1316,7 @@
     [/^(Måndag|Tisdag|Onsdag|Torsdag|Fredag|Lördag|Söndag) har högst snitt bland veckodagar med minst 3 aktiva dagar\. Historisk aktivitet, inte en prognos\. Tider och dagar räknas i UTC\.$/,
       (m, d) => ({ Måndag: 'Monday', Tisdag: 'Tuesday', Onsdag: 'Wednesday', Torsdag: 'Thursday', Fredag: 'Friday', Lördag: 'Saturday', Söndag: 'Sunday' })[d]
         + ' has the highest average among weekdays with at least 3 active days. Historical activity, not a forecast. Times and days are counted in UTC.'],
-    [/^Topp (\d+) står för ([\d\s\u00a0]+) av ([\d\s\u00a0]+) diamanter under all tid\. ([\d\s\u00a0]+) givare totalt\.$/, 'Top $1 account for $2 of $3 diamonds of all time. $4 gifters in total.'],
+    [/^Topp (\d+) står för ([\d\s\u00a0]+) av ([\d\s\u00a0]+) diamanter under all tid\. ([\d\s\u00a0]+) givare totalt\.$/, 'Top $1 account for $2 of $3 lifetime diamonds. $4 gifters in total.'],
     [/^([\d\s\u00a0]+) givare · ([\d\s\u00a0]+) 💎$/, '$1 gifters · $2 💎'],
     [/^([\d\s\u00a0]+) gåvor$/, '$1 gifts'],
     [/^Bästa gåva: (.+)$/, 'Best gift: $1'],
