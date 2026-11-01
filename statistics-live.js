@@ -13,7 +13,10 @@
     return html
       .replace('<p>Riktiga siffror från dina sändningar med VYRA Desktop.</p>','<p>Förstå din publik, dina bästa tider och vilka som stöttar din LIVE.</p>')
       .replace(/<button( class="active")? data-stats-period=/g,(_,aktiv)=>`<button type="button"${aktiv||''} aria-pressed="${aktiv?'true':'false'}" data-stats-period=`)
-      .replace('<div class="statistics-grid">',INSIKTER+'<div class="statistics-grid">')
+      // Insikterna läggs EFTER diagrammet och topplistan, inte före: överst blev sidan sex låga rader
+      // med mellanrum, och det kända diagrammet hamnade under vecket (tomt läge täckte 72 %,
+      // tests/browser/tomma-tillstand kräver 80 %). Grundmallen slutar med statistics-grid + sidans </div>.
+      .replace(/<\/div>\s*$/,INSIKTER+'</div>')
       .replace('<h3>Aktivitet per livedag</h3></div><span>Diamanter</span>','<h3>Aktivitet per livedag</h3></div><span data-stats-period-label>30 dagar</span>')
       .replace('<h3>Toppsupportrar</h3>','<h3>Toppsupportrar · livstid</h3>');
   }

@@ -1,5 +1,5 @@
 .statistics-page [hidden]{display:none!important}
-.battle-analytics-tabs{display:flex;gap:8px;flex-wrap:wrap}
+/* Flikraden är ett kort som sidans övriga (tomt läge ska täckas av kort, tests/browser/tomma-tillstand). */.battle-analytics-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:8px}
 .battle-analytics-tabs button,.battle-analytics-page button{background:#120c1a;border:1px solid #38294a;color:#cbbbda;padding:8px 12px;border-radius:9px;font:inherit;font-size:12px;cursor:pointer}
 .battle-analytics-tabs button[aria-pressed=true],.battle-analytics-filters button[aria-pressed=true]{background:#28153c;border-color:#a65cff;color:#fff;box-shadow:0 0 18px #9c4dff20}
 .battle-analytics-page button:disabled{opacity:.5;cursor:not-allowed}
