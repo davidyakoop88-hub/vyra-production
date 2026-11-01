@@ -131,6 +131,12 @@ jobs:
         run: node --test test/viewer-levels-postgres.test.js
         working-directory: server
 
+      # Statistiken och supporterkortet (2026-11-01): fönsteraggregaten före LIMIT, gifter_daily-
+      # upserten och anteckningens INSERT … WHERE EXISTS. Enhetsproven kör mot falska pooler.
+      - name: Supporterkortet — SQL mot riktig Postgres
+        run: node --test test/supporter-postgres.test.js
+        working-directory: server
+
       # Frame shape and the write path. Pure, so it also runs in the main CI job — but the isolation
       # step below only means something if these hold, and a failure here should stop this job too.
       - name: Goal-SSE — absoluta frames, normalisering och skrivvägen

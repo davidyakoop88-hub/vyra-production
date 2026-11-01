@@ -1108,6 +1108,7 @@
         "performance-wizard.js",
         "statistics-live.css",
         "statistics-live.js",
+        "statistics-supporter.js",
         "tests/load/*"
       ],
       "tester": [

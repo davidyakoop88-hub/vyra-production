@@ -1,5 +1,31 @@
 (function(root){
   'use strict';
+  // SIDANS MALL BYGGS UT HÄR, INTE I studio.js (2026-11-01). studio.js är minifierad handkod som aldrig
+  // ändras direkt; analytics() är en global funktion där, och studio.js anropar den vid namn — så en
+  // omslagen version här ritas av samma render(). Varje tillägg söker sin egen förankring i grundmallen:
+  // saknas den (grundmallen har ändrats) uteblir bara det tillägget, och koden nedan tål att noden saknas.
+  const INSIKTER='<div class="statistics-insights"><article class="card"><small>SNITT PER AKTIV DAG</small><strong data-stats-average>–</strong><p>Diamanter · <span data-stats-period-label>30 dagar</span></p><small data-stats-day-count>Inväntar data</small></article><article class="card"><small>GIVARKONCENTRATION · LIVSTID</small><div class="statistics-mini-controls"><button type="button" data-stats-top="5" aria-pressed="true">Topp 5</button><button type="button" data-stats-top="10" aria-pressed="false">10</button><button type="button" data-stats-top="25" aria-pressed="false">25</button></div><strong data-stats-concentration>–</strong><meter data-stats-share min="0" max="100" value="0" aria-label="Toppgivarnas andel av livstidsdiamanter" hidden></meter><p data-stats-concentration-note>Inväntar livstidsunderlag</p></article></div>'
+    +'<article class="card statistics-weekdays-card"><div class="statistics-card-head"><div><small>NÄR DIN PUBLIK GER</small><h3>Diamanter per veckodag</h3></div><span data-stats-period-label>30 dagar</span></div><p>Genomsnitt per dag med registrerad aktivitet. Dagar utan aktivitet ingår inte.</p><ul class="statistics-weekdays" data-stats-weekdays></ul><p data-stats-weekday-note></p></article>'
+    +'<div class="statistics-analysis-grid"><article class="card statistics-weekdays-card"><div class="statistics-card-head"><div><small>TID FÖR DIAMANTER</small><h3>Diamanter per tidsintervall</h3></div><span>All tid · UTC</span></div><div class="statistics-mini-controls"><button type="button" data-stats-hours-step="2" aria-pressed="false">2 h</button><button type="button" data-stats-hours-step="3" aria-pressed="true">3 h</button><button type="button" data-stats-hours-step="4" aria-pressed="false">4 h</button></div><ul class="statistics-weekdays statistics-hours" data-stats-hours></ul><p>Historiska totalsummor i UTC. De visar när diamanter registrerats, inte vilken tid som säkert ger bäst resultat.</p></article>'
+    +'<article class="card statistics-weekdays-card"><div class="statistics-card-head"><div><small>DIN SUPPORTERBAS</small><h3>Givargrupper</h3></div><span>All tid</span></div><ul class="statistics-tiers" data-stats-tiers></ul><p>Storgivare: minst 10 000 diamanter. Frekventa: minst 10 gåvor. Övriga gåvogivare: sporadiska. Varje person ingår i en grupp.</p></article></div>';
+  function utokaMall(html){
+    if(typeof html!=='string'||!html.includes('data-statistics-page'))return html;
+    return html
+      .replace('<p>Riktiga siffror från dina sändningar med VYRA Desktop.</p>','<p>Förstå din publik, dina bästa tider och vilka som stöttar din LIVE.</p>')
+      .replace(/<button( class="active")? data-stats-period=/g,(_,aktiv)=>`<button type="button"${aktiv||''} aria-pressed="${aktiv?'true':'false'}" data-stats-period=`)
+      .replace('<div class="statistics-grid">',INSIKTER+'<div class="statistics-grid">')
+      .replace('<h3>Aktivitet per livedag</h3></div><span>Diamanter</span>','<h3>Aktivitet per livedag</h3></div><span data-stats-period-label>30 dagar</span>')
+      .replace('<h3>Toppsupportrar</h3>','<h3>Toppsupportrar · livstid</h3>');
+  }
+  if(typeof root.analytics==='function'&&!root.analytics.vyraStatistik){
+    const grund=root.analytics;
+    root.analytics=function(){return utokaMall(grund.apply(this,arguments))};
+    root.analytics.vyraStatistik=true;
+    // Startar studion direkt på Statistik har sidan redan ritats med grundmallen innan den här filen
+    // laddades. Då ritas den om en gång, så att de nya korten finns från början.
+    const tidig=root.document?.querySelector?.('[data-statistics-page]');
+    if(tidig&&!tidig.querySelector('.statistics-insights')&&typeof root.render==='function'){try{root.render()}catch(e){}}
+  }
   const PERIODS=new Set(['7d','30d','90d','all']);
   let mounted=null,period='30d',generation=0,retryTimer=0,lastData=null,hourStep=3,topCount=5;
   const number=value=>(Number(value)||0).toLocaleString('sv-SE');

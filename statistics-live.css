@@ -36,6 +36,8 @@
 @media(max-width:900px){.statistics-weekdays{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:540px){.statistics-insights{grid-template-columns:1fr}.statistics-weekdays{grid-template-columns:repeat(2,minmax(0,1fr))}.statistics-supporters li:not(.statistics-empty){grid-template-columns:20px 32px minmax(0,1fr)}.statistics-supporters strong{grid-column:3}.statistics-supporters img,.statistics-avatar{width:32px;height:32px}}
 .statistics-head em{font-style:normal;color:#b98cff}
+/* Andelsmätaren i VYRA-lila (webbläsarens standard är grön). */
+.statistics-page meter{width:100%;height:8px;-webkit-appearance:none;appearance:none;border:0;border-radius:999px;background:#2a1f38;overflow:hidden}.statistics-page meter::-webkit-meter-bar{background:#2a1f38;border:0;border-radius:999px}.statistics-page meter::-webkit-meter-optimum-value,.statistics-page meter::-webkit-meter-suboptimum-value,.statistics-page meter::-webkit-meter-even-less-good-value{background:linear-gradient(90deg,#7c3aed,#c084fc);border-radius:999px}.statistics-page meter::-moz-meter-bar{background:linear-gradient(90deg,#7c3aed,#c084fc);border-radius:999px}
 .statistics-analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .statistics-hours{grid-template-columns:repeat(4,minmax(0,1fr))}
 .statistics-mini-controls{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}

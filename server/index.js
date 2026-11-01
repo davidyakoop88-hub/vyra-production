@@ -207,6 +207,24 @@ async function ingestTikTokEvent(workspaceId,payload){
   // Unchanged rule, unchanged place: the counters follow the RAW event, not the goal path, and the
   // route still gets exactly the publish result it has always sent back.
   if(!raw.duplicate){metrics.event(raw.event.type);lastTikTokEventAt=Date.now()}
+  // SUPPORTERKORTET (2026-11-01): en givares livstid, dagshistorik och streamerns egna anteckningar.
+  // GET for alla medlemmar; PUT (anteckning, fodelsedag) bara for ager/admin/redigerare och passerar
+  // den gemensamma session-raden ovan MED CSRF-krav. Varje fraga avgransas av arbetsyta, nuvarande
+  // TikTok-konto och givarens id (stats-read.js).
+  const supporterRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/stats\/supporters\/([^/]+)$/i);
+  if(supporterRoute){
+    const workspaceId=supporterRoute[1];
+    if(!['GET','PUT'].includes(req.method))return send(res,405,{ok:false,error:'Metoden stöds inte'});
+    const roles=req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor'];
+    if(!await membership(s.user_id,workspaceId,roles))return send(res,403,{ok:false,error:'Behörighet saknas'});
+    let viewerId;try{viewerId=decodeURIComponent(supporterRoute[2])}catch{return send(res,400,{ok:false,error:'Ogiltig supporter'})}
+    if(!viewerId||viewerId.length>80)return send(res,400,{ok:false,error:'Ogiltig supporter'});
+    try{
+      if(req.method==='PUT')return send(res,200,await statsReader.saveSupporter(workspaceId,viewerId,await body(req)),{'cache-control':'no-store'});
+      const supporter=await statsReader.supporter(workspaceId,viewerId);
+      return send(res,supporter?200:404,supporter?{ok:true,supporter}:{ok:false,error:'Supportern saknas'},{'cache-control':'no-store'});
+    }catch(error){return send(res,error.status||500,{ok:false,error:error.status?error.message:'Supporterkortet kunde inte hämtas'},{'cache-control':'no-store'})}
+  }
   // Historiken bakom "All time" pa framsidan. Skrivs BARA nar eventet inte ar en dubblett:
   // dubbelrakning i en summa gar inte att upptacka i efterhand, till skillnad fran ett
   // ogonblicksvarde som nasta korrekta event skriver over.
@@ -720,20 +738,6 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   //
   // Alla roller far lasa, aven 'viewer': det ar samma siffror som redan visas pa overlayen under
   // sandning, bara summerade over tid.
-  const supporterRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/stats\/supporters\/([^/]+)$/i);
-  if(supporterRoute){
-    const workspaceId=supporterRoute[1];
-    if(!['GET','PUT'].includes(req.method))return send(res,405,{ok:false,error:'Metoden stöds inte'});
-    const roles=req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor'];
-    if(!await membership(s.user_id,workspaceId,roles))return send(res,403,{ok:false,error:'Behörighet saknas'});
-    let viewerId;try{viewerId=decodeURIComponent(supporterRoute[2])}catch{return send(res,400,{ok:false,error:'Ogiltig supporter'})}
-    if(!viewerId||viewerId.length>80)return send(res,400,{ok:false,error:'Ogiltig supporter'});
-    try{
-      if(req.method==='PUT')return send(res,200,await statsReader.saveSupporter(workspaceId,viewerId,await body(req)),{'cache-control':'no-store'});
-      const supporter=await statsReader.supporter(workspaceId,viewerId);
-      return send(res,supporter?200:404,supporter?{ok:true,supporter}:{ok:false,error:'Supportern saknas'},{'cache-control':'no-store'});
-    }catch(error){return send(res,error.status||500,{ok:false,error:error.status?error.message:'Supporterkortet kunde inte hämtas'},{'cache-control':'no-store'})}
-  }
   const statsRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/stats$/i);
   if(statsRoute&&req.method==='GET'){
     const workspaceId=statsRoute[1];
