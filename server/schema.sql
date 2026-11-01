@@ -376,6 +376,29 @@ CREATE TABLE IF NOT EXISTS daily_totals (
   PRIMARY KEY (workspace_id, tiktok_username, day)
 );
 
+-- Per-supporter daily history starts at deployment; lifetime totals are never backfilled as days.
+CREATE TABLE IF NOT EXISTS gifter_daily (
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username text NOT NULL,
+  viewer_id text NOT NULL,
+  day date NOT NULL,
+  gifts bigint NOT NULL DEFAULT 0,
+  diamonds bigint NOT NULL DEFAULT 0,
+  last_gift_name text,
+  last_gift_diamonds bigint,
+  last_gift_at timestamptz,
+  PRIMARY KEY (workspace_id,tiktok_username,viewer_id,day)
+);
+CREATE TABLE IF NOT EXISTS supporter_notes (
+  workspace_id uuid NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  tiktok_username text NOT NULL,
+  viewer_id text NOT NULL,
+  note text NOT NULL DEFAULT '',
+  birthday text NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id,tiktok_username,viewer_id)
+);
+
 -- Fast storlek: 7 veckodagar x 24 timmar per konto. Den här är underlaget för "bästa tid att sända"
 -- och kan därför aldrig bli den tabell som växer sig dyr.
 CREATE TABLE IF NOT EXISTS slot_totals (

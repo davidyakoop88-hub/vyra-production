@@ -8,9 +8,9 @@ const client=fs.readFileSync('statistics-live.js','utf8');
 const css=fs.readFileSync('statistics-live.css','utf8');
 
 test('Statistik-vyn laddar sin riktiga klient och stil',()=>{
-  // 20261020-2: skala, stapelvärden, fokus och tabellvy (granskning 2026-10-17 F27).
-  assert.match(html,/statistics-live\.css\?v=20261020-2/);
-  assert.match(html,/statistics-live\.js\?v=20261020-2/);
+  // 20261101-1: skala, stapelvärden, fokus och tabellvy (granskning 2026-10-17 F27).
+  assert.match(html,/statistics-live\.css\?v=20261101-1/);
+  assert.match(html,/statistics-live\.js\?v=20261101-1/);
   assert.match(studio,/data-statistics-page/);
   assert.match(studio,/data-stats-total="gifts"/);
   assert.match(studio,/data-stats-total="diamonds"/);

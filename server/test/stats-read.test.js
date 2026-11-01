@@ -16,6 +16,16 @@ const { periodFonster, createStatsReader, PERIODER } = require('../stats-read');
 
 const NU = new Date('2026-08-08T12:00:00Z');
 
+test('lifetime denominator includes contributors outside the bounded top list', async () => {
+  const pool=falskPool({givare:{rowCount:1,rows:[{viewer_id:'a',diamonds:'600',gifts:'1',lifetime_diamonds:'1000',lifetime_gifters:'60'}]}});
+  const out=await createStatsReader(pool).sammanfattning('ws-1','7d',NU);
+  assert.deepEqual(out.givarUnderlag,{period:'all',diamonds:1000,givare:60});
+  const sql=pool.anrop.find(call=>/FROM gifter_totals/.test(call.sql)).sql;
+  assert.match(sql,/SUM\(diamonds\) OVER \(\)/);
+  assert.match(sql,/COUNT\(\*\) FILTER \(WHERE gifts > 0 OR diamonds > 0\) OVER \(\)/);
+  assert.equal(out.toppGivare[0].diamonds,600);
+});
+
 test('all time har ingen undre gräns', () => {
   const f = periodFonster('all', NU);
   assert.equal(f.fran, null, 'all time filtrerade på ett datum — då är det inte all time');
