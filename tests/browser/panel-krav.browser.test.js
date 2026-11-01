@@ -47,6 +47,10 @@ function servera() {
 
 // Återställ utseende provas med ett utseendefält, ett innehållsfält och placeringen.
 const TOPGIFT_ATERSTALL = { utseende: 'accent', innehall: 'dataName' };
+// Videons form syns bara när rekordgåvan har en egen animation — formerna provas i tests/topgift-video.test.js.
+// Inte i Design 1: där vänder kortet hela tiden, och ändringens omritning syns i mätningen ändå.
+const TOPGIFT_TIDSSTYRT = { 'pr-tgVideoForm': 'syns bara med en rekordgåva som har video',
+  'pr-tgVideoKant': 'syns bara med en rekordgåva som har video', 'pr-tgVideoGlod': 'syns bara med en rekordgåva som har video' };
 // LAST-X (vyra-lastx-panel.js, PR 5). Widgeten visar bara sin FÖRSTA typ i vila; vad en kontroll för
 // en annan typ gör syns först när en händelse av den typen kommer. Sådana kontroller mäts därför
 // med en händelse: samma händelse spelas före och efter ändringen (triggerLastXAlert, livevägen),
@@ -262,8 +266,8 @@ const MODELLER = [
   ...FL50_MODELLER,
   ...GLOVE_MODELLER,
   { namn: 'Top Gift · Design 1 (neon)', nyckel: 'catalog:topgift:premium:neon', aterstall: TOPGIFT_ATERSTALL },
-  { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL },
-  { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL },
+  { namn: 'Top Gift · Design 2 (royal)', nyckel: 'catalog:topgift:premium:royal', aterstall: TOPGIFT_ATERSTALL, tidsstyrt: TOPGIFT_TIDSSTYRT },
+  { namn: 'Top Gift · Design 3 (fokus)', nyckel: 'catalog:topgift:premium:fokus', aterstall: TOPGIFT_ATERSTALL, tidsstyrt: TOPGIFT_TIDSSTYRT },
   { namn: 'Top Gift · Design 4 (Signal Orbit)', nyckel: 'catalog:ranking:templateTopCoins:signal-orbit', aterstall: TOPGIFT_ATERSTALL },
   ...LASTX_MODELLER,
   ...ALERT_MODELLER,

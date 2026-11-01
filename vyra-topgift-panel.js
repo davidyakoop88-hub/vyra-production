@@ -38,6 +38,11 @@
   const kronval = { sektion: 5, typ: 'val', falt: 'tgdKrona', etikett: 'Krona', om: w => w.showTitle !== false,
     get alternativ() { return window.VyraTopGiftKronor || [['neon-valkyrie', 'Neon Valkyrie']]; } };
 
+  // VIDEONS FORM: hur rekordgåvans egen animation visas (topgift-video.js, window.VyraTopGiftVideo).
+  // Som kronan laddas renderaren efter den här filen, så alternativen läses när panelen byggs.
+  const videoform = { sektion: 5, typ: 'val', falt: 'tgVideoForm', etikett: 'Videons form',
+    get alternativ() { return (window.VyraTopGiftVideo && window.VyraTopGiftVideo.former) || [['ram', 'Ram med glöd']]; } };
+
   const TEXTFALT = ['textFont', 'textScale', 'textShadowBlur', 'textShadowColor', 'textShadowX', 'textShadowY',
     'textOutlineWidth', 'textOutlineColor'];
   const BAKGRUNDSFALT = ['hideBackground', 'bgColor', 'bgStrength', 'bgRadius', 'bgPadding'];
@@ -76,6 +81,9 @@
       ...(neon ? [{ sektion: 5, typ: 'knapp', id: 'profilram', legacyId: '.gaf-frame-group .pro-frame-picker', etikett: 'Profilram' }] : []),
       ...(neon ? [kronval] : []),
       { sektion: 5, typ: 'tal', falt: 'topGiftGlow', etikett: 'Ljus', enhet: '%', legacyId: '#pfTopGiftGlow' },
+      videoform,
+      { sektion: 5, typ: 'farg', falt: 'tgVideoKant', etikett: 'Videons kantfärg', standard: '#ffffff', om: w => w.tgVideoForm !== 'bild' },
+      { sektion: 5, typ: 'farg', falt: 'tgVideoGlod', etikett: 'Videons glödfärg', standard: '#d9a441', om: w => w.tgVideoForm !== 'bild' },
       { sektion: 5, typ: 'std-bakgrund' },
       // 6 · Animation
       { sektion: 6, typ: 'std-entre', utan: neon ? [] : ['varaktighet'] },
@@ -96,7 +104,7 @@
       arv: ['highlight', 'text', 'fontFamily'],
       kontroller,
       utseendeFalt: ['accent', 'accent2', 'tgdKrona', 'tgdRam', 'tgdBildram', 'profileFrame', 'topGiftGlow', 'giftSize', 'dataSize',
-        'fontStyle', 'fontFamily', 'topGiftFlipSpeed', 'entranceAnimation', 'entranceDuration', 'inheritBrandKit',
+        'fontStyle', 'fontFamily', 'topGiftFlipSpeed', 'tgVideoForm', 'tgVideoKant', 'tgVideoGlod','entranceAnimation', 'entranceDuration', 'inheritBrandKit',
         ...TEXTFALT, ...BAKGRUNDSFALT],
     };
   }
