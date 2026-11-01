@@ -1561,7 +1561,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='over
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20261020-14';document.body.append(js)});
 
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261021-11';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261101-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261023-21';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
