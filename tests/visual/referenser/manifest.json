@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 214,
+ "antal": 215,
  "senaste": {
-  "motiv": "Hjärtan & moln: nio nya katalognycklar (heartcloud) behöver referensbilder",
-  "nycklar": 9,
-  "filter": "heartcloud",
-  "tid": "2026-10-25T18:39:15.238Z"
+  "motiv": "Bertil paket: katalognyckeln catalog:vyrapaket:bertil behöver referensbild",
+  "nycklar": 1,
+  "filter": "vyrapaket",
+  "tid": "2026-11-02T21:58:25.338Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -868,6 +868,10 @@
   },
   "catalog:socialalert:kapsel": {
    "matt": "260x64",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:bertil": {
+   "matt": "432x768",
    "fyllnad": 100
   }
  }
