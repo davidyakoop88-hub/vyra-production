@@ -576,9 +576,3 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Social-alert: två nya katalognycklar (Glanskort och Ikon som öppnas)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 2 av 170 (filter: socialalert) — catalog:socialalert:glans, catalog:socialalert:kapsel
-
-## 2026-11-02 — 1 referenser skrivna
-
-- **Motiv:** Bertil paket: ny katalognyckel catalog:bertilpaket behöver referensbild
-- **Motor:** Google Chrome for Testing 151.0.7922.34
-- **Nycklar:** 1 av 180 (filter: bertilpaket) — catalog:bertilpaket
