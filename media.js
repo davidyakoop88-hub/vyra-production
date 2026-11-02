@@ -1922,6 +1922,13 @@ Promise.resolve().then(()=>{
   const s=document.createElement('script');s.src='hjartmoln.js?v=20261026-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda hjartmoln.js');document.body.append(s);
 });
 
+// Bertil paket - gåvoscen där valda gåvor kastar ägg, glass och vattenmelon (bertil-paket.js). gift-scene.js är
+// paketets provade modell för gåvor, kö och repliker och måste laddas först.
+Promise.resolve().then(()=>{
+  if(!document.querySelector('link[data-bertil-paket]')){let css=document.createElement('link');css.rel='stylesheet';css.href='bertil-paket.css?v=20261102-1';css.dataset.bertilPaket='1';document.head.append(css)}
+  for(const f of ['gift-scene.js?v=20261102-1','bertil-paket.js?v=20261102-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+});
+
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-social-alert]')){let css=document.createElement('link');css.rel='stylesheet';css.href='social-alert.css?v=20261025-1';css.dataset.socialAlert='1';document.head.append(css)}

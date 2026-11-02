@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6d38b0a6`
+Commit: `eaf9f359`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **188** |
-| Sektioner | 29 |
-| Med katalognyckel | 188 / 188 |
-| Med shadow DOM-miniatyr | 149 / 188  ⚠️ |
-| Ritar sin design | 188 / 188 |
+| Kort totalt | **189** |
+| Sektioner | 30 |
+| Med katalognyckel | 189 / 189 |
+| Med shadow DOM-miniatyr | 150 / 189  ⚠️ |
+| Ritar sin design | 189 / 189 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -66,6 +66,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | — | — |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -383,6 +384,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Blixtmoln | `catalog:heartcloud:blixt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | Organiskt moln | `catalog:heartcloud:organiskt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | Levande moln | `catalog:heartcloud:levande` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+
+### BERTIL PAKET
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Bertil paket | `catalog:bertilpaket` | ✓ | ✓ | — | — |
 
 ### SOCIAL-ALERT
 
