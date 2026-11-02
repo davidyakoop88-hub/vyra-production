@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6d38b0a6`
+Commit: `253df7aa`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **188** |
-| Sektioner | 29 |
-| Med katalognyckel | 188 / 188 |
-| Med shadow DOM-miniatyr | 149 / 188  ⚠️ |
-| Ritar sin design | 188 / 188 |
+| Kort totalt | **189** |
+| Sektioner | 30 |
+| Med katalognyckel | 189 / 189 |
+| Med shadow DOM-miniatyr | 150 / 189  ⚠️ |
+| Ritar sin design | 189 / 189 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,8 +44,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| FIREWORKS & BUBBLES · 8 DESIGNER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 6 | 6/6 | 6/6 | 6/6 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -66,6 +66,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | — | — |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -141,6 +142,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Fan Level 50 | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
+### EGET INNEHÅLL
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+
 ### FIREWORKS & BUBBLES · 8 DESIGNER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
@@ -153,14 +162,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 | Heart Fireworks | `catalog:heartfireworks` | ✓ | ✓ | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 | Gift Bubbles | `catalog:giftbubbles` | ✓ | ✓ | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
-
-### EGET INNEHÅLL
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
-| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
-| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
@@ -383,6 +384,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Blixtmoln | `catalog:heartcloud:blixt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | Organiskt moln | `catalog:heartcloud:organiskt` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | Levande moln | `catalog:heartcloud:levande` | ✓ | ✓ | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
+
+### BERTIL PAKET
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | — | — |
 
 ### SOCIAL-ALERT
 

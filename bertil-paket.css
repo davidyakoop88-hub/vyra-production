@@ -1,0 +1,32 @@
+/* Bertil paket (bertil-paket.js). Scenen är 9:16; allt inne i den mäts i cqw så att menyer och
+   banderoll följer widgetens storlek. Klippen täcker grundbilden exakt — samma bakgrund i båda. */
+.vyra-bertil{position:absolute;overflow:hidden;container-type:inline-size;background:#0b0d1a;border-radius:0}
+.vyra-bertil.bp-studio{outline:1px solid rgba(167,139,250,.35)}
+.vyra-bertil .bp-bakgrund,.vyra-bertil .bp-vard,.vyra-bertil .bp-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.vyra-bertil .bp-vard{z-index:1}
+.vyra-bertil .bp-video[hidden]{display:none}
+.vyra-bertil .bp-titel{position:absolute;z-index:3;top:3cqw;left:0;right:0;text-align:center;font:900 6cqw/1 system-ui,sans-serif;letter-spacing:.08em;color:#fff;text-shadow:0 .5cqw 1.5cqw rgba(0,0,0,.75)}
+.vyra-bertil .bp-meny{position:absolute;z-index:3;top:16cqw;display:flex;flex-direction:column;gap:3cqw;width:21cqw}
+.vyra-bertil .bp-vanster{left:2cqw}.vyra-bertil .bp-hoger{right:2cqw}
+.vyra-bertil .bp-val{display:flex;flex-direction:column;align-items:center;gap:1cqw;padding:2cqw 1cqw;border-radius:3cqw;background:rgba(10,8,24,.62);border:.4cqw solid rgba(255,255,255,.22);color:#fff;text-align:center}
+.vyra-bertil .bp-val.bp-tom{opacity:.55;border-style:dashed}
+.vyra-bertil .bp-gavor{display:flex;justify-content:center;align-items:center;gap:.6cqw;min-height:10cqw}
+.vyra-bertil .bp-gavor img{width:9cqw;height:9cqw;object-fit:contain}
+.vyra-bertil .bp-gavor i{font-style:normal;font-size:8cqw;line-height:1}
+.vyra-bertil .bp-gavor em{font:700 3cqw/1 system-ui,sans-serif;font-style:normal}
+.vyra-bertil .bp-val b{font:800 3.2cqw/1.1 system-ui,sans-serif}
+.vyra-bertil .bp-val small{font:600 2.6cqw/1 system-ui,sans-serif;color:#d8d2ff}
+.vyra-bertil .bp-banderoll{position:absolute;z-index:4;left:8cqw;right:8cqw;bottom:14cqw;padding:2.4cqw 3cqw;border-radius:99px;background:linear-gradient(90deg,#7c3aed,#db2777);color:#fff;text-align:center;font:800 4.4cqw/1.15 system-ui,sans-serif;opacity:0;transform:translateY(3cqw);transition:opacity .2s,transform .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vyra-bertil .bp-banderoll.bp-pa{opacity:1;transform:none}
+.vyra-bertil .bp-ai{position:absolute;z-index:4;left:0;right:0;bottom:2.5cqw;text-align:center;font:700 2.4cqw/1 system-ui,sans-serif;letter-spacing:.06em;color:rgba(255,255,255,.82);text-shadow:0 .3cqw 1cqw #000}
+.vyra-bertil .bp-status{position:absolute;z-index:5;left:2cqw;top:11cqw;padding:1cqw 2cqw;border-radius:2cqw;background:rgba(0,0,0,.6);color:#fff;font:600 2.8cqw/1.2 system-ui,sans-serif}
+.vyra-bertil .bp-status:empty{display:none}
+.bp-panel .bp-kast{margin-top:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.bp-panel .bp-chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.bp-panel .bp-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 4px 3px 8px;border-radius:99px;background:rgba(167,139,250,.16);font-size:12px}
+.bp-panel .bp-chip img{width:20px;height:20px;object-fit:contain}
+.bp-panel .bp-chip button{min-width:0;padding:0 6px;border:0;background:none;color:inherit;cursor:pointer}
+.bp-panel .bp-knappar{display:flex;gap:8px}
+.bp-panel .bp-knappar button{flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(167,139,250,.45);background:rgba(124,58,237,.18);color:#f4f1ff;font:600 12px/1.2 inherit;cursor:pointer}
+.bp-panel .bp-knappar button:hover{background:rgba(124,58,237,.34)}
+.bp-katalog .bp-katalogbild{width:64px;height:114px;object-fit:cover;border-radius:8px}

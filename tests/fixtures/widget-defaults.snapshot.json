@@ -411,6 +411,65 @@
     "boxVisaKlocka": true,
     "boxAlertSkala": 100
   },
+  "catalog:vyrapaket:bertil": {
+    "type": "templateBertilPaket",
+    "x": 0,
+    "y": 0,
+    "width": 432,
+    "title": "Bertil paket",
+    "bpRost": "en",
+    "bpVolym": 65,
+    "bpPausad": false,
+    "bpGavor": {
+      "egg": [
+        {
+          "name": "Munk",
+          "giftId": "",
+          "giftIds": [],
+          "alias": [
+            "Doughnut",
+            "Donut"
+          ],
+          "image": "assets/gifts/events/7422_Doughnut.png"
+        }
+      ],
+      "icecream": [
+        {
+          "name": "Mishka Bear",
+          "giftId": "",
+          "giftIds": [
+            "5465",
+            "5486",
+            "5566",
+            "7264"
+          ],
+          "alias": [],
+          "image": "assets/gifts/events/7489_Mishka_Bear.png"
+        }
+      ],
+      "melon": [
+        {
+          "name": "Twinkling Star",
+          "giftId": "",
+          "giftIds": [
+            "13453",
+            "14242"
+          ],
+          "alias": [],
+          "image": "assets/gifts/events/7568_Twinkling_Star.png"
+        }
+      ],
+      "finale": [
+        {
+          "name": "Corgi",
+          "giftId": "6267",
+          "giftIds": [],
+          "alias": [],
+          "image": "assets/gifts/events/7670_Corgi.png"
+        }
+      ]
+    }
+  },
   "catalog:socialalert:glans": {
     "type": "templateSocialAlert",
     "x": 40,

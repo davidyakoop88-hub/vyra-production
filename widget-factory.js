@@ -365,6 +365,19 @@
       boxMinuter: 5, boxKvarMs: 300000, boxKor: false, boxSlut: 0, boxRond: 1,
       boxVolym: 70, boxRost: true, boxRostFran: 10, boxKlocka: true, boxVisaKlocka: true, boxAlertSkala: 100
     }),
+    // Bertil paket (bertil-paket.js): gåvoscen över hela duken (432 × 768). Davids förval (2026-11-02):
+    // Munk kastar ägg, Mishka Bear glass, Twinkling Star vattenmelon och Corgi allt på en gång. Id:n
+    // uppmätta i inspelade sändningar (Mishka Bear och Twinkling Star finns i flera versioner); Munk
+    // träffar på namnet. Streamern kan byta eller ta bort varje val i panelen.
+    'bertilpaket': () => ({
+      type: 'templateBertilPaket', x: 0, y: 0, width: 432, title: 'Bertil paket',
+      bpRost: 'en', bpVolym: 65, bpPausad: false, bpGavor: {
+        egg: [{ name: 'Munk', giftId: '', giftIds: [], alias: ['Doughnut', 'Donut'], image: 'assets/gifts/events/7422_Doughnut.png' }],
+        icecream: [{ name: 'Mishka Bear', giftId: '', giftIds: ['5465', '5486', '5566', '7264'], alias: [], image: 'assets/gifts/events/7489_Mishka_Bear.png' }],
+        melon: [{ name: 'Twinkling Star', giftId: '', giftIds: ['13453', '14242'], alias: [], image: 'assets/gifts/events/7568_Twinkling_Star.png' }],
+        finale: [{ name: 'Corgi', giftId: '6267', giftIds: [], alias: [], image: 'assets/gifts/events/7670_Corgi.png' }]
+      }
+    }),
     // Hjärtan & moln (hjartmoln.js): en transparent 9:16-effekt över hela duken (432 × 768) som
     // spelas vid likes tills streamern väljer annat. Profilhjärtan har porträttlagret påslaget.
     'heartcloud': v => ({
@@ -734,6 +747,13 @@
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
     'boxgame': () => ['boxgame', {}],
+    // Familjen vyrapaket: gåvoscener i paketform, en variant per paket (idag bara bertil). Nyckeln
+    // sorteras sist bland katalognycklarna, så webbläsarvakterna som delar upp dem med index % 6 behåller
+    // sina grupper.
+    'vyrapaket': parts => {
+      if (parts[0] !== 'bertil') throw new Error('Okänt paket: ' + parts[0]);
+      return ['bertilpaket', {}];
+    },
     'heartcloud': parts => {
       const namn = { profilhjartan: 'Profilhjärtan', fallande: 'Fallande hjärtan', hjartmoln: 'Hjärtmoln', glodande: 'Glödande hjärtmoln',
         kristall: 'Kristallhjärtan', stjarnstoft: 'Stjärnstoft', blixt: 'Blixtmoln', organiskt: 'Organiskt moln', levande: 'Levande moln' };
