@@ -50,12 +50,24 @@
   const tidText = s => s <= 20 ? String(s).padStart(2, '0') : String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
 
   // ---------- markup ----------
-  // Allt som byts per sekund ritas av visa() nedan, både vid render() och av tickern, så första
-  // bildrutan och alla följande är samma funktion.
+  // Allt som byts per sekund ritas av visa() nedan, av tickern var 50:e ms. Texterna står ändå i
+  // markupen från början (texter(), samma funktion som visa() använder): en nyss ritad klocka med tom
+  // tidsrad var 106 px lägre, och Storlek-reglaget förankrade mitten mot den lådan direkt efter
+  // render — när tickern sedan fyllde i tiden växte klockan nedåt och mitten gled 53 px × skalan.
+  function texter(l, s) {
+    const skarp = s <= 20 && s > 0;
+    return {
+      tid: tidText(s),
+      status: s === 0 ? 'KNOCKOUT' : s <= 10 && l.kor ? 'Referee counting…' : l.kor ? (s <= 20 ? 'Slutspurten är igång' : 'Ronden pågår') : l.kvarMs < l.helRond ? 'Pausad' : 'Redo för nästa rond',
+      motto: skarp ? 'FINAL SECONDS' : s === 0 ? 'TIME IS UP' : 'FIGHT FOR EVERY SECOND',
+      lage: l.kor ? 'LIVE' : s === 0 ? 'FINISHED' : 'STANDBY'
+    };
+  }
   function klockHtml(w) {
+    const l = lage(w, nu()), x = texter(l, sekunder(l));
     return `<section class="bgx-klocka"><div class="bgx-topp"><span class="bgx-lampa"></span>BOXGAME<span class="bgx-rond">ROUND • ${String(klamp(w.boxRond, 1, 99, 1)).padStart(2, '0')}</span></div>`
-      + `<div class="bgx-tid" role="timer" aria-label="Tid kvar"></div><div class="bgx-domare"></div><div class="bgx-status"></div>`
-      + `<div class="bgx-spar"><div></div></div><div class="bgx-botten"><span class="bgx-motto"></span><span class="bgx-lage"></span></div></section>`;
+      + `<div class="bgx-tid" role="timer" aria-label="Tid kvar">${esc(x.tid)}</div><div class="bgx-domare"></div><div class="bgx-status">${esc(x.status)}</div>`
+      + `<div class="bgx-spar"><div></div></div><div class="bgx-botten"><span class="bgx-motto">${esc(x.motto)}</span><span class="bgx-lage">${esc(x.lage)}</span></div></section>`;
   }
   const oldWh = wh;
   wh = function (w) {
@@ -78,10 +90,8 @@
     const satt = (sel, txt) => { const el = rot.querySelector(sel); if (el && el.textContent !== txt) el.textContent = txt; };
     const klass = (k, pa) => { if (rot.classList.contains(k) !== pa) rot.classList.toggle(k, pa); };
     klass('bgx-skarp', skarp); klass('bgx-klar', s === 0); klass('bgx-alert-pa', !!alertNyckel);
-    satt('.bgx-tid', tidText(s));
-    satt('.bgx-status', s === 0 ? 'KNOCKOUT' : s <= 10 && l.kor ? 'Referee counting…' : l.kor ? (s <= 20 ? 'Slutspurten är igång' : 'Ronden pågår') : l.kvarMs < l.helRond ? 'Pausad' : 'Redo för nästa rond');
-    satt('.bgx-motto', skarp ? 'FINAL SECONDS' : s === 0 ? 'TIME IS UP' : 'FIGHT FOR EVERY SECOND');
-    satt('.bgx-lage', l.kor ? 'LIVE' : s === 0 ? 'FINISHED' : 'STANDBY');
+    const x = texter(l, s);
+    satt('.bgx-tid', x.tid); satt('.bgx-status', x.status); satt('.bgx-motto', x.motto); satt('.bgx-lage', x.lage);
     const domare = rot.querySelector('.bgx-domare');
     if (domare) {
       const d = s <= 10 && s > 0 ? String(s) : '';

@@ -117,6 +117,25 @@ test('klockan syns i OBS från första bildrutan — den väntar inte på en liv
   assert.match(kod, /const UNDANTAG = new Set\(\[[^\]]*'templateBoxgameClock'/);
 });
 
+// Storlek-reglaget förankrar mitten mot lådan DIREKT efter render. Med en tom tidsrad var den 106 px
+// lägre än när tickern fyllt i tiden, och klockan gled nedåt 53 px × skalan (storlek-matning,
+// 2026-11-02). Markupen ska därför redan bära samma texter som visa() skriver.
+test('en nyss ritad klocka har sina texter innan tickern hunnit — lådan har sin höjd från början', () => {
+  const h = rigg();
+  const w = h.window.VyraWidgets.create('catalog:boxgame');
+  const host = h.document.createElement('div');
+  host.innerHTML = h.window.wh(w);
+  const rot = host.querySelector('.vyra-boxgame');
+  assert.equal(text(rot, '.bgx-tid'), '05:00');
+  assert.equal(text(rot, '.bgx-status'), 'Redo för nästa rond');
+  assert.equal(text(rot, '.bgx-motto'), 'FIGHT FOR EVERY SECOND');
+  assert.equal(text(rot, '.bgx-lage'), 'STANDBY');
+  const fore = rot.innerHTML;
+  B(h).visa(rot, w, Date.now());
+  assert.equal(text(rot, '.bgx-tid'), '05:00', 'visa() skrev en annan tid än markupen');
+  assert.equal(rot.innerHTML.replace(/ style="[^"]*"/g, ''), fore.replace(/ style="[^"]*"/g, ''), 'visa() ändrade texterna i en nyss ritad klocka');
+});
+
 test('ljudfilerna finns, är små, och det finns inga knackljud', () => {
   for (const [f, max] of [['nedrakning-jack.mp3', 220], ['slutklocka.mp3', 60]]) {
     const kb = fs.statSync('assets/sounds/boxgame/' + f).size / 1024;
