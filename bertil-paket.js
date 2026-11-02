@@ -322,11 +322,11 @@
     sek.className = 'bp-katalog';
     sek.innerHTML = `<h4>${NAMN.toUpperCase()}</h4>`;
     const b = document.createElement('button');
-    b.type = 'button'; b.dataset.bpSkapa = '1'; b.dataset.catalogKey = 'catalog:bertilpaket';
+    b.type = 'button'; b.dataset.bpSkapa = '1'; b.dataset.catalogKey = 'catalog:vyrapaket:bertil';
     b.innerHTML = `<img class="bp-katalogbild" src="${MAPP}bertil-paket-katalog.webp" alt="" loading="lazy"><span><b>${NAMN}</b><small>Tittarnas gåvor kastar ägg, glass och vattenmelon på Bertil</small></span>`;
     b.onclick = () => {
       if (!window.VyraWidgets || typeof state === 'undefined') return;
-      const w = window.VyraWidgets.create('catalog:bertilpaket');
+      const w = window.VyraWidgets.create('catalog:vyrapaket:bertil');
       state.widgets.push(w); selected = w.id;
       if (typeof save === 'function') save(); if (typeof render === 'function') render();
       if (typeof toast === 'function') toast(NAMN + ' tillagt — välj gåvorna i panelen');

@@ -411,7 +411,7 @@
     "boxVisaKlocka": true,
     "boxAlertSkala": 100
   },
-  "catalog:bertilpaket": {
+  "catalog:vyrapaket:bertil": {
     "type": "templateBertilPaket",
     "x": 0,
     "y": 0,

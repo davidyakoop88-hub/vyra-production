@@ -23,7 +23,7 @@ function rigg({ overlay = false, widgets = [] } = {}) {
   h.load('bertil-paket.js');
   return { h, plays, BP: h.window.VyraBertilPaket };
 }
-const ny = (h, over = {}) => ({ ...h.window.VyraWidgets.create('catalog:bertilpaket'), id: 'bp1', ...over });
+const ny = (h, over = {}) => ({ ...h.window.VyraWidgets.create('catalog:vyrapaket:bertil'), id: 'bp1', ...over });
 const gava = (over = {}) => ({ type: 'gift', id: 'g' + Math.random(), giftName: 'Rose', giftId: '5655', username: 'alice', count: 1, at: T0, ...over });
 const tick = () => new Promise(r => setTimeout(r, 0));
 const skicka = (h, e) => h.window.dispatchEvent(new h.window.CustomEvent('vyra-live-event', { detail: e }));

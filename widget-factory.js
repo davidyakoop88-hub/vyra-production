@@ -747,7 +747,13 @@
     'giftbubbles': () => ['giftbubbles', {}],
     'heartfireworks': () => ['heartfireworks', {}],
     'boxgame': () => ['boxgame', {}],
-    'bertilpaket': () => ['bertilpaket', {}],
+    // Familjen vyrapaket: gåvoscener i paketform, en variant per paket (idag bara bertil). Nyckeln
+    // sorteras sist bland katalognycklarna, så webbläsarvakterna som delar upp dem med index % 6 behåller
+    // sina grupper.
+    'vyrapaket': parts => {
+      if (parts[0] !== 'bertil') throw new Error('Okänt paket: ' + parts[0]);
+      return ['bertilpaket', {}];
+    },
     'heartcloud': parts => {
       const namn = { profilhjartan: 'Profilhjärtan', fallande: 'Fallande hjärtan', hjartmoln: 'Hjärtmoln', glodande: 'Glödande hjärtmoln',
         kristall: 'Kristallhjärtan', stjarnstoft: 'Stjärnstoft', blixt: 'Blixtmoln', organiskt: 'Organiskt moln', levande: 'Levande moln' };
