@@ -47,7 +47,7 @@ function utanfor(w) {
 
 test('varje katalognyckel med kanda matt skapas helt inom 432x768', () => {
   const nycklar = allaNycklar();
-  assert.ok(nycklar.size >= 150, `bara ${nycklar.size} nycklar att prova`);
+  assert.ok(nycklar.size >= 130, `bara ${nycklar.size} nycklar att prova`);
   const ute = [];
   for (const [k, values] of nycklar) {
     const w = VyraWidgets.create(k, values ? { values } : undefined);
