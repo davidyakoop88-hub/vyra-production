@@ -250,7 +250,12 @@ test('Voltage: "Värdet under namnet" lägger värdet under namnet, bara när de
     assert.ok(nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), `${w.type}: valet syns inte`);
   }
   for (const w of FAMILJ('basic-v2'))
-    assert.ok(!nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), 'fältet ska bara gälla Voltage');
+    assert.ok(!nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), 'fältet ska bara gälla Voltage och Prism vertikal');
+  // Prism vertikal fick samma val 2026-11-03 (David: "gör prism att man kan lägga siffror också under namn").
+  for (const w of FAMILJ('prism-vertical')) {
+    assert.ok(!nod(w).classList.contains('rk6-under'), `${w.type}: Prism flyttade värdet utan att valet gjorts`);
+    assert.ok(nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), `${w.type}: Prism-valet syns inte`);
+  }
   const css = fs.readFileSync('ranking-sixpack.css', 'utf8');
   assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>em\{grid-row:2!important;grid-column:2!important/);
   assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>\.rk6-av\{grid-row:1\/3!important/);

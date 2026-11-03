@@ -70,14 +70,13 @@ test('i OBS: tom när ingen tappar, hjärtan när tittarna tappar, historik ger 
   } finally { await page.close(); }
 });
 
-test('i studion: katalogkortet skapar portalen hel på duken, med förhandsbild i vila', { skip, timeout: 90000 }, async () => {
+// Portalens katalogkort togs bort 2026-11-03 (katalog-ordning.js). En portal som redan ligger i en layout
+// ska ändå ritas hel på duken — det är det provet vaktar nu.
+test('i studion: en befintlig portal ritas hel på duken, med förhandsbild i vila', { skip, timeout: 90000 }, async () => {
   const { page, fel } = await sida(false);
   try {
     const m = await page.evaluate(async () => {
-      let k = null;
-      for (let t = 0; t < 40 && !k; t++) { view = 'overlay'; render(); bind(); k = document.querySelector('[data-catalog-key="catalog:likefountain:portal:portal"]'); if (!k) await new Promise(r => setTimeout(r, 250)); }
-      if (!k) return { fel: 'katalogkortet saknas' };
-      k.click(); const w = state.widgets[state.widgets.length - 1]; view = 'editor'; selected = null; render(); bind();
+      const w = VyraWidgets.create('catalog:likefountain:portal:portal'); state.widgets.push(w); view = 'editor'; selected = null; render(); bind();
       await new Promise(r => setTimeout(r, 400));
       const el = document.querySelector(`.editor-shell .canvas .widget[data-id="${w.id}"]`);
       const d = window.VyraGrans.dukFor(el);

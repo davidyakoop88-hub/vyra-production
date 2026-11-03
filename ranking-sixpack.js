@@ -50,6 +50,8 @@
         ...Array(7).fill(['#a9b6c5', '#edf2f7'])] })
   });
   const IDS = Object.keys(DESIGNS);
+  // Designerna där panelen erbjuder "Värdet under namnet" (David 2026-11-01 Voltage, 2026-11-03 Prism).
+  const VARDE_UNDER = new Set(['voltage', 'prism-vertical']);
 
   // EN MYNTSYMBOL I HELA FAMILJEN. Före fanns tre: guldmyntet här (sex designer), ett "V" i en
   // guldcirkel (Halo, Signal Orbit) och "◉" (Top Gift). Guldmyntet vinner: det är det vanligaste
@@ -297,8 +299,9 @@
       return `style="${utan}${utan && !/;\s*$/.test(utan) ? ';' : ''}zoom:${l.z};--rk6-z:${gz};--rk6-mot:${+(1 / gz).toFixed(4)};--rk6-vb:${Math.max(MIN_KOMPAKT_BREDD, l.synlig)}px"`;
     });
     if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');
-    // Voltage: värdet under namnet i stället för bredvid (panelens "Värdet under namnet").
-    if (id === 'voltage' && w.rk6VardeUnder === true) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-under"');
+    // Voltage och Prism vertikal: värdet under namnet i stället för bredvid (panelens "Värdet under
+    // namnet"). Prism horisontal har redan namn och värde under varandra i samma platta.
+    if (VARDE_UNDER.has(id) && w.rk6VardeUnder === true) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-under"');
     if (profilram(w)) {
       const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(String(w.profileFrame)) : { fit: 0.62 };
       const acc = typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;

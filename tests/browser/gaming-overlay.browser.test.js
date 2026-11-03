@@ -208,7 +208,7 @@ test('en vanlig widget efter temat hamnar ovanpå det, går att klicka på och r
     // En widget som låg där före temat lyfts över det, i stället för att försvinna bakom bakgrunden.
     assert.ok(await page.evaluate(() => state.widgets.find(w => w.type === 'templateCustomText').layer > 6), 'den tidigare widgeten ligger kvar under temat');
 
-    for (const nyckel of ['catalog:toplike:voltage', 'catalog:ranking:templateTopCoins:celestial', 'catalog:topgift:premium:royal']) {
+    for (const nyckel of ['catalog:toplike:voltage', 'catalog:ranking:templateTopCoins:metall', 'catalog:topgift:premium:royal']) {
       const r = await page.evaluate(async nyckel => {
         view = 'overlay'; render(); await new Promise(r => setTimeout(r, 100));
         const knapp = document.querySelector(`.widget-catalog [data-catalog-key="${nyckel}"]`);
