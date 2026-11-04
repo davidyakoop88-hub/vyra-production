@@ -22,9 +22,70 @@
   if (!GILTIG.test(aktuell)) aktuell = '';
   var spelare = [];   // { bild, canvas, url, spelare }
 
+  // VÄNDNINGEN FÖLJER VIDEON (David 2026-11-05: "varje flipp sker vid 9,5 … varje gång den flippar
+  // ska man se hela videon", och "alla våra Top Gift ska ha samma inställningar").
+  //
+  // Kortet vänder i vyraFlipSmooth (studio.css): ett varv där ena sidan står still 0–43 %, kortet
+  // står på kant vid 46,5 %, andra sidan står still 50–93 % och kortet står på kant igen vid 96,5 %.
+  // Varje sida syns alltså ett HALVT varv. Med 10 s varv var det 5 s — en 9,5 s-gåva klipptes mitt i.
+  //
+  // Medan en gåvovideo spelar blir varvet 2 × max(9,5 s, videons längd), för varje Top Gift som
+  // vänder (regeln gäller .vyra-topgift.play .vyra-flip, alltså alla designer). De som inte vänder
+  // (Design 2 och 3) visar videon i loop hela tiden och berörs inte. Regeln ligger i en egen
+  // stilmall och inte på widgeten: render() bygger om widgeten vid varje gåva, och en ny nod måste
+  // ha rätt varv redan när VyraFlip.resume (media.js) läser av det, annars hoppar vändningen.
+  //
+  // Och videon börjar om när gåvosidan vänds fram: synka() läser var i varvet kortet står och lägger
+  // videon på samma ställe — från första rutan när kortet står på kant och gåvan kommer fram, pausad
+  // på första rutan medan profilen syns. Kortare videor loopar inom sin sida.
+  var MIN_SIDA_S = 9.5, KANT = 0.465, SIDA = 0.5;
+  var varvFor = {};   // url -> varvets längd i s, när videons längd är känd
+  function varvS(langd) { return 2 * Math.max(MIN_SIDA_S, langd || 0); }
+  function varvStil() {
+    var doc = root.document, id = 'vyra-topgift-varv-stil';
+    var s = doc.getElementById(id), v = aktuell && varvFor[aktuell];
+    var text = v ? '.vyra-topgift.play .vyra-flip{animation-duration:' + v.toFixed(2) + 's!important}' : '';
+    if (!s) { if (!text) return; s = doc.createElement('style'); s.id = id; (doc.head || doc.documentElement).appendChild(s); }
+    if (s.textContent !== text) s.textContent = text;
+  }
+  // Var i varvet kortet står (0–1), och om gåvosidan ligger fram när varvet börjar. null = vänder inte.
+  function vandning(post) {
+    var rot = post.bild.closest ? post.bild.closest('.vyra-topgift') : null;
+    var flip = rot && rot.querySelector('.vyra-flip'), gava = rot && rot.querySelector('.vyra-gift-face');
+    if (!flip || !gava || typeof flip.getAnimations !== 'function') return null;
+    var a = flip.getAnimations().filter(function (x) { return x.animationName === 'vyraFlipSmooth'; })[0];
+    var t = a && a.effect && a.effect.getComputedTiming();
+    if (!t || t.progress == null) return null;
+    // Gåvosidans egen vridning (utan kortets): rotateY(180°) ger negativ cos — då ligger den bak.
+    var m = root.getComputedStyle(gava).transform, fram = true;
+    // Första talet INNANFÖR parentesen (m11) — "matrix3d(" bär själv en siffra.
+    if (m && m !== 'none') { var tal = m.slice(m.indexOf('(') + 1).match(/-?[\d.]+(e-?\d+)?/g) || []; fram = parseFloat(tal[0]) >= 0; }
+    return { p: t.progress, start: fram ? KANT + SIDA : KANT };
+  }
+  function synka() {
+    spelare.forEach(function (post) {
+      var s = post.spelare, v = s && s.video;
+      if (!v || !(v.duration > 0)) return;
+      var langd = v.duration, varv = varvFor[post.url];
+      if (!varv) { varvFor[post.url] = varv = varvS(langd); varvStil(); }
+      var l = vandning(post);
+      if (!l) { if (v.paused) v.play().catch(function () {}); return; }
+      var inne = ((l.p - l.start) % 1 + 1) % 1;      // andel av varvet sedan gåvosidan kom fram
+      if (inne >= SIDA) {                           // profilen syns: vänta på första rutan
+        if (!v.paused) v.pause();
+        if (v.currentTime > 0.05) v.currentTime = 0;
+        return;
+      }
+      var mal = (inne * varv) % langd;
+      if (Math.abs(v.currentTime - mal) > 0.25) v.currentTime = mal;
+      if (v.paused) v.play().catch(function () {});
+    });
+  }
+
   function spara(url) {
     aktuell = url;
     try { if (url) root.sessionStorage.setItem(NYCKEL, url); else root.sessionStorage.removeItem(NYCKEL); } catch (e) {}
+    varvStil();
   }
 
   // SOM BETTERTOK (2026-10-31, uppmätt ur deras inspelning bildruta för bildruta): animationen visas
@@ -342,8 +403,11 @@
     if (event && event.detail && event.detail.event === 'live:start') { spara(''); stam(); }
   });
   setInterval(stam, 1000);
+  setInterval(synka, 100);
   root.VyraTopGiftVideo = {
     stam: stam,
+    synka: synka,
+    varvS: varvS,
     aktuell: function () { return aktuell; },
     // Panelens alternativ (vyra-topgift-panel.js läser dem när panelen byggs).
     former: Object.keys(FORMER).map(function (k) { return [k, FORMER[k].namn]; }),
