@@ -106,7 +106,10 @@ test('rankingkortens förhandsbilder täcker sin bildyta', { skip, timeout: 2400
     assert.ok(kort.length >= 9, `bara ${kort.length} rankingkort ritades — provet mäter inget`);
     const sorterad = kort.map(k => k.tackning).sort((a, b) => a - b), median = sorterad[sorterad.length >> 1];
     const sammanfattning = kort.map(k => `${k.nyckel.replace('catalog:', '')}=${k.tackning}`).join(', ');
-    assert.ok(median >= 0.38, `median-täckningen är ${median} (main före rättningen: 0,31) — ${sammanfattning}`);
+    // 0,38 → 0,34 (2026-11-04): Voltage fick värdet under namnet som standard och blev hög och smal
+    // (144 px bred), så dess tre kort täcker 0,32 av den breda bildytan i stället för som förut.
+    // Omramningen är orörd; det är widgetens form som ändrats. Golvet per kort (0,22) gäller oförändrat.
+    assert.ok(median >= 0.34, `median-täckningen är ${median} (main före rättningen: 0,31) — ${sammanfattning}`);
     for (const k of kort) {
       assert.ok(k.tackning >= 0.22, `${k.nyckel} täcker bara ${Math.round(k.tackning * 100)} % av bildytan (main: 14 %)`);
       assert.ok(k.bildHojd >= 0.4 * k.kortHojd,
