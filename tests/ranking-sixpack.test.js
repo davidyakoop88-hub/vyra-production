@@ -242,12 +242,13 @@ test('alla tre familjerna bär widgetScale som zoom; textgolven följer bara det
   }
 });
 
-// VOLTAGE · VÄRDET UNDER NAMNET (David 2026-11-01): ett val, inte ett nytt förval — utan kryss ser
-// listan ut exakt som förut, och de andra designerna rörs inte av fältet.
-test('Voltage: "Värdet under namnet" lägger värdet under namnet, bara när det valts', () => {
+// VOLTAGE · VÄRDET UNDER NAMNET (David 2026-11-01 som val, 2026-11-04 "Ja, som standard"): Voltage har
+// värdet under namnet från start; bara ett urkryssat val (false) ger den gamla raden. Andra designer rörs inte.
+test('Voltage: värdet under namnet är standard, och går att kryssa ur', () => {
   for (const w of FAMILJ('voltage')) {
-    assert.ok(!nod(w).classList.contains('rk6-under'), `${w.type}: värdet flyttades utan att valet gjorts`);
+    assert.ok(nod(w).classList.contains('rk6-under'), `${w.type}: värdet står inte under namnet från start`);
     assert.ok(nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), `${w.type}: valet syns inte`);
+    assert.ok(!nod({ ...w, rk6VardeUnder: false }).classList.contains('rk6-under'), `${w.type}: urkryssat val flyttar ändå värdet`);
   }
   for (const w of FAMILJ('basic-v2'))
     assert.ok(!nod({ ...w, rk6VardeUnder: true }).classList.contains('rk6-under'), 'fältet ska bara gälla Voltage och Prism vertikal');
@@ -263,7 +264,8 @@ test('Voltage: "Värdet under namnet" lägger värdet under namnet, bara när de
   assert.match(css, /\.rk6\.rk6-voltage\.rk6-under \.toplike-row::before\{content:''!important;display:block!important;[^}]*grid-column:2!important;grid-row:1\/3!important/);
   assert.match(css, /\.rk6-voltage\.rk6-under \.toplike-row>:is\(\.rk6-namn,em\)\{[^}]*border:0!important;box-shadow:none!important;background:none!important/);
   const panel = fs.readFileSync('vyra-ranking-panel.js', 'utf8');
-  assert.match(panel, /falt: 'rk6VardeUnder', etikett: 'Värdet under namnet'/);
+  assert.match(panel, /falt: 'rk6VardeUnder', etikett: 'Värdet under namnet', standard: id === 'voltage'/);
+  assert.match(fs.readFileSync('vyra-panelram.js', 'utf8'), /\(v == null \? k\.standard : v\) \? ' checked'/, 'ramen visar inte kryssrutans standard');
   assert.match(panel, /utseendeFalt: \[[^\]]*'rk6VardeUnder'/);
 });
 

@@ -301,7 +301,8 @@
     if (l.kompakt) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-kompakt"');
     // Voltage och Prism vertikal: värdet under namnet i stället för bredvid (panelens "Värdet under
     // namnet"). Prism horisontal har redan namn och värde under varandra i samma platta.
-    if (VARDE_UNDER.has(id) && w.rk6VardeUnder === true) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-under"');
+    // Voltage har det PÅ som standard (David 2026-11-04: "Ja, som standard"); bara ett urkryssat val (false) stänger av.
+    if (VARDE_UNDER.has(id) && (w.rk6VardeUnder === true || (id === 'voltage' && w.rk6VardeUnder !== false))) open = open.replace(/class="([^"]*)"/, 'class="$1 rk6-under"');
     if (profilram(w)) {
       const g = typeof window.vyraFrameGeom === 'function' ? window.vyraFrameGeom(String(w.profileFrame)) : { fit: 0.62 };
       const acc = typeof window.vyraFrameAccent === 'function' ? window.vyraFrameAccent(String(w.profileFrame)) : null;
