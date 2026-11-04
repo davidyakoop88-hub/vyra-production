@@ -209,7 +209,8 @@
       const alt = (k.alternativ || []).map(a => Array.isArray(a) ? a : [a, a]);
       html = `${etikett}<select id="${id}">${alt.map(([a, t]) => `<option value="${esc(a)}"${String(v) === String(a) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
     } else if (k.typ === 'kryss') {
-      html = `<input id="${id}" type="checkbox"${v ? ' checked' : ''}> ${etikett}`;
+      // k.standard: vad rutan visar när fältet aldrig satts (t.ex. Voltage "Värdet under namnet", på från start).
+      html = `<input id="${id}" type="checkbox"${(v == null ? k.standard : v) ? ' checked' : ''}> ${etikett}`;
     } else if (k.typ === 'farg') {
       html = `<span>${etikett}</span><input id="${id}" type="color" value="${esc(v || k.standard || '#ffffff')}">`;
     } else if (k.typ === 'knapp') {

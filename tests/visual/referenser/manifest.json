@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 215,
  "senaste": {
-  "motiv": "Bertil paket: katalognyckeln catalog:vyrapaket:bertil behöver referensbild",
-  "nycklar": 1,
-  "filter": "vyrapaket",
-  "tid": "2026-11-02T21:58:25.338Z"
+  "motiv": "Voltage visar värdet under namnet som standard (David 2026-11-04: Ja, som standard) — tre Voltage-nycklar får ny bild",
+  "nycklar": 3,
+  "filter": "voltage",
+  "tid": "2026-11-04T07:07:19.549Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -383,7 +383,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopCoins:voltage": {
-   "matt": "197x278",
+   "matt": "145x280",
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:basic-v2": {
@@ -407,7 +407,7 @@
    "fyllnad": 100
   },
   "catalog:ranking:templateTopPoints:voltage": {
-   "matt": "197x278",
+   "matt": "145x280",
    "fyllnad": 100
   },
   "catalog:toplike:basic-v2": {
@@ -431,7 +431,7 @@
    "fyllnad": 100
   },
   "catalog:toplike:voltage": {
-   "matt": "197x278",
+   "matt": "145x280",
    "fyllnad": 100
   },
   "catalog:socialgoal:diamonds:diamond-orbit:circle": {

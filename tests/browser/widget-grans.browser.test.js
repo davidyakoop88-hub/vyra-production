@@ -52,7 +52,11 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-const WIDGET = { id: 'd1', type: 'templateTopLike', x: 40, y: 40, width: 300 };
+// rk6VardeUnder: false — Voltage har sedan 2026-11-04 värdet under namnet som standard, och blir då
+// 144 px bred i stället för den bredare raden. Vid zoom 0.35 är det 50 synliga px, bara två mer än
+// MIN_SYNLIG (48), så den nedskalade widgeten kan inte längre sticka ut förbi kanten. Provet gäller
+// inneslutningen, inte designen: det behåller den breda raden, som provet alltid mätt på.
+const WIDGET = { id: 'd1', type: 'templateTopLike', x: 40, y: 40, width: 300, rk6VardeUnder: false };
 
 async function editorn(widgets, vy) {
   const context = await browser.newContext({ viewport: vy || { width: 1440, height: 900 } });
