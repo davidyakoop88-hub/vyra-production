@@ -1929,6 +1929,12 @@ Promise.resolve().then(()=>{
   for(const f of ['gift-scene.js?v=20261102-1','bertil-paket.js?v=20261102-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 
+// Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
+Promise.resolve().then(()=>{
+  if(!document.querySelector('link[data-katalog-ordning]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-ordning.css?v=20261103-1';css.dataset.katalogOrdning='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='katalog-ordning.js?v=20261103-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-ordning.js');document.body.append(s);
+});
+
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-social-alert]')){let css=document.createElement('link');css.rel='stylesheet';css.href='social-alert.css?v=20261025-1';css.dataset.socialAlert='1';document.head.append(css)}

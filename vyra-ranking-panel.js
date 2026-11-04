@@ -124,7 +124,7 @@
       // 3 · Storlek och placering
       { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       { sektion: 3, typ: 'kryss', falt: 'rankingMirror', etikett: 'Spegla riktningen', legacyId: '#wsMirror' },
-      ...(id === 'voltage' ? [{ sektion: 3, typ: 'kryss', falt: 'rk6VardeUnder', etikett: 'Värdet under namnet' }] : []),
+      ...(id === 'voltage' || id === 'prism-vertical' ? [{ sektion: 3, typ: 'kryss', falt: 'rk6VardeUnder', etikett: 'Värdet under namnet' }] : []),
       { sektion: 3, typ: 'tal', falt: 'titleOffsetX', etikett: 'Rubrik X (px)', legacyId: '#wsTitleOffX', om: visaRubrik },
       { sektion: 3, typ: 'tal', falt: 'titleOffsetY', etikett: 'Rubrik Y (px)', legacyId: '#wsTitleOffY', om: visaRubrik },
       { sektion: 3, typ: 'tal', falt: 'nameOffsetX', etikett: 'Namn X (px)', legacyId: '#wsNameOffX' },

@@ -58,7 +58,7 @@ test('panelens klasser är handtagens: fast, text (content) och media — för v
     if (P.lasbar(k2) !== (k2 !== 'fast')) fel.push(`${k}: lasbar(${k2})`);
   }
   assert.deepEqual(fel, []);
-  assert.ok(antal.fast > 150 && antal.content >= 1 && antal.media >= 2, JSON.stringify(antal));
+  assert.ok(antal.fast > 130 && antal.content >= 1 && antal.media >= 2, JSON.stringify(antal));
 });
 
 test('panelen skriver aldrig style.height på en fast komposition, men gör det på egen text/media', async () => {

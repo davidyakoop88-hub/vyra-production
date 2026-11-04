@@ -1,0 +1,12 @@
+/* katalog-ordning.css — flikarna ovanför widgetkatalogen och de dolda sektionerna (katalog-ordning.js). */
+.widget-catalog section.kat-tom,
+.widget-catalog > .kat-utanfor{display:none!important}
+.kat-flikar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;position:sticky;top:0;z-index:3;padding:8px 0;background:#110a18}
+.kat-flikar[hidden],.kat-flikar button[hidden]{display:none}
+.kat-flikar button{appearance:none;border:1px solid #3a2a4f;background:#170c20;color:#d8ccea;border-radius:999px;
+  padding:6px 12px;font:600 11px/1.2 inherit;letter-spacing:.2px;cursor:pointer}
+.kat-flikar button:hover{border-color:#8a5cff;color:#fff}
+.kat-flikar button[aria-selected="true"]{background:linear-gradient(135deg,#8a5cff,#c04cff);border-color:transparent;color:#fff}
+.kat-flikar button:focus-visible{outline:2px solid #c9a7ff;outline-offset:2px}
+/* I editorns vänsterlist visas katalogen bara när den är öppen — flikarna följer med. */
+.elements:not(.catalog-open) .kat-flikar{display:none}

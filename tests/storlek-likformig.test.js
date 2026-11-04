@@ -172,7 +172,7 @@ function provaNyckel(h, k, values, { las, rot }) {
 const nycklar = allaNycklar();
 
 test('alla katalognycklar: atta handtag, last och olast — aldrig skilda X/Y-skalor, aldrig widgetScaleY', () => {
-  assert.ok(nycklar.size >= 150, `bara ${nycklar.size} nycklar att prova`);
+  assert.ok(nycklar.size >= 130, `bara ${nycklar.size} nycklar att prova`);
   const h = rigg();
   const fel = [];
   const klasser = { fast: 0, text: 0, media: 0 };
@@ -185,7 +185,7 @@ test('alla katalognycklar: atta handtag, last och olast — aldrig skilda X/Y-sk
   }
   assert.deepEqual(fel.slice(0, 40), [], `${fel.length} fel`);
   // kontrollmatning: alla tre klasserna faktiskt provade
-  assert.ok(klasser.fast > 150 && klasser.text >= 1 && klasser.media >= 2, JSON.stringify(klasser));
+  assert.ok(klasser.fast > 130 && klasser.text >= 1 && klasser.media >= 2, JSON.stringify(klasser));
 });
 
 test('alla katalognycklar roterade 30 grader: likformigt och mitten star still', () => {
