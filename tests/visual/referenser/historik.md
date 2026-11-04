@@ -582,3 +582,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Bertil paket: katalognyckeln catalog:vyrapaket:bertil behöver referensbild
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 180 (filter: vyrapaket) — catalog:vyrapaket:bertil
+
+## 2026-11-04 — 3 referenser skrivna
+
+- **Motiv:** Voltage visar värdet under namnet som standard (David 2026-11-04: Ja, som standard) — tre Voltage-nycklar får ny bild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 143 (filter: voltage) — catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:voltage, catalog:toplike:voltage
