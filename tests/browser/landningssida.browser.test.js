@@ -221,7 +221,9 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // 2026-10-20 (granskning F31/F32): "Från widget till OBS i tre steg" + provperiodens villkor
     // ligger direkt under heron, med avsikt — arbetsflödet ska synas före inloggning. Vaktas av
     // landning-floede-provperiod.browser.test.js.
-    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'logos', 'premium', 'mini-sidfot'],
+    // 2026-11-05 (David): "Nytt i VYRA: Fan Level Up" — de sex hjärtmodellerna som videor — under
+    // arbetsflödet. Vaktas av samma prov: en ny del syns här i diffen.
+    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'logos', 'premium', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

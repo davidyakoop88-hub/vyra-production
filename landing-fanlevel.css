@@ -1,0 +1,23 @@
+/* landing-fanlevel.css — "Nytt i VYRA: Fan Level Up" på framsidan (David 2026-11-05).
+
+   De sex hjärtmodellerna (fan-hjarta.js) visas som korta, tysta videor inspelade i VYRA:s
+   overlay-utgång — det tittaren faktiskt ser i sändningen, inte en ritad bild. Samma ram och
+   samma bredd (1040 px) som "Från widget till OBS i tre steg" ovanför, så att sidan håller ihop.
+   Videorna spelar bara när de syns och står still på slutbilden vid reducerad rörelse
+   (landing-fanlevel.js). */
+.fanniva{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:40px 20px 56px;text-align:center;background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
+.fanniva-nytt{display:inline-block;margin:0 0 10px;padding:4px 10px;border:1px solid #e4b35a66;border-radius:999px;color:#ffd98f;font-size:11px;font-weight:800;letter-spacing:2px}
+.fanniva>h2{margin:0 0 6px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text)}
+.fanniva>p.fanniva-ingress{margin:0 auto 26px;max-width:640px;color:var(--muted);font-size:14px;line-height:1.6}
+.fanniva-galleri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0;padding:0;list-style:none;text-align:left}
+.fanniva-galleri figure{margin:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--radius-lg);background:#120c1a;overflow:hidden}
+/* Videorna har olika format (Heart Reveal är bred, Ascend hög). Rutan är fast 4:5 och videon ligger
+   absolut i den, så att ett högt format inte gör sitt kort högre än grannarnas. */
+.fanniva-galleri .fanniva-film{position:relative;aspect-ratio:4/5;background:#120c1a}
+.fanniva-galleri video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain}
+.fanniva-galleri figcaption{margin-top:auto;padding:12px 14px 14px;border-top:1px solid var(--line);background:var(--panel)}
+.fanniva-galleri figcaption b{display:block;color:var(--text);font-size:14px}
+.fanniva-galleri figcaption span{display:block;margin-top:3px;color:var(--muted);font-size:12.5px;line-height:1.45}
+.fanniva-not{margin:18px auto 0;max-width:640px;color:var(--muted);font-size:12.5px;line-height:1.6}
+@media(max-width:860px){.fanniva-galleri{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.fanniva{padding:32px 16px 44px}.fanniva-galleri{grid-template-columns:minmax(0,1fr)}}
