@@ -229,7 +229,9 @@
     if (korning.get(box) !== k) return;
     const def = MODELLER[box.dataset.fhmModell], scen = box.querySelector('.fhm-scen');
     const h = box.querySelector('.fhm-hjarta'), m = box.querySelector('.fhm-markhjarta');
-    const land = () => { box.classList.add('fhm-landat'); k.flykt = null; };
+    // Flyganimationen ligger kvar (fill: forwards) tills körningen stoppas — stoppa() avbryter den, så
+    // att ingen färdig animation hänger kvar på introhjärtat efter en visning.
+    const land = () => { box.classList.add('fhm-landat'); };
     const s = skala(scen);
     if (!h || !m || !s || typeof h.animate !== 'function') { land(); return; }
     // MÅLET ÄR MÄRKETS VILOLÄGE, inte dess ruta på skärmen just nu: nivåraden har ofta sin egen
