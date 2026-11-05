@@ -377,6 +377,80 @@ test('en omladdad OBS-källa fortsätter med samma rekord; live:start nollar det
   assert.equal(w.sessionStorage.getItem('vyra-topgift-video'), null);
 });
 
+// VÄNDNINGEN FÖLJER VIDEON (David 2026-11-05): varje sida syns minst 9,5 s, längre om videon är
+// längre, och videon börjar om från första rutan när gåvosidan vänds fram. Webbläsarens animation
+// ersätts av en låtsas där provet själv säger var i varvet kortet står (0–1); i en riktig webbläsare
+// är det uppmätt med pinnad Chromium — se PR-beskrivningen.
+const VAND = '<div class="vyra-topgift play" data-id="w1"><div class="vyra-flip"><div class="vyra-profile-face"><img src="p.png"></div>' +
+  '<div class="vyra-gift-face" style="transform:matrix3d(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1)"><img src="lion.png"></div></div></div>';
+function vandSida(langd) {
+  const w = sida({ html: VAND });
+  const video = { duration: langd, currentTime: 3, paused: false,
+    play() { this.paused = false; return Promise.resolve() }, pause() { this.paused = true } };
+  w.VyraGavovideo = { spela: () => Promise.resolve({ stoppa() {}, video }) };
+  w.__p = 0;
+  w.document.querySelector('.vyra-flip').getAnimations = () =>
+    [{ animationName: 'vyraFlipSmooth', effect: { getComputedTiming: () => ({ progress: w.__p }) } }];
+  return { w, video };
+}
+const varvRegel = w => (w.document.getElementById('vyra-topgift-varv-stil') || {}).textContent || '';
+
+test('varvet: varje sida minst 9,5 s, längre när videon är längre', () => {
+  const w = sida();
+  assert.equal(w.VyraTopGiftVideo.varvS(3), 19, 'en kort gåva ska ändå stå 9,5 s per sida');
+  assert.equal(w.VyraTopGiftVideo.varvS(9.5), 19);
+  assert.equal(w.VyraTopGiftVideo.varvS(16.9), 33.8, 'The Fair King (16,9 s) ska synas hel');
+});
+
+test('med video vänder alla Top Gift i videons takt — utan video står varvet orört', async () => {
+  const { w } = vandSida(9.07);
+  assert.equal(varvRegel(w), '', 'ingen video: varvet ska vara stilmallens 10 s');
+  gava(w);
+  await vanta(250);
+  assert.equal(varvRegel(w), '.vyra-topgift.play .vyra-flip{animation-duration:19.00s!important}',
+    'regeln ska gälla alla Top Gift som vänder, inte en enskild design');
+  w.dispatchEvent(new w.CustomEvent('vyra-live-session', { detail: { event: 'live:start' } }));
+  await vanta(50);
+  assert.equal(varvRegel(w), '', 'en ny sändning utan rekord ska vända som förut');
+});
+
+test('videon börjar från första rutan när gåvan vänds fram, och väntar medan profilen syns', async () => {
+  const { w, video } = vandSida(9.07);
+  gava(w);
+  await vanta(250);
+  // Gåvosidan ligger bak (rotateY 180°): profilen syns 0–46,5 % av varvet.
+  w.__p = 0.2; w.VyraTopGiftVideo.synka();
+  assert.equal(video.paused, true, 'videon ska inte spela bakom profilen');
+  assert.equal(video.currentTime, 0, 'videon ska vänta på första rutan');
+  w.__p = 0.47; w.VyraTopGiftVideo.synka();          // kortet har just passerat kanten: gåvan kommer fram
+  assert.equal(video.paused, false);
+  assert.ok(video.currentTime < 0.25, `videon började inte om (${video.currentTime})`);
+  w.__p = 0.465 + 8 / 19; video.currentTime = 2; w.VyraTopGiftVideo.synka();   // 8 s in i gåvosidan
+  assert.ok(Math.abs(video.currentTime - 8) < 0.01, `videon ska ligga 8 s in, låg ${video.currentTime}`);
+  w.__p = 0.98; w.VyraTopGiftVideo.synka();           // profilen igen
+  assert.equal(video.paused, true);
+  assert.equal(video.currentTime, 0);
+});
+
+test('en lång video (16,9 s) får ett längre varv och hinner spelas hel', async () => {
+  const { w, video } = vandSida(16.9);
+  gava(w);
+  await vanta(250);
+  assert.match(varvRegel(w), /animation-duration:33\.80s/);
+  w.__p = 0.465 + 16.5 / 33.8; video.currentTime = 0; w.VyraTopGiftVideo.synka();
+  assert.ok(Math.abs(video.currentTime - 16.5) < 0.01, 'slutet av videon ska nås innan kortet vänder');
+});
+
+test('en Top Gift som inte vänder (Design 2 och 3) spelar videon i loop som förut', async () => {
+  const w = sida();
+  const video = { duration: 9, currentTime: 4, paused: true, play() { this.paused = false; return Promise.resolve() }, pause() { this.paused = true } };
+  w.VyraGavovideo = { spela: () => Promise.resolve({ stoppa() {}, video }) };
+  gava(w);
+  await vanta(250);
+  assert.equal(video.paused, false);
+  assert.equal(video.currentTime, 4, 'en widget utan vändning ska inte spolas');
+});
+
 test('modulen laddas i overlayn efter motorn och har en ägare', () => {
   const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
   const motor = media.indexOf("'gavovideo.js?v="), modul = media.indexOf("'topgift-video.js?v=");
