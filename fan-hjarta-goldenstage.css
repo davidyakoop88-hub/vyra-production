@@ -1,0 +1,75 @@
+/* fan-hjarta-goldenstage.css — Fan Level Up · Golden Stage. Scenen är 430×465 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar; rättningarna står i
+   fan-hjarta-goldenstage.js. */
+.fhm-goldenstage .fhm-scen{text-align:center}
+.fhm-goldenstage .fgs-golv{position:absolute;left:72px;top:290px;width:286px;height:25px;border:1px solid #d5b07166;border-radius:50%;z-index:-1;
+  background:radial-gradient(ellipse,#fff1cc55 0%,#c99c4a22 35%,#a46dc315 60%,transparent 73%);box-shadow:0 0 18px #d3ae6122}
+.fhm-goldenstage .fgs-spot{position:absolute;left:103px;top:20px;width:224px;height:283px;opacity:.5;z-index:-2;filter:blur(5px);transform-origin:50% 100%;
+  background:linear-gradient(0deg,#d4ae7622,transparent 85%);clip-path:polygon(48% 100%,52% 100%,100% 0,0 0)}
+.fhm-goldenstage .fgs-halo{position:absolute;left:55px;top:36px;width:320px;height:320px;border-radius:50%;z-index:-1;
+  background:radial-gradient(ellipse,#d1a95812,transparent 65%)}
+.fhm-goldenstage .fgs-portratt{position:absolute;left:108px;top:58px;width:214px;height:214px;border-radius:50%;padding:2px;z-index:4;overflow:hidden;
+  background:linear-gradient(140deg,#fff0c6,#d2ac68 40%,#9976aa 73%,#e6c28b);box-shadow:0 10px 20px #0008,0 0 0 7px #d7b16d08}
+.fhm-goldenstage .fgs-portratt img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:5px solid #170e1f;background:#20132d}
+.fhm-goldenstage .fgs-glans{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;background:linear-gradient(125deg,transparent 30%,#fff5 48%,transparent 62%)}
+/* Introhjärtat vid porträttets nedre högra kant. Prototypen hade en kvadrat 111×111 med object-fit:contain
+   och mitten i (324,5; 257,5) — här samma bredd och mitt med bildens egen höjd. Samma skugga som märket,
+   så att bytet i landningen inte syns. */
+.fhm-goldenstage .fgs-intro{position:absolute;left:269px;top:222px;width:111px;z-index:6;
+  filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+.fhm-goldenstage .fgs-flare{position:absolute;left:72px;top:297px;width:286px;height:2px;opacity:0;z-index:3;
+  background:linear-gradient(90deg,transparent,#fff0d5,transparent);box-shadow:0 0 15px #fadaad}
+/* Namnet i guldglans. Skuggan är en drop-shadow (bakom texten): prototypens text-shadow ritades ovanpå
+   den bakgrundsklippta texten och gjorde namnet gråbrunt. */
+.fhm-goldenstage .fgs-namn{position:absolute;top:322px;left:15px;right:15px;font-size:calc(31px * var(--fhm-namn-k,1));line-height:1.12;font-weight:800;
+  letter-spacing:-.5px;color:transparent;background:linear-gradient(100deg,#fff4ea 20%,#ffdf9e 47%,#fff4ea 70%) 0 0/220% 100%;
+  -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 7px #000)}
+.fhm-goldenstage .fgs-niva{position:absolute;left:0;right:0;top:366px;height:90px}
+/* Raden är minst 76 px hög som i prototypen (där märket var en 112×76-ruta), så siffran står kvar. */
+.fhm-goldenstage .fgs-ny{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;min-height:76px;
+  font-size:51px;font-weight:900;letter-spacing:-1px;line-height:1.15;color:#ffe2ac;text-shadow:0 0 22px #eeba5422}
+.fhm-goldenstage .fgs-ny .fgs-etikett{display:inline-block;flex-shrink:0;font-size:17px;font-weight:900;letter-spacing:1.5px;white-space:nowrap;line-height:1.2;
+  color:#ffe5ac;text-shadow:0 1px 5px #000,0 0 12px #d8ad5c33}
+.fhm-goldenstage .fgs-ny .fgs-siffra{display:inline-block;font-size:51px;font-weight:900}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). */
+.fhm-goldenstage .fgs-mark{width:112px;flex:0 0 112px;filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+
+/* Tidslinjen. Engångsrörelserna med `both`, så att slutet är vilobilden; looparna (andning, pendel,
+   glans) börjar på exakt det värde entrén slutade på. */
+.fhm-goldenstage.fhm-spelar .fgs-golv{animation:fgsGolv 1.7s ease-out both,fgsGolvPuls 4s ease-in-out 1.7s infinite}
+.fhm-goldenstage.fhm-spelar .fgs-spot{animation:fgsSpot 2.6s both,fgsPendel 7s 2.6s infinite}
+.fhm-goldenstage.fhm-spelar .fgs-halo{animation:fgsLjus 3s 1.6s both}
+.fhm-goldenstage.fhm-spelar .fgs-portratt{animation:fgsPortratt 2s cubic-bezier(.16,1,.3,1) .65s both,fgsAndas 5s ease-in-out 2.65s infinite}
+.fhm-goldenstage.fhm-spelar .fgs-glans{animation:fgsGlans 6s ease-in-out 3.2s infinite}
+.fhm-goldenstage.fhm-spelar .fgs-intro{animation:fgsHjarta 1.7s 1.8s both}
+.fhm-goldenstage.fhm-spelar .fgs-flare{animation:fgsFlare 1.2s .2s both}
+.fhm-goldenstage.fhm-spelar .fgs-namn{animation:fgsNamn 1s 2.5s both,fgsNamnGlans 5s ease-in-out 3.5s infinite}
+.fhm-goldenstage.fhm-spelar .fgs-niva{animation:fgsText 1s 2.9s both}
+/* Efter landningen (4,6 s) — annars står märket inte där hjärtat lägger sig. */
+.fhm-goldenstage.fhm-spelar .fgs-ny{animation:fgsNivaAndas 4s ease-in-out 4.8s infinite}
+
+@keyframes fgsGolv{from{opacity:0;transform:scaleX(.15)}50%{opacity:1;filter:brightness(1.5)}to{opacity:1;transform:none;filter:none}}
+@keyframes fgsGolvPuls{0%,100%{filter:brightness(1);transform:none}50%{filter:brightness(1.5);transform:scaleX(1.04)}}
+@keyframes fgsSpot{from{opacity:0;transform:scaleX(.2)}to{opacity:.5;transform:none}}
+/* Pendeln ±6° som en sinus som börjar i mitten — där strålkastarens entré slutade (0°, opacitet 0,5). */
+@keyframes fgsPendel{
+  0%{transform:rotate(0);opacity:.5;animation-timing-function:cubic-bezier(.61,1,.88,1)}
+  25%{transform:rotate(6deg);opacity:.65;animation-timing-function:cubic-bezier(.12,0,.39,0)}
+  50%{transform:rotate(0);opacity:.5;animation-timing-function:cubic-bezier(.61,1,.88,1)}
+  75%{transform:rotate(-6deg);opacity:.35;animation-timing-function:cubic-bezier(.12,0,.39,0)}
+  100%{transform:rotate(0);opacity:.5}}
+@keyframes fgsLjus{from{opacity:0;transform:scaleY(.3)}to{opacity:1;transform:none}}
+@keyframes fgsPortratt{from{opacity:0;transform:translateY(45px) scale(.87);filter:blur(7px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fgsAndas{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes fgsGlans{0%{opacity:0;transform:translateX(-70%)}30%{opacity:.6}100%{opacity:0;transform:translateX(70%)}}
+/* Entrén (1,2 s, som prototypen) och lyftet i en och samma tidslinje: hjärtat lägger sig, och lyfter
+   sedan mjukt från vila. Flygningen tar över vid 3,2 s mitt i lyftet, med hjärtats fart. */
+@keyframes fgsHjarta{
+  0%{opacity:0;transform:translate(15px,15px) scale(.7);animation-timing-function:cubic-bezier(.16,1,.3,1)}
+  70.59%{opacity:1;transform:none;animation-timing-function:ease-in-out}
+  100%{opacity:1;transform:translate(0,-8px) rotate(-4deg)}}
+@keyframes fgsFlare{0%{opacity:0;transform:scaleX(.2)}40%{opacity:.4;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.25)}}
+@keyframes fgsNamn{from{opacity:0;transform:translateY(9px);filter:blur(2px) drop-shadow(0 3px 7px #000)}to{opacity:1;transform:none;filter:blur(0) drop-shadow(0 3px 7px #000)}}
+@keyframes fgsNamnGlans{0%,100%{background-position:0 0}50%{background-position:100% 0}}
+@keyframes fgsText{from{opacity:0;transform:translateY(9px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fgsNivaAndas{0%,100%{transform:translateY(0);filter:brightness(1)}50%{transform:translateY(-2px);filter:brightness(1.16)}}

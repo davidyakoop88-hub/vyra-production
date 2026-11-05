@@ -300,7 +300,8 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const lastx = plats('vyra-lastx-panel.js', '20261023-13');
   assert.ok(lastx > reg && lastx > testspel && lastx < ordning, 'Last-X:s poster laddas efter registret och testmotorn, före panelordningen');
   // Alertfamiljernas poster (vyra-alert-panel.js, PR 6) på samma sätt.
-  const alert = plats('vyra-alert-panel.js', '20261020-23');
+  // 20261105-1: hjärtmodellerna i Fan Level Up har en egen post (fanHjarta, fan-hjarta.js).
+  const alert = plats('vyra-alert-panel.js', '20261105-1');
   assert.ok(alert > reg && alert > testspel && alert < ordning, 'alertfamiljernas poster laddas efter registret och testmotorn, före panelordningen');
   // Battle MVP:s poster (vyra-mvp-panel.js, PR 7) på samma sätt.
   const mvp = plats('vyra-mvp-panel.js', '20261023-1');

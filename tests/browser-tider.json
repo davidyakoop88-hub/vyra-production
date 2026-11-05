@@ -145,6 +145,7 @@
     "storlek-matning.browser.test.js": 400,
     "widget-rotation.browser.test.js": 64,
     "widgetlank-filtrering.browser.test.js": 42,
-    "zoom.browser.test.js": 23
+    "zoom.browser.test.js": 23,
+    "fan-hjarta.browser.test.js": 70
   }
 }

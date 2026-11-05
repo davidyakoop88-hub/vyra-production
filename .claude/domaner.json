@@ -169,6 +169,20 @@
         "fan-level-session.js",
         "fan-level-50.js",
         "fan-level-50-session.js",
+        "fan-hjarta.js",
+        "fan-hjarta.css",
+        "fan-hjarta-ascend.js",
+        "fan-hjarta-ascend.css",
+        "fan-hjarta-heartreveal.js",
+        "fan-hjarta-heartreveal.css",
+        "fan-hjarta-heartgift.js",
+        "fan-hjarta-heartgift.css",
+        "fan-hjarta-goldenstage.js",
+        "fan-hjarta-goldenstage.css",
+        "fan-hjarta-heartlift.js",
+        "fan-hjarta-heartlift.css",
+        "fan-hjarta-luminous.js",
+        "fan-hjarta-luminous.css",
         "gift-alert-chrome.js",
         "gift-alert-frames.css",
         "gift-alert-frames.js",
@@ -290,6 +304,8 @@
         "tests/battle-mvp-session.test.js",
         "tests/fan-level-session.test.js",
         "tests/fan-fas.test.js",
+        "tests/fan-hjarta.test.js",
+        "tests/browser/fan-hjarta.browser.test.js",
         "tests/guardian-emblem-fas.test.js",
         "tests/guardian-emblem-models.test.js",
         "tests/gifter-level-session.test.js",
@@ -363,6 +379,10 @@
         {
           "namn": "Katalogkarta",
           "kommando": "npm run karta"
+        },
+        {
+          "namn": "Fan Level Up-hjärtmodellernas rörelse",
+          "kommando": "node scripts/fan-hjarta-matning.js <modell> --bilder <mapp>"
         }
       ],
       "risker": [

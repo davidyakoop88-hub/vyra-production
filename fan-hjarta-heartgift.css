@@ -1,0 +1,127 @@
+/* fan-hjarta-heartgift.css — Fan Level Up · Hjärtats gåva. Scenen är 460×510 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar; rörelsefelen som
+   granskningen hittade är rättade (se fan-hjarta-heartgift.js). */
+.fhm-heartgift .fhm-scen{text-align:center}
+.fhm-heartgift .fhg-halo{position:absolute;left:92px;top:45px;width:300px;height:300px;border-radius:50%;z-index:-1;
+  background:radial-gradient(circle,#e1ba6c18,transparent 68%)}
+.fhm-heartgift .fhg-stralar{position:absolute;left:117px;top:55px;width:266px;height:266px;border-radius:50%;opacity:.3;z-index:-1;
+  background:repeating-conic-gradient(from 8deg,#ffe1a014 0deg .6deg,transparent .6deg 24deg);
+  -webkit-mask:radial-gradient(circle,transparent 45%,#000 56%,transparent 72%);mask:radial-gradient(circle,transparent 45%,#000 56%,transparent 72%)}
+.fhm-heartgift .fhg-ring{position:absolute;left:139px;top:72px;width:220px;height:220px;border:1px solid #ffe4ab88;border-radius:50%;opacity:0}
+.fhm-heartgift .fhg-spar{position:absolute;left:105px;top:184px;width:143px;height:93px;border-top:1px solid #f0d5a066;
+  border-radius:65% 20% 0 0;transform:rotate(-23deg);opacity:0}
+.fhm-heartgift .fhg-portratt{position:absolute;left:139px;top:72px;width:220px;height:220px;border-radius:50%;padding:2px;z-index:4;overflow:hidden;
+  background:linear-gradient(140deg,#fff1ce,#cba46b 35%,#8f659f 72%,#e6c594);box-shadow:0 10px 28px #0009,0 0 0 7px #d4b57b0b}
+.fhm-heartgift .fhg-portratt img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:5px solid #170e1e;background:#20132d}
+.fhm-heartgift .fhg-glans{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;background:linear-gradient(125deg,transparent 30%,#fff5 48%,transparent 62%)}
+.fhm-heartgift .fhg-flare{position:absolute;left:114px;top:181px;width:270px;height:2px;opacity:0;z-index:3;
+  background:linear-gradient(90deg,transparent,#fff0d5,transparent);box-shadow:0 0 15px #fadaad}
+/* Gåvan: laddningen och satelliterna samlas vid hjärtats högra sida, ljuspunkten flyger därifrån in i ringen. */
+.fhm-heartgift .fhg-laddning{position:absolute;left:113px;top:227px;width:64px;height:64px;border-radius:50%;opacity:0;z-index:7;filter:blur(2px);
+  background:radial-gradient(circle,#fff3cf77,#efc48222 28%,transparent 68%)}
+.fhm-heartgift .fhg-satelliter{position:absolute;left:146px;top:257px;z-index:7}
+.fhm-heartgift .fhg-satellit{position:absolute;left:0;top:0;width:3px;height:3px;border-radius:50%;opacity:0;background:#ffe9b5;box-shadow:0 0 6px #e6b765}
+.fhm-heartgift .fhg-gnista{position:absolute;left:246px;top:178px;width:6px;height:6px;border-radius:50%;opacity:0;z-index:7;
+  background:#fff7dc;box-shadow:0 0 5px 2px #fff0c5,0 0 19px 6px #e8bd7266}
+.fhm-heartgift .fhg-gnista::before,.fhm-heartgift .fhg-gnista::after{content:'';position:absolute;width:40px;height:1px;left:-17px;top:3px;
+  background:linear-gradient(90deg,transparent,#fff0c5,transparent)}
+.fhm-heartgift .fhg-gnista::after{width:24px;left:-9px;transform:rotate(90deg)}
+/* Introhjärtat: prototypens synliga hjärta (150 px brett, centrum 102,277). Rörelsen ligger på
+   hjärtat självt — inga transformerade förfäder, annars räknar flygningen fel. Skuggan är märkets,
+   i introhjärtats storlek (märket är 112/150 av det), så att bytet i landningen inte syns. */
+.fhm-heartgift .fhg-intro{position:absolute;left:27px;top:229px;width:150px;z-index:6;transform:rotate(-9deg);
+  filter:drop-shadow(0 3px 7px #0007) drop-shadow(0 0 9px #e4b35a33)}
+/* Namnet: guldskimrande text. Skuggan är en drop-shadow — en text-shadow målas ovanpå den
+   textklippta gradienten och gjorde namnet grått. Skimrets slutläge är vilobilden. */
+.fhm-heartgift .fhg-namn{position:absolute;top:352px;left:18px;right:18px;font-size:calc(30px * var(--fhm-namn-k,1));line-height:1.18;
+  font-weight:800;letter-spacing:-.5px;color:transparent;
+  background:linear-gradient(100deg,#fff4ea 20%,#ffdf9e 47%,#fff4ea 70%);background-size:220% 100%;background-position:-100% 0;
+  -webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 8px #000b)}
+.fhm-heartgift .fhg-niva{position:absolute;left:0;right:0;top:409px;height:90px}
+.fhm-heartgift .fhg-niva::after{content:'';position:absolute;left:115px;right:115px;bottom:13px;height:1px;opacity:.6;
+  background:linear-gradient(90deg,transparent,#d2b48166,transparent)}
+.fhm-heartgift .fhg-rad{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;
+  font-size:50px;font-weight:900;letter-spacing:-1px;line-height:1.15;color:#ffe2ac;text-shadow:0 0 22px #eeba5422}
+.fhm-heartgift .fhg-rad .fhg-etikett{display:inline-block;flex-shrink:0;font-size:17px;letter-spacing:1.5px;white-space:nowrap;line-height:1.2;color:#d8bd96}
+.fhm-heartgift .fhg-rad .fhg-siffra{display:inline-block;font-size:50px;font-weight:900;color:#ffe2ac}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). */
+.fhm-heartgift .fhg-mark{width:112px;flex:0 0 112px;filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+
+/* Tidslinjen. Allt med `both`, så att slutet är vilobilden. */
+.fhm-heartgift.fhm-spelar .fhg-intro{animation:fhgHjarta 4s linear both}
+.fhm-heartgift.fhm-spelar .fhg-laddning{animation:fhgLaddning 2.4s .35s both}
+.fhm-heartgift.fhm-spelar .fhg-satellit{animation:fhgSamla 2.1s calc(.35s + var(--n) * .06s) both}
+.fhm-heartgift.fhm-spelar .fhg-gnista{animation:fhgGnista 4.1s linear .7s both}
+.fhm-heartgift.fhm-spelar .fhg-spar{animation:fhgSpar 2.1s 1.6s both}
+.fhm-heartgift.fhm-spelar .fhg-halo{animation:fhgLjus 3s 1.6s both}
+.fhm-heartgift.fhm-spelar .fhg-portratt{animation:fhgPortratt 2s cubic-bezier(.16,1,.3,1) 2.8s both}
+.fhm-heartgift.fhm-spelar .fhg-stralar{animation:fhgStralar 3s 2.8s both}
+.fhm-heartgift.fhm-spelar .fhg-ring{animation:fhgRing 1.8s 3s both}
+.fhm-heartgift.fhm-spelar .fhg-flare{animation:fhgFlare 1.2s 3.1s both}
+.fhm-heartgift.fhm-spelar .fhg-namn{animation:fhgNamn 1s 4s both,fhgSkimmer 2.3s 5s both}
+/* Nivåraden är framme (5,3 s) innan hjärtat landar (5,4 s): målet är radens viloläge. */
+.fhm-heartgift.fhm-spelar .fhg-niva{animation:fhgText 1s 4.3s both}
+.fhm-heartgift.fhm-spelar .fhg-siffra{animation:fhgNivaljus 1.7s 5s both}
+.fhm-heartgift.fhm-spelar .fhg-glans{animation:fhgGlans 2s 5.7s both}
+
+/* Hjärtats bana: samplad ur en mjuk kurva (Hermite) med linjär tid mellan bilderna, så att farten
+   aldrig hoppar. In från vänster (0–1,2 s), svävar vid gåvan, backar undan medan porträttet växer
+   fram och är på väg nedåt (≈24 px/s) när motorn tar över. Sista bilden ÄR flygningens start (4 s):
+   en omritning mitt i flygningen räknar då om banan från exakt samma punkt. */
+@keyframes fhgHjarta{
+  0%{opacity:0;transform:translate(-45px,14px) rotate(-12deg) scale(.85)}
+  2.5%{opacity:.07;transform:translate(-30.99px,8.19px) rotate(-9.14deg) scale(.887)}
+  5%{opacity:.26;transform:translate(-18.88px,3.13px) rotate(-6.57deg) scale(.917)}
+  7.5%{opacity:.5;transform:translate(-8.52px,-1.24px) rotate(-4.28deg) scale(.941)}
+  10%{opacity:.74;transform:translate(.23px,-4.96px) rotate(-2.26deg) scale(.96)}
+  12.5%{opacity:.93;transform:translate(7.51px,-8.1px) rotate(-.5deg) scale(.974)}
+  15%{opacity:1;transform:translate(13.45px,-10.7px) rotate(1deg) scale(.985)}
+  17.5%{opacity:1;transform:translate(18.2px,-12.82px) rotate(2.25deg) scale(.992)}
+  20%{opacity:1;transform:translate(21.9px,-14.5px) rotate(3.26deg) scale(.997)}
+  22.5%{opacity:1;transform:translate(24.69px,-15.81px) rotate(4.03deg) scale(.999)}
+  25%{opacity:1;transform:translate(26.71px,-16.8px) rotate(4.57deg) scale(1)}
+  27.5%{opacity:1;transform:translate(28.1px,-17.51px) rotate(4.89deg) scale(1)}
+  30%{opacity:1;transform:translate(29px,-18px) rotate(5deg) scale(1)}
+  35%{opacity:1;transform:translate(30.5px,-18.93px) rotate(4.92deg) scale(1)}
+  40%{opacity:1;transform:translate(31.99px,-19.98px) rotate(4.68deg) scale(1)}
+  45%{opacity:1;transform:translate(33.13px,-20.98px) rotate(4.28deg) scale(1)}
+  50%{opacity:1;transform:translate(33.58px,-21.71px) rotate(3.72deg) scale(1)}
+  55%{opacity:1;transform:translate(33px,-22px) rotate(3deg) scale(1)}
+  60%{opacity:1;transform:translate(30.71px,-20.8px) rotate(1.84deg) scale(1)}
+  65%{opacity:1;transform:translate(26.71px,-17.72px) rotate(.18deg) scale(1)}
+  70%{opacity:1;transform:translate(21.73px,-13.56px) rotate(-1.65deg) scale(1)}
+  75%{opacity:1;transform:translate(16.49px,-9.09px) rotate(-3.33deg) scale(1)}
+  80%{opacity:1;transform:translate(11.65px,-5.16px) rotate(-4.56deg) scale(1)}
+  85%{opacity:1;transform:translate(7.32px,-2.17px) rotate(-5.44deg) scale(1)}
+  90%{opacity:1;transform:translate(3.54px,.42px) rotate(-6.09deg) scale(1)}
+  95%{opacity:1;transform:translate(.4px,3.26px) rotate(-6.59deg) scale(1)}
+  100%{opacity:1;transform:translate(-2px,7px) rotate(-7deg) scale(1)}}
+/* Ljuspunkten: tänds vid hjärtat (1,6 s), flyger en sammanhängande båge in i ringens mitt (3,2 s)
+   och blommar upp till porträttet. */
+@keyframes fhgGnista{
+  0%,22%{opacity:0;transform:translate(-97px,65px) scale(.3)}
+  29%{opacity:1;transform:translate(-97px,65px) scale(1)}
+  33%{opacity:1;transform:translate(-94.3px,57.5px) scale(1.012)}
+  37%{opacity:1;transform:translate(-87.2px,40px) scale(1.05)}
+  41%{opacity:1;transform:translate(-77.3px,20.3px) scale(1.113)}
+  45%{opacity:1;transform:translate(-66px,6px) scale(1.2)}
+  49%{opacity:1;transform:translate(-49.2px,0) scale(1.313)}
+  53%{opacity:1;transform:translate(-27.3px,-1.5px) scale(1.45)}
+  57%{opacity:1;transform:translate(-8.2px,-.8px) scale(1.613)}
+  61%{opacity:1;transform:translate(0,0) scale(1.8);animation-timing-function:ease-out}
+  80%{opacity:.5;transform:scale(7);animation-timing-function:ease-in}
+  100%{opacity:0;transform:scale(13)}}
+@keyframes fhgLaddning{0%{opacity:0;transform:scale(.15)}45%{opacity:.85;transform:scale(1.05)}70%{opacity:.6;transform:scale(.75)}100%{opacity:0;transform:scale(.3)}}
+@keyframes fhgSamla{0%{opacity:0;transform:rotate(calc(var(--n) * 60deg)) translateX(45px) scale(.5)}25%{opacity:.9}
+  70%{opacity:1;transform:rotate(calc(var(--n) * 60deg + 80deg)) translateX(12px) scale(.8)}100%{opacity:0;transform:rotate(calc(var(--n) * 60deg + 120deg)) translateX(0) scale(.3)}}
+@keyframes fhgSpar{0%{opacity:0;clip-path:inset(0 100% 0 0)}40%{opacity:.8}100%{opacity:0;clip-path:inset(0 0 0 0)}}
+@keyframes fhgLjus{from{opacity:0;transform:scaleY(.3)}to{opacity:1;transform:none}}
+@keyframes fhgPortratt{from{opacity:0;transform:scale(.25);filter:blur(9px) brightness(1.35)}55%{opacity:.9;filter:blur(1px) brightness(1.05)}to{opacity:1;transform:scale(1);filter:none}}
+@keyframes fhgStralar{from{opacity:0;transform:scale(.45) rotate(-8deg)}60%{opacity:.5}to{opacity:.3;transform:none}}
+@keyframes fhgRing{from{opacity:.55;transform:scale(.45)}to{opacity:0;transform:scale(1.3)}}
+@keyframes fhgFlare{0%{opacity:0;transform:scaleX(.2)}40%{opacity:.4;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.25)}}
+@keyframes fhgText{from{opacity:0;transform:translateY(9px);filter:blur(2px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fhgNamn{from{opacity:0;transform:translateY(9px);filter:blur(2px) drop-shadow(0 3px 8px #000b)}to{opacity:1;transform:none;filter:drop-shadow(0 3px 8px #000b)}}
+@keyframes fhgSkimmer{from{background-position:100% 0}to{background-position:-100% 0}}
+@keyframes fhgNivaljus{0%,100%{filter:brightness(1);transform:scale(1)}45%{filter:brightness(1.23);transform:scale(1.035)}}
+@keyframes fhgGlans{0%{opacity:0;transform:translateX(-70%)}30%{opacity:.6}100%{opacity:0;transform:translateX(70%)}}
