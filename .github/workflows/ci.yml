@@ -322,8 +322,12 @@ jobs:
           # slutade i stallet for att borja om. Tre forsok och ett tak pa 25 minuter racker for en
           # trog spegel; en spegel som ar NERE faller fortfarande, och det ska den.
           echo 'Acquire::Retries "5";' | sudo tee /etc/apt/apt.conf.d/99vyra-retries > /dev/null
+          #
+          # DEN LOKALA CLI:N, INTE npx (se 'pinnad Chromium' nedan). Uppmatt 2026-11-05: playwright
+          # 1.65.0 publicerades fore sin playwright-core 1.65.0, och `npx playwright` foll pa ETARGET
+          # i alla tre forsok — ett rott bygge av en publicering mitt i, utan att nagon rort koden.
           for i in 1 2 3; do
-            if npx playwright install-deps chromium; then exit 0; fi
+            if node node_modules/playwright-core/cli.js install-deps chromium; then exit 0; fi
             echo "Forsok $i gav upp — provar igen om 20 s"
             sleep 20
           done
