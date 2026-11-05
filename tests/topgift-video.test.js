@@ -138,6 +138,27 @@ test('förvalt: videon tar profilsidans ruta, rundning, kant och skugga — samm
   assert.equal(c.style.clipPath, 'inset(0 round 50%)');
 });
 
+test('förvalt i Design 3: videon fyller glasrutan, inte den lilla profilbrickan', async () => {
+  // Sett 2026-11-05: profilbrickan är 60 px, och videon krympte till en liten cirkel mitt i rutan.
+  const w = sida({ html: '<div class="vyra-topgift tgd tgd3" data-id="w1"><div class="tgd-in"><div class="tgd-bild"><div class="ruta">' +
+    '<div class="vyra-gift-face"><img src="lion.png"></div></div><div class="bw"><div class="vyra-profile-face"></div></div></div></div></div>' });
+  const def = (e, o) => { for (const [k, v] of Object.entries(o)) Object.defineProperty(e, k, { configurable: true, get: () => v }) };
+  const ruta = w.document.querySelector('.ruta'), gf = w.document.querySelector('.vyra-gift-face');
+  def(ruta, { offsetWidth: 164, offsetHeight: 164 });
+  def(gf, { offsetWidth: 126, offsetHeight: 126, offsetLeft: 18, offsetTop: 18, offsetParent: ruta });
+  def(bild(w), { offsetWidth: 126, offsetHeight: 126, offsetLeft: 0, offsetTop: 0 });
+  def(w.document.querySelector('.vyra-profile-face'), { offsetWidth: 60, offsetHeight: 60 });
+  gava(w);
+  await vanta(50);
+  const { ram, c } = delar(w);
+  assert.equal(c.style.width, '152px', 'videon ska fylla glasytan (rutan minus 6 px runt om), inte brickans 60 px');
+  assert.equal(c.style.height, '152px');
+  assert.equal(c.style.left, '-12px');
+  assert.equal(c.style.top, '-12px');
+  assert.equal(c.style.clipPath, 'inset(0 round 27px)', 'videon ska få glasets rundade hörn');
+  assert.equal(ram.style.display, 'none', 'rutan är själv ramen — ingen mörk platta över glaset');
+});
+
 test('egna färger: kant och glöd byts på videon, och en kant läggs till där profilbilden saknar en', async () => {
   const w = sida({ falt: { tgVideoKant: '#ff0000', tgVideoGlod: '#00ff00' } });
   royalRuta(w);

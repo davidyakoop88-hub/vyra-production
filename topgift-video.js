@@ -250,6 +250,7 @@
     // knuffade namnet ur rutan (sett 2026-11-01). Där centreras formen och texten lämnas orörd.
     var rot = b.closest ? b.closest('.vyra-topgift') : null, design2 = !!(rot && rot.classList.contains('tgd2'));
     text(post, design2 ? f.text : null);
+    if (f.profil && rot && rot.classList.contains('tgd3') && placeraIRutan(post)) { egnaFarger(post, false); return; }
     if (f.profil) { placeraSomProfil(post); egnaFarger(post, true); return; }
     var bas = Math.max(b.offsetWidth, b.offsetHeight), sida = Math.round(bas * f.storlek), skala = bas / 110;
     if (!sida) return;
@@ -280,6 +281,27 @@
     c.clipPath = f.polygon ? 'polygon(' + f.polygon + ')'
       : f.klipp === 'nedre' ? 'inset(0 round 0 0 ' + rNedre + ' ' + rNedre + ')'
       : f.klipp === 'allt' ? 'inset(0 round ' + r + ')' : '';
+  }
+
+  // DESIGN 3 (tgd3): gåvan är huvudmotivet i en stor glasruta och profilen bara en liten bricka i
+  // hörnet. "Som profilbilden" krympte videon till brickans 60 px mitt i rutan (sett 2026-11-05).
+  // Där fyller videon i stället rutans glasyta (.ruta::before), med glasets rundning, och rutan
+  // själv är ramen — ingen mörk platta, så glaset och bubblorna syns genom videons genomskinliga delar.
+  function placeraIRutan(post) {
+    var gf = post.ansikte, ruta = post.bild.closest ? post.bild.closest('.ruta') : null;
+    if (!gf || !ruta || !ruta.offsetWidth || gf.offsetParent !== ruta) return false;
+    var glas = root.getComputedStyle ? root.getComputedStyle(ruta, '::before') : null;
+    var inset = glas ? parseFloat(glas.top) : NaN; if (!(inset >= 0)) inset = 6;
+    var radie = glas && parseFloat(glas.borderTopLeftRadius) > 0 ? glas.borderTopLeftRadius : '27px';
+    var vanster = Math.round(inset - gf.offsetLeft), topp = Math.round(inset - gf.offsetTop);
+    var bredd = Math.round(ruta.offsetWidth - 2 * inset), hojd = Math.round(ruta.offsetHeight - 2 * inset);
+    var ram = post.ram.style, c = post.canvas.style;
+    post.ram.className = 'vyra-topgift-ram';
+    post.ram.firstChild.style.clipPath = '';
+    ram.display = 'none';
+    c.left = vanster + 'px'; c.top = topp + 'px'; c.width = bredd + 'px'; c.height = hojd + 'px';
+    c.clipPath = 'inset(0 round ' + radie + ')';
+    return true;
   }
 
   // SOM PROFILBILDEN: samma ruta som profilsidan (.vyra-profile-face), centrerad på gåvobilden, med
