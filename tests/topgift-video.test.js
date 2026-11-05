@@ -428,8 +428,10 @@ test('med video vänder alla Top Gift i videons takt — utan video står varvet
   assert.equal(varvRegel(w), '', 'ingen video: varvet ska vara stilmallens 10 s');
   gava(w);
   await vanta(250);
-  assert.equal(varvRegel(w), '.vyra-topgift.play .vyra-flip{animation-duration:19.00s!important}',
+  assert.ok(varvRegel(w).startsWith('.vyra-topgift.play .vyra-flip{animation-duration:19.00s!important}'),
     'regeln ska gälla alla Top Gift som vänder, inte en enskild design');
+  assert.match(varvRegel(w), /.spel-gifter.vyra-topgift .spel-flip>div{animation-duration:19.00s!important}/, 'Gaming overlayns Top Gifter ska ha samma varv');
+  assert.match(varvRegel(w), /.spel-flip>.vyra-gift-face{animation-delay:-9.50s!important}/, 'gåvosidan ska ligga ett halvt varv efter profilen');
   w.dispatchEvent(new w.CustomEvent('vyra-live-session', { detail: { event: 'live:start' } }));
   await vanta(50);
   assert.equal(varvRegel(w), '', 'en ny sändning utan rekord ska vända som förut');
@@ -460,6 +462,28 @@ test('en lång video (16,9 s) får ett längre varv och hinner spelas hel', asyn
   assert.match(varvRegel(w), /animation-duration:33\.80s/);
   w.__p = 0.465 + 16.5 / 33.8; video.currentTime = 0; w.VyraTopGiftVideo.synka();
   assert.ok(Math.abs(video.currentTime - 16.5) < 0.01, 'slutet av videon ska nås innan kortet vänder');
+});
+
+// GAMING OVERLAY (spellayout.js): Top Gifter vänder varje sida för sig med spel-flip, gåvosidan ett
+// halvt varv efter profilen. Samma regel ska gälla där: 9,5 s per sida och hela videon varje gång.
+test('Gaming overlayns Top Gifter: videon väntar bakom profilen och spelas från början när gåvan vänds fram', async () => {
+  const w = sida({ html: '<div class="widget spel vyra-topgift spel-gifter" data-id="w1"><div class="spel-flip"><div class="vyra-profile-face"><img src="p.png"></div>' +
+    '<div class="vyra-gift-face"><img src="lion.png"></div></div></div>' });
+  const video = { duration: 9.07, currentTime: 3, paused: false, play() { this.paused = false; return Promise.resolve() }, pause() { this.paused = true } };
+  w.VyraGavovideo = { spela: () => Promise.resolve({ stoppa() {}, video }) };
+  w.__p = 0;
+  w.document.querySelector('.vyra-gift-face').getAnimations = () =>
+    [{ animationName: 'spel-flip', effect: { getComputedTiming: () => ({ progress: w.__p }) } }];
+  gava(w);
+  await vanta(250);
+  w.__p = 0.7; w.VyraTopGiftVideo.synka();           // gåvosidan vänd bort (180°): profilen syns
+  assert.equal(video.paused, true, 'videon ska inte spela bakom profilen');
+  assert.equal(video.currentTime, 0);
+  w.__p = 0.97; w.VyraTopGiftVideo.synka();          // just förbi kanten: gåvan kommer fram
+  assert.equal(video.paused, false);
+  assert.ok(video.currentTime < 0.25, `videon började inte om (${video.currentTime})`);
+  w.__p = (0.965 + 8 / 19) % 1; video.currentTime = 2; w.VyraTopGiftVideo.synka();   // 8 s in i gåvosidan
+  assert.ok(Math.abs(video.currentTime - 8) < 0.01, `videon ska ligga 8 s in, låg ${video.currentTime}`);
 });
 
 test('en Top Gift som inte vänder (Design 2 och 3) spelar videon i loop som förut', async () => {

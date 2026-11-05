@@ -44,7 +44,11 @@
   function varvStil() {
     var doc = root.document, id = 'vyra-topgift-varv-stil';
     var s = doc.getElementById(id), v = aktuell && varvFor[aktuell];
-    var text = v ? '.vyra-topgift.play .vyra-flip{animation-duration:' + v.toFixed(2) + 's!important}' : '';
+    // Gaming overlayns Top Gifter (spellayout.css) vänder i stället varje sida för sig med spel-flip,
+    // gåvosidan ett halvt varv efter — samma längd på båda och halva varvet som försprång.
+    var text = v ? '.vyra-topgift.play .vyra-flip{animation-duration:' + v.toFixed(2) + 's!important}' +
+      '.widget.spel.spel-gifter.vyra-topgift .spel-flip>div{animation-duration:' + v.toFixed(2) + 's!important}' +
+      '.widget.spel.spel-gifter.vyra-topgift .spel-flip>.vyra-gift-face{animation-delay:-' + (v / 2).toFixed(2) + 's!important}' : '';
     if (!s) { if (!text) return; s = doc.createElement('style'); s.id = id; (doc.head || doc.documentElement).appendChild(s); }
     if (s.textContent !== text) s.textContent = text;
   }
@@ -52,6 +56,13 @@
   function vandning(post) {
     var rot = post.bild.closest ? post.bild.closest('.vyra-topgift') : null;
     var flip = rot && rot.querySelector('.vyra-flip'), gava = rot && rot.querySelector('.vyra-gift-face');
+    // Gaming overlay: gåvosidan har en egen spel-flip (0–42 % vänd fram, kant vid ~46 %, bak 50–92 %,
+    // kant igen vid ~96 %). Dess eget framsteg räknas, så gåvan kommer fram vid KANT + SIDA.
+    if (gava && rot.classList.contains('spel-gifter') && typeof gava.getAnimations === 'function') {
+      var sa = gava.getAnimations().filter(function (x) { return x.animationName === 'spel-flip'; })[0];
+      var st = sa && sa.effect && sa.effect.getComputedTiming();
+      return st && st.progress != null ? { p: st.progress, start: KANT + SIDA } : null;
+    }
     if (!flip || !gava || typeof flip.getAnimations !== 'function') return null;
     var a = flip.getAnimations().filter(function (x) { return x.animationName === 'vyraFlipSmooth'; })[0];
     var t = a && a.effect && a.effect.getComputedTiming();
