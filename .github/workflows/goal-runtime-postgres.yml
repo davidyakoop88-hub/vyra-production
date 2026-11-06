@@ -1,7 +1,7 @@
 name: Goal runtime · Postgres 18
 
 # Railway runs PostgreSQL 18.4, so the goal contract is proved against major 18. The existing CI job
-# in ci.yml stays on 16-alpine on purpose — ubuntu-latest ships the 16 client its backup/restore proof
+# in ci.yml stays on 16-alpine on purpose — ubuntu-24.04 ships the 16 client its backup/restore proof
 # needs — so this is a separate job rather than a change to that one.
 #
 # The database here is a throwaway service container. It never sees a Railway credential, and no
@@ -16,7 +16,7 @@ name: Goal runtime · Postgres 18
 # 111 av serverns 410 prov var överhoppade i den konfiguration CI faktiskt kör.
 #
 # Triggern är därför flyttad hit, till samma villkor som ci.yml. Jobbet är inte en dubblett av det:
-# Railway kör PostgreSQL 18.4 och ci.yml står kvar på 16-alpine med flit, eftersom ubuntu-latest
+# Railway kör PostgreSQL 18.4 och ci.yml står kvar på 16-alpine med flit, eftersom ubuntu-24.04
 # levererar den 16-klient dess backup/restore-bevis behöver. Målkontraktet bevisas mot major 18.
 on:
   pull_request:
