@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 215,
+ "antal": 221,
  "senaste": {
-  "motiv": "Voltage visar värdet under namnet som standard (David 2026-11-04: Ja, som standard) — tre Voltage-nycklar får ny bild",
-  "nycklar": 3,
-  "filter": "voltage",
-  "tid": "2026-11-04T07:07:19.549Z"
+  "motiv": "Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)",
+  "nycklar": 12,
+  "filter": "giftcampaign",
+  "tid": "2026-11-06T00:20:17.827Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -872,6 +872,30 @@
   },
   "catalog:vyrapaket:bertil": {
    "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:classic:landscape": {
+   "matt": "290x170",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:classic:portrait": {
+   "matt": "172x263",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:flode:landscape": {
+   "matt": "420x150",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:flode:portrait": {
+   "matt": "150x440",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:fokus:landscape": {
+   "matt": "270x180",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:fokus:portrait": {
+   "matt": "172x263",
    "fyllnad": 100
   }
  }
