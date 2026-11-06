@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `992d22cf`
+Commit: `345b3c1e`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -60,7 +60,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
@@ -270,20 +270,20 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Fan Level Up · Hero Card | `catalog:fanlevel:layout:hero` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Original Fan Stack | `catalog:fanlevel:layout:stack` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Heartbeat Side | `catalog:fanlevel:layout:heartbeat` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Fan Badge Reveal | `catalog:fanlevel:layout:badgereveal` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Loyalty Ring | `catalog:fanlevel:layout:loyalty` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Rising Hearts | `catalog:fanlevel:layout:hearts` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Welcome Ribbon | `catalog:fanlevel:layout:ribbon` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Community Duo | `catalog:fanlevel:layout:duo` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Ascend | `catalog:fanlevel:layout:ascend` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Heart Reveal | `catalog:fanlevel:layout:heartreveal` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Hjärtats gåva | `catalog:fanlevel:layout:heartgift` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Golden Stage | `catalog:fanlevel:layout:goldenstage` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Heart Lift | `catalog:fanlevel:layout:heartlift` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Fan Level Up · Luminous | `catalog:fanlevel:layout:luminous` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Hero Card | `catalog:fanlevel:layout:hero` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Original Fan Stack | `catalog:fanlevel:layout:stack` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Heartbeat Side | `catalog:fanlevel:layout:heartbeat` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Fan Badge Reveal | `catalog:fanlevel:layout:badgereveal` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Loyalty Ring | `catalog:fanlevel:layout:loyalty` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Rising Hearts | `catalog:fanlevel:layout:hearts` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Welcome Ribbon | `catalog:fanlevel:layout:ribbon` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Community Duo | `catalog:fanlevel:layout:duo` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Ascend | `catalog:fanlevel:layout:ascend` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Heart Reveal | `catalog:fanlevel:layout:heartreveal` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Hjärtats gåva | `catalog:fanlevel:layout:heartgift` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Golden Stage | `catalog:fanlevel:layout:goldenstage` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Heart Lift | `catalog:fanlevel:layout:heartlift` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
+| Fan Level Up · Luminous | `catalog:fanlevel:layout:luminous` | ✓ | ✓ | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
 
 ### HEART ME GOAL · VARJE TEMA SEPARAT
 
