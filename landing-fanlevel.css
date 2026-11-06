@@ -21,3 +21,9 @@
 .fanniva-not{margin:18px auto 0;max-width:640px;color:var(--muted);font-size:12.5px;line-height:1.6}
 @media(max-width:860px){.fanniva-galleri{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.fanniva{padding:32px 16px 44px}.fanniva-galleri{grid-template-columns:minmax(0,1fr)}}
+/* "Nytt i VYRA: Gift Campaign" (2026-11-06) använder samma ram, kort och videoskript. Klippen är
+   inspelade i OBS och har olika format (Fokus brett, Classic högt, Gåvoflödet en smal rad), så
+   rutan är 4:3 i stället för 4:5 och videon ligger i den med contain. */
+.gcm-hemsida{padding-top:8px}
+/* Videornas bakgrund är OBS-scenens mörka färgkälla (#070417); rutan får samma färg så att ingen kant syns. */
+.gcm-hemsida .fanniva-galleri .fanniva-film{aspect-ratio:4/3;background:#070417}

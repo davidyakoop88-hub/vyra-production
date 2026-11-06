@@ -133,6 +133,17 @@
     'Inspelat i VYRA:s overlay. Visas automatiskt när TikTok rapporterar en ny fan club-nivå. Inget ljud.':
       "Recorded in VYRA's overlay. Shown automatically when TikTok reports a new fan club level. No sound.",
 
+    // ---- nytt i VYRA: Gift Campaign (samma ram, landing-fanlevel.css) ------------------------------
+    'Gift Campaign där varje gåva spelar sin egen video': 'Gift Campaign where every gift plays its own video',
+    'Tre nya designer för din gåvokampanj. Gåvan i fokus spelar sin egen TikTok-animation hela vägen ut, och räknaren följer just den gåvan. Gåvor utan animation visar sin bild.':
+      'Three new designs for your gift campaign. The gift in focus plays its own TikTok animation all the way through, and the counter follows that exact gift. Gifts without an animation show their picture.',
+    'En gåva i taget i stort format, med kampanjens alla gåvor i en rad under.': "One gift at a time in a large format, with all the campaign's gifts in a row below.",
+    'Gåvorna i en lista som glider uppåt. Den i mitten spelar sin video.': 'The gifts in a list that slides upward. The one in the middle plays its video.',
+    'Gåvoflöde': 'Gift Flow',
+    'Gåvorna glider förbi i en rad, och den i mitten spelar sin video.': 'The gifts glide past in a row, and the one in the middle plays its video.',
+    'Inspelat i OBS med VYRA:s overlay och riktiga gåvohändelser. Alla tre finns liggande och stående. Inget ljud.':
+      "Recorded in OBS with VYRA's overlay and real gift events. All three come in landscape and portrait. No sound.",
+
     // ---- så funkar det ----------------------------------------------------------------------------
     'Från widget till OBS i tre steg': 'From widget to OBS in three steps',
     'Ingen kodning och inget att installera för att komma igång — allt sker i webbläsaren.': 'No coding and nothing to install to get started — everything happens in the browser.',
