@@ -600,3 +600,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 12 av 149 (filter: giftcampaign) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:emerald:landscape, catalog:giftcampaign:emerald:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait, catalog:giftcampaign:gold:landscape, catalog:giftcampaign:gold:portrait, catalog:giftcampaign:platinum:landscape, catalog:giftcampaign:platinum:portrait
+
+## 2026-11-06 — 12 referenser skrivna
+
+- **Motiv:** Gift Campaign-modellerna utan studioram (marginalen kapade gåvoraden)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 12 av 155 (filter: giftcampaign) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:emerald:landscape, catalog:giftcampaign:emerald:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait, catalog:giftcampaign:gold:landscape, catalog:giftcampaign:gold:portrait, catalog:giftcampaign:platinum:landscape, catalog:giftcampaign:platinum:portrait

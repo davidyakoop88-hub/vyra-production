@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 227,
  "senaste": {
-  "motiv": "Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)",
+  "motiv": "Gift Campaign-modellerna utan studioram (marginalen kapade gåvoraden)",
   "nycklar": 12,
   "filter": "giftcampaign",
-  "tid": "2026-11-06T00:20:17.827Z"
+  "tid": "2026-11-06T21:07:06.306Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -887,7 +887,7 @@
    "fyllnad": 100
   },
   "catalog:giftcampaign:flode:portrait": {
-   "matt": "150x440",
+   "matt": "140x440",
    "fyllnad": 100
   },
   "catalog:giftcampaign:fokus:landscape": {
