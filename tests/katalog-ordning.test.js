@@ -85,12 +85,12 @@ test('ordningen: Top Like, Top Gifter och Top Streak först — med CSS order, u
   assert.deepEqual([...cat.children].map(s => s.querySelector('h4').textContent), fore, 'sektionerna får inte flyttas i DOM:en');
 });
 
-test('Video FX-blocket (sektioner i en <div>) sorteras som en enhet under Battle', () => {
+test('Video FX-blocket (en sektion i en <div>) sorteras som en enhet under Battle', () => {
   const h = rigg();
   const cat = katalog(h, [['VYRA TOP STREAK', ['catalog:topstreak']]]);
   const block = h.document.createElement('div');
   block.dataset.videoPacks = '1';
-  block.innerHTML = `<section><h4>Koi Pearl Lagoon · VIDEO FX</h4>${kort('catalog:glovesnipe:koiPearl:pack:2')}</section>`;
+  block.innerHTML = `<section><h4>Battle-paket · VIDEO FX · 2 paket</h4><div>${kort('catalog:glovesnipe:koiPearl:pack:2')}${kort('catalog:glovesnipe:cloudFox:pack:2')}</div></section>`;
   cat.prepend(block);
   h.window.VyraKatalogOrdning.ordna(cat);
   assert.equal(block.dataset.katGrupp, 'battle');
@@ -140,6 +140,16 @@ test('ordna() är idempotent — andra varvet ändrar ingenting, så observatör
   h.window.VyraKatalogOrdning.ordna(cat);
   assert.equal(obs.takeRecords().length + andringar.length, 0);
   obs.disconnect();
+});
+
+// David 2026-11-06: paketen ska ligga i EN box, ett kort per paket — inte en box per paket.
+test('VIDEO FX-paketen byggs som en enda sektion med ett kort per paket', () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'media.js'), 'utf8');
+  const rad = src.split(/\r?\n/).find(r => r.startsWith('const videoPackCatalog=bind;'));
+  assert.ok(rad, 'videoPackCatalog saknas i media.js');
+  assert.equal(rad.split("createElement('section')").length - 1, 1, 'paketen ska dela en sektion');
+  assert.ok(rad.includes('packIds.map('), 'ett kort per paket i samma sektion');
+  assert.match(rad, /Battle-paket · VIDEO FX/);
 });
 
 test('laddas via skript-svansen i media.js', () => {
