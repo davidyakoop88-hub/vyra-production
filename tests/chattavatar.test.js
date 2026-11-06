@@ -25,6 +25,7 @@ test('tolka: kortkommandon, argument bara där de hör hemma, okänt är null', 
   assert.deepEqual(M.tolka('#f'), { key: '#fira', namn: '' });
   assert.deepEqual(M.tolka('#f Vi nådde målet'), { key: '#fira', namn: 'Vi nådde målet' });
   assert.deepEqual(M.tolka('#säg  hej   allihop '), { key: '#säg', namn: 'hej allihop' });
+  assert.deepEqual(M.tolka('#s hej'), { key: '#säg', namn: 'hej' }, 'kortformen #s');
   assert.deepEqual(M.tolka('#hej Anna'), { key: '#hej', namn: 'Anna' });
   assert.deepEqual(M.tolka('#stopp'), { key: '#stopp', namn: '' });
   assert.equal(M.tolka('#d1 extra'), null, 'en dans tar inga argument');
@@ -296,7 +297,7 @@ test('studion: ▶ Testa spelar i fliken; panelen och katalogen är på svenska'
   const { h, $, spelade } = rigg();
   h.window.eval("selected='ca1'");
   const panel = h.window.eval('props()');
-  for (const ord of ['VEM FÅR STYRA', 'Bara du och dina moderatorer', 'Hälsa fanklubbsmedlemmar', 'TESTA', 'Eget meddelande']) assert.ok(panel.includes(ord), ord);
+  for (const ord of ['VEM FÅR STYRA', 'Bara du och dina moderatorer', 'Hälsa fanklubbsmedlemmar', '#s meddelande', 'TESTA', 'Eget meddelande']) assert.ok(panel.includes(ord), ord);
   h.window.VyraChattavatar.testa(h.window.eval('state.widgets[0]'), '#d1'); await mikro();
   assert.deepEqual(spelade, ['dance']);
   assert.ok($('.ca-status').textContent.startsWith('Dans 1'));

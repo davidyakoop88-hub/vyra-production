@@ -289,7 +289,7 @@
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
       + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (#d1 #d2 #d3 #t)</option></select></label>`
-      + `<small>Moderatorer: #d1 #d2 #d3 dans · #t tap tap · #g handske · #f fira (eller #f egen text) · #hej namn · #säg meddelande · #stopp. `
+      + `<small>Moderatorer: #d1 #d2 #d3 dans · #t tap tap · #g handske · #f fira (eller #f egen text) · #hej namn · #s meddelande (eller #säg) · #stopp. `
       + `Tittare har 20 s väntetid var och 8 s mellan två tittare. Högst ${M.MAX_KO} kommandon väntar i kön.</small></div>`
       + `<div class="property-group"><h4>AUTOMATISKT</h4>`
       + `<label><input id="caHalsa" type="checkbox"${halsa(w) ? ' checked' : ''}> Hälsa fanklubbsmedlemmar välkomna när de kommer in</label>`
