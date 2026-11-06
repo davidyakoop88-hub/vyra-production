@@ -79,6 +79,12 @@ async function loggaIn(opts = {}, fore = null) {
   // det pa sidan ocksa ar en annan kodvag i Playwright (Emulation.setEmulatedMedia mot en redan
   // oppnad sida) och kostar ingenting nar contextvalet redan tagit.
   await page.emulateMedia({ reducedMotion: opts.reducedMotion || 'no-preference' });
+  // EN GRANS FOR ALLT SIDAN GOR, inte Playwrights 30 s. UPPMATT i CI 2026-11-05/06 (korningar
+  // 42123419480 och 42140631562, del 1 av 6): pa en utsvulten runner foll filen tre varv i rad pa
+  // TRE OLIKA vaggtidsgranser — klicket, navigeringen och #loginEmail, som Playwright sjalv redan
+  // rapporterat som synligt. Varje gang en grans hojdes foll nasta. Det som ska fangas ar ett
+  // strandat lage, och det ar oandligt, sa en generos grans for allt kostar ingenting.
+  page.setDefaultTimeout(60000);
   // Samla det sidan sjalv sager. En timeout i CI berattar bara att nagot INTE hande; ett
   // konsolfel eller ett kastat undantag berattar varfor. slappIn() ar fail-open (try/catch ->
   // ga vidare anda), sa ett kast dar ser utifran ut EXAKT som ett medvetet overhopp.
@@ -89,7 +95,7 @@ async function loggaIn(opts = {}, fore = null) {
   page.on('console', m => { if (m.type() === 'error') page.__konsol.push(`konsol@${var_()}: ${m.text()}`) });
   page.on('pageerror', e => page.__konsol.push(`sidfel@${var_()}: ${e && e.message}`));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
-  await page.waitForSelector('#loginEmail', { timeout: 15000 });
+  await page.waitForSelector('#loginEmail');
   // Hook for prov som behover andra sidan INNAN inloggningen (t.ex. sla av alla animationer).
   if (fore) await fore(page);
   // MAT FORUTSATTNINGEN, ANTA DEN INTE. Nar den har inte holl vantade provet 50 sekunder pa en
@@ -100,7 +106,7 @@ async function loggaIn(opts = {}, fore = null) {
   await page.fill('#loginPassword', 'ettlangtlosenord123');
   // Haka pa svaret INNAN klicket, annars kan det hinna komma medan vi staller oss i ko.
   page.__inloggningssvar = page
-    .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 40000 })
+    .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 90000 })
     .catch(() => null);
 
   // LAT SIDAN ANTECKNA SJALV, MEDAN DET HANDER.
@@ -213,7 +219,7 @@ async function navigeringsAnteckning(page) {
 // Sekvensens avsedda langd, sa som koden ber om den.
 const SEKVENS_MS = 1500;
 
-test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 150000 }, async () => {
+test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 240000 }, async () => {
   const page = await loggaIn();
   try {
     // VANTAN MATER RATT SAK NU. Forut stod har `timeout: 4000` raknat fran klicket — en gissning
@@ -263,7 +269,7 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 15
   } finally { await page.close() }
 });
 
-test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, timeout: 150000 },
+test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, timeout: 240000 },
   async () => {
   const page = await loggaIn();
   try {
@@ -276,7 +282,7 @@ test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, tim
   } finally { await page.close() }
 });
 
-test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', { skip, timeout: 150000 },
+test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', { skip, timeout: 240000 },
   async () => {
   // HELA POANGEN. Sessionen ar redan satt nar sekvensen borjar — blir anvandaren kvar har ar hen
   // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
@@ -298,7 +304,7 @@ test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', {
   } finally { await page.close() }
 });
 
-test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 150000 }, async () => {
+test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 240000 }, async () => {
   // Malsidan gors konstgjort langsam: tre extra sekunder innan studio.html ens svarar. Det som
   // mats — vilken fordrojning koden BER om — ar oberoende av det, och ska sta orort.
   //
@@ -318,7 +324,7 @@ test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 150000 },
   } finally { await page.close() }
 });
 
-test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout: 150000 },
+test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout: 240000 },
   async () => {
   // slappIn() bygger dorren inne i try/catch och gar vidare i catch. Den grenen ar OSYNLIG i ett
   // normalt prov — uppmatt: muterar man bort `return gaVidare()` i catch passerar alla ovriga prov
@@ -346,7 +352,7 @@ test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout
   } finally { await page.close() }
 });
 
-test('prefers-reduced-motion slapper igenom UTAN sekvensens fordrojning', { skip, timeout: 150000 },
+test('prefers-reduced-motion slapper igenom UTAN sekvensens fordrojning', { skip, timeout: 240000 },
   async () => {
   // Den som bett om mindre rorelse ska inte betala 1,5 sekunder for en animation hen inte ser.
   // landing-login.js hoppar darfor over HELA steget, inte bara keyframes.
