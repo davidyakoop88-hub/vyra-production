@@ -59,7 +59,7 @@
   let flik = 'alla';
   try { const s = localStorage.getItem(NYCKEL); if (s === 'alla' || GRUPPER.some(g => g.id === s)) flik = s; } catch (_) {}
 
-  // Ett barn i katalogen är oftast en sektion, men Video FX ligger som fem sektioner i ett eget
+  // Ett barn i katalogen är oftast en sektion, men Video FX ligger som en sektion i ett eget
   // block (<div data-video-packs>). Blocket sorteras som en enhet efter sin första rubrik.
   const rubrik = s => (s.querySelector(':scope > h4, section > h4')?.textContent || '').toUpperCase();
   const gruppFor = s => {
