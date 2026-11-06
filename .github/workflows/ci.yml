@@ -17,10 +17,15 @@ permissions:
   contents: read
 jobs:
   test:
-    runs-on: ubuntu-latest
+    # Låst till ubuntu-24.04 (2026-11-06): den avbildningen har PostgreSQL 16-klienten som
+    # backup/restore-beviset nedan behöver. När ubuntu-latest blev ubuntu-26.04 kom en nyare
+    # pg_dump, vars dump innehåller SET transaction_timeout — det känner en 16-server inte igen,
+    # och scripts/verify-backup-restore.sh föll (körning 42276628056). Klient och server ska ha
+    # samma major. Byts avbildningen, byt tjänsten nedan till klientens major i samma ändring.
+    runs-on: ubuntu-24.04
     services:
       postgres:
-        # ubuntu-latest currently ships the PostgreSQL 16 client used by the
+        # ubuntu-24.04 ships the PostgreSQL 16 client used by the
         # backup/restore proof below. Keep the CI server on the matching major
         # so pg_dump can create a portable verified backup.
         image: postgres:16-alpine
