@@ -1,0 +1,106 @@
+/* GIFT CAMPAIGN · FOKUS, CLASSIC OCH GÅVOFLÖDE (gift-campaign-modeller.js, 2026-11-06).
+ *
+ * Flyttade ur Davids godkända prototyper (Codex-överlämningen 2026-11-01: campaign-focus-*-approved,
+ * campaign-classic-*-approved, campaign-side-wave*) utan deras historiska överstyrningar: värdena här
+ * är de som prototypernas kaskad till slut gav. Räknarstilen är campaign-counter-legibility.css,
+ * skopad till widgeten. Ingen widgetbakgrund — overlayen är genomskinlig.
+ *
+ * .gcm-yta har designens egna mått och skalas med zoom till widgetens bredd (samma grepp som
+ * gift-campaign-aura.js). Videoytan (.gcm-art) håller gåvobilden; gift-campaign-video.js lägger en
+ * canvas ovanpå när gåvan har en egen animation.
+ */
+.vyra-gcm{position:absolute;background:transparent;color:#f9f2e7;font-family:var(--vt-font,system-ui,-apple-system,"Segoe UI",sans-serif)}
+.vyra-gcm .gcm-yta{position:relative;isolation:isolate;overflow:visible}
+.vyra-gcm img{display:block;-webkit-user-drag:none;user-select:none}
+
+/* ---- videoytan --------------------------------------------------------------------------------- */
+.vyra-gcm .gcm-art{position:relative;flex-shrink:0}
+.vyra-gcm .gcm-art>img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 6px 8px #0008);transition:opacity .28s}
+/* Videon är TikToks helskärmsanimation (720 × 1280) med motivet i nedre halvan — uppmätt
+ * 2026-11-06 över tio gåvor: motivet börjar på 42–66 % av höjden och når nederkanten. Canvasen
+ * visar därför den nedre kvadraten (object-fit/object-position) och är 1,45 × bildrutan, så att
+ * motivet blir ungefär lika stort som gåvobilden det ersätter. Kanterna tonas ut: många motiv når
+ * bildens sidor, och en hård kant mot sändningen syns. */
+.vyra-gcm .gcm-video{position:absolute;left:50%;top:50%;width:145%;height:145%;transform:translate(-50%,-56%);object-fit:cover;object-position:50% 100%;
+  pointer-events:none;opacity:0;transition:opacity .28s;-webkit-mask-image:radial-gradient(closest-side,#000 74%,transparent);mask-image:radial-gradient(closest-side,#000 74%,transparent)}
+.vyra-gcm .gcm-video[data-synlig]{opacity:1}
+.vyra-gcm .gcm-art.gcm-video-pa>img{opacity:0}
+
+/* ---- räknarna (campaign-counter-legibility.css, skopad) ---------------------------------------- */
+.vyra-gcm .gcm-num{font-variant-numeric:tabular-nums;color:#fff8e8;font-weight:850;line-height:1.15;letter-spacing:-1px;animation:gcmSiffra 4.8s ease-in-out infinite}
+.vyra-gcm .gcm-mal{color:#fff0d8;font-weight:650;line-height:1.4;text-shadow:0 1px 2px #000,0 0 4px #ffdda033;font-variant-numeric:tabular-nums}
+.vyra-gcm .gcm-namn{font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+@keyframes gcmSiffra{0%,100%{text-shadow:0 1px 2px #000,0 0 3px #fff0c8aa,0 0 8px #ffc75c66,0 0 15px #e9a83222}50%{text-shadow:0 1px 2px #000,0 0 3px #fff3d6cc,0 0 10px #ffd17488,0 0 20px #e9aa3c44}}
+.vyra-gcm .gcm-bar{height:3px;background:#ffffff13;border-radius:3px;overflow:hidden}
+.vyra-gcm .gcm-bar i{display:block;height:100%;background:#e8c17d;box-shadow:0 0 9px #e7b963;transition:width .6s}
+.vyra-gcm .gcm-plus{position:absolute;right:10px;top:5px;font-size:14px;color:#fff1bc;font-weight:800;opacity:0;pointer-events:none;text-shadow:0 1px 2px #000}
+
+/* ---- liggande: aktiv gåva + gåvorad (Fokus 270 × 180, Classic 290 × 170) ---------------------- */
+.vyra-gcm .gcm-hero{position:absolute;inset:0 0 40px;display:flex;align-items:center;gap:20px;padding:0 18px}
+.vyra-gcm .gcm-hero .gcm-art{width:94px;height:94px}
+.vyra-gcm .gcm-hero .gcm-art:before{content:'';position:absolute;inset:-12px;background:radial-gradient(#edc17635,transparent 66%);z-index:-1}
+.vyra-gcm .gcm-info{flex:1;min-width:0}
+.vyra-gcm .gcm-hero .gcm-namn{font-size:13px;color:#f1dcb4;margin-bottom:8px}
+.vyra-gcm .gcm-hero .gcm-num{font-size:33px}
+.vyra-gcm .gcm-hero .gcm-mal{font-size:12px;margin-top:5px}
+.vyra-gcm .gcm-hero .gcm-bar{margin-top:12px}
+.vyra-gcm .gcm-ko{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;gap:7px;padding-top:10px;border-top:1px solid #dfbd6733}
+.vyra-gcm .gcm-ko span{width:36px;height:38px;padding:3px;opacity:.45;position:relative;transition:opacity .4s}
+.vyra-gcm .gcm-ko img{width:100%;height:100%;object-fit:contain}
+.vyra-gcm .gcm-ko span.gcm-aktiv{opacity:1}
+.vyra-gcm .gcm-ko span.gcm-aktiv:after{content:'';position:absolute;left:9px;right:9px;bottom:-5px;height:2px;background:#ffe2a2;box-shadow:0 0 9px #ffc96d}
+.vyra-gcm .gcm-hero.gcm-in .gcm-art{animation:gcmValkommen .95s cubic-bezier(.16,1,.3,1) both}
+.vyra-gcm .gcm-hero.gcm-in .gcm-info{animation:gcmInfoIn .8s both}
+.vyra-gcm .gcm-tar-emot .gcm-art>img,.vyra-gcm .gcm-tar-emot .gcm-art>canvas{animation:gcmTarEmot 1.1s both}
+.vyra-gcm .gcm-tar-emot>.gcm-plus,.vyra-gcm .gcm-tar-emot .gcm-plus{animation:gcmPlus 1.4s both}
+@keyframes gcmValkommen{from{opacity:0;transform:translateX(35px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes gcmInfoIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+@keyframes gcmTarEmot{0%,100%{scale:1;translate:0 0}40%{scale:1.12;translate:0 -7px}}
+@keyframes gcmPlus{0%{opacity:0;transform:translateY(8px)}25%,70%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+
+/* Classic: mindre gåva, vit räknare och en bred stapel i rosa → lila → turkos under hela raden. */
+.vyra-gcm[data-gcm=classic] .gcm-hero{gap:12px;padding:0 5px}
+.vyra-gcm[data-gcm=classic] .gcm-hero .gcm-art{width:66px;height:66px}
+.vyra-gcm[data-gcm=classic] .gcm-hero .gcm-info{position:relative;padding-bottom:30px}
+.vyra-gcm[data-gcm=classic] .gcm-namn{color:#e6dfed;font-size:12px}
+.vyra-gcm[data-gcm=classic] .gcm-hero .gcm-num{font-size:31px}
+.vyra-gcm[data-gcm=classic] .gcm-mal{font-size:12px}
+.vyra-gcm[data-gcm=classic] .gcm-bar{height:12px;border-radius:12px;background:#ffffff18}
+.vyra-gcm[data-gcm=classic] .gcm-bar i{background:linear-gradient(90deg,#ff416a,#bd6ccc,#25d6dc);box-shadow:none;border-radius:12px}
+.vyra-gcm[data-gcm=classic] .gcm-hero .gcm-bar{position:absolute;left:-78px;right:0;bottom:4px;margin:0}
+.vyra-gcm[data-gcm=classic] .gcm-ko{border:0}
+.vyra-gcm[data-gcm=classic] .gcm-ko span.gcm-aktiv:after{background:#42e1de;box-shadow:0 0 8px #42e1de}
+
+/* ---- stående: tre platser, den aktiva i mitten, nästa kommer uppåt (172 × 263) ----------------- */
+.vyra-gcm .gcm-lista{position:absolute;inset:0;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(transparent,#000 8%,#000 92%,transparent)}
+.vyra-gcm .gcm-rad{position:absolute;left:0;top:86px;width:172px;height:86px;display:flex;align-items:center;gap:11px;padding:8px;opacity:0;transition:transform 1s cubic-bezier(.22,.7,.25,1),opacity .8s,filter .8s}
+.vyra-gcm .gcm-rad .gcm-art{width:53px;height:53px}
+.vyra-gcm .gcm-rad .gcm-namn{font-size:11.5px;line-height:1.25;margin-bottom:4px;color:#e9d6f1}
+.vyra-gcm .gcm-rad .gcm-num{font-size:28px;line-height:1.1}
+.vyra-gcm .gcm-rad .gcm-mal{font-size:12px;margin-top:4px}
+.vyra-gcm .gcm-rad .gcm-bar{margin-top:6px;height:2px}
+.vyra-gcm .gcm-rad.gcm-aktiv{filter:brightness(1.12)}
+.vyra-gcm[data-gcm=classic] .gcm-rad .gcm-bar{height:5px}
+/* Den stående listan klipper (maskerad överkant/underkant); videon ska inte sticka ut ur raden. */
+.vyra-gcm .gcm-rad .gcm-video{width:140%;height:140%}
+
+/* ---- Gåvoflöde: gåvorna glider ut åt ena hållet och kommer in från det andra ------------------- */
+.vyra-gcm .gcm-flode{position:absolute;inset:0;overflow:hidden}
+.vyra-gcm[data-orient=landscape] .gcm-flode{-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.vyra-gcm[data-orient=portrait] .gcm-flode{-webkit-mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent)}
+.vyra-gcm .gcm-post{position:absolute;left:0;top:0;width:72px;height:114px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;will-change:transform}
+.vyra-gcm[data-orient=portrait] .gcm-post{width:88px}
+.vyra-gcm .gcm-post .gcm-art{width:48px;height:48px}
+.vyra-gcm .gcm-mini{position:relative;isolation:isolate;font-size:24px;font-weight:850;color:#fff8e8;line-height:1.25;white-space:nowrap;font-variant-numeric:tabular-nums;animation:gcmSiffra 4.8s ease-in-out infinite}
+.vyra-gcm .gcm-mini:before{content:'';position:absolute;z-index:-1;pointer-events:none;left:-8px;right:-8px;top:8px;height:33px;background:radial-gradient(ellipse at 50% 65%,#ffc46585 0%,#efa93c45 35%,#ec982014 60%,transparent 78%);filter:blur(4px)}
+.vyra-gcm .gcm-mini small{font-size:16px;font-weight:700;color:#fff0d8;text-shadow:0 1px 2px #000,0 0 4px #ffdda033}
+.vyra-gcm .gcm-minibar{position:relative;width:43px;height:3px;background:#e9bd692b;border-radius:2px;box-shadow:0 3px 10px #f5b34855}
+.vyra-gcm .gcm-minibar i{display:block;height:100%;background:#ffdda0;box-shadow:0 0 5px #ffdc9b,0 2px 12px #ffb943aa;transition:width .6s}
+.vyra-gcm .gcm-flode:before{content:'';position:absolute;left:0;right:0;bottom:15px;height:1px;background:linear-gradient(90deg,transparent,#d6b78355,transparent)}
+.vyra-gcm[data-orient=portrait] .gcm-flode:before{display:none}
+.vyra-gcm .gcm-post .gcm-plus{right:0;top:-2px}
+.vyra-gcm .gcm-post.gcm-tar-emot .gcm-art>img,.vyra-gcm .gcm-post.gcm-tar-emot .gcm-art>canvas{animation:gcmTarEmot 1s both}
+
+/* Katalogkort och reducerad rörelse: stilla, ingen video. */
+.widget-catalog .vyra-gcm .gcm-video{display:none}
+@media (prefers-reduced-motion:reduce){.vyra-gcm *{animation:none!important;transition:none!important}}

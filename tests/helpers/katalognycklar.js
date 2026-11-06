@@ -321,6 +321,27 @@ const REGI = {
   },
 };
 
+// GIFT CAMPAIGN · FOKUS, CLASSIC OCH GÅVOFLÖDE (gift-campaign-modeller.js, 2026-11-06). Modellerna byter
+// aktiv gåva var 9,3:e sekund och Gåvoflödet glider i requestAnimationFrame; räknarnas glöd andas i en
+// oändlig loop. Regin använder modellens egen krok: VyraKampanjModeller.vila() stoppar körningen och
+// ritar utgångsläget (första gåvan aktiv, flödet i fas 0, ingen video), och CSS-animationerna stoppas.
+const GIFT_CAMPAIGN_REGI = {
+  fas: 'utgangslage', ms: 0,
+  varfor: 'rotation och flöde drivs av en JS-klocka; utgångsläget är deterministiskt',
+  regi: () => {
+    const M = window.VyraKampanjModeller;
+    if (!M) return { fel: 'gift-campaign-modeller.js laddades inte' };
+    const nod = document.querySelector('.vyra-gcm[data-id]');
+    if (!nod) return { fel: 'ingen .vyra-gcm renderades' };
+    M.vila(nod);
+    const ny = document.querySelector('.vyra-gcm[data-id]');
+    void ny.offsetWidth;
+    ny.getAnimations({ subtree: true }).forEach(a => { try { a.finish(); } catch (_) { a.cancel(); } });
+    return { modell: ny.dataset.gcm, orient: ny.dataset.orient, animationer: ny.getAnimations({ subtree: true }).length };
+  },
+};
+for (const m of ['fokus', 'classic', 'flode']) for (const o of ['landscape', 'portrait']) REGI['catalog:giftcampaign:' + m + ':' + o] = GIFT_CAMPAIGN_REGI;
+
 // ETT KORT PER PALETT (2026-10-11): portalens nio palettkort delar portalens regi — samma canvas,
 // samma deterministiska forhandsbild, bara fargerna skiljer. Utan den har raden hade de nio
 // fotograferats levande (slumpat) och vakten fallit pa brus.

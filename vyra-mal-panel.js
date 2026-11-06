@@ -156,7 +156,9 @@
   // Samma temaregel som gift-campaign-aura.js theme(): de äldre temana ritas som en av de tre.
   const KAMPANJTEMA = { gold: 'Guldslöja', platinum: 'Platinum Light', emerald: 'Emerald Mist' };
   const KAMPANJ_ALIAS = { glass: 'platinum', minimal: 'platinum', aurora: 'emerald', 'crystal-garden': 'emerald' };
-  const kampanjTema = w => { const t = w && w.campaignTheme; return KAMPANJTEMA[t] ? t : KAMPANJ_ALIAS[t] || 'gold'; };
+  // Fokus, Classic och Gåvoflöde (gift-campaign-modeller.js, 2026-11-06) har egna poster längre ned.
+  const KAMPANJMODELLER = { fokus: 'Fokus', classic: 'Classic', flode: 'Gåvoflöde' };
+  const kampanjTema = w => { const t = w && w.campaignTheme; return KAMPANJTEMA[t] || KAMPANJMODELLER[t] ? t : KAMPANJ_ALIAS[t] || 'gold'; };
   const orientering = w => (w && w.campaignOrientation === 'portrait' ? 'portrait' : 'landscape');
   const kampanjModell = w => kampanjTema(w) + ':' + orientering(w);
   // Samma som media.js campaignGiftCount (1–6, standard 4).
@@ -212,6 +214,36 @@
     };
   }
   for (const tema of Object.keys(KAMPANJTEMA)) for (const o of ['landscape', 'portrait']) R.definiera(kampanj(tema, o));
+
+  // FOKUS, CLASSIC OCH GÅVOFLÖDE. En gåva i taget i fokus med sin egen video (gift-campaign-video.js).
+  // Modellerna har ingen rubrik, entré, rörelseval eller ljud (Davids överlämning: inget ljud) — panelen
+  // visar bara det de faktiskt använder.
+  function kampanjFokus(m, orient) {
+    return {
+      typ: 'templateGiftCampaign',
+      modell: kampanjModell,
+      galler: [m + ':' + orient],
+      rubrik: () => 'Gift Campaign',
+      marke: () => KAMPANJMODELLER[m] + ' · ' + (orient === 'portrait' ? 'stående' : 'liggande'),
+      katalognyckel: () => `catalog:giftcampaign:${m}:${orient}`,
+      test: 'kampanj',
+      ersatter: ['#giftImage0', '#giftImage1', '#giftImage2', '#giftImage3', '#giftImage4', '#giftImage5', '.open-gift-picker'],
+      arv: [],
+      kontroller: [
+        // 2 · Innehåll
+        { sektion: 2, typ: 'val', falt: 'giftCount', etikett: 'Antal gåvor', legacyId: '#campaignGiftCount' },
+        ...gavoKontroller(),
+        live('Nu räknas upp live: varje gåva räknas på sin egen plats, och en gåva med egen TikTok-animation spelar den när den står i fokus.'),
+        // 3 · Storlek och placering
+        position(),
+        { sektion: 3, typ: 'val', falt: 'campaignOrientation', etikett: 'Orientering', legacyId: '#campaignOrientation' },
+        // 5 · Utseende
+        { sektion: 5, typ: 'val', falt: 'campaignTheme', etikett: 'Design', legacyId: '#campaignTheme' },
+      ],
+      utseendeFalt: [],
+    };
+  }
+  for (const m of Object.keys(KAMPANJMODELLER)) for (const o of ['landscape', 'portrait']) R.definiera(kampanjFokus(m, o));
 
   // ---- 2. Panelens tillägg -----------------------------------------------------------------------
   //

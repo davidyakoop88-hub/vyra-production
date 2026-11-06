@@ -230,6 +230,10 @@
           w['giftMatch' + i] = g.name;
           if (g.image) w['giftImage' + i] = g.image;
           w['giftCoins' + i] = Number(g.coins) || 0;
+          // Gåvans id: kampanjmodellerna spelar gåvans EGEN animation och slår upp den strikt på id
+          // (gift-campaign-video.js) — samma namn kan ha flera id med olika video. Utan id i katalogen
+          // tas ett gammalt id bort, så att platsen inte spelar förra gåvans video.
+          if (g.giftId) w['giftId' + i] = String(g.giftId); else delete w['giftId' + i];
           stang(false);
           if (typeof save === 'function') save();
           if (typeof render === 'function') render();
