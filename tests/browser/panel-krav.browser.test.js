@@ -91,6 +91,14 @@ const FAN_EFFEKT = ['hero', 'heartbeat', 'hearts', 'ribbon'], GIFTER_EFFEKT = ['
 const ALERT_MODELLER = [
   ...['hero', 'stack', 'heartbeat', 'badgereveal', 'loyalty', 'hearts', 'ribbon', 'duo'].map(l => ALERT('Fan Level Up · ' + l,
     'catalog:fanlevel:layout:' + l, FAN_EFFEKT.includes(l), { utseende: 'fanColor', innehall: 'fanName' }, { tidsstyrt: NIVA_TIDSSTYRT('fan') })),
+  // Hjärtmodellerna (fan-hjarta.js) har en egen post utan utseendefält — inget att återställa. Effekten
+  // mäts på Ascend; de sex delar post.
+  ...['ascend', 'heartreveal', 'heartgift', 'goldenstage', 'heartlift', 'luminous'].map(l => ALERT('Fan Level Up · ' + l,
+    'catalog:fanlevel:layout:' + l, l === 'ascend', null, { tidsstyrt: NIVA_TIDSSTYRT('fan'),
+    // Elva kontroller med flit: tema, färger, typsnitt, rubrik, profilram, bakgrund och entré verkar
+    // inte i de färdiga scenerna och visas inte (vyra-alert-panel.js, fanHjarta). Samma slags golv som
+    // Heart Fireworks och Fan Level 50.
+    minKontroller: 10 })),
   ...['profile', 'number', 'stack', 'sidebadge', 'reveal', 'orbitlevel', 'risingtier', 'flip', 'duo'].map(l => ALERT('Gifter Level Up · ' + l,
     'catalog:gifterlevel:' + l, GIFTER_EFFEKT.includes(l), { utseende: 'gifterColor', innehall: 'gifterName' }, { tidsstyrt: NIVA_TIDSSTYRT('gifter') })),
   ...['gold', 'ocean', 'blush'].map(t => ALERT('Follower Spotlight · ' + t, 'catalog:followeralert:' + t, t === 'gold',

@@ -118,6 +118,21 @@
     'Inställningar': 'Settings',
     'Profil': 'Profile',
 
+    // ---- nytt i VYRA: Fan Level Up (landing-fanlevel.css) ---------------------------------------------
+    'NYTT I VYRA': 'NEW IN VYRA',
+    'Fan Level Up med guldhjärta': 'Fan Level Up with a golden heart',
+    'Sex nya designer firar tittaren som går upp i fan club-nivå i din LIVE — med profilbild, namn och den nya nivån. Guldhjärtat landar vid siffran.':
+      'Six new designs celebrate the viewer who levels up in your fan club during your LIVE — with profile picture, name and the new level. The golden heart lands next to the number.',
+    'Profilen stiger fram ur portalen, och hjärtat landar vid nivåsiffran.': 'The profile rises out of the portal, and the heart lands next to the level number.',
+    'Ett stort hjärta löses upp i ljus och lämnar plats åt profilen.': 'A big heart dissolves into light and makes room for the profile.',
+    'Hjärtats gåva': "Heart's Gift",
+    'Hjärtat bär fram personen och lägger sig vid den nya nivån.': 'The heart presents the person and settles next to the new level.',
+    'Strålkastare på en guldscen, med konfetti när nivån kommer.': 'Spotlights on a golden stage, with confetti when the level arrives.',
+    'Hjärtat flyger in i ett svep och lyfter nivån utan att stanna.': 'The heart flies in in one sweep and lifts the level without stopping.',
+    'Först en ljusshow med hjärtat, sedan ramen och sist personen.': 'First a light show with the heart, then the frame, and finally the person.',
+    'Inspelat i VYRA:s overlay. Visas automatiskt när TikTok rapporterar en ny fan club-nivå. Inget ljud.':
+      "Recorded in VYRA's overlay. Shown automatically when TikTok reports a new fan club level. No sound.",
+
     // ---- så funkar det ----------------------------------------------------------------------------
     'Från widget till OBS i tre steg': 'From widget to OBS in three steps',
     'Ingen kodning och inget att installera för att komma igång — allt sker i webbläsaren.': 'No coding and nothing to install to get started — everything happens in the browser.',

@@ -1,0 +1,104 @@
+/* fan-hjarta-heartreveal.css — Fan Level Up · Heart Reveal. Scenen är 560×310 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar (uppmätta i webbläsaren).
+   Grundstilarna är TIDSLINJENS SLUTBILD: utan .fhm-spelar (editorns stillbild, reducerad rörelse) står
+   scenen exakt som när firandet har vilat, så att inget hoppar när klassen tas bort. */
+.fhm-heartreveal .fhm-scen{text-align:left}
+/* Partiklarna ligger bakom hela scenen, som i prototypen (där låg duken under scenen). */
+.fhm-heartreveal .fhm-partiklar{z-index:-3}
+
+/* Ljuset bakom: gnistan, glorian och ringen före hjärtat; strålen och stoftet under hela visningen. */
+.fhm-heartreveal .fhr-gnista{position:absolute;left:135px;top:151px;width:5px;height:5px;margin:-2px;border-radius:50%;z-index:10;opacity:0;
+  background:#fff6db;box-shadow:0 0 7px 2px #ffe8b8,0 0 25px 5px #e8b86a77}
+.fhm-heartreveal .fhr-gnista::before,.fhm-heartreveal .fhr-gnista::after{content:'';position:absolute;left:-32px;top:2px;width:68px;height:1px;
+  background:linear-gradient(90deg,transparent,#fff1ca,transparent)}
+.fhm-heartreveal .fhr-gnista::after{transform:rotate(90deg);left:-18px;width:40px}
+.fhm-heartreveal .fhr-ring{position:absolute;left:62px;top:78px;width:150px;height:150px;border-radius:50%;z-index:0;opacity:0;
+  border:1px solid #ffdfaa66;box-shadow:0 0 18px #edbf7044,inset 0 0 16px #edbf7022}
+.fhm-heartreveal .fhr-bloom{position:absolute;left:-35px;top:-15px;width:345px;height:345px;border-radius:50%;z-index:0;opacity:0;filter:blur(8px);
+  background:radial-gradient(circle,#fff0c526,#e6ad5520 18%,#a659dd0e 40%,transparent 68%)}
+.fhm-heartreveal .fhr-ljus{position:absolute;left:-43px;top:-25px;width:360px;height:360px;z-index:-2;filter:blur(14px);
+  opacity:.45;transform:rotate(-10deg);
+  background:conic-gradient(from 152deg at 50% 100%,transparent 0deg,#ffdc8d05 15deg,#ffe0a017 25deg,#e3b0ff09 34deg,transparent 58deg)}
+.fhm-heartreveal .fhr-stoft{position:absolute;left:18px;top:9px;width:525px;height:285px;z-index:-1;opacity:.25;transform:translateY(-12px);
+  background:radial-gradient(circle at 8% 22%,#ffe3ad 0 1px,transparent 1.7px),radial-gradient(circle at 47% 10%,#e7d3ed 0 .7px,transparent 1.5px),
+    radial-gradient(circle at 80% 77%,#ffe3ad 0 .8px,transparent 1.5px),radial-gradient(circle at 90% 31%,#ffe3ad 0 .7px,transparent 1.3px),
+    radial-gradient(circle at 22% 90%,#e7d3ed 0 .8px,transparent 1.5px)}
+
+/* Panelen som vecklas ut åt höger bakom namn och nivå, med en tunn skiljelinje och en glans. */
+.fhm-heartreveal .fhr-band{position:absolute;left:135px;top:85px;width:418px;height:148px;z-index:-1;overflow:hidden;transform-origin:left center;
+  border:1px solid #a4886740;border-left:0;border-radius:0 18px 18px 0;box-shadow:0 9px 25px #0006;
+  background:linear-gradient(100deg,#211625f5 0%,#1c1420f2 48%,#19121cec 100%)}
+.fhm-heartreveal .fhr-band::after{content:'';position:absolute;left:107px;top:25px;width:1px;height:97px;border-radius:3px;opacity:.65;
+  background:linear-gradient(transparent,#d4b18466,transparent)}
+.fhm-heartreveal .fhr-bandglans{position:absolute;inset:-30% -60%;opacity:0;transform:translateX(65%);pointer-events:none;
+  background:linear-gradient(110deg,transparent 40%,#ffe8bf09 47%,#fff0d521 50%,transparent 59%)}
+.fhm-heartreveal .fhr-krusning{position:absolute;left:30px;top:50px;width:210px;height:210px;border:1px solid #ffdfa4;border-radius:50%;z-index:0;opacity:0}
+
+/* Porträttet. overflow:hidden klipper glansen till cirkeln. */
+.fhm-heartreveal .fhr-portratt{position:absolute;left:36px;top:56px;width:198px;height:198px;padding:2px;border-radius:50%;z-index:4;overflow:hidden;
+  background:linear-gradient(135deg,#fff0ce 0%,#c4a169 32%,#775c83 65%,#e4c99b 100%);box-shadow:0 8px 24px #0009,0 0 25px #d8b77512}
+.fhm-heartreveal .fhr-bild{position:relative;z-index:1;display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;
+  border:5px solid #160f1c;background:#20132d}
+.fhm-heartreveal .fhr-glans{position:absolute;inset:0;border-radius:50%;z-index:2;opacity:0;pointer-events:none;
+  background:linear-gradient(125deg,transparent 30%,#fff5 48%,transparent 62%)}
+.fhm-heartreveal .fhr-flare{position:absolute;left:13px;top:155px;width:260px;height:2px;z-index:3;opacity:0;
+  background:linear-gradient(90deg,transparent,#fff0d5,transparent);box-shadow:0 0 10px #fadaad55}
+
+/* Introhjärtat: prototypens 254×254-ruta med object-fit:contain visade hjärtat 254 px brett med
+   mitten i (136,151). Här har bilden sina egna proportioner (fan-hjarta.css), så toppen är 151 − 81. */
+.fhm-heartreveal .fhr-intro{position:absolute;left:9px;top:70px;width:254px;z-index:9;filter:drop-shadow(0 3px 6px #0006) blur(0)}
+
+/* Namnet och nivån i panelen, vänsterställda i samma kolumn. */
+.fhm-heartreveal .fhr-namn{position:absolute;left:259px;right:25px;top:110px;font-size:calc(30px * var(--fhm-namn-k,1));line-height:1.18;
+  font-weight:700;letter-spacing:-.6px;color:#fff4e9;text-shadow:0 2px 7px #0008}
+.fhm-heartreveal .fhr-niva{position:absolute;left:259px;right:15px;top:151px;height:90px}
+.fhm-heartreveal .fhr-rad{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:8px;
+  font-size:50px;font-weight:900;letter-spacing:-1px;line-height:1.15;color:#ffe1a9;text-shadow:0 0 20px #dba75525}
+.fhm-heartreveal .fhr-etikett{display:inline-block;flex:0 0 auto;font-size:15px;font-weight:700;letter-spacing:1.5px;line-height:1.2;
+  white-space:nowrap;color:#dbc09a}
+.fhm-heartreveal .fhr-siffra{display:inline-block;flex:0 0 auto;font-size:50px;font-weight:900;color:#ffe1a9}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). 94 px brett, som i prototypens sista granskning. */
+.fhm-heartreveal .fhr-mark{width:94px;flex:0 0 94px;filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+
+/* Tidslinjen. Allt med `both`, så att slutet är vilobilden. Tiderna är prototypens slutliga. */
+.fhm-heartreveal.fhm-spelar .fhr-gnista{animation:fhrGnista 2.6s ease-in-out both}
+.fhm-heartreveal.fhm-spelar .fhr-ring{animation:fhrRing 2.8s ease-out .5s both}
+.fhm-heartreveal.fhm-spelar .fhr-bloom{animation:fhrBloom 4.6s ease-in-out .65s both}
+.fhm-heartreveal.fhm-spelar .fhr-ljus{animation:fhrLjus 7s ease-in-out both}
+.fhm-heartreveal.fhm-spelar .fhr-stoft{animation:fhrStoft 11s linear 1.5s both}
+/* Hjärtat: två rörelser på samma element. Ljuset (opacitet, oskärpa) formas, hålls och löses upp;
+   växten går från vila vid 1,53 s rakt in i upplösningen utan att stanna på vägen. */
+.fhm-heartreveal.fhm-spelar .fhr-intro{animation:fhrHjartaLjus 3.65s ease-in-out both,fhrHjartaVaxt 3.65s ease-in-out both}
+.fhm-heartreveal.fhm-spelar .fhr-portratt{animation:fhrPortratt 1.4s cubic-bezier(.16,1,.3,1) 3.35s both}
+.fhm-heartreveal.fhm-spelar .fhr-krusning{animation:fhrKrusning 1.5s 3.35s both}
+.fhm-heartreveal.fhm-spelar .fhr-flare{animation:fhrFlare 1.5s 3.35s both}
+.fhm-heartreveal.fhm-spelar .fhr-band{animation:fhrBand 1.5s cubic-bezier(.16,1,.3,1) 3.8s both}
+.fhm-heartreveal.fhm-spelar .fhr-namn{animation:fhrText 1.15s 4.3s both}
+.fhm-heartreveal.fhm-spelar .fhr-niva{animation:fhrText 1s 4.65s both}
+/* Märket tonar in med nivån; .fhm-landat (landning 4650 ms) gör det synligt 50 ms innan, med opacitet 0. */
+.fhm-heartreveal.fhm-spelar .fhr-mark{animation:fhrMark .8s ease-out 4.7s both}
+.fhm-heartreveal.fhm-spelar .fhr-glans{animation:fhrGlans 1.1s 4.8s both}
+.fhm-heartreveal.fhm-spelar .fhr-bandglans{animation:fhrBandglans 2.4s 5.25s both}
+
+@keyframes fhrGnista{0%{opacity:0;transform:scale(.1)}18%{opacity:.6;transform:scale(.6)}40%{opacity:1;transform:scale(1.25)}64%{opacity:.85;transform:scale(.85)}78%{opacity:1;transform:scale(1.8)}100%{opacity:0;transform:scale(4)}}
+@keyframes fhrRing{0%{opacity:0;transform:scale(.1) rotate(-35deg)}40%{opacity:.6}75%{opacity:.25}100%{opacity:0;transform:scale(1.4) rotate(35deg)}}
+@keyframes fhrBloom{0%{opacity:0;transform:scale(.2)}45%{opacity:.9;transform:scale(.85)}80%{opacity:.4;transform:scale(1.2)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes fhrLjus{0%,20%{opacity:0;transform:rotate(-24deg) scale(.7)}60%{opacity:.7}100%{opacity:.45;transform:rotate(-10deg) scale(1)}}
+@keyframes fhrStoft{0%{opacity:0;transform:translateY(9px)}15%{opacity:.4}100%{opacity:.25;transform:translateY(-12px)}}
+/* 0–0,73 s osynligt, formas till 1,53 s, hålls, löses upp i ljus till 3,65 s. Prototypen hade
+   upplösningen på en omslutande ruta och skuggan på bilden — skuggan ligger därför före oskärpan. */
+@keyframes fhrHjartaLjus{0%,20%{opacity:0;filter:drop-shadow(0 3px 6px #0006) blur(5px)}42%,72%{opacity:1;filter:drop-shadow(0 3px 6px #0006) blur(0)}
+  100%{opacity:0;filter:drop-shadow(0 3px 6px #0006) blur(5px)}}
+/* Prototypen gick 1 → 1,025 (ease-in-out) och 1,025 → 1,08 (ease-in-out): farten var noll vid 72 %
+   och hjärtat stod still ett ögonblick mitt i växten. Ett enda ease-in från 42 % ger samma värde vid
+   72 % (≈1,026) och samma slut, men en jämn acceleration in i upplösningen. */
+@keyframes fhrHjartaVaxt{0%,20%{transform:scale(.4)}42%{transform:scale(1);animation-timing-function:cubic-bezier(.42,0,1,1)}100%{transform:scale(1.08)}}
+@keyframes fhrPortratt{from{opacity:0;transform:scale(.94);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+/* Prototypens krusning började på opacitet .65 och syntes, stilla, från första bildrutan. */
+@keyframes fhrKrusning{0%{opacity:0;transform:scale(.7)}10%{opacity:.65}100%{opacity:0;transform:scale(1.55)}}
+@keyframes fhrFlare{0%{opacity:0;transform:scaleX(.2)}40%{opacity:.45;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1.3)}}
+@keyframes fhrBand{0%{opacity:0;transform:scaleX(.12);filter:blur(4px)}55%{opacity:.9;filter:blur(.5px)}100%{opacity:1;transform:scaleX(1);filter:blur(0)}}
+@keyframes fhrText{from{opacity:0;transform:translateX(-10px);filter:blur(2px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes fhrMark{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@keyframes fhrGlans{0%{opacity:0;transform:translateX(-70%)}30%{opacity:.6}100%{opacity:0;transform:translateX(70%)}}
+@keyframes fhrBandglans{0%{opacity:0;transform:translateX(-65%)}25%{opacity:1}100%{opacity:0;transform:translateX(65%)}}

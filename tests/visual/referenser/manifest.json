@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 215,
+ "antal": 221,
  "senaste": {
-  "motiv": "Voltage visar värdet under namnet som standard (David 2026-11-04: Ja, som standard) — tre Voltage-nycklar får ny bild",
-  "nycklar": 3,
-  "filter": "voltage",
-  "tid": "2026-11-04T07:07:19.549Z"
+  "motiv": "Fan Level Up: sex nya hjärtmodeller (PR 732)",
+  "nycklar": 6,
+  "filter": "catalog:fanlevel:layout:ascend,catalog:fanlevel:layout:heartreveal,catalog:fanlevel:layout:heartgift,catalog:fanlevel:layout:goldenstage,catalog:fanlevel:layout:heartlift,catalog:fanlevel:layout:luminous",
+  "tid": "2026-11-05T22:31:38.734Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -872,6 +872,30 @@
   },
   "catalog:vyrapaket:bertil": {
    "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:ascend": {
+   "matt": "300x426",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:goldenstage": {
+   "matt": "300x324",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartgift": {
+   "matt": "300x333",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartlift": {
+   "matt": "300x330",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartreveal": {
+   "matt": "300x166",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:luminous": {
+   "matt": "300x336",
    "fyllnad": 100
   }
  }

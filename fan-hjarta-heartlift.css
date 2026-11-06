@@ -1,0 +1,93 @@
+/* fan-hjarta-heartlift.css — Fan Level Up · Heart Lift. Scenen är 400×440 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar; lager som var
+   display:none där finns inte med. */
+.fhm-heartlift .fhm-scen{text-align:center}
+
+/* Effekterna runt introt. Alla är osynliga i vila, så editorns slutbild är bara ram, namn och nivå. */
+.fhm-heartlift .fhl-gnistor{position:absolute;left:36px;top:155px;width:320px;height:80px;z-index:4;pointer-events:none}
+.fhm-heartlift .fhl-gnistor i{position:absolute;left:0;top:35px;width:4px;height:3px;border-radius:50%;opacity:0;background:#ffe3a0;box-shadow:0 0 5px #ffd187}
+.fhm-heartlift .fhl-gnistor i:nth-child(3n){width:11px;height:1px}
+.fhm-heartlift .fhl-pop{position:absolute;left:100px;top:74px;width:200px;height:200px;border:2px solid #ffe0a2;border-radius:50%;opacity:0;z-index:3;
+  box-shadow:0 0 20px #d6a65b22}
+.fhm-heartlift .fhl-komet{position:absolute;left:-130px;top:179px;width:210px;height:4px;border-radius:50%;opacity:0;z-index:2;filter:blur(1px);
+  background:linear-gradient(90deg,transparent,#ad68e63b,#ffe1a7)}
+.fhm-heartlift .fhl-komet::after{content:'';position:absolute;left:0;top:-8px;width:100%;height:20px;border-radius:50%;filter:blur(6px);
+  background:linear-gradient(90deg,transparent,#a65bca15,#f6d49c44)}
+.fhm-heartlift .fhl-laddning{position:absolute;left:102px;top:74px;width:196px;height:196px;border-radius:50%;opacity:0;z-index:-1;
+  background:radial-gradient(circle,#ffe3ac16,#d6a25713 35%,transparent 70%)}
+.fhm-heartlift .fhl-vag{position:absolute;left:102px;top:74px;width:196px;height:196px;border:1px solid #ffe7b3;border-radius:50%;opacity:0;z-index:0;
+  box-shadow:0 0 15px #f6d6a444,inset 0 0 18px #f6d6a422}
+.fhm-heartlift .fhl-stjarnor{position:absolute;left:200px;top:174px;z-index:0}
+.fhm-heartlift .fhl-stjarnor i{position:absolute;left:0;top:0;width:3px;height:7px;border-radius:1px;opacity:0;background:#ffe0a0;box-shadow:0 0 4px #ffdc9555}
+.fhm-heartlift .fhl-stjarnor i:nth-child(3n){width:2px;height:4px;background:#c599ec}
+.fhm-heartlift .fhl-stjarnor i:nth-child(5n){width:9px;height:2px;background:#fff1cc}
+
+/* Den lutade porträttramen: en guldram och bilden ovanpå, båda vridna 5°. */
+.fhm-heartlift .fhl-ram{position:absolute;left:89px;top:22px;width:222px;height:222px;border-radius:10px;z-index:0;transform:rotate(5deg);
+  background:linear-gradient(140deg,#f6d79d,#a886be 65%,#e2c4a2);box-shadow:0 10px 24px #0008}
+.fhm-heartlift .fhl-portratt{position:absolute;left:95px;top:28px;width:210px;height:210px;border-radius:6px;z-index:1;overflow:hidden;
+  transform:rotate(5deg);background:#21132b}
+.fhm-heartlift .fhl-bild{display:block;width:100%;height:100%;border-radius:5px;object-fit:cover;object-position:center 35%}
+.fhm-heartlift .fhl-glans{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;
+  background:linear-gradient(125deg,transparent 30%,#fff5 48%,transparent 62%)}
+
+/* Introhjärtat. Lådan står med centrum i scenens mitt (200,152) — där prototypens hjärta passerade
+   i full storlek (124 px × 1,3); bildens egna proportioner, som märket. Ligger direkt i scenen: inga
+   transformerade förfäder, så motorns flygning räknar från rätt ställe. */
+.fhm-heartlift .fhl-intro{position:absolute;left:138px;top:112px;width:124px;z-index:6;filter:drop-shadow(0 3px 6px #0006)}
+
+.fhm-heartlift .fhl-namn{position:absolute;top:312px;left:5px;right:5px;font-size:calc(31px * var(--fhm-namn-k,1));line-height:1.15;font-weight:800;
+  letter-spacing:-.5px;color:transparent;text-shadow:0 3px 15px #000;
+  background:linear-gradient(100deg,#fff4ea 20%,#ffdf9e 47%,#fff4ea 70%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text}
+.fhm-heartlift .fhl-niva{position:absolute;left:0;right:0;top:356px;height:90px}
+.fhm-heartlift .fhl-rad{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;
+  font-size:46px;font-weight:900;letter-spacing:-1px;line-height:1.15;color:#ffe2ac;text-shadow:0 0 22px #eeba5422}
+.fhm-heartlift .fhl-rad .fhl-etikett{display:inline-block;font-size:17px;font-weight:900;letter-spacing:1.5px;line-height:1.2;white-space:nowrap;
+  color:#ffe6b3;text-shadow:0 1px 5px #000,0 0 12px #d8ad5c33}
+.fhm-heartlift .fhl-rad .fhl-siffra{display:inline-block;font-size:46px;font-weight:900;color:#ffe2ac}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). */
+.fhm-heartlift .fhl-mark{width:112px;flex:0 0 112px;filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+
+/* Tidslinjen. Allt med `both`, så att slutet är vilobilden.
+   Prototypens oskärpa i ramens och textens entré (blur 3 px / 2 px) är borttagen: den föll mitt i
+   hjärtats flygning och kostade tappade bildrutor just där (uppmätt 2026-11-05 i headless Chromium:
+   ≈400 ms förlorade rutor mellan 2,1 och 2,9 s med, ≈35 ms utan). Den syntes bara medan lagren
+   ännu var nästan genomskinliga.
+   0–1,2 s komet och gnistspår · 0–2,0 s introhjärtat glider in (flygningen tar över vid 1,6 s och
+   landar vid 3,35 s) · 1,0 s laddning · 2,08 s pop, ljusvåg och stjärnor · 2,1 s namnet ·
+   2,3 s ramen poppar fram · 2,35 s nivåraden · 3,6 s nivån lyser upp · 3,4 s ramen andas · 4,3 s glansen. */
+.fhm-heartlift.fhm-spelar .fhl-komet{animation:fhlKomet 1.22s ease-out both}
+.fhm-heartlift.fhm-spelar .fhl-gnistor i{animation:fhlGnista 1.1s calc(120ms + var(--i) * 45ms) both}
+.fhm-heartlift.fhm-spelar .fhl-intro{animation:fhlIntro 2s cubic-bezier(.15,.5,.65,.75) both}
+.fhm-heartlift.fhm-spelar .fhl-laddning{animation:fhlLaddning 1.45s 1s both}
+.fhm-heartlift.fhm-spelar .fhl-pop{animation:fhlPop 1s 2.08s both}
+.fhm-heartlift.fhm-spelar .fhl-vag{animation:fhlVag 1.3s 2.1s both}
+.fhm-heartlift.fhm-spelar .fhl-stjarnor i{animation:fhlStjarna 1.8s calc(2160ms + var(--d)) both}
+.fhm-heartlift.fhm-spelar .fhl-ram,
+.fhm-heartlift.fhm-spelar .fhl-portratt{animation:fhlRamIn 1.1s cubic-bezier(.16,1,.3,1) 2.3s both,fhlRamVila 3.2s ease-in-out 3.4s forwards}
+/* Andetaget fyller bara framåt: med `both` hade dess första bild (rotate 5°) legat över entrén
+   från 0 s, eftersom den senare animationen i listan vinner. */
+.fhm-heartlift.fhm-spelar .fhl-namn{animation:fhlText .9s 2.1s both}
+.fhm-heartlift.fhm-spelar .fhl-niva{animation:fhlText .9s 2.35s both}
+.fhm-heartlift.fhm-spelar .fhl-rad{animation:fhlGlod 1.5s 3.6s both}
+.fhm-heartlift.fhm-spelar .fhl-glans{animation:fhlGlans 2.2s ease-in-out 4.3s both}
+
+/* Introts bana: rakt in från vänster, snabbt (≈520 px/s) och sedan en jämn inbromsning till en
+   glidfart på ≈135 px/s när flygningen tar över vid 1,6 s. Slutet (100 %) ligger bortom mitten,
+   så hjärtat aldrig hinner bromsa till stillastående även om flygningens timer kommer sent. */
+@keyframes fhlIntro{0%{opacity:0;transform:translate(-365px,31px) scale(.85) rotate(-14deg)}18%{opacity:1}
+  100%{opacity:1;transform:translate(38.6px,-3.3px) scale(1.35) rotate(2deg)}}
+@keyframes fhlKomet{0%{opacity:0;transform:translateX(-95px) scaleX(.6)}15%{opacity:.9}70%{opacity:.7;transform:translateX(240px) scaleX(.95)}
+  100%{opacity:0;transform:translateX(280px) scaleX(.4)}}
+@keyframes fhlGnista{0%{opacity:0;transform:translate(-100px,var(--y)) scale(.3)}15%{opacity:1}
+  65%{opacity:.75;transform:translate(calc(105px + var(--i) * 4px),var(--y)) scale(1)}
+  100%{opacity:0;transform:translate(calc(145px + var(--i) * 4px),calc(var(--y) * 1.7)) scale(.2)}}
+@keyframes fhlLaddning{0%{opacity:0;transform:scale(.6)}55%{opacity:1;transform:scale(1)}82%{opacity:.7;transform:scale(.9)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes fhlPop{0%{opacity:0;transform:scale(.35)}25%{opacity:.7}100%{opacity:0;transform:scale(1.5)}}
+@keyframes fhlVag{0%{opacity:0;transform:scale(.55)}20%{opacity:.8}100%{opacity:0;transform:scale(1.8)}}
+@keyframes fhlStjarna{0%{opacity:0;transform:translate(0,0) scale(.2)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--snurr)) scale(.4)}}
+@keyframes fhlRamIn{0%{opacity:0;transform:translateY(8px) scale(.78) rotate(2deg)}70%{opacity:1;transform:scale(1.02) rotate(6deg)}100%{opacity:1;transform:rotate(5deg)}}
+@keyframes fhlRamVila{0%,100%{transform:rotate(5deg) translateY(0)}50%{transform:rotate(4.5deg) translateY(-2px)}}
+@keyframes fhlText{0%{opacity:0;transform:translateY(9px)}100%{opacity:1;transform:none}}
+@keyframes fhlGlod{0%,100%{filter:brightness(1)}35%{filter:brightness(1.35)}}
+@keyframes fhlGlans{0%{opacity:0;transform:translateX(-70%)}30%{opacity:.6}100%{opacity:0;transform:translateX(70%)}}

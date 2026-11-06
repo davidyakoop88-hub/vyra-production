@@ -1336,9 +1336,16 @@ test('23f: parterna växer fram och linjen dras åt höger', () => {
 // klocka, och ingen av de åtta kan tyst tappa sin.
 // ================================================================================================
 
+// HJÄRTMODELLERNA (fan-hjarta.js, 2026-11-05) är undantagna, och det är inte ett hål: de har en
+// EGEN klocka — en tidslinje på 4–9 s med ett hjärta som flyger till nivåsiffran — och deras
+// motsvarighet till F3 är att hela tidslinjen ryms i modellens förvalda visningstid. Den vakten
+// står i tests/fan-hjarta.test.js. En fas på ≤ 2 s här hade varit ett påhittat register för att
+// tysta provet. En modell räknas som hjärtmodell bara om dess egen modellfil finns.
+const HJARTMODELLER = new Set(fabriksnycklar().filter(l => fs.existsSync(path.join(ROOT, `fan-hjarta-${l}.js`))));
+
 test('23g: varje registrerad modell har en koreografi', () => {
   const { FASER } = require('./helpers/fan-fas-register.js');
-  const utan = fabriksnycklar().filter(l => !FASER[l]);
+  const utan = fabriksnycklar().filter(l => !FASER[l] && !HJARTMODELLER.has(l));
   assert.deepEqual(utan, [],
     `${utan.join(', ')} står i fabrikstabellen men har ingen koreografi i FASER — modellen spelar `
     + 'utan klocka, och F3:s tak kan inte se den');
