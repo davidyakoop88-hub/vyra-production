@@ -9,6 +9,11 @@
  * gift-campaign-aura.js). Videoytan (.gcm-art) håller gåvobilden; gift-campaign-video.js lägger en
  * canvas ovanpå när gåvan har en egen animation.
  */
+/* Studions grundram för .widget (lila kant, skugga, 12 px marginal, rundning, minsta bredd) gäller inte
+ * modellerna: de har ingen ruta. Utan nollställningen syntes ramen i editorn och marginalen tryckte in
+ * .gcm-yta, så gåvoraden och stapeln kapades — i overlayn också. Samma nollställning som
+ * .widget.vyra-campaign-aura (gift-campaign-aura.js). */
+.widget.vyra-gcm{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:0!important;min-width:0!important}
 .vyra-gcm{position:absolute;background:transparent;color:#f9f2e7;font-family:var(--vt-font,system-ui,-apple-system,"Segoe UI",sans-serif)}
 .vyra-gcm .gcm-yta{position:relative;isolation:isolate;overflow:visible}
 .vyra-gcm img{display:block;-webkit-user-drag:none;user-select:none}
