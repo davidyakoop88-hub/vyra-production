@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `97af05d0`
+Commit: `543778d9`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **171** |
-| Sektioner | 31 |
-| Med katalognyckel | 171 / 171 |
-| Med shadow DOM-miniatyr | 137 / 171  ⚠️ |
-| Ritar sin design | 171 / 171 |
+| Kort totalt | **172** |
+| Sektioner | 32 |
+| Med katalognyckel | 172 / 172 |
+| Med shadow DOM-miniatyr | 138 / 172  ⚠️ |
+| Ritar sin design | 172 / 172 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -68,6 +68,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-02 | [#725](https://github.com/davidyakoop88-hub/vyra-production/pull/725) |
+| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-02 | [#725](https://github.com/davidyakoop88-hub/vyra-production/pull/725) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -378,6 +379,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-02 | [#725](https://github.com/davidyakoop88-hub/vyra-production/pull/725) |
+
+### CHATTAVATAR
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-02 | [#725](https://github.com/davidyakoop88-hub/vyra-production/pull/725) |
 
 ### SOCIAL-ALERT
 

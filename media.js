@@ -1929,6 +1929,13 @@ Promise.resolve().then(()=>{
   for(const f of ['gift-scene.js?v=20261102-1','bertil-paket.js?v=20261102-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 
+// Chattavatar - streamerns avatar i OBS, styrd från TikTok-chatten (chattavatar.js). Modellen (vem får styra,
+// väntetider, kö, pratbubblans delar) laddas först.
+Promise.resolve().then(()=>{
+  if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261106-1';css.dataset.chattavatar='1';document.head.append(css)}
+  for(const f of ['chattavatar-modell.js?v=20261106-1','chattavatar.js?v=20261106-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+});
+
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-katalog-ordning]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-ordning.css?v=20261103-1';css.dataset.katalogOrdning='1';document.head.append(css)}

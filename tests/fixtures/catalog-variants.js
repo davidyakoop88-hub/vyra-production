@@ -20,6 +20,7 @@ const CONTRACT = [
   { name: 'Heart Fireworks', key: 'catalog:heartfireworks' },
   { name: 'Boxgame-klocka', key: 'catalog:boxgame' },
   { name: 'Bertil paket', key: 'catalog:vyrapaket:bertil' },
+  { name: 'Chattavatar', key: 'catalog:vyrapaket:chattavatar' },
   // Hjärtan & moln (hjartmoln.js): en nyckel per gallerivariant, samma fabriksbyggare.
   { name: 'Hjärtan & moln · Profilhjärtan', key: 'catalog:heartcloud:profilhjartan' },
   { name: 'Hjärtan & moln · Glödande hjärtmoln', key: 'catalog:heartcloud:glodande' },

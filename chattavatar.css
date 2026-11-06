@@ -1,0 +1,33 @@
+/* CHATTAVATAR (chattavatar.js). Scenen ritas i paketets mått — 180 bred, avataren 180 x 265 längst
+   ned och pratbubblan ovanför huvudet — och --ca-z skalar allt med widgetens bredd. */
+.widget.vyra-chattavatar{position:absolute;box-sizing:border-box;overflow:visible}
+/* Studions standardlåda (.widget i studio.css: padding, lila kant, bakgrund, minst 150 px) gäller inte här. */
+.widget.vyra-chattavatar{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;border-radius:0!important;min-width:0!important}
+.vyra-chattavatar.ca-studio{outline:1px dashed rgba(167,139,250,.35)}
+.vyra-chattavatar .ca-scen{zoom:var(--ca-z,1);position:relative;width:180px;height:325px;pointer-events:none}
+.vyra-chattavatar .ca-avatar{position:absolute;left:0;bottom:0;width:180px;height:265px}
+.vyra-chattavatar .ca-vila,.vyra-chattavatar .ca-klipp{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .18s ease}
+.vyra-chattavatar .ca-vila{filter:drop-shadow(0 8px 7px #0005)}
+.vyra-chattavatar .ca-vila.ca-dold{opacity:0}
+.vyra-chattavatar .ca-vard{position:absolute;inset:0}
+.vyra-chattavatar .ca-klipp{opacity:0;visibility:hidden}
+.vyra-chattavatar .ca-klipp.ca-pa{opacity:1;visibility:visible}
+/* Bubblan sitter fast: botten 19 px ned i avatarlådan (ovanför huvudet), spetsen mot avataren. Högst
+   två rader; långa meddelanden delas i chattavatar.js. Ingen glidning, bara toning. */
+.vyra-chattavatar .ca-bubbla{position:absolute;left:6px;bottom:246px;width:168px;box-sizing:border-box;min-height:48px;padding:9px 12px;
+  background:rgba(22,15,32,.92);border:1px solid #cfa8ec88;border-radius:12px;color:#fff;
+  font:800 18px/1.3 system-ui,sans-serif;text-align:center;text-shadow:0 1px 2px #000;
+  white-space:pre-line;overflow-wrap:anywhere;opacity:0;transition:opacity .2s ease;z-index:3}
+.vyra-chattavatar .ca-bubbla::after{content:'';position:absolute;bottom:-7px;left:calc(50% - 6px);width:12px;height:12px;background:#1c1426;
+  border-right:1px solid #cfa8ec88;border-bottom:1px solid #cfa8ec88;transform:rotate(45deg)}
+.vyra-chattavatar .ca-bubbla.ca-syns{opacity:1}
+/* Tap tap: ett hjärta som slår bredvid avataren. Avataren själv flyttas eller skalas aldrig. */
+.vyra-chattavatar .ca-tap{position:absolute;left:8px;bottom:150px;font-size:28px;color:#ff6fa8;opacity:0;z-index:2}
+.vyra-chattavatar .ca-tap.ca-pa{animation:ca-tap .65s ease-in-out 6}
+@keyframes ca-tap{50%{opacity:1;transform:scale(1.2)}}
+.vyra-chattavatar .ca-status{position:absolute;left:0;right:0;top:100%;margin-top:2px;font:600 10px/1.2 system-ui,sans-serif;color:#b9a8d6;text-align:center;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.vyra-chattavatar .ca-tap.ca-pa{animation:none;opacity:1}}
+/* Panel och katalogkort */
+.ca-panel .ca-knappar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.ca-panel .ca-knappar button{flex:1 1 auto;min-width:64px}
+.ca-katalog .ca-katalogbild{width:44px;height:64px;object-fit:contain;flex:0 0 auto}
