@@ -162,6 +162,11 @@ const MAL_MODELLER = [
     tidsstyrt: { campaignDirection: 'entrén syns bara medan den spelar — provas i mal-livevag.browser.test.js',
       campaignMotion: 'rörelsen är kontinuerlig — provas i mal-livevag.browser.test.js',
       campaignSound: 'ljudet hörs bara vid en gåva — provas i mal-livevag.browser.test.js' } }))),
+  // Fokus, Classic och Gåvoflöde (gift-campaign-modeller.js): ingen rubrik, entré, rörelse eller ljud, och
+  // inga utseendefält — panelen har därför få kontroller med flit och ingen Återställ utseende.
+  ...['fokus', 'classic', 'flode'].flatMap(t => ['landscape', 'portrait'].map(o => ({ namn: `Gift Campaign · ${t} ${o}`,
+    nyckel: `catalog:giftcampaign:${t}:${o}`, effekt: (t === 'fokus' && o === 'landscape') || (t === 'flode' && o === 'portrait'),
+    minKontroller: 4, aterstall: null }))),
 ];
 // TOP STREAK (vyra-streak-panel.js, PR 10): Clean Flip och Design 1–3. Panelkraven och effekten per kontroll
 // gäller alla fyra — panelerna skiljer sig mellan alla fyra (Clean Flip har accent och entré men inga
