@@ -1953,7 +1953,7 @@ Promise.resolve().then(()=>{
  const css=document.createElement('link');css.rel='stylesheet';css.href='gift-campaign-aura.css?v=20261020-15';document.head.append(css);
  // Fokus, Classic och Gåvoflöde (2026-11-06) ritas av gift-campaign-modeller.js, som läggs UTANPÅ Aura i
  // wh-kedjan; gift-campaign-video.js spelar varje gåvas egen animation (strikt på giftId).
- if(!document.querySelector('link[data-gcm]')){const m=document.createElement('link');m.rel='stylesheet';m.href='gift-campaign-modeller.css?v=20261106-2';m.dataset.gcm='1';document.head.append(m)}
+ if(!document.querySelector('link[data-gcm]')){const m=document.createElement('link');m.rel='stylesheet';m.href='gift-campaign-modeller.css?v=20261106-3';m.dataset.gcm='1';document.head.append(m)}
  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','vfx-performance-monitor.js?v=20260912-1','vfx-quality-manager.js?v=20260912-1','gift-campaign-aura-engine.js?v=20261019-1','gift-campaign-aura.js?v=20261020-15','gift-campaign-aura-session.js?v=20260912-1','gift-campaign-video.js?v=20261106-1','gift-campaign-modeller.js?v=20261106-2'];
  const next=i=>{if(i>=files.length){if(typeof render==='function')render();return}const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0);
 });
