@@ -594,3 +594,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Fan Level Up: sex nya hjärtmodeller (PR 732)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 6 av 149 (filter: catalog:fanlevel:layout:ascend,catalog:fanlevel:layout:heartreveal,catalog:fanlevel:layout:heartgift,catalog:fanlevel:layout:goldenstage,catalog:fanlevel:layout:heartlift,catalog:fanlevel:layout:luminous) — catalog:fanlevel:layout:ascend, catalog:fanlevel:layout:goldenstage, catalog:fanlevel:layout:heartgift, catalog:fanlevel:layout:heartlift, catalog:fanlevel:layout:heartreveal, catalog:fanlevel:layout:luminous
+
+## 2026-11-06 — 12 referenser skrivna
+
+- **Motiv:** Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 12 av 149 (filter: giftcampaign) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:emerald:landscape, catalog:giftcampaign:emerald:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait, catalog:giftcampaign:gold:landscape, catalog:giftcampaign:gold:portrait, catalog:giftcampaign:platinum:landscape, catalog:giftcampaign:platinum:portrait

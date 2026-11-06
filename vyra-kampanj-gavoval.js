@@ -143,7 +143,8 @@
       + '<button type="button" class="gc-valj" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="gcGavaRubrik gcValtNamn">'
       + (s.image ? bild(s.image) : '') + '<span id="gcValtNamn">' + text(s.gava) + '</span><i>' + text(mynt(s.coins)) + '</i><b aria-hidden="true">▾</b></button>'
       + '<div class="gc-lista" hidden><input type="search" placeholder="Sök gåva …" aria-label="Sök gåva"><div role="listbox" aria-label="Gåvor"></div><small class="gc-mer"></small></div></div>'
-      + '<label>Namn<input id="gcGavaNamn" value="' + text(s.name) + '"></label>'
+      // Gåvoflödet (gift-campaign-modeller.js) visar bara bild och räknare, aldrig namnet — där har fältet ingen verkan.
+      + (w.campaignTheme === 'flode' ? '' : '<label>Namn<input id="gcGavaNamn" value="' + text(s.name) + '"></label>')
       + '<label>Mål (st)<input id="gcGavaMal" type="number" min="1" value="' + (Math.max(1, Math.round(+s.target || 1))) + '"></label>'
       + '</div>';
   }
@@ -230,6 +231,10 @@
           w['giftMatch' + i] = g.name;
           if (g.image) w['giftImage' + i] = g.image;
           w['giftCoins' + i] = Number(g.coins) || 0;
+          // Gåvans id: kampanjmodellerna spelar gåvans EGEN animation och slår upp den strikt på id
+          // (gift-campaign-video.js) — samma namn kan ha flera id med olika video. Utan id i katalogen
+          // tas ett gammalt id bort, så att platsen inte spelar förra gåvans video.
+          if (g.giftId) w['giftId' + i] = String(g.giftId); else delete w['giftId' + i];
           stang(false);
           if (typeof save === 'function') save();
           if (typeof render === 'function') render();

@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 221,
+ "antal": 227,
  "senaste": {
-  "motiv": "Fan Level Up: sex nya hjärtmodeller (PR 732)",
-  "nycklar": 6,
-  "filter": "catalog:fanlevel:layout:ascend,catalog:fanlevel:layout:heartreveal,catalog:fanlevel:layout:heartgift,catalog:fanlevel:layout:goldenstage,catalog:fanlevel:layout:heartlift,catalog:fanlevel:layout:luminous",
-  "tid": "2026-11-05T22:31:38.734Z"
+  "motiv": "Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)",
+  "nycklar": 12,
+  "filter": "giftcampaign",
+  "tid": "2026-11-06T00:20:17.827Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -872,6 +872,30 @@
   },
   "catalog:vyrapaket:bertil": {
    "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:classic:landscape": {
+   "matt": "290x170",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:classic:portrait": {
+   "matt": "172x263",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:flode:landscape": {
+   "matt": "420x150",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:flode:portrait": {
+   "matt": "150x440",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:fokus:landscape": {
+   "matt": "270x180",
+   "fyllnad": 100
+  },
+  "catalog:giftcampaign:fokus:portrait": {
+   "matt": "172x263",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:ascend": {

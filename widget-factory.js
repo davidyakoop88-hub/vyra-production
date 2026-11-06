@@ -66,6 +66,8 @@
   // pa tva stallen far forr eller senare tva olika varden. Bredden ar 400 i varje steg: det ar
   // familjens format, inte en installning per niva.
   const GE_MATT = { 1: [400, 450], 2: [400, 535], 3: [400, 560], 4: [400, 570] };
+  // Gift Campaign · Fokus, Classic, Gåvoflöde: prototypernas bredd (gift-campaign-modeller.js DESIGN).
+  const GCM_BREDD = { fokus: { landscape: 270, portrait: 172 }, classic: { landscape: 290, portrait: 172 }, flode: { landscape: 420, portrait: 140 } };
   // Fan Level Up:s hjärtmodeller (fan-hjarta.js): förvald visningstid i sekunder, så att hela
   // tidslinjen — hjärtat landar vid nivåsiffran — hinns med innan uttoningen. Samma tal som
   // modellfilernas `visning` (vaktat av tests/fan-hjarta.test.js).
@@ -646,7 +648,16 @@
     }),
     // Undertexten är temats egen röst. Alla teman utom Crystal Garden delar 'PUSH THE EVENT';
     // kristallträdgården växer i stället för att pushas, och namnger det själv.
-    'giftcampaign.theme': v => ({
+    // FOKUS, CLASSIC OCH GÅVOFLÖDE (gift-campaign-modeller.js, 2026-11-06): designens egen bredd,
+    // centrerad i den 432 breda duken, sex gåvor. Modellerna har ingen rubrik.
+    'giftcampaign.theme': v => GCM_BREDD[v.theme] ? ({
+      type: 'templateGiftCampaign',
+      x: Math.round((432 - GCM_BREDD[v.theme][v.orientation]) / 2), y: 110,
+      width: GCM_BREDD[v.theme][v.orientation], title: 'Gift Campaign',
+      templateTitle: 'GIFT CAMPAIGN', campaignSubtitle: '',
+      campaignTheme: v.theme, campaignOrientation: v.orientation,
+      giftCount: 6, accent: '#e8c17d'
+    }) : ({
       // Liggande var 608 (guld, platina, smaragd) och 430 (ovriga) pa x 70 - hogerkant 678 och 500 i en
       // 432-duk (F02). Guldtrion far 432 pa x 0, samma som passaInNya redan gav i editorn; de ovriga
       // behaller 430 och centreras. Staende ar oforandrade.

@@ -223,7 +223,9 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // landning-floede-provperiod.browser.test.js.
     // 2026-11-05 (David): "Nytt i VYRA: Fan Level Up" — de sex hjärtmodellerna som videor — under
     // arbetsflödet. Vaktas av samma prov: en ny del syns här i diffen.
-    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'logos', 'premium', 'mini-sidfot'],
+    // 2026-11-06 (David godkände OBS-provet): "Nytt i VYRA: Gift Campaign" — Fokus, Classic och Gåvoflöde
+    // som videor inspelade i OBS — direkt under Fan Level Up.
+    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'logos', 'premium', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

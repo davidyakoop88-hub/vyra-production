@@ -135,7 +135,7 @@ test('Top Gift med en sparad egen profil- och gåvobild ritar den automatiska re
 test('undantaget: Gift Campaign väljer sina gåvor i flikraden, ur Action & Events gåvokatalog', () => {
   const R = register();
   const kampanj = R.poster().filter(p => p.typ === 'templateGiftCampaign');
-  assert.equal(kampanj.length, 6, 'tre designer × två orienteringar');
+  assert.equal(kampanj.length, 12, 'sex designer (gold, platinum, emerald, fokus, classic, flöde) × två orienteringar');
   for (const p of kampanj) {
     const k = p.kontroller.filter(x => x.falt === 'gcGavoflikar');
     assert.equal(k.length, 1, 'en flikrad per post');
