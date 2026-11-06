@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `992d22cf`
+Commit: `61be037a`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **165** |
+| Kort totalt | **171** |
 | Sektioner | 31 |
-| Med katalognyckel | 165 / 165 |
-| Med shadow DOM-miniatyr | 131 / 165  ⚠️ |
-| Ritar sin design | 165 / 165 |
+| Med katalognyckel | 171 / 171 |
+| Med shadow DOM-miniatyr | 137 / 171  ⚠️ |
+| Ritar sin design | 171 / 171 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -44,13 +44,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VYRA TOP STREAK | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| FIREWORKS & BUBBLES · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| FIREWORKS & BUBBLES · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 2 | 2/2 | 2/2 | 2/2 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| GIFT CAMPAIGN · LJUS OCH RÖRELSE | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| GIFT CAMPAIGN · EN GÅVA I FOKUS | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| GIFT CAMPAIGN · LJUS OCH RÖRELSE | 12 | 12/12 | 12/12 | 12/12 | 2026-11-06 | — |
+| GIFT CAMPAIGN · EN GÅVA I FOKUS | 12 | 12/12 | 12/12 | 12/12 | 2026-11-06 | — |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · 6 DESIGNER | 6 | 6/6 | 6/6 | 6/6 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · FIRANDE · 2 KOREOGRAFIER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
@@ -61,7 +61,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| FAN LEVEL UP · 8 MODELLER | 8 | 8/8 | 8/8 | 8/8 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
@@ -132,13 +132,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 |---|---|---|---|---|---|
 | Fan Level 50 | `catalog:fanlevel50:royal` | ✓ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
-### FIREWORKS & BUBBLES · 2 DESIGNER
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
-| Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
-| Gift Bubbles | `catalog:giftbubbles` | ✓ | ✓ | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
-
 ### EGET INNEHÅLL
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
@@ -146,6 +139,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+
+### FIREWORKS & BUBBLES · 2 DESIGNER
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Supernova | `catalog:giftfireworks:supernova` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Gift Bubbles | `catalog:giftbubbles` | ✓ | ✓ | 2026-10-20 | [#663](https://github.com/davidyakoop88-hub/vyra-production/pull/663) |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
@@ -184,35 +184,35 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Fokus | `catalog:giftcampaign:fokus:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Fokus | `catalog:giftcampaign:fokus:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Classic | `catalog:giftcampaign:classic:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Classic | `catalog:giftcampaign:classic:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Gåvoflöde | `catalog:giftcampaign:flode:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Gåvoflöde | `catalog:giftcampaign:flode:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Fokus | `catalog:giftcampaign:fokus:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Fokus | `catalog:giftcampaign:fokus:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Classic | `catalog:giftcampaign:classic:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Classic | `catalog:giftcampaign:classic:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Gåvoflöde | `catalog:giftcampaign:flode:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Gåvoflöde | `catalog:giftcampaign:flode:portrait` | ✓ | ✓ | 2026-11-06 | — |
 
 ### GIFT CAMPAIGN · EN GÅVA I FOKUS
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Fokus | `catalog:giftcampaign:fokus:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Fokus | `catalog:giftcampaign:fokus:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Classic | `catalog:giftcampaign:classic:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Classic | `catalog:giftcampaign:classic:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Gåvoflöde | `catalog:giftcampaign:flode:landscape` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
-| Gåvoflöde | `catalog:giftcampaign:flode:portrait` | ✓ | ✓ | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
+| Guldslöja | `catalog:giftcampaign:gold:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Guldslöja | `catalog:giftcampaign:gold:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Platinum Light | `catalog:giftcampaign:platinum:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Emerald Mist | `catalog:giftcampaign:emerald:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Fokus | `catalog:giftcampaign:fokus:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Fokus | `catalog:giftcampaign:fokus:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Classic | `catalog:giftcampaign:classic:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Classic | `catalog:giftcampaign:classic:portrait` | ✓ | ✓ | 2026-11-06 | — |
+| Gåvoflöde | `catalog:giftcampaign:flode:landscape` | ✓ | ✓ | 2026-11-06 | — |
+| Gåvoflöde | `catalog:giftcampaign:flode:portrait` | ✓ | ✓ | 2026-11-06 | — |
 
 ### LIKE FOUNTAIN
 
@@ -290,7 +290,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 
-### FAN LEVEL UP · 8 MODELLER
+### FAN LEVEL UP · 14 MODELLER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -302,6 +302,12 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Fan Level Up · Rising Hearts | `catalog:fanlevel:layout:hearts` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | Fan Level Up · Welcome Ribbon | `catalog:fanlevel:layout:ribbon` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | Fan Level Up · Community Duo | `catalog:fanlevel:layout:duo` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Ascend | `catalog:fanlevel:layout:ascend` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Heart Reveal | `catalog:fanlevel:layout:heartreveal` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Hjärtats gåva | `catalog:fanlevel:layout:heartgift` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Golden Stage | `catalog:fanlevel:layout:goldenstage` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Heart Lift | `catalog:fanlevel:layout:heartlift` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Fan Level Up · Luminous | `catalog:fanlevel:layout:luminous` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 
 ### HEART ME GOAL · VARJE TEMA SEPARAT
 

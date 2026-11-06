@@ -68,6 +68,10 @@
   const GE_MATT = { 1: [400, 450], 2: [400, 535], 3: [400, 560], 4: [400, 570] };
   // Gift Campaign · Fokus, Classic, Gåvoflöde: prototypernas bredd (gift-campaign-modeller.js DESIGN).
   const GCM_BREDD = { fokus: { landscape: 270, portrait: 172 }, classic: { landscape: 290, portrait: 172 }, flode: { landscape: 420, portrait: 140 } };
+  // Fan Level Up:s hjärtmodeller (fan-hjarta.js): förvald visningstid i sekunder, så att hela
+  // tidslinjen — hjärtat landar vid nivåsiffran — hinns med innan uttoningen. Samma tal som
+  // modellfilernas `visning` (vaktat av tests/fan-hjarta.test.js).
+  const FAN_HJARTA_VISNING = { ascend: 7, heartreveal: 13, heartgift: 13, goldenstage: 7, heartlift: 7, luminous: 11 };
 
   const TABLES = {
     // Spellayoutens teman. Konsten ligger i assets/spellayout/<tema>/, geometrin i spellayout.js.
@@ -179,7 +183,9 @@
     // 'hero' star forst for att den ar STANDARDEN: fanLevelHtml renderar fan-layout-${fanLayout
     // ||'hero'}, sa en widget utan vald modell ar redan en hero. Den saknade bara sin plats i
     // registret, vilket gjorde att katalogen inte kunde skapa den och provet inte kunde mata den.
-    'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo'},
+    // De sex sista är hjärtmodellerna (fan-hjarta.js, David 2026-11-05): fristående scener med eget
+    // guldhjärta som flyger till nivåsiffran. Deras förvalda visningstid står i FAN_HJARTA_VISNING.
+    'fanlevel.layout': {hero:'Hero Card',stack:'Original Fan Stack',heartbeat:'Heartbeat Side',badgereveal:'Fan Badge Reveal',loyalty:'Loyalty Ring',hearts:'Rising Hearts',ribbon:'Welcome Ribbon',duo:'Community Duo',ascend:'Ascend',heartreveal:'Heart Reveal',heartgift:'Hjärtats gåva',goldenstage:'Golden Stage',heartlift:'Heart Lift',luminous:'Luminous'},
     // Fan Level 50 — en milstolpe-tavla. Varje design ar en fardig kort-mall (bakgrundsbild) vars
     // niva ar inbrand; bara fans som natt den nivan visas. Fler mallar (level 40, 100) blir fler
     // rader har. Geometrin (foto/namn/lag) bor i fan-level-50.css, en mall = en uppsattning matt.
@@ -516,7 +522,8 @@
       levelPlacering: 'absolut'
     }),
     'fanlevel.layout': v => ({
-      type: 'templateFanLevel', x: 100, y: 80, width: v.layout === 'heartbeat' || v.layout === 'duo' ? 300 : 260,
+      type: 'templateFanLevel', x: 100, y: 80, width: FAN_HJARTA_VISNING[v.layout] ? 300 : v.layout === 'heartbeat' || v.layout === 'duo' ? 300 : 260,
+      ...(FAN_HJARTA_VISNING[v.layout] ? { fanDuration: FAN_HJARTA_VISNING[v.layout] } : {}),
       title: 'Fan Level Up', fanHeadline: 'FAN LEVEL UP', fanLevelLabel: 'LV.', fanLevel: 12,
       fanName: 'HeartRiser', fanMessage: 'TROGEN SUPPORTER', fanTheme: 'gold',
       fanColor: '#ff8a20', fanLight: '#ffd36b', fanLayout: v.layout,

@@ -349,4 +349,34 @@ for (const pal of ['portal', 'rainbow', 'neon', 'fire', 'ice', 'gold', 'aurora',
   REGI['catalog:likefountain:portal:' + pal] = REGI['catalog:likefountain:portal'];
 }
 
+// FAN LEVEL UP · HJÄRTMODELLERNA (fan-hjarta.js, 2026-11-05). Firandet är en tidslinje på 5–9 s med
+// en partikelduk som ritas i requestAnimationFrame, och Golden Stage/Luminous andas i oändliga
+// loopar medan de visas — den generella frysningen stoppar CSS men inte duken, och den levande
+// fotograferingen fann aldrig två lika bildrutor (uppmätt i CI 2026-11-05: Golden Stage 7 och
+// Heart Lift 8 olika bildrutor på 14 s). Regin använder motorns egen krok: VyraFanHjarta.vila()
+// stoppar tidslinjen, duken och flygningen och lämnar lådan i slutbilden — samma bild som editorn
+// visar — och media.js uttoningstimer stängs så att lådan står kvar tänd. Bilden är bestämd av kod.
+const FAN_HJARTA_REGI = {
+  fas: 'slutbild', ms: 0,
+  varfor: 'tidslinje med partikelduk och oändliga andningsloopar; slutbilden är deterministisk',
+  regi: () => {
+    const M = window.VyraFanHjarta;
+    if (!M) return { fel: 'fan-hjarta.js laddades inte' };
+    const box = document.querySelector('.fhm[data-id]');
+    if (!box) return { fel: 'ingen .fhm-låda renderades' };
+    clearTimeout(box._fanTimer); clearTimeout(box._fanExitTimer);
+    M.vila(box);
+    box.classList.remove('fan-exit');
+    box.classList.add('fan-active');
+    // Klassbytet startar CSS-övergångar först vid nästa stilberäkning — tvinga den, annars fotograferas
+    // lådan mitt i en övergång och bilden skiljer mellan körningar.
+    void box.offsetWidth; getComputedStyle(box).opacity;
+    box.getAnimations({ subtree: true }).forEach(a => { try { a.finish(); } catch (_) { a.cancel(); } });
+    return { modell: box.dataset.fhmModell, animationer: box.getAnimations({ subtree: true }).length };
+  },
+};
+for (const m of ['ascend', 'heartreveal', 'heartgift', 'goldenstage', 'heartlift', 'luminous']) {
+  REGI['catalog:fanlevel:layout:' + m] = FAN_HJARTA_REGI;
+}
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };

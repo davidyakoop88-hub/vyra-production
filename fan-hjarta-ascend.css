@@ -1,0 +1,55 @@
+/* fan-hjarta-ascend.css — Fan Level Up · Ascend. Scenen är 430×610 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar. */
+.fhm-ascend .fhm-scen{text-align:center}
+.fhm-ascend .fa-beam{position:absolute;left:70px;top:-45px;width:290px;height:480px;z-index:-2;filter:blur(8px);
+  background:conic-gradient(from 151deg at 50% 100%,transparent,#a955ff18 20deg,#e0b4ff1c 28deg,transparent 58deg)}
+.fhm-ascend .fa-halo{position:absolute;left:48px;top:58px;width:334px;height:334px;border-radius:50%;z-index:-2;
+  background:radial-gradient(circle,#c866ff22,transparent 68%);box-shadow:0 0 80px #a442ff16}
+.fhm-ascend .fa-orbit{position:absolute;left:77px;top:87px;width:276px;height:276px;border:1px solid #e2b4ff66;border-radius:50%;
+  box-shadow:inset 0 0 24px #ad51ff10,0 0 16px #ad51ff10}
+.fhm-ascend .fa-orbit::before,.fhm-ascend .fa-orbit::after{content:'';position:absolute;left:36px;top:33px;width:6px;height:6px;background:#fff2c3;border-radius:50%;box-shadow:0 0 12px #ffcf72}
+.fhm-ascend .fa-orbit::after{left:auto;top:auto;right:36px;bottom:33px;width:4px;height:4px}
+.fhm-ascend .fa-orbit.fa-yttre{left:56px;top:66px;width:318px;height:318px;border:1px dashed #d7acff33;box-shadow:none}
+.fhm-ascend .fa-portratt{position:absolute;left:105px;top:115px;width:220px;height:220px;border-radius:50%;padding:4px;z-index:4;overflow:hidden;
+  background:linear-gradient(135deg,#fff4d8,#ffcd78 35%,#b365e8 72%,#ffe6b8);box-shadow:0 0 0 8px #b76cff0b,0 14px 35px #0008}
+.fhm-ascend .fa-portratt img{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;border:5px solid #140d20;background:#20132d}
+.fhm-ascend .fa-glans{position:absolute;inset:0;border-radius:50%;opacity:0;pointer-events:none;background:linear-gradient(125deg,transparent 30%,#fff5 48%,transparent 62%)}
+/* Introhjärtat vid porträttets nederkant (centrum 328,317 som i prototypen) — samma bredd, bildens höjd. */
+.fhm-ascend .fa-intro{position:absolute;left:274px;top:283px;width:108px;z-index:5;filter:drop-shadow(0 3px 6px #0006)}
+.fhm-ascend .fa-flare{position:absolute;left:55px;top:216px;width:320px;height:2px;opacity:0;z-index:3;
+  background:linear-gradient(90deg,transparent,#fff0d5,transparent);box-shadow:0 0 15px #fadaad}
+.fhm-ascend .fa-namn{position:absolute;top:361px;left:32px;right:32px;font-size:calc(30px * var(--fhm-namn-k,1));line-height:1.1;font-weight:800;
+  letter-spacing:-.8px;text-shadow:0 3px 15px #000}
+.fhm-ascend .fa-niva{position:absolute;left:0;right:0;top:418px;height:90px}
+.fhm-ascend .fa-gammal{display:none;position:absolute;inset:20px 0 0;font-size:45px;color:#bba4cd;font-weight:800}
+.fhm-ascend .fa-ny{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:10px;
+  font-size:58px;font-weight:900;letter-spacing:-1px;line-height:1.15;color:#ffe3ad;text-shadow:0 0 22px #eeba5422}
+.fhm-ascend .fa-ny .fa-etikett{display:inline-block;font-size:17px;letter-spacing:1.5px;white-space:nowrap;line-height:1.2;color:#ffe3ad}
+.fhm-ascend .fa-ny .fa-siffra{font-weight:900}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). */
+.fhm-ascend .fa-mark{width:112px;flex:0 0 112px;filter:drop-shadow(0 2px 5px #0007) drop-shadow(0 0 7px #e4b35a33)}
+.fhm-ascend .fa-mark-golv{position:absolute;top:584px;left:86px;width:258px;height:3px;border-radius:50%;
+  background:linear-gradient(90deg,transparent,#dfadff,transparent);box-shadow:0 0 22px #b053fa}
+
+/* Tidslinjen. Allt med `both`, så att slutet är vilobilden. */
+.fhm-ascend.fhm-spelar .fa-portratt{animation:faPortratt 1.1s cubic-bezier(.16,1,.3,1) .25s both}
+.fhm-ascend.fhm-spelar .fa-orbit{animation:faRing 1.5s cubic-bezier(.16,1,.3,1) both}
+.fhm-ascend.fhm-spelar .fa-orbit.fa-yttre{animation-delay:.12s}
+.fhm-ascend.fhm-spelar .fa-halo,.fhm-ascend.fhm-spelar .fa-beam{animation:faLjus 1.2s both}
+.fhm-ascend.fhm-spelar .fa-namn{animation:faIn .7s .9s both}
+.fhm-ascend.fhm-spelar .fa-intro{animation:faHjarta .8s 1.15s both}
+.fhm-ascend.fhm-spelar .fa-gammal{display:block;animation:faGammal 2.2s both}
+.fhm-ascend.fhm-spelar .fa-ny{animation:faNy .8s 2.15s both}
+.fhm-ascend.fhm-spelar .fa-mark-golv{animation:faRing 1s .4s both}
+.fhm-ascend.fhm-spelar .fa-flare{animation:faFlare .8s 2.1s both}
+.fhm-ascend.fhm-spelar .fa-glans{animation:faGlans 1.1s 3.1s both}
+
+@keyframes faPortratt{0%{opacity:0;transform:translateY(48px) scale(.55);filter:blur(6px)}65%{opacity:1;transform:translateY(-8px) scale(1.035);filter:blur(0)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes faRing{from{opacity:0;transform:scale(.3) rotate(-75deg)}to{opacity:1;transform:none}}
+@keyframes faLjus{from{opacity:0;transform:scaleY(.3)}to{opacity:1;transform:none}}
+@keyframes faIn{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:none}}
+@keyframes faHjarta{0%{opacity:0;transform:scale(.1) rotate(-30deg)}70%{opacity:1;transform:scale(1.12) rotate(5deg)}100%{opacity:1;transform:none}}
+@keyframes faNy{0%{opacity:0;transform:scale(2);filter:blur(8px)}45%{opacity:1;transform:scale(.92);filter:blur(0)}70%{transform:scale(1.08)}100%{opacity:1;transform:none;filter:blur(0)}}
+@keyframes faGammal{0%,35%{opacity:0}50%,78%{opacity:1;transform:scale(1);filter:blur(0)}100%{opacity:0;transform:translateY(-18px) scale(1.4);filter:blur(5px)}}
+@keyframes faFlare{0%{opacity:0;transform:scaleX(.1)}35%{opacity:.85;transform:scaleX(1.15)}100%{opacity:0;transform:scaleX(1.3)}}
+@keyframes faGlans{0%{opacity:0;transform:translateX(-70%)}30%{opacity:.6}100%{opacity:0;transform:translateX(70%)}}

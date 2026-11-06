@@ -3,7 +3,7 @@
   // ALERTFAMILJERNA I PANELRAMEN — PR 6 i panelspecifikationen (avsnitt 5.10, 5.11 och 5.12).
   //
   // Fyra familjer, 26 modeller:
-  //   * Fan Level Up (templateFanLevel) — åtta modeller (fanLayout),
+  //   * Fan Level Up (templateFanLevel) — fjorton modeller (fanLayout); de sex hjärtmodellerna har en egen post,
   //   * Gifter Level Up (templateGifterLevel) — nio modeller (gifterLayout),
   //   * Follower Spotlight (templateFollowerAlert) — tre teman (followTheme),
   //   * Guardian Emblem (templateGuardianEmblem) — Guld i fyra praktsteg, Blå kristall och Grön aura.
@@ -50,7 +50,12 @@
   const ENTREFALT = ['entranceAnimation', 'entranceDuration'];
 
   const FAN = { hero: 'Hero Card', stack: 'Original Fan Stack', heartbeat: 'Heartbeat Side', badgereveal: 'Fan Badge Reveal',
-    loyalty: 'Loyalty Ring', hearts: 'Rising Hearts', ribbon: 'Welcome Ribbon', duo: 'Community Duo' };
+    loyalty: 'Loyalty Ring', hearts: 'Rising Hearts', ribbon: 'Welcome Ribbon', duo: 'Community Duo',
+    ascend: 'Ascend', heartreveal: 'Heart Reveal', heartgift: 'Hjärtats gåva', goldenstage: 'Golden Stage', heartlift: 'Heart Lift', luminous: 'Luminous' };
+  // Hjärtmodellerna (fan-hjarta.js) är färdiga scener med eget guldhjärta och egna färger: tema,
+  // färger, typsnitt, rubrik, nivåtext, meddelande, profilram, bakgrund och entré verkar inte där och
+  // visas därför inte (BARA KONTROLLER SOM GÖR NÅGOT, ovan).
+  const FAN_HJARTA = new Set(['ascend', 'heartreveal', 'heartgift', 'goldenstage', 'heartlift', 'luminous']);
   const GIFTER = { profile: 'Profil i orbit', number: 'Stort nivånummer', stack: 'Diamantstapel', sidebadge: 'Sidobadge',
     reveal: 'Diamantreveal', orbitlevel: 'Orbitnivå', risingtier: 'Stigande nivåer', flip: 'Myntvändning', duo: 'Kompakt duo' };
   const FOLJARE = { gold: 'Guld', ocean: 'Hav', blush: 'Rosa' };
@@ -82,6 +87,7 @@
 
   // ---- 1a. Fan Level Up --------------------------------------------------------------------------
   function fanLevel(modell) {
+    if (FAN_HJARTA.has(modell)) return fanHjarta(modell);
     const profil = modell !== 'hearts';
     const nivatext = modell !== 'ribbon';
     const kontroller = [
@@ -128,6 +134,36 @@
       arv: ['highlight', 'secondary', 'text', 'fontFamily'],
       kontroller,
       utseendeFalt: ['fanTheme', 'fanColor', 'fanLight', 'profileFrame', 'inheritBrandKit', ...ENTREFALT, ...TEXTFALT, ...BAKGRUNDSFALT],
+    };
+  }
+
+  // ---- 1a2. Fan Level Up · hjärtmodellerna --------------------------------------------------------
+  function fanHjarta(modell) {
+    return {
+      typ: 'templateFanLevel',
+      modell: fanModell,
+      galler: [modell],
+      rubrik: () => 'Fan Level Up',
+      marke: () => FAN[modell] + ' · nivåhöjning',
+      katalognyckel: () => 'catalog:fanlevel:layout:' + modell,
+      test: 'fanlevel',
+      ersatter: ['#testFanLevel', '#fanProfile'],
+      arv: [],
+      kontroller: [
+        // 2 · Innehåll
+        { sektion: 2, typ: 'kryss', falt: 'levelVideoMode', etikett: 'Spela en egen video för vissa nivåer', legacyId: '#fanLevelVideoMode' },
+        { sektion: 2, typ: 'text', falt: 'prNivavideo', legacyId: '#prNivavideo' },
+        { sektion: 2, kalla: 'live', typ: 'text', etikett: 'Hämtas från TikTok: namn, nivå och profilbild för den som går upp en nivå.' },
+        narDenVisas,
+        { sektion: 2, typ: 'kryss', falt: 'fanTeamOnly', etikett: 'Bara medlemmar i ditt team', legacyId: '#fanTeamOnly' },
+        { sektion: 2, typ: 'kryss', falt: 'autoTrigger', etikett: 'Visa automatiskt vid en nivåhöjning', legacyId: '#fanAutoTrigger' },
+        { sektion: 2, typ: 'tal', falt: 'minLevel', etikett: 'Minsta nivå', legacyId: '#fanMinLevel' },
+        // 3 · Storlek och placering
+        { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
+        // 6 · Animation: hela firandet ryms i den förvalda visningstiden (widget-factory.js).
+        { sektion: 6, typ: 'tal', falt: 'fanDuration', etikett: 'Visningstid', enhet: 's', legacyId: '#fanDuration' },
+      ],
+      utseendeFalt: [],
     };
   }
 

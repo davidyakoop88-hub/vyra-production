@@ -589,6 +589,12 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 3 av 143 (filter: voltage) — catalog:ranking:templateTopCoins:voltage, catalog:ranking:templateTopPoints:voltage, catalog:toplike:voltage
 
+## 2026-11-05 — 6 referenser skrivna
+
+- **Motiv:** Fan Level Up: sex nya hjärtmodeller (PR 732)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 6 av 149 (filter: catalog:fanlevel:layout:ascend,catalog:fanlevel:layout:heartreveal,catalog:fanlevel:layout:heartgift,catalog:fanlevel:layout:goldenstage,catalog:fanlevel:layout:heartlift,catalog:fanlevel:layout:luminous) — catalog:fanlevel:layout:ascend, catalog:fanlevel:layout:goldenstage, catalog:fanlevel:layout:heartgift, catalog:fanlevel:layout:heartlift, catalog:fanlevel:layout:heartreveal, catalog:fanlevel:layout:luminous
+
 ## 2026-11-06 — 12 referenser skrivna
 
 - **Motiv:** Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)

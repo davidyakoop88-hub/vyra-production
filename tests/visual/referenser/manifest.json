@@ -6,7 +6,7 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 221,
+ "antal": 227,
  "senaste": {
   "motiv": "Sex nya katalognycklar: Gift Campaign Fokus, Classic och Gåvoflöde (PR 733)",
   "nycklar": 12,
@@ -896,6 +896,30 @@
   },
   "catalog:giftcampaign:fokus:portrait": {
    "matt": "172x263",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:ascend": {
+   "matt": "300x426",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:goldenstage": {
+   "matt": "300x324",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartgift": {
+   "matt": "300x333",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartlift": {
+   "matt": "300x330",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:heartreveal": {
+   "matt": "300x166",
+   "fyllnad": 100
+  },
+  "catalog:fanlevel:layout:luminous": {
+   "matt": "300x336",
    "fyllnad": 100
   }
  }

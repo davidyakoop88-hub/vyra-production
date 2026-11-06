@@ -1,0 +1,113 @@
+/* fan-hjarta-luminous.css — Fan Level Up · Luminous. Scenen är 420×470 (fan-hjarta.css skalar den).
+   Värdena är de som faktiskt gällde i prototypen efter alla dess överskrivningar (kristallversionen
+   med "story first"-tidslinjen); fjäderkrönet och medaljplattan som låg under är borta. */
+.fhm-luminous .fhm-scen{text-align:center;color:#ffe4a9}
+/* Konfettin och gnistorna ligger över allt, som prototypens konfetti (z 6). */
+.fhm-luminous .fhm-partiklar{z-index:6}
+
+/* Ljuset. Glöden, strålarna och auran är mjuka gradienter; de får gärna gå utanför scenen. */
+.fhm-luminous .flu-glod{position:absolute;left:-10px;top:-63px;width:420px;height:330px;border-radius:50%;opacity:0;z-index:-2;
+  background:radial-gradient(ellipse at 50% 50%,#fff0c344,#f1b95a18 32%,transparent 68%)}
+.fhm-luminous .flu-stralar{position:absolute;left:-8px;top:-35px;width:436px;height:436px;border-radius:50%;z-index:-2;
+  background:radial-gradient(ellipse,#b266e522 0%,#efba6b0a 35%,transparent 66%)}
+.fhm-luminous .flu-ring{position:absolute;left:113px;top:40px;width:160px;height:160px;border:1px solid #ffe2a599;border-radius:50%;opacity:0;z-index:-1}
+.fhm-luminous .flu-aura{position:absolute;left:-40px;top:-25px;width:500px;height:565px;z-index:-1;
+  background:radial-gradient(ellipse at 50% 42%,#dcb26d17,transparent 65%)}
+.fhm-luminous .flu-blixt{position:absolute;left:40px;top:3px;width:330px;height:330px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,#fff1c777,#f2cd9520 25%,transparent 65%)}
+.fhm-luminous .flu-overlamning{position:absolute;left:177px;top:107px;width:20px;height:20px;border-radius:50%;opacity:0;z-index:5;
+  background:radial-gradient(circle,#fff7d3,#e7b96955 30%,transparent 68%)}
+
+/* Kristallen: en slipad sjukant runt porträttet (samma polygon i skal, kant, porträtt och glans). */
+.fhm-luminous .flu-skal,.fhm-luminous .flu-kant,.fhm-luminous .flu-portratt,.fhm-luminous .flu-glimt{position:absolute;
+  clip-path:polygon(50% 0,89% 16%,100% 61%,73% 100%,24% 95%,0 58%,10% 17%)}
+.fhm-luminous .flu-skal{left:71px;top:36px;width:278px;height:278px;rotate:-8deg;z-index:0;filter:drop-shadow(0 0 15px #e8bf8a44);
+  background:conic-gradient(from 15deg,#fff1c5,#d5ac71,#694086,#e5a87e,#fff1bc,#71439b,#fff1c5)}
+.fhm-luminous .flu-skal::before{content:'';position:absolute;inset:4px;clip-path:inherit;background:linear-gradient(145deg,#35213c,#140e21 65%)}
+.fhm-luminous .flu-kant{left:53px;top:18px;width:314px;height:314px;rotate:5deg;z-index:-1;
+  background:linear-gradient(130deg,#f6e0aa55,transparent 26%,transparent 68%,#a879d555)}
+.fhm-luminous .flu-portratt{left:95px;top:60px;width:230px;height:230px;rotate:-8deg;background:#25162c}
+.fhm-luminous .flu-portratt img{display:block;width:100%;height:100%;object-fit:cover;rotate:8deg;scale:1.12;background:#27162a}
+.fhm-luminous .flu-glimt{left:70px;top:37px;width:279px;height:278px;rotate:-8deg;z-index:4;opacity:0;mix-blend-mode:screen;
+  background:linear-gradient(115deg,transparent 30%,#fff5d322 42%,#fff9e977 48%,transparent 57%)}
+
+/* Ljusspåren efter hjärtat i soloshowen: samma ruta och samma spår som introhjärtat, ett glödande
+   streck i mitten, oskarpa och svagare för varje steg bakåt. */
+.fhm-luminous .flu-spar{position:absolute;left:240px;top:362.2125px;width:112px;height:71.6px;opacity:0;z-index:0;filter:blur(3px)}
+.fhm-luminous .flu-spar::before{content:'';position:absolute;left:43px;top:31px;width:21px;height:2.6px;border-radius:50%;
+  background:#ffe5ad;box-shadow:0 0 8px 3px #eeb65b66;opacity:calc(.24 - var(--flu-i,0) * .025)}
+
+/* Texten: skarp yta, varm gloria — starkast på LEVEL UP (David). Varje textelement har egen storlek
+   (studions .widget span är 8 px). Glöden ligger i text-shadow; overlayns mörka kontur läggs ovanpå. */
+/* Namnet klipps (långa namn, fan-hjarta.css) — utan luft klipptes glöden till en rektangel kring raden,
+   som i prototypen. 14 px luft över och under; texten står kvar på prototypens y 331. */
+.fhm-luminous .flu-namn{position:absolute;top:317px;padding:14px 0;left:0;right:0;z-index:4;font-size:calc(30px * var(--fhm-namn-k,1));line-height:1.15;
+  font-weight:750;letter-spacing:-.7px;color:#fff4dd;text-shadow:0 0 2px #fff0bf,0 0 9px #e7ad6099,0 0 22px #e3a34466,0 2px 3px #160c20}
+/* Nivåraden ligger över namnet (z 5), så att hjärtat har samma lager före och efter bytet till märket
+   (i prototypen låg raden under namnets glöd och introhjärtat över den). */
+.fhm-luminous .flu-niva{position:absolute;left:0;right:0;top:360px;height:76px;z-index:5;display:flex;flex-direction:row;flex-wrap:nowrap;
+  align-items:center;justify-content:center;gap:10px;color:#ffe4a9}
+.fhm-luminous .flu-etikett{display:inline-block;font-size:19px;line-height:1.2;width:108px;font-weight:750;letter-spacing:3px;white-space:nowrap;color:#fff7d9;
+  text-shadow:0 0 2px #fffef1,0 0 6px #fff0b9,0 0 14px #ffd271,0 0 27px #efa637bb,0 0 43px #e8a13b77}
+/* Fast bredd för två siffror (och för etiketten): nivå 1 och nivå 50 ger märket samma plats, så att
+   hjärtats spår (som slutar i märkets ruta) aldrig behöver glida i sidled efter att det har stannat.
+   108 + 10 + 44 + 10 + 112 = 284 px ger hela pixlar: märket står på (240, 362,21), mitt 296,398 —
+   exakt där motorn (som läser offsetLeft/offsetTop) siktar och där introhjärtat vilar. */
+.fhm-luminous .flu-siffra{display:inline-block;width:44px;font-size:42px;line-height:1;font-weight:700;letter-spacing:-2px;
+  font-variant-numeric:tabular-nums;text-align:center;color:#fff2cc;text-shadow:0 0 3px #fff5d8,0 0 13px #f4bd68bb,0 0 30px #df9c4577}
+/* Märket bredvid siffran: tydligt, inte en ikon (David). Introhjärtat har samma glöd, så bytet syns inte. */
+.fhm-luminous .flu-mark{width:112px;flex:0 0 112px;filter:drop-shadow(0 0 10px #f0bb6b77)}
+/* Introhjärtat vilar i märkets ruta (nivå 12); spåret fluBana är förskjutningen därifrån. Direkt barn
+   till scenen — inga transformerade förfäder, som motorns flygning kräver. */
+.fhm-luminous .flu-intro{position:absolute;left:240px;top:362.2125px;width:112px;z-index:5;filter:drop-shadow(0 0 10px #f0bb6b77)}
+.fhm-luminous .flu-stjarnor{position:absolute;left:210px;top:398px;z-index:6}
+.fhm-luminous .flu-stjarnor i{position:absolute;width:4px;height:4px;background:#fff4c7;box-shadow:0 0 6px #ffd27b;opacity:0;rotate:45deg}
+.fhm-luminous .flu-stjarnor i:nth-child(1){--x:-114px;--y:-17px}
+.fhm-luminous .flu-stjarnor i:nth-child(2){--x:110px;--y:-12px}
+.fhm-luminous .flu-stjarnor i:nth-child(3){--x:-72px;--y:19px}
+.fhm-luminous .flu-stjarnor i:nth-child(4){--x:83px;--y:16px}
+
+/* Tidslinjen. Allt med `both`, så att slutet är vilobilden; ingen egen uttoning (Fan Level Up har sin).
+   0–3,85 s hjärtats soloshow (in från vänster, svävar i ljuset), 3,65–5,55 s ramen byggs,
+   5,15 s personen, 6,2 s namnet, 6,6 s hjärtat stilla på nivåplatsen, 6,7–7,7 s nivåraden, 7,7 s märket. */
+.fhm-luminous.fhm-spelar .flu-intro{animation:fluBana 6.6s linear both}
+.fhm-luminous.fhm-spelar .flu-spar{animation:fluBana 6.6s linear calc(45ms + var(--flu-i,0) * 38ms) both,fluSpar 3.762s linear calc(45ms + var(--flu-i,0) * 38ms) both}
+.fhm-luminous.fhm-spelar .flu-glod{animation:fluValkomst 3.4s .6s both}
+.fhm-luminous.fhm-spelar .flu-ring{animation:fluRing 1.7s .8s both}
+.fhm-luminous.fhm-spelar .flu-ring2{animation:fluRing 1.9s 1.1s both}
+.fhm-luminous.fhm-spelar .flu-aura{animation:fluTona 2s .9s both}
+.fhm-luminous.fhm-spelar .flu-stralar{animation:fluLaddning 3s 1.5s both}
+.fhm-luminous.fhm-spelar .flu-blixt{animation:fluBlixt 2.1s 3.25s both}
+.fhm-luminous.fhm-spelar .flu-overlamning{animation:fluOverlamning 1.8s 3.65s both}
+.fhm-luminous.fhm-spelar .flu-kant{animation:fluBygg 1.9s 3.65s both}
+.fhm-luminous.fhm-spelar .flu-skal{animation:fluBygg 1.65s cubic-bezier(.16,1,.3,1) 3.9s both,fluVila 7s ease-in-out 5.55s infinite}
+.fhm-luminous.fhm-spelar .flu-glimt{animation:fluGlimt 2.1s 4.3s both,fluGlimt 7s 8s infinite}
+.fhm-luminous.fhm-spelar .flu-portratt{animation:fluPerson 1.5s cubic-bezier(.16,1,.3,1) 5.15s both,fluVila 7s ease-in-out 6.65s infinite}
+.fhm-luminous.fhm-spelar .flu-namn{animation:fluIn 1s 6.2s both,fluNamnGlod 4.8s ease-in-out 7.2s infinite}
+.fhm-luminous.fhm-spelar .flu-niva{animation:fluIn 1s 6.7s both}
+.fhm-luminous.fhm-spelar .flu-etikett{animation:fluEtikettGlod 4s ease-in-out 7.4s infinite}
+.fhm-luminous.fhm-spelar .flu-siffra{animation:fluSiffraGlod 4.8s ease-in-out 7.4s infinite}
+.fhm-luminous.fhm-spelar .flu-stjarnor i{animation:fluStjarna 1.9s 7.35s both}
+
+@keyframes fluValkomst{0%{opacity:0;transform:scale(.3)}20%{opacity:1;transform:scale(.9)}65%{opacity:.6;transform:scale(1.12)}100%{opacity:0;transform:scale(1.3)}}
+@keyframes fluRing{0%{opacity:0;transform:scale(.25)}15%{opacity:.75}100%{opacity:0;transform:scale(2.35)}}
+@keyframes fluTona{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes fluLaddning{0%{opacity:0;transform:scale(.25)}45%{opacity:.35;transform:scale(.6)}80%{opacity:1;transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+@keyframes fluBlixt{0%{opacity:0;transform:scale(.3)}35%{opacity:.85;transform:scale(.8)}100%{opacity:0;transform:scale(1.4)}}
+@keyframes fluOverlamning{0%{opacity:0;transform:scale(.2)}25%{opacity:.9;transform:scale(2)}65%{opacity:.55;transform:translate(16px,50px) scale(12)}100%{opacity:0;transform:translate(16px,50px) scale(17)}}
+@keyframes fluBygg{from{opacity:0;transform:scale(.4) rotate(-28deg);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fluVila{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes fluGlimt{0%,100%{opacity:0;background-position:-220px 0}25%{opacity:.7}65%{opacity:.2;background-position:220px 0}}
+@keyframes fluPerson{from{opacity:0;transform:scale(.9);filter:blur(6px) brightness(1.4)}to{opacity:1;transform:none;filter:none}}
+@keyframes fluIn{from{opacity:0;transform:translateY(12px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fluNamnGlod{0%,100%{text-shadow:0 0 2px #fff0bf,0 0 9px #e7ad6088,0 0 22px #e3a34455,0 2px 3px #160c20}40%{text-shadow:0 0 3px #fff4d7,0 0 14px #f3c37abb,0 0 30px #e3a34488,0 2px 3px #160c20}}
+@keyframes fluEtikettGlod{0%,100%{text-shadow:0 0 2px #fffef1,0 0 6px #fff0b9,0 0 14px #ffd271,0 0 27px #efa637bb,0 0 43px #e8a13b77}45%{text-shadow:0 0 3px #fff,0 0 8px #fff5cc,0 0 19px #ffe59a,0 0 34px #ffc052ee,0 0 50px #efa63799}}
+@keyframes fluSiffraGlod{0%,100%{text-shadow:0 0 3px #fff5d8,0 0 13px #f4bd6899,0 0 30px #df9c4566}40%{text-shadow:0 0 5px #fff9e9,0 0 18px #ffd68ddd,0 0 38px #efb35d99}}
+@keyframes fluStjarna{0%{opacity:0;transform:translate(var(--x),var(--y)) scale(.1)}30%{opacity:.9;transform:translate(var(--x),var(--y)) scale(1)}100%{opacity:0;transform:translate(var(--x),calc(var(--y) - 12px)) scale(.2)}}
+/* Ljusspårens styrka: prototypens sin-kurva över de första 57 % av hjärtats 6,6 s, gånger infadningen. */
+@keyframes fluSpar{0%{opacity:0}8.33%{opacity:0.18}16.67%{opacity:0.5}25%{opacity:0.707}33.33%{opacity:0.866}41.67%{opacity:0.966}50%{opacity:1}58.33%{opacity:0.966}66.67%{opacity:0.866}75%{opacity:0.707}83.33%{opacity:0.5}91.67%{opacity:0.259}100%{opacity:0}}
+/* Hjärtats spår, samplat ur prototypens organicHeartFrames (60 bilder/s, samma fjäder för lutningen) med
+   80 nycklar inom 0,2 px. In från vänster 0–1,65 s, en lugn slinga i ljuset till 3,85 s, sedan ned till
+   märkets ruta med kvintisk utfasning: framme och stilla vid 6,6 s. Translate är från vilorutan (märket),
+   scale relativt 112 px. */
+@keyframes fluBana{0%{opacity:0;transform:translate(-405px,-201.67px) scale(0.9143) rotate(0deg)}0.505%{opacity:0.074;transform:translate(-386.29px,-206.46px) scale(0.9856) rotate(0.55deg)}1.263%{opacity:0.185;transform:translate(-359.64px,-214.01px) scale(1.0871) rotate(2.17deg)}2.02%{opacity:0.296;transform:translate(-334.64px,-221.98px) scale(1.1823) rotate(4.12deg)}2.778%{opacity:0.407;transform:translate(-311.23px,-230.31px) scale(1.2715) rotate(6.02deg)}3.535%{opacity:0.519;transform:translate(-289.37px,-238.93px) scale(1.3548) rotate(7.7deg)}4.293%{opacity:0.63;transform:translate(-269px,-247.73px) scale(1.4324) rotate(9.08deg)}5.051%{opacity:0.741;transform:translate(-250.06px,-256.59px) scale(1.5045) rotate(10.17deg)}5.808%{opacity:0.852;transform:translate(-232.51px,-265.37px) scale(1.5714) rotate(11deg)}6.566%{opacity:0.963;transform:translate(-216.29px,-273.91px) scale(1.6332) rotate(11.61deg)}6.818%{opacity:1;transform:translate(-211.17px,-276.69px) scale(1.6527) rotate(11.78deg)}7.576%{transform:translate(-196.65px,-284.69px) scale(1.708) rotate(12.1deg)}8.333%{transform:translate(-183.33px,-292.11px) scale(1.7587) rotate(12.18deg)}9.091%{transform:translate(-171.18px,-298.81px) scale(1.805) rotate(12.03deg)}9.848%{transform:translate(-160.12px,-304.67px) scale(1.8472) rotate(11.67deg)}10.606%{transform:translate(-150.12px,-309.59px) scale(1.8853) rotate(11.15deg)}11.364%{transform:translate(-141.12px,-313.5px) scale(1.9195) rotate(10.5deg)}12.121%{transform:translate(-133.06px,-316.34px) scale(1.9502) rotate(9.76deg)}12.879%{transform:translate(-125.9px,-318.1px) scale(1.9775) rotate(8.96deg)}13.636%{transform:translate(-119.58px,-318.79px) scale(2.0016) rotate(8.13deg)}14.394%{transform:translate(-114.05px,-318.45px) scale(2.0227) rotate(7.28deg)}15.404%{transform:translate(-107.81px,-316.54px) scale(2.0464) rotate(6.16deg)}16.414%{transform:translate(-102.76px,-313.19px) scale(2.0657) rotate(5.07deg)}17.677%{transform:translate(-97.92px,-307.48px) scale(2.0841) rotate(3.81deg)}18.939%{transform:translate(-94.49px,-300.78px) scale(2.0972) rotate(2.68deg)}20.455%{transform:translate(-91.89px,-292.59px) scale(2.1071) rotate(1.56deg)}21.717%{transform:translate(-90.71px,-286.57px) scale(2.1116) rotate(0.84deg)}22.727%{transform:translate(-90.24px,-282.78px) scale(2.1134) rotate(0.41deg)}23.737%{transform:translate(-90.04px,-280.22px) scale(2.1141) rotate(0.11deg)}24.747%{transform:translate(-90px,-279.08px) scale(2.1143) rotate(-0.06deg)}26.768%{transform:translate(-89.78px,-279.5px) scale(2.1168) rotate(-0.1deg)}28.535%{transform:translate(-88.41px,-280.88px) scale(2.1241) rotate(0.09deg)}30.051%{transform:translate(-85.9px,-282.67px) scale(2.1335) rotate(0.39deg)}33.838%{transform:translate(-76.92px,-288.52px) scale(2.1643) rotate(1.24deg)}35.101%{transform:translate(-74.95px,-290.53px) scale(2.175) rotate(1.31deg)}36.111%{transform:translate(-74.41px,-292.03px) scale(2.1829) rotate(1.22deg)}37.121%{transform:translate(-74.99px,-293.37px) scale(2.1899) rotate(1deg)}38.131%{transform:translate(-76.75px,-294.51px) scale(2.1959) rotate(0.65deg)}39.394%{transform:translate(-80.48px,-295.58px) scale(2.2016) rotate(0.09deg)}40.909%{transform:translate(-86.6px,-296.27px) scale(2.2052) rotate(-0.67deg)}43.182%{transform:translate(-96.62px,-296.01px) scale(2.2039) rotate(-1.62deg)}44.444%{transform:translate(-101.2px,-295.2px) scale(2.1996) rotate(-1.88deg)}45.455%{transform:translate(-103.8px,-294.24px) scale(2.1945) rotate(-1.92deg)}46.465%{transform:translate(-105.26px,-293.05px) scale(2.1883) rotate(-1.81deg)}47.475%{transform:translate(-105.55px,-291.66px) scale(2.1809) rotate(-1.55deg)}48.737%{transform:translate(-104.41px,-289.74px) scale(2.1708) rotate(-1.09deg)}50.253%{transform:translate(-101.42px,-287.28px) scale(2.1578) rotate(-0.44deg)}53.283%{transform:translate(-94.1px,-282.67px) scale(2.1335) rotate(0.55deg)}54.798%{transform:translate(-91.59px,-280.88px) scale(2.1241) rotate(0.71deg)}56.566%{transform:translate(-90.22px,-279.5px) scale(2.1168) rotate(0.63deg)}58.838%{transform:translate(-89.96px,-279.06px) scale(2.1143) rotate(0.34deg)}60.859%{transform:translate(-88.96px,-279.39px) scale(2.1118) rotate(0.24deg)}62.626%{transform:translate(-86.73px,-279.06px) scale(2.1028) rotate(0.34deg)}64.141%{transform:translate(-83.73px,-277.64px) scale(2.0875) rotate(0.51deg)}65.404%{transform:translate(-80.45px,-275.34px) scale(2.0684) rotate(0.67deg)}66.667%{transform:translate(-76.5px,-271.85px) scale(2.0431) rotate(0.83deg)}67.929%{transform:translate(-71.94px,-267.03px) scale(2.0115) rotate(0.97deg)}69.192%{transform:translate(-66.85px,-260.8px) scale(1.9738) rotate(1.07deg)}70.455%{transform:translate(-61.34px,-253.13px) scale(1.9301) rotate(1.14deg)}71.717%{transform:translate(-55.51px,-244.01px) scale(1.8812) rotate(1.16deg)}72.98%{transform:translate(-49.48px,-233.49px) scale(1.8276) rotate(1.15deg)}74.242%{transform:translate(-43.37px,-221.66px) scale(1.7702) rotate(1.08deg)}75.505%{transform:translate(-37.31px,-208.62px) scale(1.7098) rotate(0.98deg)}77.02%{transform:translate(-30.25px,-191.6px) scale(1.6348) rotate(0.81deg)}78.788%{transform:translate(-22.55px,-170.25px) scale(1.5458) rotate(0.55deg)}81.061%{transform:translate(-13.86px,-141.34px) scale(1.4332) rotate(0.15deg)}83.081%{transform:translate(-7.55px,-115.31px) scale(1.3387) rotate(-0.23deg)}85.101%{transform:translate(-2.73px,-90.07px) scale(1.2527) rotate(-0.59deg)}86.616%{transform:translate(-0.11px,-72.27px) scale(1.1954) rotate(-0.83deg)}87.879%{transform:translate(1.44px,-58.51px) scale(1.153) rotate(-1deg)}89.141%{transform:translate(2.45px,-45.96px) scale(1.1158) rotate(-1.13deg)}90.404%{transform:translate(2.97px,-34.79px) scale(1.0841) rotate(-1.16deg)}91.667%{transform:translate(3.08px,-25.14px) scale(1.0579) rotate(-1.07deg)}92.929%{transform:translate(2.84px,-17.12px) scale(1.0372) rotate(-0.86deg)}94.192%{transform:translate(2.36px,-10.74px) scale(1.0216) rotate(-0.59deg)}95.455%{transform:translate(1.72px,-5.99px) scale(1.0109) rotate(-0.33deg)}96.717%{transform:translate(1.05px,-2.77px) scale(1.0043) rotate(-0.14deg)}97.98%{transform:translate(0.46px,-0.89px) scale(1.0011) rotate(-0.03deg)}99.495%{transform:translate(0.03px,-0.04px) scale(1) rotate(0deg)}100%{transform:translate(0px,0px) scale(1) rotate(0deg)}}
