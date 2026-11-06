@@ -98,7 +98,8 @@ test('router: medlemshälsning och följartack', () => {
   assert.deepEqual([h.key, h.namn], ['välkommen', 'Anna 🌸'], 'visningsnamnet används i hälsningen');
   fram(5 * 60000); assert.equal(r.ta(e({ type: 'member', fanClubLevel: 3 })), null, 'samma person inom tio minuter');
   assert.ok(r.ta(e({ type: 'subscribe', username: 'bo', name: 'Bo' })));
-  assert.ok(r.ta(e({ type: 'member', isSubscriber: true, username: 'cia', name: 'Cia' })));
+  // live-client.js normalizeUserFlags sätter isSubscriber=true på VARJE member-händelse — den får inte räcka.
+  assert.equal(r.ta(e({ type: 'member', isSubscriber: true, fanClubLevel: 0, teamLevel: 0, username: 'cia', name: 'Cia' })), null);
   halsa = false; assert.equal(r.ta(e({ type: 'member', fanClubLevel: 9, username: 'dan', name: 'Dan' })), null, 'avstängt');
   assert.equal(r.ta(e({ type: 'follow' })).key, 'följare');
   fram(3000); assert.equal(r.ta(e({ type: 'follow', username: 'x' })), null, 'högst var tionde sekund');
@@ -275,6 +276,20 @@ test('OBS: namn och meddelanden skrivs som text, aldrig som HTML', async () => {
   assert.equal($('.ca-bubbla img'), null);
   assert.match($('.ca-bubbla').textContent, /<img/);
   skicka({ type: 'member', id: 'm1', fanClubLevel: 2, username: 'x', name: '<b>Elak</b>' });
+});
+
+test('OBS: en vanlig tittare som går in hälsas inte, även efter klientens normalisering', async () => {
+  const { h, spelade } = rigg({ overlay: true });
+  // Samma väg som sändningen: VyraLive.ingest kör normalizeUserFlags, som sätter isSubscriber på member.
+  if (!h.window.VyraLive?.ingest) { h.load('cloud-fields.js'); h.load('live-client.js'); }
+  const e = { id: 'm-bo', type: 'member', username: 'bo', name: 'Bo', fanClubLevel: 0, at: Date.now() };
+  assert.equal(typeof h.window.VyraLive?.ingest, 'function', 'live-client.js laddades inte i riggen');
+  h.window.VyraLive.ingest(e, e.id);
+  await mikro();
+  assert.deepEqual(spelade, [], 'Bo hälsades');
+  h.window.VyraLive.ingest({ ...e, id: 'm-anna', username: 'anna', name: 'Anna', fanClubLevel: 3 }, 'm-anna');
+  await mikro();
+  assert.deepEqual(spelade, ['wave'], 'fanklubbsmedlemmen hälsades');
 });
 
 test('studion: ▶ Testa spelar i fliken; panelen och katalogen är på svenska', async () => {

@@ -1932,8 +1932,8 @@ Promise.resolve().then(()=>{
 // Chattavatar - streamerns avatar i OBS, styrd från TikTok-chatten (chattavatar.js). Modellen (vem får styra,
 // väntetider, kö, pratbubblans delar) laddas först.
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261106-1';css.dataset.chattavatar='1';document.head.append(css)}
-  for(const f of ['chattavatar-modell.js?v=20261106-1','chattavatar.js?v=20261106-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+  if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261106-2';css.dataset.chattavatar='1';document.head.append(css)}
+  for(const f of ['chattavatar-modell.js?v=20261106-2','chattavatar.js?v=20261106-2']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).

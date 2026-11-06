@@ -127,10 +127,12 @@
         senastFoljare = t;
         return { key: 'följare', namn: '', kalla: 'auto' };
       }
-      // 'member' är att någon går in i rummet. Bara fanklubbsmedlemmar och prenumeranter hälsas, och
-      // varje person högst en gång var tionde minut — folk går in och ut hela kvällen.
+      // 'member' är att någon går in i rummet. Bara fanklubbsmedlemmar hälsas, och varje person högst
+      // en gång var tionde minut — folk går in och ut hela kvällen. isSubscriber räknas INTE här:
+      // live-client.js normalizeUserFlags sätter den till true på VARJE member-händelse (OBS-provet
+      // 2026-11-06 hälsade en vanlig tittare med fanklubbsnivå 0). Prenumeranter hälsas på 'subscribe'.
       const medlem = typ === 'subscribe' || ((typ === 'member' || typ === 'superfan')
-        && (Number(e.fanClubLevel || e.teamLevel) > 0 || e.isSubscriber === true));
+        && Number(e.fanClubLevel || e.teamLevel) > 0);
       if (medlem) {
         if (!(typeof o.halsa === 'function' && o.halsa())) return null;
         const namn = tvatta(e.name || e.username, MAX_NAMN);

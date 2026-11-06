@@ -17,7 +17,7 @@
 .vyra-chattavatar .ca-bubbla{position:absolute;left:6px;bottom:246px;width:168px;box-sizing:border-box;min-height:48px;padding:9px 12px;
   background:rgba(22,15,32,.92);border:1px solid #cfa8ec88;border-radius:12px;color:#fff;
   font:800 18px/1.3 system-ui,sans-serif;text-align:center;text-shadow:0 1px 2px #000;
-  white-space:pre-line;overflow-wrap:anywhere;opacity:0;transition:opacity .2s ease;z-index:3}
+  white-space:pre;opacity:0;transition:opacity .2s ease;z-index:3}
 .vyra-chattavatar .ca-bubbla::after{content:'';position:absolute;bottom:-7px;left:calc(50% - 6px);width:12px;height:12px;background:#1c1426;
   border-right:1px solid #cfa8ec88;border-bottom:1px solid #cfa8ec88;transform:rotate(45deg)}
 .vyra-chattavatar .ca-bubbla.ca-syns{opacity:1}

@@ -38,7 +38,11 @@
   });
   // Scenen i designmått: avataren 180 x 265 längst ned, plats för bubblan ovanför.
   const SCEN_B = 180, SCEN_H = 325, STANDARD_B = 72;
-  const TEXT_B = 144;                 // bubblan 168 bred minus 12 px luft på var sida
+  // Bubblan är 168 bred med 12 px luft på var sida = 144. Mätningen görs mot 134: i OBS skalas texten
+  // (duken 432 -> 1080, widgeten 72/180) och fetstil i liten grad blir inte exakt proportionell — i första
+  // OBS-provet bröt en rad som mätts till 144 en tredje rad. Bubblan bryter dessutom aldrig själv
+  // (white-space:pre i chattavatar.css): raderna är exakt de två som läggs här.
+  const TEXT_B = 134;
   const TEXT_FONT = '800 18px system-ui, sans-serif';
   const TAP_MS = 4000, TONING_MS = 200, VAKT_EXTRA_MS = 4000;
 
