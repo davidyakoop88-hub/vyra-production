@@ -134,7 +134,7 @@ async function loggaIn(opts = {}, fore = null) {
     if (las()) return klar(true);
     const obs = new MutationObserver(() => { if (las()) { obs.disconnect(); klar(true) } });
     obs.observe(document.documentElement, { childList: true, subtree: true, attributes: true });
-    setTimeout(() => { obs.disconnect(); klar(false) }, 30000);
+    setTimeout(() => { obs.disconnect(); klar(false) }, 60000);
   })).catch(() => null);   // navigeringen river kontexten — anteckningen ar redan skriven
 
   // MAT DEN FORDROJNING APPLIKATIONEN BEGAR — inte den maskinen levererar.
@@ -187,18 +187,22 @@ async function loggaIn(opts = {}, fore = null) {
     addEventListener('pagehide', notera);
   });
 
-  await page.click('.login-knapp');
+  // 60 s, inte Playwrights 30. UPPMATT i CI 2026-11-05 (korning 42123419480, del 1 av 6): hela
+  // runnern var utsvulten — de GRONA proven i den har filen tog 38-48 s mot 1-4 s lokalt — och
+  // klicket slog i standardgransen efter att knappen redan var synlig, stabil och i bild. Det som
+  // ska fangas ar ett strandat lage, och det ar oandligt; gransen far inte i stallet mata lararen.
+  await page.click('.login-knapp', { timeout: 60000 });
   return page;
 }
 
 // Anteckningen som skrevs i det ogonblick navigeringen initierades. `null` betyder att den ALDRIG
 // initierades - alltsa att anvandaren blev kvar pa framsidan.
 //
-// 30 s ar generost med flit: det som ska fangas ar ett STRANDAT lage, och det ar oandligt. En snal
+// 60 s ar generost med flit: det som ska fangas ar ett STRANDAT lage, och det ar oandligt. En snal
 // grans hade i stallet matt hur belastad lararen ar - felet som fallde de tva forra matten.
 async function navigeringsAnteckning(page) {
   try {
-    await page.waitForURL(/studio\.html/, { timeout: 30000, waitUntil: 'commit' });
+    await page.waitForURL(/studio\.html/, { timeout: 60000, waitUntil: 'commit' });
   } catch (e) {
     return null;
   }
@@ -209,7 +213,7 @@ async function navigeringsAnteckning(page) {
 // Sekvensens avsedda langd, sa som koden ber om den.
 const SEKVENS_MS = 1500;
 
-test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60000 }, async () => {
+test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 150000 }, async () => {
   const page = await loggaIn();
   try {
     // VANTAN MATER RATT SAK NU. Forut stod har `timeout: 4000` raknat fran klicket — en gissning
@@ -231,7 +235,7 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
     // Läs därför sessionStorage först efter att destinationen har committats;
     // annars kan page.evaluate hamna mitt i den avsedda navigeringen i CI.
     try {
-      await page.waitForURL(/studio\.html/, { timeout: 30000, waitUntil: 'commit' });
+      await page.waitForURL(/studio\.html/, { timeout: 60000, waitUntil: 'commit' });
     } catch (e) {}
     // Anteckningen, inte elementet. Den skrevs i samma ogonblick dorren fanns och ligger kvar i
     // sessionStorage aven efter att redirecten tagit oss till studio.html.
@@ -259,7 +263,7 @@ test('sekvensen spelas: kortet blir gront och dorren visas', { skip, timeout: 60
   } finally { await page.close() }
 });
 
-test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, timeout: 90000 },
+test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, timeout: 150000 },
   async () => {
   const page = await loggaIn();
   try {
@@ -272,7 +276,7 @@ test('normallaget ber om sekvensens fordrojning innan navigeringen', { skip, tim
   } finally { await page.close() }
 });
 
-test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', { skip, timeout: 90000 },
+test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', { skip, timeout: 150000 },
   async () => {
   // HELA POANGEN. Sessionen ar redan satt nar sekvensen borjar — blir anvandaren kvar har ar hen
   // inloggad men star still pa framsidan, och det ser ut som att inloggningen inte fungerade.
@@ -294,7 +298,7 @@ test('en lyckad inloggning fastnar ALDRIG — aven om ingen animation spelar', {
   } finally { await page.close() }
 });
 
-test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 90000 }, async () => {
+test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 150000 }, async () => {
   // Malsidan gors konstgjort langsam: tre extra sekunder innan studio.html ens svarar. Det som
   // mats — vilken fordrojning koden BER om — ar oberoende av det, och ska sta orort.
   //
@@ -314,7 +318,7 @@ test('en LANGSAM navigering paverkar inte matningen', { skip, timeout: 90000 }, 
   } finally { await page.close() }
 });
 
-test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout: 90000 },
+test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout: 150000 },
   async () => {
   // slappIn() bygger dorren inne i try/catch och gar vidare i catch. Den grenen ar OSYNLIG i ett
   // normalt prov — uppmatt: muterar man bort `return gaVidare()` i catch passerar alla ovriga prov
@@ -342,7 +346,7 @@ test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout
   } finally { await page.close() }
 });
 
-test('prefers-reduced-motion slapper igenom UTAN sekvensens fordrojning', { skip, timeout: 90000 },
+test('prefers-reduced-motion slapper igenom UTAN sekvensens fordrojning', { skip, timeout: 150000 },
   async () => {
   // Den som bett om mindre rorelse ska inte betala 1,5 sekunder for en animation hen inte ser.
   // landing-login.js hoppar darfor over HELA steget, inte bara keyframes.
