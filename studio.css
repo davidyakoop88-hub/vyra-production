@@ -455,9 +455,7 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .like-fountain[class*="lf-motion-"] .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartSway;animation-duration:var(--dur),var(--lf-sway-dur,2s);animation-delay:var(--delay),var(--lf-sway-delay,0s);animation-timing-function:linear,ease-in-out;animation-direction:normal,alternate;animation-iteration-count:infinite}
 .like-fountain[class*="lf-motion-"] .lf-p-spark{animation-name:lfOrganicSparkRise}
 .like-fountain[class*="lf-motion-"] .lf-p-dust{animation-name:lfOrganicDustRise}
-.like-fountain.lf-motion-firefly .lf-p{animation-duration:calc(var(--dur) * 1.28)}
 .like-fountain.lf-motion-firefly .lf-p-heart{filter:saturate(.9) brightness(1.14)}
-.like-fountain.lf-motion-cascade .lf-p{animation-duration:calc(var(--dur) * 1.12)}
 .like-fountain.lf-motion-cascade .lf-p-heart{animation-name:lfCascadeRise;filter:brightness(1.12) saturate(1.05)}
 .like-fountain.lf-motion-bloom .lf-p-heart{transform-origin:center bottom}
 @keyframes lfOrganicHeartRise{
@@ -1796,8 +1794,8 @@ html:not(.overlay-output) .editor-shell .sb-obs-not{font-size:11.5px;color:var(-
 .like-fountain.lf-motion-bubble .lf-p-heart{animation-name:lfBubbleRise,lfBubbleSway;animation-duration:var(--dur),calc(var(--lf-sway-dur,2s) * 1.4)}
 @keyframes lfBubbleRise{0%{transform:translate(-50%,10px) scale(.3);opacity:0}8%{opacity:.95}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .38)) scale(.9)}70%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .78)) scale(1);opacity:1}88%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .88)) scale(1.04);opacity:1}94%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.3);opacity:.55}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .9)) scale(1.5);opacity:0}}
 @keyframes lfBubbleSway{0%{translate:calc(var(--lf-sway,3px) * -1.1) 0}100%{translate:calc(var(--lf-sway,3px) * 1.1) 0}}
-.like-fountain.lf-motion-ghost .lf-p-heart{animation-name:lfGhostRise,lfHeartSway;animation-duration:calc(var(--dur) * 1.15),calc(var(--lf-sway-dur,2s) * 1.5)}
-@keyframes lfGhostRise{0%{transform:translate(-50%,10px) scale(.4);opacity:0}12%{opacity:.75}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(.9);opacity:.35}50%{opacity:.85}65%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .72)) scale(1);opacity:.4}82%{opacity:.8}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(1.05);opacity:0}}
+.like-fountain.lf-motion-ghost .lf-p-heart{animation-name:lfGhostRise,lfHeartSway;animation-duration:var(--dur),calc(var(--lf-sway-dur,2s) * 1.5)}
+@keyframes lfGhostRise{0%{transform:translate(-50%,10px) scale(.4);opacity:0}12%{opacity:.75}30%{transform:translate(calc(-50% + var(--lf-x1)),calc(-1 * var(--rise) * .34)) scale(.9);opacity:.6}50%{opacity:.9}65%{transform:translate(calc(-50% + var(--lf-x2)),calc(-1 * var(--rise) * .72)) scale(1);opacity:.65}82%{opacity:.85}100%{transform:translate(calc(-50% + var(--lf-x3)),calc(-1 * var(--rise) * .96)) scale(1.05);opacity:0}}
 .like-fountain.lf-motion-flip .lf-p-heart{animation-name:lfOrganicHeartRise,lfHeartFlip;animation-duration:var(--dur),2.6s;animation-timing-function:linear,ease-in-out;animation-direction:normal,normal}
 @keyframes lfHeartFlip{0%{rotate:y 0deg}50%{rotate:y 180deg}100%{rotate:y 360deg}}
 .like-fountain.lf-motion-pulse .lf-p.lf-live,.like-fountain.lf-motion-flip .lf-p.lf-live,.like-fountain.lf-motion-bubble .lf-p.lf-live,.like-fountain.lf-motion-ghost .lf-p.lf-live{animation-iteration-count:1,infinite;animation-fill-mode:forwards,none}
