@@ -36,10 +36,15 @@
     katalognyckel: () => 'catalog:custom:text',
     kontroller: [
       // 2 · Innehåll
-      { sektion: 2, typ: 'text', kalla: 'egen', falt: 'customText', etikett: 'Text', legacyId: '#ctwText' },
+      // Textraden (David 2026-11-07): Rubrik och Meddelande, rullning och hastighet Lugn/Normal/Snabb.
+      // Den gamla Rullhastighet i sekunder (textScrollSpeed) ligger kvar i state och läses bara när
+      // textSpeed saknas (custom-widgets.js vtrFart).
+      { sektion: 2, typ: 'text', kalla: 'egen', falt: 'textLabel', etikett: 'Rubrik', legacyId: '#ctwLabel' },
+      { sektion: 2, typ: 'text', kalla: 'egen', falt: 'customText', etikett: 'Meddelande', legacyId: '#ctwText' },
       { sektion: 2, typ: 'kryss', falt: 'textScrollEndless', etikett: 'Rulla oändligt', legacyId: '#ctwEndless' },
-      { sektion: 2, typ: 'tal', falt: 'textScrollSpeed', etikett: 'Rullhastighet', enhet: 's', legacyId: '#ctwSpeed', om: rullar },
-      // 3 · Storlek och placering
+      { sektion: 2, typ: 'val', falt: 'textSpeed', etikett: 'Hastighet', legacyId: '#ctwFart', om: rullar },
+      // 3 · Storlek och placering — Placering flyttar raden Överst eller Under övre delen, över dukens bredd.
+      { sektion: 3, typ: 'val', falt: 'prTextPlacering', etikett: 'Placering', legacyId: '#ctwPlace' },
       { sektion: 3, typ: 'std-position' },
       // 4 · Text
       { sektion: 4, typ: 'val', falt: 'textFontFamily', etikett: 'Typsnitt', legacyId: '#ctwFont', arv: 'fontFamily' },
@@ -48,7 +53,8 @@
       { sektion: 4, typ: 'tal', falt: 'textShadowY', etikett: 'Skugga Y (px)', legacyId: '#ctwShadowY' },
       { sektion: 4, typ: 'tal', falt: 'textShadowBlur', etikett: 'Skugga (px)', legacyId: '#ctwShadowBlur' },
       { sektion: 4, typ: 'farg', falt: 'textShadowColor', etikett: 'Skuggfärg', legacyId: '#ctwShadowColor' },
-      // 5 · Utseende
+      // 5 · Utseende — textradens tre stilar först
+      { sektion: 5, typ: 'val', falt: 'textStyle', etikett: 'Stil', legacyId: '#ctwStyle' },
       { sektion: 5, typ: 'farg', falt: 'textColor', etikett: 'Textfärg', legacyId: '#ctwColor', arv: 'text' },
       { sektion: 5, typ: 'kryss', falt: 'textRainbow', etikett: 'Regnbågsfärg', legacyId: '#ctwRainbow' },
       { sektion: 5, typ: 'std-bakgrund' },
@@ -57,7 +63,7 @@
       // 7
       { sektion: 7, typ: 'std-aterstall' },
     ],
-    utseendeFalt: ['textFontFamily', 'textFontSize', 'textColor', 'textRainbow', 'textShadowX', 'textShadowY',
+    utseendeFalt: ['textStyle', 'textFontFamily', 'textFontSize', 'textColor', 'textRainbow', 'textShadowX', 'textShadowY',
       'textShadowBlur', 'textShadowColor', 'entranceAnimation', 'entranceDuration'],
   });
 

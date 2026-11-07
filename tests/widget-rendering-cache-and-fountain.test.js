@@ -202,7 +202,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261025-12/);
+  assert.match(studio, /widget-factory\.js\?v=20261107-11/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
   // 20261021-13: en gåva till en annan värd (tillVarden:false) tar inte Top Gift.
@@ -474,7 +474,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Grannarna i samma laddningslista ar ororda och ska INTE ha bumpats med.
   // De tva filer panellagningen rorde. En bump utan andring ar en gratis omladdning; en andring
   // utan bump ar en tyst gammal fil som fortsatter riva panelen vid varje tangenttryck.
-  assert.match(media, /custom-widgets\.js\?v=20261020-14/);
+  assert.match(media, /custom-widgets\.js\?v=20261107-11/);
   // Bumpad 2026-09-25: den naturliga motorn och dess vard laddas tillsammans.
   // Classics och panelen ar ororda och behaller sina tidigare versioner.
   // 2026-10-01: gift-fireworks.js ombumpad (burst1) for den gemensamma Fireworks+Bubbles-

@@ -266,6 +266,7 @@
         "tests/panelregister.test.js",
         "tests/utan-bildvaljare.test.js",
         "tests/browser/mediaval.browser.test.js",
+        "tests/browser/textrad.browser.test.js",
         "tests/browser/fargarv-sant.browser.test.js",
         "tests/browser/topgift-livevag.browser.test.js",
         "tests/browser/lastx-livevag.browser.test.js",
