@@ -600,6 +600,25 @@ plats till slutsumman ("×10"). Det som INTE gick att mäta utan en riktig sänd
 4. **Syns kortet direkt?** Gifterkortet (Last-X) ska komma på första tappet och byta till slutsumman
    när kombon är klar, inte visas två gånger.
 
+## 17. Finns kreatörens egen rankplats i trafiken? (Live Rank, 2026-11-08)
+
+**Inte byggt — det här är datatestet som avgör om det går.** Live Rank-designerna (Studio, Neon Arcade,
+Glass Bar) finns sparade, men VYRA har ingen riktig kreatörsrank att visa. Battle-ligan (`ligaText`)
+syns bara under matcher, och `ROOM_USER.ranks` är tittarnas topplista — ingen av dem får användas som
+kreatörsrank. Den enda kandidaten är `RANK_TEXT`, som bryggan inte prenumererar på men inspelaren fångar.
+
+1. **Starta med inspelning** (`SPELA-IN-TIKTOK.cmd`) och sänd som vanligt en stund. Ingen ny inloggning
+   och inget tredjepartsverktyg behövs: inspelaren läser samma ström som bryggan.
+2. **Anteckna** placeringen och poängen TikTok visar (t.ex. timrank/Daily Rank) vid två–tre tidpunkter.
+3. **Kör** `node tiktok-bridge/analysera-inspelning.js <fil.jsonl>` och läs punkt **E**. Den listar
+   varje rankhändelse med tid, `rankType` och `ownerIdxBeforeUpdate` → `ownerIdxAfterUpdate`.
+4. **Jämför.** Stämmer placeringen (kanske +1 om den räknar från 0) med anteckningarna vid samma tid kan
+   Live Rank byggas på `RANK_TEXT`. Visar den bara att placeringen ändrades — inte poäng eller avstånd
+   till nästa plats — visar widgeten bara placeringen. Saknas `RANK_TEXT` helt behövs en annan källa,
+   och då först undersöks till exempel TikTools (betalt, kräver verifiering för kontot).
+
+Vid avbrott ska widgeten visa "Rank tillfälligt otillgänglig", aldrig gamla siffror som aktuella.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

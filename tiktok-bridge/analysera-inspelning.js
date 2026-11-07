@@ -507,6 +507,34 @@ function identitet(rader) {
   };
 }
 
+// LIVE RANK (David 2026-11-08): finns kreatörens egen rankplats i trafiken?
+//
+// VYRA vidarebefordrar ingen kreatörsrank idag. Battle-ligan (ligaText) gäller bara under matcher och
+// ROOM_USER.ranks är TITTARNAS topplista — ingen av dem får visas som kreatörsrank. Den enda kandidaten
+// i tidigare mätningar är RANK_TEXT (nycklarna rankType, ownerIdxBeforeUpdate, ownerIdxAfterUpdate,
+// curUserId, selfGetBadgeMsg), men värdena var okända. Inspelaren maskerar namn och id men låter tal
+// stå, så placeringen före och efter syns här. Jämför tidpunkterna med det TikTok visade i appen.
+function liveRank(rader) {
+  const rank = rader.filter(r => arEvent(r) && /RANK/i.test(String(r.typ)));
+  if (!rank.length) return { svar: INGET, kontroll: 'Ingen RANK-typ i inspelningen. Spela in en hel sändning med SPELA-IN-TIKTOK.cmd.' };
+  const perTyp = {};
+  for (const r of rank) perTyp[r.typ] = (perTyp[r.typ] || 0) + 1;
+  const TAL = ['rankType', 'ownerIdxBeforeUpdate', 'ownerIdxAfterUpdate', 'rank', 'score', 'gap', 'countdown', 'rankScore'];
+  const exempel = rank.slice(0, 30).map(r => {
+    const n = r.nyttolast || {}, ut = { tid: r.vid, typ: r.typ };
+    for (const k of TAL) if (n[k] !== undefined && typeof n[k] !== 'object') ut[k] = n[k];
+    ut.falt = nycklar(n).slice(0, 12);
+    return ut;
+  });
+  const flytt = rank.filter(r => r.nyttolast && r.nyttolast.ownerIdxBeforeUpdate !== undefined && r.nyttolast.ownerIdxAfterUpdate !== undefined).length;
+  return {
+    svar: `${rank.length} rankhändelser · ${flytt} med placering före och efter`,
+    typer: Object.entries(perTyp).sort((a, b) => b[1] - a[1]),
+    handelser: exempel,
+    kontroll: 'Stämmer ownerIdxAfterUpdate (+1 om den räknar från 0) med placeringen i TikTok vid samma tid? Först då kan Live Rank byggas på den.',
+  };
+}
+
 function analysera(fil) {
   const rader = lasRader(fil);
   const handelser = rader.filter(arEvent);
@@ -527,6 +555,7 @@ function analysera(fil) {
     gavor: gavor(rader),
     protokollglapp: protokollglapp(rader),
     identitet: identitet(rader),
+    liveRank: liveRank(rader),
     punkt1: punkt1(rader),
     punkt2: punkt2(rader),
     punkt3: punkt3(rader),
@@ -548,6 +577,7 @@ function skrivUt(r) {
     gavor: 'B. Bär gåvorna coin-värden?',
     protokollglapp: 'C. Vilka händelsetyper gör VYRA inget med?',
     identitet: 'D. Syns moderator, prenumerant, följare och fanklubbsnivå?',
+    liveRank: 'E. Finns kreatörens egen rankplats (Live Rank)?',
     punkt1: '1. Tänder handsken vid rätt ögonblick?',
     punkt2: '2. Vilka värden bär battleStatus?',
     punkt3: '3. Vilken händelse bär matchens slut?',
