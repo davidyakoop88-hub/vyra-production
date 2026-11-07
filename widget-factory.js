@@ -328,9 +328,12 @@
     // Text har egen bredd och en starttext; bild och video delar allt utom hojden. Formen ar
     // hamtad falt for falt fran custom-widgets.js sa befintliga anvandare far samma sak.
     'custom.kind': v => Object.assign(
-      // Texten ar 420 bred: x 6 centrerar den (x 60 gav hogerkant 480 i en 432-duk, F02).
-      { type: v.type, x: v.kind === 'text' ? 6 : 60, y: 120 },
-      v.kind === 'text' ? { width: 420, height: 90, customText: 'Skriv din text här' }
+      // Textraden (David 2026-11-07, playgroundens text.html): Överst över dukens bredd med 2,5 %
+      // marginal (x 11, bredd 410 i 432-duken, F02), 40 hög (handtagens minsta höjd), rubrik och meddelande, Broadcast och Normal.
+      { type: v.type, x: v.kind === 'text' ? 11 : 60, y: v.kind === 'text' ? 91 : 120 },
+      v.kind === 'text' ? { width: 410, height: 40, textFontSize: 15, textLabel: 'VÄLKOMMEN',
+                            customText: 'Välkommen till liven! 💜 Följ och bli en del av teamet · Tack för alla gåvor! ✨',
+                            textStyle: 'broadcast', textSpeed: 'normal' }
                         : { width: 300, height: v.kind === 'video' ? 450 : 300 }
     ),
     'giftfireworks.motion': v => ({

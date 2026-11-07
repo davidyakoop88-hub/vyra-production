@@ -612,3 +612,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Chattavatar: katalognyckeln catalog:vyrapaket:chattavatar behöver referensbild
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 156 (filter: vyrapaket:chattavatar) — catalog:vyrapaket:chattavatar
+
+## 2026-11-07 — 1 referenser skrivna
+
+- **Motiv:** Textraden ersätter Egen text (catalog:custom:text): ny modell med rubrik, stil och nya standardmått, David 2026-11-07
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 148 (filter: custom:text) — catalog:custom:text

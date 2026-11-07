@@ -35,8 +35,9 @@ const GAMLA = {
   'catalog:lastx:royal': { type: 'templateLastX', x: 100, y: 80, width: 500, title: 'Last-X Alerts',
     lastXType: 'all', lastXDesign: 'royal', lastXEntrance: 'slide-left', followDuration: 5 },
 
-  'catalog:custom:text': { type: 'templateCustomText', x: 60, y: 120, width: 420, height: 90,
-    customText: 'Skriv din text här' },
+  'catalog:custom:text': { type: 'templateCustomText', x: 11, y: 91, width: 410, height: 40, textFontSize: 15,
+    textLabel: 'VÄLKOMMEN', customText: 'Välkommen till liven! 💜 Följ och bli en del av teamet · Tack för alla gåvor! ✨',
+    textStyle: 'broadcast', textSpeed: 'normal' },  // textraden, David 2026-11-07
   'catalog:custom:image': { type: 'templateCustomImage', x: 60, y: 120, width: 300, height: 300 },
   'catalog:custom:video': { type: 'templateCustomVideo', x: 60, y: 120, width: 300, height: 450 },
 

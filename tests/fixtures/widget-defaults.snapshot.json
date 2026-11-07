@@ -346,11 +346,15 @@
   },
   "catalog:custom:text": {
     "type": "templateCustomText",
-    "x": 60,
-    "y": 120,
-    "width": 420,
-    "height": 90,
-    "customText": "Skriv din text här"
+    "x": 11,
+    "y": 91,
+    "width": 410,
+    "height": 40,
+    "textFontSize": 15,
+    "textLabel": "VÄLKOMMEN",
+    "customText": "Välkommen till liven! 💜 Följ och bli en del av teamet · Tack för alla gåvor! ✨",
+    "textStyle": "broadcast",
+    "textSpeed": "normal"
   },
   "catalog:giftfireworks:magnetic": {
     "type": "templateGiftFireworks",
