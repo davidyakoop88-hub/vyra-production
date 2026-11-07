@@ -31,6 +31,8 @@ function cwResolveUrl(meta){if(!meta?.id)return null;if(cwUrlCache[meta.id])retu
    bred som fönstret, annars syns ett tomrum innan nästa varv: vtrMat() mäter efter ritningen och
    upprepar texten i varje halva tills den räcker. Fasen räknas från en gemensam klocka
    (animation-delay), så en omritning (render() byter noden) hoppar inte tillbaka till början.
+   Klockan startar per widget vid FÖRSTA mätningen med fördröjning 0, så en nyladdad sida är
+   deterministisk (pixelvakten fryser på en fast currentTime och kräver samma bild varje gång).
 
    TEXTEN ÄR TEXT. Allt användaren skriver escapas (&<>"'), även i panelens textruta. Typsnittet
    rensas till ett säkert teckenurval och får emoji-typsnitt som reserv. */
@@ -43,10 +45,10 @@ function vtrFart(w){if(Object.prototype.hasOwnProperty.call(VTR_FART,w.textSpeed
 const vtrTypsnitt=f=>(String(f||'Inter').replace(/[^\w\s,\-]/g,'').trim()||'Inter')+',"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
 function vtrDuk(){let f=typeof state!=='undefined'&&state&&state.layoutFormat==='widescreen';return f?{w:768,h:432}:{w:432,h:768}}
 function vtrPlatsAv(w){let d=vtrDuk(),m=Math.round(d.w*.025);for(const k of Object.keys(VTR_PLATS))if(Math.abs((w.y||0)-Math.round(d.h*VTR_PLATS[k]))<=1&&Math.abs((w.x||0)-m)<=1&&Math.abs((w.width||0)-(d.w-2*m))<=1)return k;return 'egen'}
-let vtrRaf=0;
+let vtrRaf=0;const vtrStart={};
 function vtrPlanera(){if(vtrRaf||typeof requestAnimationFrame!=='function')return;vtrRaf=requestAnimationFrame(()=>{vtrRaf=0;vtrMat()})}
-function vtrMat(){document.querySelectorAll('.custom-text-widget.vtr .ctw-track.endless').forEach(t=>{const fonster=t.parentElement,halvor=t.children,forsta=halvor[0],en=forsta&&forsta.firstElementChild;if(!en||!fonster)return;const bit=en.offsetWidth,bredd=fonster.clientWidth;if(!bit||!bredd)return;const k=Math.min(40,Math.max(1,Math.ceil(bredd/bit)));for(const h of halvor){while(h.children.length<k){const c=en.cloneNode(true);c.setAttribute('aria-hidden','true');h.append(c)}while(h.children.length>k)h.lastElementChild.remove()}const fart=+t.dataset.vtrFart||60,varv=k*bit/fart,nyckel=varv.toFixed(3);if(t.dataset.vtrVarv===nyckel)return;t.dataset.vtrVarv=nyckel;t.style.setProperty('--speed',varv+'s');t.style.animationDelay=(-((performance.now()/1000)%varv))+'s'})}
-if(typeof document!=='undefined'&&document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{document.querySelectorAll('.custom-text-widget.vtr .ctw-track').forEach(t=>{delete t.dataset.vtrVarv});vtrMat()}).catch(()=>{});
+function vtrMat(){document.querySelectorAll('.custom-text-widget.vtr .ctw-track.endless').forEach(t=>{const fonster=t.parentElement,halvor=t.children,forsta=halvor[0],en=forsta&&forsta.firstElementChild;if(!en||!fonster)return;const bit=en.offsetWidth,bredd=fonster.clientWidth;if(!bit||!bredd)return;const k=Math.min(40,Math.max(1,Math.ceil(bredd/bit)));for(const h of halvor){while(h.children.length<k){const c=en.cloneNode(true);c.setAttribute('aria-hidden','true');h.append(c)}while(h.children.length>k)h.lastElementChild.remove()}const fart=+t.dataset.vtrFart||60,varv=k*bit/fart,nyckel=varv.toFixed(3);if(t.dataset.vtrVarv===nyckel)return;t.dataset.vtrVarv=nyckel;t.style.setProperty('--speed',varv+'s');const id=(t.closest('[data-id]')||{dataset:{}}).dataset.id||'';if(!(id in vtrStart)){vtrStart[id]=performance.now();t.style.animationDelay='0s'}else t.style.animationDelay=(-(((performance.now()-vtrStart[id])/1000)%varv))+'s'})}
+if(typeof document!=='undefined'&&document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>vtrMat()).catch(()=>{});
 if(typeof document!=='undefined'&&!document.getElementById('vyra-textrad-css')){const st=document.createElement('style');st.id='vyra-textrad-css';st.textContent=`.custom-text-widget.vtr,.custom-text-widget.vtr.selected{padding:0!important}
 .vtr-ram{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;box-sizing:border-box;border:1px solid #6fe1ff99;background:#111321df;box-shadow:0 0 9px #37c9ed22;--accent:#61dcff;color:#f9f5ff;font-family:system-ui,"Segoe UI",sans-serif}
 .vtr-label{flex-shrink:0;align-self:stretch;display:flex;align-items:center;max-width:33%;padding:0 .7em;box-sizing:border-box;background:var(--accent);color:#131124;font-size:calc(var(--vtr-fs) * .82);font-weight:800;letter-spacing:.05em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
