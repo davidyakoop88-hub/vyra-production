@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `efd0f158`
+Commit: `81c854ba`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -63,8 +63,8 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
-| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-06 | — |
-| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-06 | — |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
+| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -354,13 +354,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-06 | — |
+| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
 
 ### CHATTAVATAR
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-06 | — |
+| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
 
 ### SOCIAL-ALERT
 
