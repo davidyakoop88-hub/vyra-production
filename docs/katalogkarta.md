@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `f7383733`
+Commit: `5a3b4f7f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **158** |
-| Sektioner | 28 |
-| Med katalognyckel | 158 / 158 |
-| Med shadow DOM-miniatyr | 126 / 158  ⚠️ |
-| Ritar sin design | 158 / 158 |
+| Kort totalt | **161** |
+| Sektioner | 29 |
+| Med katalognyckel | 161 / 161 |
+| Med shadow DOM-miniatyr | 129 / 161  ⚠️ |
+| Ritar sin design | 161 / 161 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -63,8 +63,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
-| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
-| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
+| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
+| VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -340,13 +341,21 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
+| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-08 | — |
 
 ### CHATTAVATAR
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-07 | [#736](https://github.com/davidyakoop88-hub/vyra-production/pull/736) |
+| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-08 | — |
+
+### VIEWER SHOWCASE
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Name Takeover | `catalog:vyrapaket:showcase:takeover` | ✓ | ✓ | 2026-11-08 | — |
+| Halo Reveal | `catalog:vyrapaket:showcase:halo` | ✓ | ✓ | 2026-11-08 | — |
+| Spotlight Slide | `catalog:vyrapaket:showcase:spotlight` | ✓ | ✓ | 2026-11-08 | — |
 
 ### SOCIAL-ALERT
 
