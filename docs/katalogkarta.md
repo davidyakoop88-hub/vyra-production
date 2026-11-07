@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `8f15224e`
+Commit: `de38dc2f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -45,7 +45,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | FIREWORKS & BUBBLES · 2 DESIGNER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
-| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| EGET INNEHÅLL | 3 | 3/3 | 3/3 | 3/3 | 2026-11-07 | [#739](https://github.com/davidyakoop88-hub/vyra-production/pull/739) |
 | LAST-X ALERTS · VARJE DESIGN SEPARAT | 11 | 11/11 | 11/11 | 11/11 | 2026-10-19 | [#656](https://github.com/davidyakoop88-hub/vyra-production/pull/656) |
 | GIFT JAR · VARJE MODELL SEPARAT | 5 | 5/5 | 5/5 | 5/5 | 2026-10-20 | [#664](https://github.com/davidyakoop88-hub/vyra-production/pull/664) |
 | GUARDIAN EMBLEM | 2 | 2/2 | 2/2 | 2/2 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -140,9 +140,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Text | `catalog:custom:text` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
-| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
-| Video | `catalog:custom:video` | ✓ | ✓ | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
+| Text | `catalog:custom:text` | ✓ | ✓ | 2026-11-07 | [#739](https://github.com/davidyakoop88-hub/vyra-production/pull/739) |
+| Bild | `catalog:custom:image` | ✓ | ✓ | 2026-11-07 | [#739](https://github.com/davidyakoop88-hub/vyra-production/pull/739) |
+| Video | `catalog:custom:video` | ✓ | ✓ | 2026-11-07 | [#739](https://github.com/davidyakoop88-hub/vyra-production/pull/739) |
 
 ### LAST-X ALERTS · VARJE DESIGN SEPARAT
 
