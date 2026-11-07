@@ -121,16 +121,20 @@ test('paketet pa duken vilar slackt som forut', { skip, timeout: 120000 }, async
   } finally { await page.close(); }
 });
 
-test('Koi Pearl och Masquerade ar tillbaka i katalogen som WebM med alfa (B-001/B-002 atgardat)', { skip, timeout: 120000 }, async () => {
+// David 2026-11-07: Koi Pearl och Masquerade togs ur katalogen (katalog-ordning.js UTGANGNA), men
+// layouter som redan har dem ska fortfarande fungera - nyckeln skapar paketet och klippen ligger kvar.
+test('Koi Pearl och Masquerade ar ur katalogen men fungerar i befintliga layouter (WebM med alfa)', { skip, timeout: 120000 }, async () => {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   try {
     await overlayKatalog(page);
     const m = await page.evaluate(() => {
       const nycklar = [...document.querySelectorAll('[data-catalog-key]')].map(b => b.dataset.catalogKey);
-      return { koi: nycklar.includes('catalog:glovesnipe:koiPearl:pack:2'), masq: nycklar.includes('catalog:glovesnipe:masquerade:pack:2') };
+      return { koi: nycklar.includes('catalog:glovesnipe:koiPearl:pack:2'), masq: nycklar.includes('catalog:glovesnipe:masquerade:pack:2'),
+        skapar: [VyraWidgets.create('catalog:glovesnipe:koiPearl:pack:2').boostPack, VyraWidgets.create('catalog:glovesnipe:masquerade:pack:2').boostPack] };
     });
-    assert.equal(m.koi, true, 'Koi Pearl Lagoon saknas i katalogen');
-    assert.equal(m.masq, true, 'Masquerade Ball saknas i katalogen');
+    assert.equal(m.koi, false, 'Koi Pearl Lagoon ska inte synas i katalogen');
+    assert.equal(m.masq, false, 'Masquerade Ball ska inte synas i katalogen');
+    assert.deepEqual(m.skapar, ['koiPearl', 'masquerade'], 'nycklarna ska fortfarande skapa sina paket');
     // Klippen och affischerna ligger pa disk: WebM, WebP med alfa och JPG over svart, inga MP4 kvar.
     for (const mapp of ['koi-pearl', 'masquerade']) for (const k of ['boost-x2', 'boost-x3', 'tap', 'glove']) {
       for (const ext of ['webm', 'webp', 'jpg']) assert.ok(fs.existsSync(path.join(ROOT, 'assets/videos/battle', mapp, k + '.' + ext)), `${mapp}/${k}.${ext} saknas`);

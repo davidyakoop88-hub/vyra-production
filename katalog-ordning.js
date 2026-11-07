@@ -40,7 +40,12 @@
     'catalog:battlemvp:frame:dragon-fire', 'catalog:battlemvp:frame:nautical-helm', 'catalog:battlemvp:frame:shadow-star',
     // Battle MVP · sex firanden — Guldkrona och Lion Clash är kvar
     'catalog:battlemvp:celebration:coronation', 'catalog:battlemvp:celebration:wings', 'catalog:battlemvp:celebration:portal',
-    'catalog:battlemvp:celebration:rosegold', 'catalog:battlemvp:celebration:pearl', 'catalog:battlemvp:celebration:moon'
+    'catalog:battlemvp:celebration:rosegold', 'catalog:battlemvp:celebration:pearl', 'catalog:battlemvp:celebration:moon',
+    // Gift Campaign · Ljus och rörelse · alla sex (David 2026-11-07) — Fokus, Classic och Gåvoflöde är kvar
+    'catalog:giftcampaign:gold:landscape', 'catalog:giftcampaign:gold:portrait', 'catalog:giftcampaign:platinum:landscape',
+    'catalog:giftcampaign:platinum:portrait', 'catalog:giftcampaign:emerald:landscape', 'catalog:giftcampaign:emerald:portrait',
+    // VIDEO FX · Koi Pearl Lagoon och Masquerade Ball (David 2026-11-07) — Pink Princess, Royal Ruby och Cloud Fox är kvar
+    'catalog:glovesnipe:koiPearl:pack:2', 'catalog:glovesnipe:masquerade:pack:2'
   ]);
 
   // Grupperna i flikordning. En sektion hamnar i den FÖRSTA gruppen vars mönster matchar rubriken,
@@ -82,11 +87,23 @@
       const h = sek.querySelector(':scope > h4');
       // Antalet i rubriken ska stämma med korten som är kvar ("· 8 DESIGNER" → "· 2 DESIGNER").
       if (h) {
-        const ny = h.textContent.replace(/\d+(?=\s+(?:RÖRLIGA\s+)?(?:DESIGNER|KOREOGRAFIER|MODELLER|PRAKTSTEG|TEMAN)\b)/i, String(n));
+        const ny = h.textContent.replace(/\d+(?=\s+(?:RÖRLIGA\s+)?(?:DESIGNER|KOREOGRAFIER|MODELLER|PRAKTSTEG|TEMAN|PAKET)\b)/i, String(n));
         if (ny !== h.textContent) { h.textContent = ny; andrat = true; }
       }
       const tom = n === 0;
       if (sek.classList.contains('kat-tom') !== tom) { sek.classList.toggle('kat-tom', tom); andrat = true; }
+      // En sektion kan ha flera rubriker (Gift Campaign: "Ljus och rörelse" och efter den "En gåva i
+      // fokus"). En rubrik vars alla kort gått ut göms, så den inte står tom ovanför nästa rubrik.
+      const barn = [...sek.children];
+      barn.forEach((el, i) => {
+        if (el.tagName !== 'H4') return;
+        let kort = false;
+        for (let j = i + 1; j < barn.length && barn[j].tagName !== 'H4'; j++) {
+          if (barn[j].matches('[data-catalog-key]') || barn[j].querySelector('[data-catalog-key]')) { kort = true; break; }
+        }
+        const dold = !kort && !tom;
+        if (el.classList.contains('kat-tom-rubrik') !== dold) { el.classList.toggle('kat-tom-rubrik', dold); andrat = true; }
+      });
     });
     return andrat;
   }

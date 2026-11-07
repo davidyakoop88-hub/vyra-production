@@ -1,5 +1,6 @@
 /* katalog-ordning.css — flikarna ovanför widgetkatalogen och de dolda sektionerna (katalog-ordning.js). */
 .widget-catalog section.kat-tom,
+.widget-catalog section > h4.kat-tom-rubrik,
 .widget-catalog > .kat-utanfor{display:none!important}
 .kat-flikar{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;position:sticky;top:0;z-index:3;padding:8px 0;background:#110a18}
 .kat-flikar[hidden],.kat-flikar button[hidden]{display:none}
