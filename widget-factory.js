@@ -398,6 +398,13 @@
     }),
     // Viewer Showcase (viewer-showcase.js, David 2026-11-07): streamern eller en moderator väljer en tittare
     // som lyfts fram i 8 sekunder. 300 bred, centrerad i den 432 breda duken, i övre tredjedelen.
+    // Energimätaren (energimatare.js, David 2026-11-07): fylls av tittarna, töms över tid. 270 bred
+    // liggande, centrerad i den 432 breda duken, högt upp där TikToks egna knappar inte ligger.
+    'energi': v => ({
+      type: 'templateEnergyBar', x: 81, y: 60, width: 270, title: 'Energimätare · ' + v.label,
+      emModell: v.modell, emRiktning: 'liggande', emNamn: 'LIVE-ENERGI', emFarg: '#74ddb5',
+      emStart: 50, emLikes: 1, emGavor: 0.5, emDelning: 5, emFoljare: 5, emChatt: 0, emChattPaus: 10, emTomning: 6
+    }),
     'viewershowcase': v => ({
       type: 'templateViewerShowcase', x: 66, y: 110, width: 300, title: 'Viewer Showcase · ' + v.label,
       vsDesign: v.design, vsRubrik: 'VÄLKOMMEN', vsMeddelande: 'Kul att du är här!', vsSek: 8
@@ -786,6 +793,11 @@
     // sina grupper.
     'vyrapaket': parts => {
       if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'energi') {
+        const namn = { vital: 'Vital', arcade: 'Arcade', minimal: 'Minimal' };
+        if (!namn[parts[1]]) throw new Error('Okänd modell för Energimätaren "' + parts[1] + '" — giltiga: vital, arcade, minimal');
+        return ['energi', { modell: parts[1], label: namn[parts[1]] }];
+      }
       if (parts[0] === 'showcase') {
         const namn = { takeover: 'Name Takeover', halo: 'Halo Reveal', spotlight: 'Spotlight Slide' };
         if (!namn[parts[1]]) throw new Error('Okänd design för Viewer Showcase "' + parts[1] + '" — giltiga: takeover, halo, spotlight');
