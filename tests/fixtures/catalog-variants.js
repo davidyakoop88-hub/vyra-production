@@ -25,6 +25,10 @@ const CONTRACT = [
   { name: 'Viewer Showcase · Name Takeover', key: 'catalog:vyrapaket:showcase:takeover' },
   { name: 'Viewer Showcase · Halo Reveal', key: 'catalog:vyrapaket:showcase:halo' },
   { name: 'Viewer Showcase · Spotlight Slide', key: 'catalog:vyrapaket:showcase:spotlight' },
+  // Energimätaren (energimatare.js): en nyckel per modell.
+  { name: 'Energimätare · Vital', key: 'catalog:vyrapaket:energi:vital' },
+  { name: 'Energimätare · Arcade', key: 'catalog:vyrapaket:energi:arcade' },
+  { name: 'Energimätare · Minimal', key: 'catalog:vyrapaket:energi:minimal' },
   // Hjärtan & moln (hjartmoln.js): en nyckel per gallerivariant, samma fabriksbyggare.
   { name: 'Hjärtan & moln · Profilhjärtan', key: 'catalog:heartcloud:profilhjartan' },
   { name: 'Hjärtan & moln · Glödande hjärtmoln', key: 'catalog:heartcloud:glodande' },

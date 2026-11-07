@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `ed1885cb`
+Commit: `26eb5670`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **161** |
-| Sektioner | 29 |
-| Med katalognyckel | 161 / 161 |
-| Med shadow DOM-miniatyr | 129 / 161  ⚠️ |
-| Ritar sin design | 161 / 161 |
+| Kort totalt | **164** |
+| Sektioner | 30 |
+| Med katalognyckel | 164 / 164 |
+| Med shadow DOM-miniatyr | 132 / 164  ⚠️ |
+| Ritar sin design | 164 / 164 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -66,6 +66,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
 | CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
 | VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
+| ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -356,6 +357,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Name Takeover | `catalog:vyrapaket:showcase:takeover` | ✓ | ✓ | 2026-11-08 | — |
 | Halo Reveal | `catalog:vyrapaket:showcase:halo` | ✓ | ✓ | 2026-11-08 | — |
 | Spotlight Slide | `catalog:vyrapaket:showcase:spotlight` | ✓ | ✓ | 2026-11-08 | — |
+
+### ENERGIMÄTARE
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Vital | `catalog:vyrapaket:energi:vital` | ✓ | ✓ | 2026-11-08 | — |
+| Arcade | `catalog:vyrapaket:energi:arcade` | ✓ | ✓ | 2026-11-08 | — |
+| Minimal | `catalog:vyrapaket:energi:minimal` | ✓ | ✓ | 2026-11-08 | — |
 
 ### SOCIAL-ALERT
 
