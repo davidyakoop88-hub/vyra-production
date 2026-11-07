@@ -1941,8 +1941,8 @@ Promise.resolve().then(()=>{
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-katalog-ordning]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-ordning.css?v=20261103-1';css.dataset.katalogOrdning='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='katalog-ordning.js?v=20261103-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-ordning.js');document.body.append(s);
+  if(!document.querySelector('link[data-katalog-ordning]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-ordning.css?v=20261107-1';css.dataset.katalogOrdning='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='katalog-ordning.js?v=20261107-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-ordning.js');document.body.append(s);
 });
 
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).

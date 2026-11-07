@@ -1,5 +1,5 @@
 'use strict';
-// KATALOGENS ORDNING (katalog-ordning.js, David 2026-11-03): 42 kort ut ur katalogen, resten i grupper
+// KATALOGENS ORDNING (katalog-ordning.js, David 2026-11-03): 42 kort ut ur katalogen (50 sedan 2026-11-07), resten i grupper
 // med flikar. Provet vaktar det David bad om — "när du ska ta bort de, de ska inte störa annat":
 //   * de utgångna korten syns inte, men varje nyckel skapar fortfarande en widget (befintliga layouter),
 //   * rubrikernas antal stämmer med korten som är kvar, och en tömd sektion syns inte,
@@ -57,11 +57,45 @@ test('en sektion vars alla kort gått ut syns inte; en orörd sektion behåller 
   assert.equal(hg.dataset.katRensad, undefined, 'en sektion utan utgångna kort ska inte röras');
 });
 
+// David 2026-11-07: "Ljus och rörelse" ut, men Fokus/Classic/Gåvoflöde ligger i samma sektion under
+// en egen rubrik. Den gamla rubriken ska inte stå tom ovanför den nya.
+test('en rubrik vars kort gått ut göms, nästa rubrik i samma sektion står kvar', () => {
+  const h = rigg();
+  const cat = katalog(h, []);
+  const sek = h.document.createElement('section');
+  sek.dataset.campaignTemplate = '1';
+  sek.innerHTML = '<h4>GIFT CAMPAIGN · LJUS OCH RÖRELSE</h4>'
+    + ['gold', 'platinum', 'emerald'].flatMap(t => ['landscape', 'portrait'].map(o => kort(`catalog:giftcampaign:${t}:${o}`))).join('')
+    + '<h4>GIFT CAMPAIGN · EN GÅVA I FOKUS</h4>' + kort('catalog:giftcampaign:fokus:landscape') + kort('catalog:giftcampaign:fokus:portrait');
+  cat.append(sek);
+  h.window.VyraKatalogOrdning.ordna(cat);
+  const [gammal, ny] = sek.querySelectorAll(':scope > h4');
+  assert.deepEqual([...sek.querySelectorAll('[data-catalog-key]')].map(b => b.dataset.catalogKey),
+    ['catalog:giftcampaign:fokus:landscape', 'catalog:giftcampaign:fokus:portrait']);
+  assert.ok(gammal.classList.contains('kat-tom-rubrik'), 'den tomma rubriken ska gömmas');
+  assert.ok(!ny.classList.contains('kat-tom-rubrik'));
+  assert.ok(!sek.classList.contains('kat-tom'), 'sektionen har kort kvar och ska synas');
+  assert.equal(sek.dataset.katGrupp, 'mal');
+});
+
+test('VIDEO FX-rubrikens antal räknas om när paket går ut', () => {
+  const h = rigg();
+  const cat = katalog(h, []);
+  const block = h.document.createElement('div');
+  block.dataset.videoPacks = '1';
+  block.innerHTML = '<section><h4>Battle-paket · VIDEO FX · 5 paket</h4><div>'
+    + ['koiPearl', 'masquerade', 'pinkPrincess', 'royalRuby', 'cloudFox'].map(p => kort(`catalog:glovesnipe:${p}:pack:2`)).join('') + '</div></section>';
+  cat.append(block);
+  h.window.VyraKatalogOrdning.ordna(cat);
+  assert.equal(block.querySelector('h4').textContent, 'Battle-paket · VIDEO FX · 3 paket');
+  assert.deepEqual([...block.querySelectorAll('[data-catalog-key]')].map(b => b.dataset.catalogKey.split(':')[2]), ['pinkPrincess', 'royalRuby', 'cloudFox']);
+});
+
 test('varje utgången nyckel skapar fortfarande en widget — layouter som redan har dem går inte sönder', () => {
   const h = rigg();
   h.load('widget-factory.js');
   const { UTGANGNA } = h.window.VyraKatalogOrdning;
-  assert.equal(UTGANGNA.size, 42);
+  assert.equal(UTGANGNA.size, 50);
   for (const n of UTGANGNA) {
     let w;
     assert.doesNotThrow(() => { w = h.window.VyraWidgets.create(n); }, `${n} kan inte längre skapas`);
