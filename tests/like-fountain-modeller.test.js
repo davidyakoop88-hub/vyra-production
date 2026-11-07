@@ -54,3 +54,22 @@ test('i OBS syns bara hjärtan som en like släppt', () => {
   assert.match(media, /fountainStarLikes\|\|25/, 'stjärnläget saknas');
   assert.match(css, /\.lf-p-heart\.lf-star \.lf-p-heart-avatar-img\{/);
 });
+
+// I BALANS (David 2026-11-07: "vissa försvinner snabbt och vissa rör på sig snabbare"). Uppmätt med
+// riktiga like-hjärtan: 6,2 s synlig tid (Neon Pulse) mot 8,6 s (Ghost Hearts, Plasma Core) och Ghost som
+// tonade ner till 35 % mitt i banan. Temat ska skilja i färg och rörelse — inte i tempo eller livslängd.
+test('alla tio modeller har samma flygtid och täthet', () => {
+  const tempo = MODELLER.map(k => presetRad.match(new RegExp(k + ':[{][^}]*trailStrength:([0-9.]+)'))[1]);
+  const tathet = MODELLER.map(k => presetRad.match(new RegExp(k + ':[{][^}]*heartDensity:([0-9.]+)'))[1]);
+  assert.equal(new Set(tempo).size, 1, 'modellerna har olika flygtid: ' + tempo.join(', '));
+  assert.equal(new Set(tathet).size, 1, 'modellerna har olika täthet: ' + tathet.join(', '));
+});
+
+test('ingen rörelsestil har en egen fartfaktor, och Ghost försvinner inte mitt i banan', () => {
+  for (const m of css.matchAll(/\.lf-motion-[a-z]+ \.lf-p(?:-heart)?\{[^}]*animation-duration:([^;}]+)/g)) {
+    assert.match(m[1].split(',')[0], /^var\(--dur\)$/, 'fartfaktor på flygningen: ' + m[0].slice(0, 120));
+  }
+  const ghost = css.match(/@keyframes lfGhostRise\{.*?\}\s*\}/s)[0];
+  const mitt = [...ghost.matchAll(/(\d+)%\{[^}]*?opacity:([\d.]+)/g)].filter(([, p]) => +p > 0 && +p < 100).map(([, , o]) => +o);
+  assert.ok(Math.min(...mitt) >= 0.6, 'Ghost tonar ner till ' + Math.min(...mitt) + ' mitt i banan');
+});
