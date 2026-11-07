@@ -143,8 +143,10 @@
       // 3 · Storlek och placering
       { sektion: 3, typ: 'std-position', utan: ['hojd', 'las'] },
       // 5 · Utseende
-      { sektion: 5, typ: 'text', falt: 'latRubrik', etikett: 'Rubrik', legacyId: '#latRubrik' },
-      { sektion: 5, typ: 'farg', falt: 'latFarg', etikett: 'Färg', legacyId: '#latFarg' },
+      // Spotify har två egna designer i mörk VYRA-lila (spotify-request-view.js); Rubrik och Färg gäller bara YouTube.
+      { sektion: 5, typ: 'val', falt: 'latSpotifyDesign', etikett: 'Utseende', legacyId: '#latSpotifyDesign', om: w => (w && w.latKalla) === 'spotify' },
+      { sektion: 5, typ: 'text', falt: 'latRubrik', etikett: 'Rubrik', legacyId: '#latRubrik', om: w => (w && w.latKalla) !== 'spotify' },
+      { sektion: 5, typ: 'farg', falt: 'latFarg', etikett: 'Färg', legacyId: '#latFarg', om: w => (w && w.latKalla) !== 'spotify' },
       { sektion: 5, typ: 'kryss', falt: 'latVisaKo', etikett: 'Visa kön i widgeten', legacyId: '#latVisaKo' },
       { sektion: 5, typ: 'tal', falt: 'latVisa', etikett: 'Visa låtar i kön', enhet: 'st', legacyId: '#latVisa' },
       { sektion: 5, typ: 'tal', falt: 'latVolym', etikett: 'Volym (YouTube)', enhet: '%', legacyId: '#latVolym' },

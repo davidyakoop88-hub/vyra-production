@@ -271,6 +271,16 @@
   // visaGavostreak) tänder bara de widgetar som visar den: Last-X och Hjärtan & moln. Topplistor,
   // Top Gift och mål får sitt värde först med slutframens `gift` och väntar på den — tändes de av
   // streakstarten hade de stått tomma i OBS tills summan kom.
+  // SPOTIFY SPELAR UTAN ATT NÅGON CHATTAR (2026-11-07). Låtönskningar väntar annars på första chatten,
+  // men Spotify-visningen (latonskningar.js, SSE `spotify`) har egen färsk data: låten som spelas just nu.
+  // En ram med en låt eller en kö, högst 30 s gammal, tänder därför widgetar med källan Spotify.
+  // YouTube-widgetar väntar på chatten som förut.
+  function taSpotify(d) {
+    if (!d || typeof d !== 'object' || !(Date.now() - Number(d.at) < 30000)) return;
+    if (!d.current && !(Array.isArray(d.queue) && d.queue.length)) return;
+    const ids = widgetar().filter(w => w && w.type === 'templateSongRequests' && w.latKalla === 'spotify' && w.id != null && !aktiverad(w)).map(w => w.id);
+    if (ids.length) aktivera(ids);
+  }
   const TIDIGA = new Set(['templateLastX', 'templateHeartCloud']);
   function taTidig(e) {
     if (!e || typeof e !== 'object') return;
@@ -281,6 +291,7 @@
   if (!AV) {
     window.addEventListener('vyra-live-event', ev => ta(ev && ev.detail));
     window.addEventListener('vyra-gava-tidig', ev => taTidig(ev && ev.detail));
+    window.addEventListener('vyra-spotify-overlay', ev => taSpotify(ev && ev.detail));
     // Samma handelse fran en annan flik i samma webblasare (media.js speglar den till
     // routeLiveBattleEvent via localStorage).
     window.addEventListener('storage', ev => {

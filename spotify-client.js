@@ -254,6 +254,11 @@
     return spelare('/me/player/next', { method: 'POST' });
   }
 
+  // Spotifys egen kö (GET /me/player/queue, behörigheten user-read-playback-state). Bara läsning.
+  async function readQueue() {
+    return api('/me/player/queue');
+  }
+
   function disconnect() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(OAUTH_KEY);
@@ -270,5 +275,5 @@
     channel.onmessage = () => window.dispatchEvent(new CustomEvent('vyra:spotify-changed'));
   } catch {}
 
-  window.VyraSpotify = { connect, disconnect, status, current, play, queue, next, handleCallback };
+  window.VyraSpotify = { connect, disconnect, status, current, play, queue, readQueue, next, handleCallback };
 })();

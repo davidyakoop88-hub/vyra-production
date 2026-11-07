@@ -156,6 +156,8 @@
         "social-alert.js",
         "social-alert.css",
         "latonskningar.js",
+        "spotify-request-view.js",
+        "spotify-request-view.css",
         "approved-rankings.css",
         "approved-rankings.js",
         "topstreak-designer.css",
@@ -380,7 +382,8 @@
         "tests/browser/slutgranskning-b.browser.test.js",
         "tests/browser/slutgranskning-ab2.browser.test.js",
         "tests/bildrad.test.js",
-        "tests/browser/bildrad.browser.test.js"
+        "tests/browser/bildrad.browser.test.js",
+        "tests/spotify-request-view.test.js"
       ],
       "matning": [
         {

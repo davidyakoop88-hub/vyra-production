@@ -191,6 +191,15 @@ data: ${JSON.stringify(ram)}
   }
 
   // Raw TikTok events, unchanged: workspace-scoped, replayable, same bytes for every overlay.
+  // SPOTIFY-LÅTÖNSKNINGAR (studion -> OBS). Studion är den enda som pratar med Spotify; overlayn i OBS
+  // är en annan webbläsare och når varken studions localStorage eller dess token. Därför skickar studion
+  // bara låtdata hit, och samma regler som testspelet gäller: eget meddelandeslag, ingen `id:`-rad (inget
+  // att spela upp vid återanslutning), ingen ingest, och en vitlista av fält. Token följer aldrig med.
+  if (item.spotify && typeof item.spotify === 'object') {
+    const ram = spotifyRam(item.spotify);
+    return ram ? `event: spotify\ndata: ${JSON.stringify(ram)}\n\n` : null;
+  }
+
   if (item.event && typeof item.event === 'object' && item.streamId) {
     return `id: ${item.streamId}\nevent: live\ndata: ${JSON.stringify(item.event)}\n\n`;
   }
@@ -227,6 +236,36 @@ async function publishTestspel(eventBus, workspaceId, d) {
   return true;
 }
 
+// Spotify-låtdata till overlayn: bara titel, artist, albumomslag från Spotifys bild-CDN, längd och
+// önskarens visningsnamn. Allt annat i det studion skickar (uri, token, konto) faller bort här.
+const SPOTIFY_BILD = /^https:\/\/i\.scdn\.co\/image\/[A-Za-z0-9]{8,64}$/;
+const SPOTIFY_FEL = 'Spotify kunde inte uppdateras';
+const sptext = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max);
+function spotifyLat(t) {
+  if (!t || typeof t !== 'object') return null;
+  const title = sptext(t.title, 200);
+  if (!title) return null;
+  const sek = Math.round(Number(t.seconds));
+  return { title, artist: sptext(t.artist, 200), image: SPOTIFY_BILD.test(t.image) ? t.image : '',
+    seconds: Number.isFinite(sek) && sek >= 0 && sek < 86400 ? sek : 0, requester: sptext(t.requester, 60) };
+}
+function spotifyRam(d) {
+  if (!d || typeof d !== 'object') return null;
+  const at = Number(d.at);
+  if (!Number.isFinite(at) || at <= 0) return null;
+  return { at, playing: d.playing === true, current: spotifyLat(d.current),
+    queue: (Array.isArray(d.queue) ? d.queue : []).slice(0, 10).map(spotifyLat).filter(Boolean),
+    error: d.error ? SPOTIFY_FEL : '' };
+}
+// Pub/sub, aldrig xAdd - samma regel som konfig och testspel.
+async function publishSpotify(eventBus, workspaceId, d) {
+  const ram = spotifyRam(d);
+  if (!ram) return false;
+  const client = await eventBus.connect();
+  await client.publish(eventBus.channel(workspaceId), JSON.stringify({ spotify: ram }));
+  return true;
+}
+
 // Publishes on the workspace channel — the same one raw events use, so one subscription per
 // connection carries both. Refuses an invalid frame instead of putting it on the channel: every
 // subscriber would have to drop it anyway, and it would be indistinguishable from a real one in a
@@ -240,4 +279,4 @@ async function publish(eventBus, workspaceId, update) {
 }
 
 module.exports = { FIELDS, buildFrame, visibleTo, isGoalMessage, frameEnvelope, sseChunk, publish,
-  publishKonfig, publishTestspel, testspelRam };
+  publishKonfig, publishTestspel, testspelRam, publishSpotify, spotifyRam };

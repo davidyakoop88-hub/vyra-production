@@ -209,15 +209,56 @@
           try { if (rad) rad.fel(orsak); } catch (e) {}
           try { console.warn('[VYRA Låtönskningar] Spotify-önskningen kunde inte läggas i kön', orsak); } catch (e) {}
         })
-        .then(rita);
+        .then(function () { rita(); spotifyVisningUppdatera(); });
     };
     try { if (navigator.locks && navigator.locks.request) { navigator.locks.request(nyckel, gor); return; } } catch (e) {}
     gor();
   }
 
+  // ---- SPOTIFY-VISNINGEN (David 2026-11-07) ---------------------------------------------------
+  // Spotifykö och Ren musikrad (spotify-request-view.js) visar Spotifys aktuella låt och Spotifys
+  // EGEN kö med artist, omslag och längd. Bara studion har Spotify-inloggningen: den läser var tionde
+  // sekund och skickar en ögonblicksbild med bara låtdata till servern, som lägger den på overlayns
+  // ström (SSE `spotify`). OBS är en annan webbläsare — localStorage eller BroadcastChannel når den
+  // aldrig, och en token lämnar aldrig studion. Overlayn visar "Väntar på Spotify" när bilden är
+  // äldre än 30 s, så gamla låtar aldrig ser aktuella ut. Bilden glöms vid kontobyte.
+  var spotifyVisning = null, spotifyVisningUpptagen = false;
+  function arbetsyta() { try { return root.VyraAuth && root.VyraAuth.lastDetail && root.VyraAuth.lastDetail().workspaces[0].id || null; } catch (e) { return null; } }
+  function spotifyVisningPublicera(bild) {
+    spotifyVisning = bild; rita();
+    var id = arbetsyta();
+    if (!id || !root.VyraAuth || typeof root.VyraAuth.api !== 'function') return;
+    try { Promise.resolve(root.VyraAuth.api('/api/workspaces/' + id + '/spotify-visning', { method: 'POST', body: JSON.stringify(bild) })).catch(function () {}); } catch (e) {}
+  }
+  function spotifyVisningUppdatera() {
+    if (iOverlay() || spotifyVisningUpptagen || !root.VyraSpotifyRequestView || !root.VyraSpotify || typeof root.VyraSpotify.readQueue !== 'function') return;
+    if (!widgetar().some(function (w) { return !w.hidden && kalla(w) === 'spotify'; })) return;
+    spotifyVisningUpptagen = true;
+    Promise.all([root.VyraSpotify.current(), root.VyraSpotify.readQueue()])
+      .then(function (v) { spotifyVisningPublicera(root.VyraSpotifyRequestView.snapshot(v[0], v[1], KO, Date.now())); })
+      .catch(function () { spotifyVisningPublicera({ at: Date.now(), current: null, queue: [], playing: false, error: 'Spotify kunde inte uppdateras' }); })
+      .then(function () { spotifyVisningUpptagen = false; });
+  }
+  if (typeof document !== 'undefined' && document.head) {
+    var visJs = document.createElement('script'); visJs.src = 'spotify-request-view.js?v=20261107-1';
+    visJs.onload = function () { rita(); spotifyVisningUppdatera(); }; document.head.appendChild(visJs);
+    var visCss = document.createElement('link'); visCss.rel = 'stylesheet'; visCss.href = 'spotify-request-view.css?v=20261107-1'; document.head.appendChild(visCss);
+  }
+  setInterval(function () { if (iOverlay()) rita(); else spotifyVisningUppdatera(); }, 10000);
+  root.addEventListener('vyra:spotify-changed', spotifyVisningUppdatera);
+  // Overlayn: bilden kommer från servern (overlay-access.js -> 'vyra-spotify-overlay').
+  root.addEventListener('vyra-spotify-overlay', function (e) { if (iOverlay() && e.detail && Number.isFinite(e.detail.at)) { spotifyVisning = e.detail; rita(); } });
+  root.addEventListener('vyra-session-ended', function () { spotifyVisning = null; rita(); });
+
   // ---- RITNING -------------------------------------------------------------------------------
   function html(w) {
     var s = installning(w), k = kalla(w), vald = typeof selected !== 'undefined' && selected === w.id;
+    if (k === 'spotify' && root.VyraSpotifyRequestView) {
+      var V = root.VyraSpotifyRequestView, bild = spotifyVisning;
+      if (!iOverlay() && !(bild && Date.now() - bild.at < V.FARSK_MS) && typeof V.exempel === 'function') bild = V.exempel(Date.now());
+      var rik = V.html(w, bild, Date.now());
+      return vald ? rik.replace('sr-widget', 'selected sr-widget').replace('</footer>', '</footer><span class="resize-handle">↘</span>') : rik;
+    }
     var spelar = k === 'youtube' ? spelandeYt() : null;
     var vantar = k === 'spotify'
       ? KO.filter(function (x) { return x.kalla === 'spotify' && (x.status === 'skickad' || x.status === 'sokar'); }).reverse()
@@ -304,7 +345,8 @@
           + '<label>Max antal låtar i kön<input id="latMaxKo" type="number" min="1" max="50" value="' + s.maxKo + '"></label>'
           + '<label>Max längd per låt (minuter)<input id="latMaxMinuter" type="number" min="1" max="30" value="' + (s.maxSek / 60) + '"></label>'
           + '<small id="latSkipInfo" class="pr-info">Moderatorer kan skriva !skip för att hoppa över låten som spelas.</small>')
-        + sek('UTSEENDE', '<label>Rubrik<input id="latRubrik" maxlength="24" value="' + saker(w.latRubrik || 'LÅTÖNSKNINGAR') + '"></label>'
+        + sek('UTSEENDE', (k === 'spotify' ? '<label>Utseende<select id="latSpotifyDesign"><option value="card"' + (w.latSpotifyDesign !== 'line' ? ' selected' : '') + '>Spotifykö</option><option value="line"' + (w.latSpotifyDesign === 'line' ? ' selected' : '') + '>Ren musikrad</option></select></label>' : '')
+          + '<label>Rubrik<input id="latRubrik" maxlength="24" value="' + saker(w.latRubrik || 'LÅTÖNSKNINGAR') + '"></label>'
           + '<label>Färg<input id="latFarg" type="color" value="' + saker(w.latFarg || '#ff3b7a') + '"></label>'
           + '<label><input id="latVisaKo" type="checkbox"' + (w.latVisaKo === false ? '' : ' checked') + '> Visa kön i widgeten</label>'
           + '<label class="range-label">Visa låtar i kön <b>' + s.visa + '</b><input id="latVisa" type="range" min="0" max="10" value="' + s.visa + '"></label>'
@@ -340,6 +382,7 @@
       var f = q(p[0]); if (f) f.onchange = function (e) { w[p[1]] = Number(e.target.value); spara(false); };
     });
     if ((el = q('#latVisaKo'))) el.onchange = function (e) { w.latVisaKo = e.target.checked; spara(); };
+    if ((el = q('#latSpotifyDesign'))) el.onchange = function (e) { w.latSpotifyDesign = e.target.value === 'line' ? 'line' : 'card'; spara(); };
     if ((el = q('#latRubrik'))) el.onchange = function (e) { w.latRubrik = String(e.target.value || '').slice(0, 24); spara(); };
     if ((el = q('#latFarg'))) el.onchange = function (e) { w.latFarg = e.target.value; spara(); };
     [['#latVisa', 'latVisa'], ['#latVolym', 'latVolym']].forEach(function (p) {
@@ -447,6 +490,7 @@
   }
 
   root.VyraLatonskningar = {
+    spotifyVisningUppdatera: spotifyVisningUppdatera,
     ta: ta, tolka: tolka, ko: function () { return KO.map(function (x) { return { fraga: x.fraga, av: x.av, status: x.status, fel: x.fel, kalla: x.kalla, titel: x.lat && x.lat.titel || '' }; }); },
     hoppaOver: hoppaOver, tom: tom, klar: klar, rensa: function () { KO.length = 0; Object.keys(SENAST).forEach(function (k) { delete SENAST[k]; }); Object.keys(SEDDA).forEach(function (k) { delete SEDDA[k]; }); rita(); }
   };
