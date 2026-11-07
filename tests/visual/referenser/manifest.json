@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 228,
  "senaste": {
-  "motiv": "Textraden ersätter Egen text (catalog:custom:text): ny modell med rubrik, stil och nya standardmått, David 2026-11-07",
+  "motiv": "Låtönskningar · Spotify får två designer i mörk VYRA-lila (Spotifykö, Ren musikrad) med Spotifys kö och ett märkt exempel i studion, David 2026-11-07",
   "nycklar": 1,
-  "filter": "custom:text",
-  "tid": "2026-11-07T12:20:16.965Z"
+  "filter": "latonskningar:spotify",
+  "tid": "2026-11-07T22:20:21.822Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -483,7 +483,7 @@
    "fyllnad": 100
   },
   "catalog:latonskningar:spotify": {
-   "matt": "340x142",
+   "matt": "340x196",
    "fyllnad": 100
   },
   "catalog:latonskningar:youtube": {

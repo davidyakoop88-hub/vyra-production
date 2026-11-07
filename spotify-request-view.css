@@ -1,0 +1,28 @@
+/* SPOTIFY-LÅTÖNSKNINGAR · mörk VYRA-lila (David 2026-11-07: "inte grönt"). Neutral vit text, lavendel som
+   accent, VYRA-violett i linjen. Tonerna är design-tokens.css egna: --text-primary #f7f2ff,
+   --text-secondary #b8aac8, --accent-violet #8b3dff. */
+.sr-widget{color:#f7f2ff;font-family:Inter,Arial,sans-serif}
+.sr-now{display:flex;align-items:center;gap:11px;padding:13px;background:linear-gradient(120deg,rgba(30,16,50,.94),rgba(17,9,30,.94));border:1px solid #3d2763;border-radius:12px;box-shadow:0 8px 24px rgba(8,3,18,.45)}
+.sr-cover{display:block;object-fit:cover;width:52px;height:52px;border-radius:6px;flex:none}
+.sr-placeholder{display:grid;place-items:center;background:#2b1a48;color:#d9c6ff;font-size:27px}
+.sr-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.sr-info small{font-size:9px;letter-spacing:1px;color:#c9a7ff;font-weight:700}
+.sr-info b{font-size:17px;color:#f7f2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-info span{font-size:11px;color:#b8aac8;line-height:1.4;overflow-wrap:anywhere}
+.sr-info .sr-requester{font-size:10px;color:#c9a7ff}
+.sr-queue-label{font-size:9px;letter-spacing:1px;margin:14px 8px 5px;color:#a996c8;font-weight:700}
+.sr-widget ol.sr-list{display:flex;flex-direction:column;gap:0;padding:0 7px;margin:0;list-style:none;background:linear-gradient(180deg,rgba(24,13,40,.82),rgba(17,9,30,.82));border:1px solid #2d1d4a;border-radius:10px}
+.sr-widget .sr-list li{display:flex;gap:9px;align-items:center;margin:0;padding:9px 0;background:none;border-radius:0;border-bottom:1px solid rgba(201,167,255,.10)}
+.sr-widget .sr-list li:last-child{border-bottom:0}
+.sr-widget .sr-list em{font-style:normal;font-size:10px;color:#a996c8;flex:none;width:12px;text-align:center}
+.sr-list .sr-cover{width:32px;height:32px;border-radius:4px}
+.sr-list .sr-info{flex:1;min-width:0}
+.sr-list .sr-info b{font-size:13px;font-weight:700}
+.sr-list .sr-info span{max-width:none;white-space:normal;font-size:10px;opacity:1}
+.sr-empty{font-size:11px;padding:9px;color:#a996c8}
+.sr-widget footer{font-size:10px;margin-top:10px;color:#b8aac8;text-align:left}
+.latonskningar.sr-widget footer b{display:inline;color:#c9a7ff}
+.sr-line .sr-now{background:none;border:0;border-bottom:2px solid #8b3dff;border-radius:0;padding:10px 0;box-shadow:none}
+.sr-line .sr-now .sr-cover{width:38px;height:38px;border-radius:50%}
+.sr-line .sr-queue-label{margin-left:0}
+.sr-line ol.sr-list{padding:0 4px;background:none;border:0}
