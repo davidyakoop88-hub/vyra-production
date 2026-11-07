@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 228,
  "senaste": {
-  "motiv": "Chattavatar: katalognyckeln catalog:vyrapaket:chattavatar behöver referensbild",
+  "motiv": "Textraden ersätter Egen text (catalog:custom:text): ny modell med rubrik, stil och nya standardmått, David 2026-11-07",
   "nycklar": 1,
-  "filter": "vyrapaket:chattavatar",
-  "tid": "2026-11-06T22:49:04.955Z"
+  "filter": "custom:text",
+  "tid": "2026-11-07T12:20:16.965Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -83,7 +83,7 @@
    "fyllnad": 100
   },
   "catalog:custom:text": {
-   "matt": "420x90",
+   "matt": "410x40",
    "fyllnad": 100
   },
   "catalog:fanlevel:layout:badgereveal": {
