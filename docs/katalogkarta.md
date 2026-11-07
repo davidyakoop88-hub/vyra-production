@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `6976a88c`
+Commit: `efd0f158`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -26,7 +26,7 @@ proveniensen saknas: datumet bredvid ar anda matt.
 | | |
 |---|---|
 | Kort totalt | **172** |
-| Sektioner | 32 |
+| Sektioner | 28 |
 | Med katalognyckel | 172 / 172 |
 | Med shadow DOM-miniatyr | 138 / 172  ⚠️ |
 | Ritar sin design | 172 / 172 |
@@ -54,11 +54,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · 6 DESIGNER | 6 | 6/6 | 6/6 | 6/6 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · FIRANDE · 2 KOREOGRAFIER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
-| Koi Pearl Lagoon · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Masquerade Ball · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Pink Princess · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Royal Ruby · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-| Cloud Fox · VIDEO FX | 1 | 1/1 | 0/1 ⚠️ | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
+| Battle-paket · VIDEO FX · 5 paket | 5 | 5/5 | 0/5 ⚠️ | 5/5 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
@@ -239,34 +235,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 
-### Koi Pearl Lagoon · VIDEO FX
+### Battle-paket · VIDEO FX · 5 paket
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Koi Pearl Lagoon · hela paketet | `catalog:glovesnipe:koiPearl:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-
-### Masquerade Ball · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
 | Masquerade Ball · hela paketet | `catalog:glovesnipe:masquerade:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-
-### Pink Princess · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
 | Pink Princess · hela paketet | `catalog:glovesnipe:pinkPrincess:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-
-### Royal Ruby · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
 | Royal Ruby · hela paketet | `catalog:glovesnipe:royalRuby:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
-
-### Cloud Fox · VIDEO FX
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
 | Cloud Fox · hela paketet | `catalog:glovesnipe:cloudFox:pack:2` | — ⚠️ | ✓ | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
 
 ### NEW FOLLOWER ALERT · 3 TEMAN
