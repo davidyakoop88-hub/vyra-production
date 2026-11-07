@@ -100,6 +100,12 @@
   }
   const exempel = w => ({ namn: 'Tittare', avatar: EXEMPELBILD, rubrik: rubrikFor(w), meddelande: budskapFor(w) });
 
+  // STILLBILD FÖR PIXELVAKTEN (tests/helpers/katalognycklar.js REGI). I OBS är widgeten osynlig tills ett
+  // firande spelas, och ett firande är en animation i rörelse. stilla() visar exempelprofilen i slutläget,
+  // utan animation — samma bild varje gång, bestämd av kod.
+  let STILLA = false;
+  function stilla() { STILLA = true; for (const s of SPEL.values()) { clearTimeout(s.timer); s.nu = null; s.ko = []; } ritaOm(); return document.querySelectorAll('.vyra-showcase').length; }
+
   const oldWh = wh;
   wh = function (w) {
     if (!w || w.type !== TYP) return oldWh(w);
@@ -108,7 +114,7 @@
     const valt = !OVERLAY && typeof selected !== 'undefined' && selected === w.id;
     const skala = (klamp(w.width, 150, 900, BAS_B) / BAS_B) * klamp(w.widgetScale, 0.1, 5, 1);
     const off = nu ? -((Date.now() - nu.start) / 1000) : 0;
-    return `<div class="widget vyra-showcase vs-${d}${OVERLAY ? '' : ' vs-studio'}${nu ? ' vs-spelar' : ''}${valt ? ' selected' : ''}" data-id="${esc(w.id)}" `
+    return `<div class="widget vyra-showcase vs-${d}${OVERLAY ? '' : ' vs-studio'}${nu ? ' vs-spelar' : STILLA ? ' vs-stilla' : ''}${valt ? ' selected' : ''}" data-id="${esc(w.id)}" `
       + `style="left:${Number(w.x) || 0}px;top:${Number(w.y) || 0}px;width:${BAS_B}px;zoom:${skala.toFixed(3)};z-index:${Number(w.layer) || 1};--vs-dur:${nu ? nu.sek : sek(w)}s;--vs-off:${off.toFixed(2)}s">`
       + kortHtml(d, p) + (valt ? '<span class="resize-handle">↘</span>' : '') + '</div>';
   };
@@ -249,6 +255,6 @@
     if ((el = q('#vsStopp'))) el.onclick = () => { stoppa(w.id); status('Stoppad här i studion.'); };
   };
 
-  window.VyraViewerShowcase = Object.freeze({ typ: TYP, DESIGNER, RUBRIKER, namnKlass, initialer, tittareAv, person, spela, stoppa, visaIObs, MAX_KO, PAUS_MS, _spel: SPEL, _tittare: TITTARE });
+  window.VyraViewerShowcase = Object.freeze({ typ: TYP, DESIGNER, RUBRIKER, namnKlass, initialer, tittareAv, person, spela, stoppa, stilla, visaIObs, MAX_KO, PAUS_MS, _spel: SPEL, _tittare: TITTARE });
   ritaOm();
 })();

@@ -1944,8 +1944,8 @@ Promise.resolve().then(()=>{
 });
 // Viewer Showcase - streamern eller en moderator lyfter fram en tittare i 8 sekunder (viewer-showcase.js).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-viewer-showcase]')){let css=document.createElement('link');css.rel='stylesheet';css.href='viewer-showcase.css?v=20261108-1';css.dataset.viewerShowcase='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='viewer-showcase.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda viewer-showcase.js');document.body.append(s);
+  if(!document.querySelector('link[data-viewer-showcase]')){let css=document.createElement('link');css.rel='stylesheet';css.href='viewer-showcase.css?v=20261108-2';css.dataset.viewerShowcase='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='viewer-showcase.js?v=20261108-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda viewer-showcase.js');document.body.append(s);
 });
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).

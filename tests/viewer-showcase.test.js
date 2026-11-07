@@ -129,7 +129,7 @@ test('OBS spelar bara en widget som finns och inte är dold, och aldrig samma be
 
 test('i OBS syns widgeten bara under ett firande; kompositionen har ingen kortram', () => {
   const css = fs.readFileSync(path.join(ROOT, 'viewer-showcase.css'), 'utf8');
-  assert.match(css, /\.overlay-output \.vyra-showcase:not\(\.vs-spelar\)\{visibility:hidden\}/);
+  assert.match(css, /\.overlay-output \.vyra-showcase:not\(\.vs-spelar\):not\(\.vs-stilla\)\{visibility:hidden\}/);
   assert.match(css, /\.widget\.vyra-showcase\{background:transparent!important;border:0!important/);
   assert.match(css, /border-radius:50%/, 'profilerna ska vara runda');
   assert.match(css, /animation:vsHela var\(--vs-dur,8s\)/);
@@ -140,4 +140,17 @@ test('overlayn tar emot beskedet och grinden väntar inte på en händelse', () 
   assert.match(access, /source\.addEventListener\('showcase',message=>\{try\{root\.dispatchEvent\(new CustomEvent\('vyra-showcase-overlay'/);
   assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /'templateViewerShowcase'\]\)/);
   assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /viewer-showcase\.js\?v=\d{8}-\d+/);
+});
+
+test('pixelvaktens stillbild: syns i OBS utan firande, och ett nytt firande tar över', () => {
+  const dom = sida('https://vyralive.app/studio.html?overlay=1'), V = dom.window.VyraViewerShowcase, w = ny();
+  try {
+    dom.window.state.widgets.push(w);
+    V.stilla();
+    let box = dom.window.document.createElement('div'); box.innerHTML = dom.window.wh(w);
+    assert.ok(box.querySelector('.vyra-showcase.vs-stilla:not(.vs-spelar)'));
+    V.spela(w, { namn: 'Anna' });
+    box = dom.window.document.createElement('div'); box.innerHTML = dom.window.wh(w);
+    assert.ok(box.querySelector('.vyra-showcase.vs-spelar:not(.vs-stilla)'));
+  } finally { dom.window.close(); }
 });
