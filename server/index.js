@@ -766,6 +766,10 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // bara låtdata hit; servern vitlistar fälten (GoalSse.spotifyRam) och lägger dem på workspace-kanalen till
   // overlayn. Aldrig ingest, aldrig en livehändelse, aldrig en token. Bara medlemmar som får redigera.
   const spotifyVisningRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/spotify-visning$/i);if(spotifyVisningRoute&&req.method==='POST'){const workspaceId=spotifyVisningRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`spotify-visning:${workspaceId}`,30,60))return send(res,429,{ok:false,error:'För många uppdateringar just nu'});const d=await body(req).catch(()=>({}));const ok=await GoalSse.publishSpotify(eventBus,workspaceId,d);return send(res,ok?202:400,{ok})}
+  // VIEWER SHOWCASE I OBS (viewer-showcase.js). Streamern eller en moderator med redigeringsrätt väljer en
+  // tittare i studion; servern vitlistar fälten (GoalSse.showcaseRam) och lägger beskedet på overlayns ström.
+  // Aldrig ingest och aldrig en livehändelse: inget räknas, inget sparas, inga Actions triggas.
+  const showcaseRoute=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/showcase$/i);if(showcaseRoute&&req.method==='POST'){const workspaceId=showcaseRoute[1];if(!await membership(s.user_id,workspaceId,['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(await rateLimiter.exceeded(`showcase:${workspaceId}`,20,60))return send(res,429,{ok:false,error:'För många presentationer just nu — vänta en stund'});const d=await body(req).catch(()=>({}));const ok=await GoalSse.publishShowcase(eventBus,workspaceId,d);return send(res,ok?202:400,{ok})}
   // ADMINISTRATIV ATEROPPNING AV ETT STANGT RUM. Ligger efter den gemensamma sessionsraden och
   // arver darfor husets bada skydd: den globala sameOrigin-sparren (403 'Origin nekad' fore allt
   // annat) och CSRF-kravet pa icke-GET (session() returnerar null utan giltig x-vyra-csrf -> 401).

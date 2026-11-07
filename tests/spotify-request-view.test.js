@@ -136,5 +136,7 @@ test('en färsk Spotify-ram tänder Spotify-widgeten i OBS utan chatt, men inte 
   const fn = src.slice(src.indexOf('function taSpotify'), src.indexOf('const TIDIGA'));
   assert.match(fn, /Date\.now\(\) - Number\(d\.at\) < 30000/, 'gammal ram får inte tända widgeten');
   assert.match(fn, /w\.type === 'templateSongRequests' && w\.latKalla === 'spotify'/);
-  assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /overlay-aktivering\.js\?v=20261107-21/);
+  // Versionen ska vara höjd sedan Spotify-regeln kom in (20261107-21); senare ändringar får höja den vidare.
+  const v = (fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8').match(/overlay-aktivering\.js\?v=(\d{8}-\d+)/) || [])[1] || '';
+  assert.ok(v >= '20261107-21', 'overlay-aktivering.js cachebustades inte: ' + v);
 });

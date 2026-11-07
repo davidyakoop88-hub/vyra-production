@@ -1,0 +1,83 @@
+/* VIEWER SHOWCASE (viewer-showcase.js, David 2026-11-07). Tre kompositioner ur den sparade prototypen:
+   Name Takeover (stora bokstäver bredvid profilen), Halo Reveal (profilen i ljusets mitt) och Spotlight
+   Slide (profilen till höger, texten till vänster). ENKLA RUNDA profiler — konstiga ramar avvisades.
+   Firandet är 8 s: ljusspår, profil, stort namn, budskap, diskreta gnistor, stilla fas, mjuk uttoning.
+   --vs-off förskjuter ALLA animationer när overlayn ritar om mitt i ett firande, så att det inte börjar om. */
+.vyra-showcase{position:absolute;height:206px;color:#f6f4fa;font-family:Inter,Arial,sans-serif;isolation:isolate;overflow:visible;pointer-events:auto}
+/* Kompositionen ÄR widgeten: ingen kortram, bakgrund eller skugga från studions allmänna .widget. */
+.widget.vyra-showcase{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.vyra-showcase .vs-kort{position:absolute;inset:0;overflow:visible}
+.vyra-showcase .vs-avatar{position:absolute;display:grid;place-items:center;overflow:hidden;width:82px;height:82px;border-radius:50%;border:1px solid #ffffff55;background:#4a3d56;color:#fff;font-size:28px;font-weight:800}
+.vyra-showcase .vs-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%}
+.vyra-showcase .vs-ord{position:absolute;min-width:0}
+.vyra-showcase .vs-rubrik{font-size:8px;letter-spacing:1.2px;line-height:1.5;font-weight:700;text-transform:uppercase}
+.vyra-showcase .vs-namn{position:relative;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:2px;line-height:1.16}
+.vyra-showcase .vs-namn.vs-n4{white-space:normal;overflow-wrap:anywhere;max-height:2.4em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.vyra-showcase .vs-budskap{font-size:11px;line-height:1.5;overflow-wrap:anywhere;max-height:50px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+
+/* 01 · Name Takeover — namnet är kompositionen; profilen bryter dess baslinje. */
+.vs-takeover .vs-avatar{left:4px;top:24px}
+.vs-takeover .vs-ord{inset:0}
+.vs-takeover .vs-rubrik{position:absolute;left:99px;right:0;top:25px;color:#ba9bea}
+.vs-takeover .vs-namn{position:absolute;left:98px;right:0;top:55px;letter-spacing:-1.6px;color:#f3eaff;text-shadow:0 3px 20px #9e69ff30}
+.vs-takeover .vs-budskap{position:absolute;left:8px;right:8px;top:125px;color:#b3a8c2;border-left:2px solid #ba8aff;padding-left:9px}
+.vs-takeover .vs-namn.vs-n1{font-size:43px}.vs-takeover .vs-namn.vs-n2{font-size:34px}.vs-takeover .vs-namn.vs-n3{font-size:26px}.vs-takeover .vs-namn.vs-n4{font-size:20px}
+
+/* 02 · Halo Reveal — bilden i ljusets mitt, inget informationskort. */
+.vs-halo .vs-kort{background:radial-gradient(ellipse at 50% 30%,#478b9450,transparent 58%);text-align:center}
+.vs-halo .vs-avatar{left:calc(50% - 41px);top:9px;border-color:#a8e9dc;box-shadow:0 0 0 5px #81d9cc08,0 0 27px #81d9cc20}
+.vs-halo .vs-ord{left:3px;right:3px;top:109px}
+.vs-halo .vs-rubrik{color:#8bcec7;margin-bottom:7px;letter-spacing:1.3px}
+.vs-halo .vs-namn{letter-spacing:-1px;color:#ecfffa}
+.vs-halo .vs-budskap{color:#a9c5c3;margin-top:7px}
+.vs-halo .vs-namn.vs-n1{font-size:30px}.vs-halo .vs-namn.vs-n2{font-size:26px}.vs-halo .vs-namn.vs-n3{font-size:21px}.vs-halo .vs-namn.vs-n4{font-size:17px}
+
+/* 03 · Spotlight Slide — profilen till höger, kompakt textblock till vänster. */
+.vs-spotlight .vs-avatar{right:3px;top:28px;border-color:#dfb789}
+.vs-spotlight .vs-ord{left:0;top:30px;right:103px;z-index:3}
+.vs-spotlight .vs-rubrik{color:#d8b786}
+.vs-spotlight .vs-namn{margin-top:10px;letter-spacing:-1px;color:#fff0d9}
+.vs-spotlight .vs-budskap{color:#c0ad94;margin-top:12px}
+.vs-spotlight .vs-namn.vs-n1{font-size:33px}.vs-spotlight .vs-namn.vs-n2{font-size:27px}.vs-spotlight .vs-namn.vs-n3{font-size:22px}.vs-spotlight .vs-namn.vs-n4{font-size:17px}
+
+/* Ljus, ljusspår och gnistor. */
+.vyra-showcase .vs-kort:before{content:"";position:absolute;width:110px;height:110px;left:calc(50% - 55px);top:0;border-radius:50%;background:radial-gradient(circle,#c29aff38,transparent 68%);z-index:-1;opacity:0}
+.vs-takeover .vs-kort:before{left:-10px;top:8px}
+.vs-spotlight .vs-kort:before{left:auto;right:-10px;top:10px}
+.vyra-showcase .vs-spar{position:absolute;left:-35px;top:62px;height:2px;width:85px;background:linear-gradient(90deg,transparent,#e4b8ff,white);opacity:0;pointer-events:none;z-index:6;box-shadow:0 0 10px #c48fff}
+.vs-spotlight .vs-spar{top:60px}
+.vs-halo .vs-spar{top:53px}
+.vyra-showcase .vs-gnistor{position:absolute;inset:-10px;pointer-events:none;z-index:5}
+.vyra-showcase .vs-gnistor i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffe6a7;opacity:0;box-shadow:0 0 5px #ffdb92;left:var(--x);top:var(--y)}
+
+/* I OBS syns widgeten bara under ett firande. Studion visar en stillbild. */
+.overlay-output .vyra-showcase:not(.vs-spelar){visibility:hidden}
+.vyra-showcase.vs-studio:not(.vs-spelar){outline:1px dashed #ffffff22;outline-offset:6px}
+
+.vyra-showcase.vs-spelar .vs-kort{animation:vsHela var(--vs-dur,8s) linear calc(var(--vs-off,0s)) both}
+.vyra-showcase.vs-spelar .vs-spar{animation:vsSpar 1.15s cubic-bezier(.2,.7,.2,1) calc(var(--vs-off,0s)) both}
+.vyra-showcase.vs-spelar .vs-kort:before{animation:vsLjus var(--vs-dur,8s) ease calc(var(--vs-off,0s)) both}
+.vyra-showcase.vs-spelar .vs-avatar{animation:vsGast 1.3s cubic-bezier(.16,1,.3,1) calc(var(--vs-off,0s) + .25s) both}
+.vyra-showcase.vs-spelar .vs-namn{animation:vsNamn 1.05s cubic-bezier(.16,1,.3,1) calc(var(--vs-off,0s) + .95s) both}
+.vyra-showcase.vs-spelar .vs-rubrik{animation:vsText .8s ease calc(var(--vs-off,0s) + 1.3s) both}
+.vyra-showcase.vs-spelar .vs-budskap{animation:vsText .8s ease calc(var(--vs-off,0s) + 1.65s) both}
+.vyra-showcase.vs-spelar .vs-gnistor i{animation:vsGnista 2.7s ease-out calc(var(--vs-off,0s) + 1s + var(--d)) both}
+.vyra-showcase.vs-spelar .vs-namn:after{content:"";position:absolute;inset:-6px;background:linear-gradient(105deg,transparent 35%,#fff9 49%,transparent 63%);mix-blend-mode:screen;pointer-events:none;animation:vsGlans 1.3s ease calc(var(--vs-off,0s) + 1.8s) both}
+@keyframes vsHela{0%,4%{opacity:1}89%{opacity:1;translate:0}100%{opacity:0;translate:0 -5px}}
+@keyframes vsSpar{0%{opacity:0;translate:-30px 0;scale:.5 1}25%{opacity:1}75%{opacity:1}100%{opacity:0;translate:160px 0;scale:.15 1}}
+@keyframes vsGast{from{opacity:0;translate:-18px 10px;scale:.82;filter:blur(4px)}to{opacity:1;translate:0;scale:1;filter:blur(0)}}
+@keyframes vsNamn{from{opacity:0;translate:0 12px;filter:blur(6px)}to{opacity:1;translate:0;filter:blur(0)}}
+@keyframes vsText{from{opacity:0;translate:0 6px}to{opacity:1;translate:0}}
+@keyframes vsLjus{0%,7%{opacity:0;scale:.5}23%{opacity:1;scale:1.35}45%,85%{opacity:.55;scale:1.1}100%{opacity:0}}
+@keyframes vsGnista{0%{opacity:0;translate:0 5px}12%{opacity:1}65%{opacity:.5}100%{opacity:0;translate:var(--dx) -35px}}
+@keyframes vsGlans{0%{opacity:0;translate:-110% 0}20%,70%{opacity:.7}100%{opacity:0;translate:110% 0}}
+@media(prefers-reduced-motion:reduce){html:not(.overlay-output) .vyra-showcase.vs-spelar *{animation-duration:.01s!important}}
+
+/* Panelen och katalogen. */
+.vs-katalog{display:contents}
+.vs-tittare{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto;margin:6px 0}
+.vs-tittare button{display:flex;align-items:center;gap:8px;text-align:left;padding:6px 8px;border:1px solid #3a2a4a;border-radius:8px;background:#1a1222;color:#f6f4fa;cursor:pointer}
+.vs-tittare button.vald{border-color:#b98cff;background:#2a1a3c}
+.vs-tittare img,.vs-tittare .vs-ini{width:26px;height:26px;border-radius:50%;object-fit:cover;flex:none;background:#4a3d56;display:grid;place-items:center;font-size:11px;font-weight:800}
+.vs-tittare small{color:#a998bb;font-size:10px;margin-left:auto}
+.vs-tom{font-size:11px;color:#a998bb}
