@@ -606,3 +606,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Gift Campaign-modellerna utan studioram (marginalen kapade gåvoraden)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 12 av 155 (filter: giftcampaign) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:emerald:landscape, catalog:giftcampaign:emerald:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait, catalog:giftcampaign:gold:landscape, catalog:giftcampaign:gold:portrait, catalog:giftcampaign:platinum:landscape, catalog:giftcampaign:platinum:portrait
+
+## 2026-11-06 — 1 referenser skrivna
+
+- **Motiv:** Chattavatar: katalognyckeln catalog:vyrapaket:chattavatar behöver referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 156 (filter: vyrapaket:chattavatar) — catalog:vyrapaket:chattavatar

@@ -386,6 +386,13 @@
         finale: [{ name: 'Corgi', giftId: '6267', giftIds: [], alias: [], image: 'assets/gifts/events/7670_Corgi.png' }]
       }
     }),
+    // Chattavatar (chattavatar.js): streamerns avatar, styrd från chatten. 72 bred i duken = 180 px i en
+    // 1080 bred OBS-bild, samma storlek som paketets fristående källa. Till höger, där TikTok-chatten
+    // inte ligger. Moderatorstyrd från början; hälsning och tack är påslagna.
+    'chattavatar': () => ({
+      type: 'templateChatAvatar', x: 350, y: 400, width: 72, title: 'Chattavatar',
+      caPublik: 'mod', caHalsa: true, caTacka: true
+    }),
     // Hjärtan & moln (hjartmoln.js): en transparent 9:16-effekt över hela duken (432 × 768) som
     // spelas vid likes tills streamern väljer annat. Profilhjärtan har porträttlagret påslaget.
     'heartcloud': v => ({
@@ -769,6 +776,7 @@
     // sorteras sist bland katalognycklarna, så webbläsarvakterna som delar upp dem med index % 6 behåller
     // sina grupper.
     'vyrapaket': parts => {
+      if (parts[0] === 'chattavatar') return ['chattavatar', {}];
       if (parts[0] !== 'bertil') throw new Error('Okänt paket: ' + parts[0]);
       return ['bertilpaket', {}];
     },
