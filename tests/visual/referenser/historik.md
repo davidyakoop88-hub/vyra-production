@@ -642,3 +642,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ordjakten, Quiz (tre designer) och Match 1 vs 1: fem nya katalognycklar, David 2026-11-07
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 5 av 159 (filter: vyrapaket:ordjakten,vyrapaket:quiz,vyrapaket:match) — catalog:vyrapaket:match:1v1, catalog:vyrapaket:ordjakten, catalog:vyrapaket:quiz:fragerad, catalog:vyrapaket:quiz:quizshow, catalog:vyrapaket:quiz:spelkort
+
+## 2026-11-08 — 6 referenser skrivna
+
+- **Motiv:** Quiz och Energimätaren: fasta radhöjder och kanter som inre skuggor (likformig storlek), David 2026-11-08
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 6 av 159 (filter: vyrapaket:quiz,vyrapaket:energi) — catalog:vyrapaket:energi:arcade, catalog:vyrapaket:energi:minimal, catalog:vyrapaket:energi:vital, catalog:vyrapaket:quiz:fragerad, catalog:vyrapaket:quiz:quizshow, catalog:vyrapaket:quiz:spelkort

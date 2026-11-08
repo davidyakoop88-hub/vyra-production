@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 239,
  "senaste": {
-  "motiv": "Ordjakten, Quiz (tre designer) och Match 1 vs 1: fem nya katalognycklar, David 2026-11-07",
-  "nycklar": 5,
-  "filter": "vyrapaket:ordjakten,vyrapaket:quiz,vyrapaket:match",
-  "tid": "2026-11-08T00:56:49.357Z"
+  "motiv": "Quiz och Energimätaren: fasta radhöjder och kanter som inre skuggor (likformig storlek), David 2026-11-08",
+  "nycklar": 6,
+  "filter": "vyrapaket:quiz,vyrapaket:energi",
+  "tid": "2026-11-08T02:11:49.042Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -939,15 +939,15 @@
    "fyllnad": 100
   },
   "catalog:vyrapaket:energi:arcade": {
-   "matt": "270x100",
+   "matt": "270x104",
    "fyllnad": 100
   },
   "catalog:vyrapaket:energi:minimal": {
-   "matt": "270x67",
+   "matt": "270x71",
    "fyllnad": 100
   },
   "catalog:vyrapaket:energi:vital": {
-   "matt": "270x93",
+   "matt": "270x97",
    "fyllnad": 100
   },
   "catalog:vyrapaket:match:1v1": {
@@ -959,15 +959,15 @@
    "fyllnad": 100
   },
   "catalog:vyrapaket:quiz:fragerad": {
-   "matt": "300x233",
+   "matt": "300x236",
    "fyllnad": 100
   },
   "catalog:vyrapaket:quiz:quizshow": {
-   "matt": "300x250",
+   "matt": "300x248",
    "fyllnad": 100
   },
   "catalog:vyrapaket:quiz:spelkort": {
-   "matt": "300x275",
+   "matt": "300x274",
    "fyllnad": 100
   }
  }
