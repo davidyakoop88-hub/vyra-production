@@ -36,9 +36,12 @@
   // en rad här — ta aldrig bort en gammal, widgetar i molnet pekar på den.
   const FILER = { vila: 'vyra-avatar-idle.png', dance: 'vyra-avatar-flow-dance-v2.webm', dance2: 'vyra-avatar-flow-dance2.webm',
     dance3: 'vyra-avatar-flow-dance3.webm', wave: 'vyra-avatar-flow-wave.webm', glove: 'vyra-avatar-flow-glove.webm', fira: 'vyra-avatar-flow-fira-v2.webm' };
+  // Varje avatar är en EGEN widget i katalogen med egen nyckel (David 2026-11-08: "jag vill varje avatar
+  // ska vara för sig själv") — inget avatarval i panelen. En ny avatar = en ny mapp, en rad här och en
+  // gren i widget-factory.js vyrapaket.
   const MODELLER = Object.freeze({
-    nr1: Object.freeze({ namn: 'Avatar 1', mapp: 'assets/chattavatar/' }),
-    nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', mapp: 'assets/chattavatar/nr2/' })
+    nr1: Object.freeze({ namn: 'Avatar 1', kort: 'Chattavatar', nyckel: 'catalog:vyrapaket:chattavatar', mapp: 'assets/chattavatar/' }),
+    nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', kort: 'Chattavatar 2 · helkropp', nyckel: 'catalog:vyrapaket:chattavatar:2', mapp: 'assets/chattavatar/nr2/' })
   });
   const STANDARD_MODELL = 'nr1';
   const modell = w => (w && Object.prototype.hasOwnProperty.call(MODELLER, w.caModell) ? w.caModell : STANDARD_MODELL);
@@ -338,10 +341,7 @@
   props = function () {
     const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
     if (!w || w.type !== TYP) return oldProps();
-    return `<h3>CHATTAVATAR</h3><div class="template-badge">AVATAR · STYRS FRÅN CHATTEN</div><div hidden><input id="pt" value="${NAMN}"><input id="pv" value=""></div>`
-      + `<div class="property-group"><h4>AVATAR</h4><label>Vilken avatar<select id="caModell">`
-      + Object.entries(MODELLER).map(([v, m]) => `<option value="${v}"${modell(w) === v ? ' selected' : ''}>${esc(m.namn)}</option>`).join('')
-      + `</select></label><small>Alla kommandon fungerar likadant med båda.</small></div>`
+    return `<h3>${esc(MODELLER[modell(w)].kort.toUpperCase())}</h3><div class="template-badge">${esc(MODELLER[modell(w)].namn.toUpperCase())} · STYRS FRÅN CHATTEN</div><div hidden><input id="pt" value="${NAMN}"><input id="pv" value=""></div>`
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
       + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (!d1 !d2 !d3 !t)</option></select></label>`
@@ -372,17 +372,20 @@
     const sek = document.createElement('section');
     sek.className = 'ca-katalog';
     sek.innerHTML = '<h4>CHATTAVATAR</h4>';
-    const b = document.createElement('button');
-    b.type = 'button'; b.dataset.caSkapa = '1'; b.dataset.catalogKey = 'catalog:vyrapaket:chattavatar';
-    b.innerHTML = `<img class="ca-katalogbild" src="${VILA}" alt="" loading="lazy"><span><b>${NAMN}</b><small>Din avatar dansar, hälsar och pratar när moderatorerna skriver i chatten</small></span>`;
-    b.onclick = () => {
-      if (!window.VyraWidgets || typeof state === 'undefined') return;
-      const w = window.VyraWidgets.create('catalog:vyrapaket:chattavatar');
-      state.widgets.push(w); selected = w.id;
-      if (typeof save === 'function') save(); if (typeof render === 'function') render();
-      if (typeof toast === 'function') toast(NAMN + ' tillagd');
-    };
-    sek.append(b);
+    // Ett kort per avatar, var och en med sin egen nyckel och sin egen vilobild.
+    for (const [m, info] of Object.entries(MODELLER)) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.dataset.caSkapa = m; b.dataset.catalogKey = info.nyckel;
+      b.innerHTML = `<img class="ca-katalogbild" src="${esc(filerFor(m).vila)}" alt="" loading="lazy"><span><b>${esc(info.kort)}</b><small>Din avatar dansar, hälsar och pratar när moderatorerna skriver i chatten</small></span>`;
+      b.onclick = () => {
+        if (!window.VyraWidgets || typeof state === 'undefined') return;
+        const w = window.VyraWidgets.create(info.nyckel);
+        state.widgets.push(w); selected = w.id;
+        if (typeof save === 'function') save(); if (typeof render === 'function') render();
+        if (typeof toast === 'function') toast(info.kort + ' tillagd');
+      };
+      sek.append(b);
+    }
     cat.append(sek);
   }
 
@@ -395,10 +398,6 @@
     if (!w || w.type !== TYP) return;
     const satt = (falt, v) => { w[falt] = v; if (typeof save === 'function') save(); };
     const el = id => document.querySelector(id);
-    if (el('#caModell')) el('#caModell').onchange = e => {
-      w.caModell = Object.prototype.hasOwnProperty.call(MODELLER, e.target.value) ? e.target.value : STANDARD_MODELL;
-      if (typeof save === 'function') save(); if (typeof render === 'function') render();
-    };
     if (el('#caPublik')) el('#caPublik').onchange = e => satt('caPublik', e.target.value === 'alla' ? 'alla' : 'mod');
     if (el('#caHalsa')) el('#caHalsa').onchange = e => satt('caHalsa', !!e.target.checked);
     if (el('#caTacka')) el('#caTacka').onchange = e => satt('caTacka', !!e.target.checked);

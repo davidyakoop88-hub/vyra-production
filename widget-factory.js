@@ -392,9 +392,13 @@
     // Chattavatar (chattavatar.js): streamerns avatar, styrd från chatten. 72 bred i duken = 180 px i en
     // 1080 bred OBS-bild, samma storlek som paketets fristående källa. Till höger, där TikTok-chatten
     // inte ligger. Moderatorstyrd från början; hälsning och tack är påslagna.
-    'chattavatar': () => ({
+    // Varje avatar är en EGEN widget i katalogen (David 2026-11-08: "jag vill varje avatar ska vara för
+    // sig själv") — catalog:vyrapaket:chattavatar är avatar 1, …:chattavatar:2 avatar 2 (helkropp).
+    // Avataren bärs av caModell (chattavatar.js MODELLER) och väljs inte i panelen.
+    'chattavatar': v => ({
       type: 'templateChatAvatar', x: 350, y: 400, width: 72, title: 'Chattavatar',
-      caPublik: 'mod', caHalsa: true, caTacka: true
+      caPublik: 'mod', caHalsa: true, caTacka: true,
+      ...(v && v.modell === 'nr2' ? { title: 'Chattavatar 2 · helkropp', caModell: 'nr2' } : {})
     }),
     // Viewer Showcase (viewer-showcase.js, David 2026-11-07): streamern eller en moderator väljer en tittare
     // som lyfts fram i 8 sekunder. 300 bred, centrerad i den 432 breda duken, i övre tredjedelen.
@@ -807,7 +811,11 @@
     // sorteras sist bland katalognycklarna, så webbläsarvakterna som delar upp dem med index % 6 behåller
     // sina grupper.
     'vyrapaket': parts => {
-      if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'chattavatar') {
+        if (parts[1] === undefined) return ['chattavatar', {}];
+        if (parts[1] === '2') return ['chattavatar', { modell: 'nr2' }];
+        throw new Error('Okänd chattavatar "' + parts[1] + '" — finns: 1 (utan suffix) och 2');
+      }
       if (parts[0] === 'match') {
         if (parts[1] !== '1v1') throw new Error('Okänt matchläge "' + parts[1] + '" — bara 1v1 finns (2 vs 2 och alla mot alla väntar på inspelade matcher)');
         return ['match1v1', {}];
