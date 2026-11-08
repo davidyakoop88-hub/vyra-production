@@ -848,5 +848,41 @@
     "caPublik": "mod",
     "caHalsa": true,
     "caTacka": true
+  },
+  "catalog:vyrapaket:showcase:takeover": {
+    "type": "templateViewerShowcase",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Viewer Showcase · Name Takeover",
+    "vsDesign": "takeover",
+    "vsRubrik": "VÄLKOMMEN",
+    "vsMeddelande": "Kul att du är här!",
+    "vsSek": 8,
+    "createdFrom": "catalog:vyrapaket:showcase:takeover"
+  },
+  "catalog:vyrapaket:showcase:halo": {
+    "type": "templateViewerShowcase",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Viewer Showcase · Halo Reveal",
+    "vsDesign": "halo",
+    "vsRubrik": "VÄLKOMMEN",
+    "vsMeddelande": "Kul att du är här!",
+    "vsSek": 8,
+    "createdFrom": "catalog:vyrapaket:showcase:halo"
+  },
+  "catalog:vyrapaket:showcase:spotlight": {
+    "type": "templateViewerShowcase",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Viewer Showcase · Spotlight Slide",
+    "vsDesign": "spotlight",
+    "vsRubrik": "VÄLKOMMEN",
+    "vsMeddelande": "Kul att du är här!",
+    "vsSek": 8,
+    "createdFrom": "catalog:vyrapaket:showcase:spotlight"
   }
 }

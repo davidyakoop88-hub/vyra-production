@@ -200,6 +200,14 @@ data: ${JSON.stringify(ram)}
     return ram ? `event: spotify\ndata: ${JSON.stringify(ram)}\n\n` : null;
   }
 
+  // VIEWER SHOWCASE (studion -> OBS). Streamern eller en moderator väljer en tittare i studion; servern
+  // vitlistar fälten (showcaseRam) och lägger beskedet här. Samma regler som testspelet: eget
+  // meddelandeslag, ingen `id:`-rad, ingen ingest, inget som räknas eller sparas.
+  if (item.showcase && typeof item.showcase === 'object') {
+    const ram = showcaseRam(item.showcase);
+    return ram ? `event: showcase\ndata: ${JSON.stringify(ram)}\n\n` : null;
+  }
+
   if (item.event && typeof item.event === 'object' && item.streamId) {
     return `id: ${item.streamId}\nevent: live\ndata: ${JSON.stringify(item.event)}\n\n`;
   }
@@ -266,6 +274,31 @@ async function publishSpotify(eventBus, workspaceId, d) {
   return true;
 }
 
+// Viewer Showcase: widgetens id, tittarens namn, profilbild (bara https på TikToks bildvärdar, samma lista
+// som gåvokatalogen), rubrik, budskap och ett spel-id. Allt annat — konto, token, workspace — faller bort.
+const SHOWCASE_BILDVARDAR = /(^|\.)(tiktokcdn\.com|tiktokcdn-us\.com|tiktokcdn-eu\.com|ibyteimg\.com|byteimg\.com|muscdn\.com)$/i;
+const sctext = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, max);
+function showcaseBild(v) {
+  try { const u = new URL(String(v || '')); return u.protocol === 'https:' && SHOWCASE_BILDVARDAR.test(u.hostname) ? u.href.slice(0, 1200) : ''; }
+  catch { return ''; }
+}
+function showcaseRam(d) {
+  if (!d || typeof d !== 'object') return null;
+  const widgetId = typeof d.widgetId === 'string' && TESTSPEL_ID.test(d.widgetId) ? d.widgetId : null;
+  const namn = sctext(d.namn, 40);
+  if (!widgetId || !namn) return null;
+  const spelId = typeof d.spelId === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(d.spelId) ? d.spelId : null;
+  return { widgetId, spelId, namn, avatar: showcaseBild(d.avatar), rubrik: sctext(d.rubrik, 30), meddelande: sctext(d.meddelande, 100) };
+}
+// Pub/sub, aldrig xAdd - samma regel som konfig och testspel.
+async function publishShowcase(eventBus, workspaceId, d) {
+  const ram = showcaseRam(d);
+  if (!ram) return false;
+  const client = await eventBus.connect();
+  await client.publish(eventBus.channel(workspaceId), JSON.stringify({ showcase: ram }));
+  return true;
+}
+
 // Publishes on the workspace channel — the same one raw events use, so one subscription per
 // connection carries both. Refuses an invalid frame instead of putting it on the channel: every
 // subscriber would have to drop it anyway, and it would be indistinguishable from a real one in a
@@ -279,4 +312,4 @@ async function publish(eventBus, workspaceId, update) {
 }
 
 module.exports = { FIELDS, buildFrame, visibleTo, isGoalMessage, frameEnvelope, sseChunk, publish,
-  publishKonfig, publishTestspel, testspelRam, publishSpotify, spotifyRam };
+  publishKonfig, publishTestspel, testspelRam, publishSpotify, spotifyRam, publishShowcase, showcaseRam };

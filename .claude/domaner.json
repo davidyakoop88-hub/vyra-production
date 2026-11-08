@@ -146,6 +146,8 @@
         "chattavatar.js",
         "chattavatar.css",
         "chattavatar-modell.js",
+        "viewer-showcase.js",
+        "viewer-showcase.css",
         "bertil-paket.js",
         "bertil-paket.css",
         "katalog-ordning.js",
@@ -383,7 +385,8 @@
         "tests/browser/slutgranskning-ab2.browser.test.js",
         "tests/bildrad.test.js",
         "tests/browser/bildrad.browser.test.js",
-        "tests/spotify-request-view.test.js"
+        "tests/spotify-request-view.test.js",
+        "tests/viewer-showcase.test.js"
       ],
       "matning": [
         {

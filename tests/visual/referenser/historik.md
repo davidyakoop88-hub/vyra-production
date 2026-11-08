@@ -624,3 +624,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Låtönskningar · Spotify får två designer i mörk VYRA-lila (Spotifykö, Ren musikrad) med Spotifys kö och ett märkt exempel i studion, David 2026-11-07
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 148 (filter: latonskningar:spotify) — catalog:latonskningar:spotify
+
+## 2026-11-08 — 3 referenser skrivna
+
+- **Motiv:** Viewer Showcase: tre nya katalognycklar (takeover, halo, spotlight), David 2026-11-07
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 151 (filter: vyrapaket:showcase) — catalog:vyrapaket:showcase:halo, catalog:vyrapaket:showcase:spotlight, catalog:vyrapaket:showcase:takeover

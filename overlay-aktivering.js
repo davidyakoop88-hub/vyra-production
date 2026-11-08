@@ -47,7 +47,7 @@
 
   // Boxgame-klockan visar streamerns egen rond, ingen handelse - den star i OBS fran forsta bildrutan.
   // Chattavataren star i vila i OBS fran forsta bildrutan och vantar pa chattens kommandon.
-  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock', 'templateSocialAlert', 'templateChatAvatar']);
+  const UNDANTAG = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'templateBoxgameClock', 'templateSocialAlert', 'templateChatAvatar', 'templateViewerShowcase']);
   const NYCKEL = 'vyra-aktiverade-widgetar';
   // Utan sandningsidentitet (lokalt lage, flaggan av) finns ingen live:start som nollstaller.
   // Da galler aktiveringen hogst en arbetsdag.

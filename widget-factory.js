@@ -396,6 +396,12 @@
       type: 'templateChatAvatar', x: 350, y: 400, width: 72, title: 'Chattavatar',
       caPublik: 'mod', caHalsa: true, caTacka: true
     }),
+    // Viewer Showcase (viewer-showcase.js, David 2026-11-07): streamern eller en moderator väljer en tittare
+    // som lyfts fram i 8 sekunder. 300 bred, centrerad i den 432 breda duken, i övre tredjedelen.
+    'viewershowcase': v => ({
+      type: 'templateViewerShowcase', x: 66, y: 110, width: 300, title: 'Viewer Showcase · ' + v.label,
+      vsDesign: v.design, vsRubrik: 'VÄLKOMMEN', vsMeddelande: 'Kul att du är här!', vsSek: 8
+    }),
     // Hjärtan & moln (hjartmoln.js): en transparent 9:16-effekt över hela duken (432 × 768) som
     // spelas vid likes tills streamern väljer annat. Profilhjärtan har porträttlagret påslaget.
     'heartcloud': v => ({
@@ -780,6 +786,11 @@
     // sina grupper.
     'vyrapaket': parts => {
       if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'showcase') {
+        const namn = { takeover: 'Name Takeover', halo: 'Halo Reveal', spotlight: 'Spotlight Slide' };
+        if (!namn[parts[1]]) throw new Error('Okänd design för Viewer Showcase "' + parts[1] + '" — giltiga: takeover, halo, spotlight');
+        return ['viewershowcase', { design: parts[1], label: namn[parts[1]] }];
+      }
       if (parts[0] !== 'bertil') throw new Error('Okänt paket: ' + parts[0]);
       return ['bertilpaket', {}];
     },

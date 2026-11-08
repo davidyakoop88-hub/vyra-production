@@ -379,4 +379,20 @@ for (const m of ['ascend', 'heartreveal', 'heartgift', 'goldenstage', 'heartlift
   REGI['catalog:fanlevel:layout:' + m] = FAN_HJARTA_REGI;
 }
 
+// VIEWER SHOWCASE (viewer-showcase.js). I OBS är widgeten osynlig tills streamern väljer en tittare, och
+// firandet är åtta sekunders rörelse. Regin använder widgetens egen krok: VyraViewerShowcase.stilla() visar
+// exempelprofilen i slutläget utan animation. Bilden är bestämd av kod.
+const SHOWCASE_REGI = {
+  fas: 'stillbild', ms: 0,
+  varfor: 'osynlig i OBS tills en tittare väljs, och firandet rör sig; stillbilden är deterministisk',
+  regi: () => {
+    const V = window.VyraViewerShowcase;
+    if (!V) return { fel: 'viewer-showcase.js laddades inte' };
+    const n = V.stilla();
+    if (!n) return { fel: 'ingen .vyra-showcase renderades' };
+    return { lador: n, stilla: document.querySelectorAll('.vyra-showcase.vs-stilla').length };
+  },
+};
+for (const d of ['takeover', 'halo', 'spotlight']) REGI['catalog:vyrapaket:showcase:' + d] = SHOWCASE_REGI;
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
