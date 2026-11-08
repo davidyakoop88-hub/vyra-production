@@ -400,3 +400,24 @@ test('punkt 3 redovisar vilka battle-familjer som ALDRIG kan finnas i filen', ()
     `LINK_MIC_BATTLE_PUNISH_FINISH ska stå med som omojlig, fick `
     + JSON.stringify(r.punkt3.spelasAldrigIn));
 });
+
+// ---- E · LIVE RANK (David 2026-11-08) ------------------------------------------------------------
+// Kreatörens egen rankplats är inte kopplad. Datatestet under en riktig LIVE ska visa om RANK_TEXT bär
+// placeringen — och analysatorn ska aldrig blanda in battle-ligan eller tittarnas topplista.
+test('Live Rank: RANK_TEXT med placering före och efter syns med tid och tal', () => {
+  const r = analysera(skrivFil([
+    { typ: 'RANK_TEXT', kalla: 'inspelad', vid: vid(1), nyttolast: { rankType: 8, ownerIdxBeforeUpdate: 12, ownerIdxAfterUpdate: 9, curUserId: 'id#ab12' } },
+    { typ: 'RANK_TEXT', kalla: 'inspelad', vid: vid(5), nyttolast: { rankType: 8, ownerIdxBeforeUpdate: 9, ownerIdxAfterUpdate: 7 } },
+    { typ: 'battle', kalla: 'vidarebefordrad', vid: vid(6), nyttolast: { leagueInfoMap: {} } },
+    { typ: 'ROOM_USER', kalla: 'vidarebefordrad', vid: vid(7), nyttolast: { ranks: [{ rank: 1 }] } },
+  ]));
+  assert.match(r.liveRank.svar, /2 rankhändelser · 2 med placering/);
+  assert.deepEqual(r.liveRank.typer, [['RANK_TEXT', 2]]);
+  assert.equal(r.liveRank.handelser[0].ownerIdxAfterUpdate, 9);
+  assert.equal(r.liveRank.handelser[1].tid, vid(5));
+});
+
+test('Live Rank: utan rankhändelser blir svaret "inget underlag", aldrig ett påhittat värde', () => {
+  const r = analysera(skrivFil([{ typ: 'chat', kalla: 'vidarebefordrad', vid: vid(1), nyttolast: {} }]));
+  assert.equal(r.liveRank.svar, 'inget underlag');
+});
