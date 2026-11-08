@@ -401,7 +401,21 @@
     f.__vyraYtter = RANG;
     return f;
   }
-  function install() {
+  // sent: se approved-rankings.js install/ritaSnart — lindningen direkt, omritningen en gång per bildruta.
+  function ritaSnart() {
+    if (!window.VyraRitaSnart) {
+      let vantar = false;
+      window.VyraRitaSnart = function () {
+        if (vantar) return;
+        vantar = true;
+        const kor = () => { if (!vantar) return; vantar = false; try { if (typeof render === 'function') render(); } catch (e) {} };
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(kor);
+        setTimeout(kor, 100);
+      };
+    }
+    window.VyraRitaSnart();
+  }
+  function install(sent) {
     let andrat = false;
     if (typeof wh === 'function' && !(wh.__vyraYtter >= RANG)) {
       const tidigareWh = wh;
@@ -420,14 +434,14 @@
       });
       andrat = true;
     }
-    if (andrat) { try { if (typeof render === 'function') render(); } catch (e) {} }
+    if (andrat) { if (sent) ritaSnart(); else { try { if (typeof render === 'function') render(); } catch (e) {} } }
   }
 
   // Laddas efter approved-rankings.js, så dess capture-lyssnare körs före den här vid varje sent
   // skript: approved lägger sig ytterst först, sedan hamnar den här utanför.
   install();
-  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
-  addEventListener('load', install, { once: true });
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(true); }, true);
+  addEventListener('load', () => install(), { once: true });
 
   // NAMNET FÅR PLATS (2026-10-17). Neon Purple är ett smalt stående kort (210 px, studio.css), så
   // namnskylten rymde bara ~12 tecken: ett vanligt "@StreamQueen2" klipptes till "@StreamQue…" i

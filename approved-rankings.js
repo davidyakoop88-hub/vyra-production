@@ -301,11 +301,33 @@
     return andrat;
   }
 
-  function install() {
+  // sent: anropet kommer från ett senare skripts load. Omlindningen sker direkt (vi måste ligga
+  // ytterst), men omritningen samlas i ritaSnart() — se kommentaren där.
+  function install(sent) {
     installed = true;
     if (!linda()) return;
     try { cleanCatalog(); } catch (e) {}
+    if (sent) { ritaSnart(); return; }
     try { if (typeof render === 'function') render(); } catch (e) {}
+  }
+  // EN OMRITNING PER BILDRUTA VID LADDNINGEN (uppmätt 2026-11-08). Studion laddar ~70 skript
+  // dynamiskt, och efter vart och ett lindade den här filen, ranking-sixpack.js och spellayout.js
+  // om sig ytterst och ritade om HELA studion: ~30 omritningar var, 11 s blockerad huvudtråd lokalt
+  // med 12 widgetar, 22 s tom duk under en sändning. Omritningen gör bara att det yttersta lagret
+  // syns; den kan vänta till nästa bildruta, och de tre filerna delar en enda väntande.
+  // Samma kod i alla tre filerna — den som laddas först definierar den.
+  function ritaSnart() {
+    if (!window.VyraRitaSnart) {
+      let vantar = false;
+      window.VyraRitaSnart = function () {
+        if (vantar) return;
+        vantar = true;
+        const kor = () => { if (!vantar) return; vantar = false; try { if (typeof render === 'function') render(); } catch (e) {} };
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(kor);
+        setTimeout(kor, 100);   // dold flik: rAF står still, timern gör inte det
+      };
+    }
+    window.VyraRitaSnart();
   }
 
   const observer = new MutationObserver(mutations => {
@@ -317,8 +339,8 @@
   install();
   // Ett sent skript som lindat om utanför oss: lägg oss ytterst igen. `load` bubblar inte från
   // <script>, men den går att fånga. `load` på fönstret är sista kontrollen.
-  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
-  addEventListener('load', install, { once: true });
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(true); }, true);
+  addEventListener('load', () => install(), { once: true });
 
   // ▶ TESTA WIDGET FÖR TOP STREAK (panelspecifikationen 2.4, adaptern 'topstreak' i vyra-streak-panel.js).
   // Skriver ETT steg av en streak på EN nod — klonens — med exempeldatan: samma skrivning som livevägen
