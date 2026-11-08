@@ -33,6 +33,7 @@ const CONTRACT = [
   { name: 'Quiz · Frågerad', key: 'catalog:vyrapaket:quiz:fragerad' },
   { name: 'Quiz · Spelkort', key: 'catalog:vyrapaket:quiz:spelkort' },
   { name: 'Quiz · Quiz Show', key: 'catalog:vyrapaket:quiz:quizshow' },
+  { name: 'Match 1 vs 1', key: 'catalog:vyrapaket:match:1v1' },
   // Hjärtan & moln (hjartmoln.js): en nyckel per gallerivariant, samma fabriksbyggare.
   { name: 'Hjärtan & moln · Profilhjärtan', key: 'catalog:heartcloud:profilhjartan' },
   { name: 'Hjärtan & moln · Glödande hjärtmoln', key: 'catalog:heartcloud:glodande' },

@@ -150,6 +150,8 @@
         "energimatare.js",
         "ordjakten.js",
         "quiz.js",
+        "match-1v1.js",
+        "match-1v1.css",
         "quiz.css",
         "ordjakten.css",
         "energimatare.css",
@@ -395,7 +397,8 @@
         "tests/viewer-showcase.test.js",
         "tests/energimatare.test.js",
         "tests/ordjakten.test.js",
-        "tests/quiz.test.js"
+        "tests/quiz.test.js",
+        "tests/match-1v1.test.js"
       ],
       "matning": [
         {

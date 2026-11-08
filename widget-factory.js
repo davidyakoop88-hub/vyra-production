@@ -402,6 +402,11 @@
     // liggande, centrerad i den 432 breda duken, högt upp där TikToks egna knappar inte ligger.
     // Ordjakten (ordjakten.js, David 2026-11-07): chatten gissar det blandade ordet. 300 bred, centrerad.
     // Quiz (quiz.js, David 2026-11-07): chatten svarar A, B eller C. Gratis anmälan, inga priser.
+    // Match 1 vs 1 (match-1v1.js, David 2026-11-07): TikToks egen match, poängcirklar. 320 bred, centrerad.
+    'match1v1': () => ({
+      type: 'templateMatchDuel', x: 56, y: 100, width: 320, title: 'Match 1 vs 1',
+      mdVi: 'Du', mdDe: 'Motståndare', mdSlutSek: 10
+    }),
     'quiz': v => ({
       type: 'templateQuiz', x: 66, y: 110, width: 300, title: 'Quiz · ' + v.label,
       qzDesign: v.design, qzRubrik: 'QUIZ', qzPaket: 'allman', qzEgna: '', qzTid: 20, qzPaus: 6, qzPoang: 100
@@ -803,6 +808,10 @@
     // sina grupper.
     'vyrapaket': parts => {
       if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'match') {
+        if (parts[1] !== '1v1') throw new Error('Okänt matchläge "' + parts[1] + '" — bara 1v1 finns (2 vs 2 och alla mot alla väntar på inspelade matcher)');
+        return ['match1v1', {}];
+      }
       if (parts[0] === 'quiz') {
         const namn = { fragerad: 'Frågerad', spelkort: 'Spelkort', quizshow: 'Quiz Show' };
         if (!namn[parts[1]]) throw new Error('Okänd design för Quiz "' + parts[1] + '" — giltiga: fragerad, spelkort, quizshow');

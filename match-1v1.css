@@ -1,0 +1,23 @@
+/* MATCH 1 VS 1 (match-1v1.js, David 2026-11-07). Den godkända versionen: två poängcirklar utan kortram, VS i
+   mitten, tunn stapel i lila och turkos, guld på den som leder. Läsbara tabellsiffror. */
+.vyra-match{position:absolute;width:320px;color:#f7f3ff;font-family:Inter,Arial,sans-serif}
+.widget.vyra-match{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.overlay-output .vyra-match.md-dold{visibility:hidden}
+.vyra-match .md-kort{padding:8px 3px}
+.vyra-match .md-duell{display:grid;grid-template-columns:1fr 34px 1fr;gap:9px;align-items:center}
+.vyra-match .md-sida{display:flex;flex-direction:column;align-items:center;padding:12px 6px 10px;border-radius:50%;aspect-ratio:1/1;justify-content:center;background:radial-gradient(circle at 50% 35%,#2b2140,#151720 70%);border:2px solid #c79bfa;box-shadow:0 6px 18px #0007}
+.vyra-match .md-sida:last-child{border-color:#8edcef}
+.vyra-match .md-person{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.vyra-match .md-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#674483,#a26e9f);border:1px solid #c5a2e2}
+.vyra-match .md-sida:last-child .md-avatar{background:linear-gradient(135deg,#2f6577,#4f9cb0);border-color:#8edcef}
+.vyra-match .md-namn{font-size:11px;color:#e8dcf5;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vyra-match .md-poang{font-size:26px;font-weight:900;line-height:1.1;margin-top:5px;font-variant-numeric:tabular-nums;text-shadow:0 0 12px #ffffff19;color:#fff}
+.vyra-match .md-svit{font-size:9px;color:#cbbed7;margin-top:2px}
+.vyra-match .md-leder{border-color:#efd18c!important;box-shadow:0 0 14px #efd18c33,0 6px 18px #0007}
+.vyra-match .md-leder .md-poang{color:#ffe7af}
+.vyra-match .md-vs{display:flex;flex-direction:column;align-items:center;font-size:12px;font-weight:800;color:#d6c8e4;text-shadow:0 1px 4px #000}
+.vyra-match .md-vs small{font-size:10px;font-weight:600;color:#ffe7af;margin-top:3px;font-variant-numeric:tabular-nums}
+.vyra-match .md-stapel{display:flex;height:4px;overflow:hidden;border-radius:4px;margin-top:10px;background:#8edcef}
+.vyra-match .md-fyll{background:#cf9bff;transition:width .4s ease}
+.vyra-match .md-text{font-size:11px;text-align:center;color:#e9def5;margin-top:7px;text-shadow:0 1px 4px #000;font-weight:700}
+.vyra-match.md-slut .md-text{color:#ffe7af}

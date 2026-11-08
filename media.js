@@ -1962,6 +1962,11 @@ Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-quiz]')){let css=document.createElement('link');css.rel='stylesheet';css.href='quiz.css?v=20261108-1';css.dataset.quiz='1';document.head.append(css)}
   const s=document.createElement('script');s.src='quiz.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda quiz.js');document.body.append(s);
 });
+// Match 1 vs 1 - TikToks egen match med poängcirklar, syns i OBS bara under en match (match-1v1.js).
+Promise.resolve().then(()=>{
+  if(!document.querySelector('link[data-match1v1]')){let css=document.createElement('link');css.rel='stylesheet';css.href='match-1v1.css?v=20261108-1';css.dataset.match1v1='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='match-1v1.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda match-1v1.js');document.body.append(s);
+});
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
 Promise.resolve().then(()=>{
@@ -1998,7 +2003,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
 // Aktiveringsregeln (overlay-aktivering.js: dold i sandningen tills forsta riktiga handelsen) laddas
 // FORE vakten, sa att vaktens forsta svep redan vet vilka widgetar som vantar.
-Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261108-61';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
+Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261108-71';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
 // ▶ Testa widget aven i OBS, bara nar ingen sandning pagar (overlay-testspel.js). Eget meddelandeslag, aldrig en livehandelse.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-testspel.js?v=20261021-5';document.body.append(js)});
 
