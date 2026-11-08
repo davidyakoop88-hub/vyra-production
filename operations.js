@@ -20,7 +20,26 @@ async function laddaVerifieringar(){const box=document.querySelector('#verifieri
       return `<div class="verifieringsrad"><span><b>@${esc(String(rad.tiktok_username||'').replace(/^@/,''))}</b>${rad.visningsnamn?` <small>${esc(rad.visningsnamn)}</small>`:''}</span><small>${nar&&Number.isFinite(nar.getTime())?esc(nar.toLocaleString('sv-SE')):'—'}</small><small class="${rad.active?'':'av'}">${rad.active?'aktiv':'vilande'}</small></div>`}).join('')
       +`<p><small>${rader.length} visade av ${out.antal} verifierade · ${unika} unika handtag</small></p>`}
   catch(error){box.innerHTML=`<p>${esc(error.message)}</p>`}}
-root.addEventListener('vyra-auth-ready',load);root.addEventListener('vyra-auth-ready',laddaVerifieringar)
+// ANVÄNDARE. Bara antal (GET /api/admin/anvandare, server/anvandarsiffror.js) — inga namn eller
+// e-postadresser når sidan. Betan (provider comp, 30 dagars gratis Premium) skrivs ut för sig, så
+// att "Premium" inte läses som betalande kunder.
+async function laddaAnvandare(){const box=document.querySelector('#anvandare');if(!box)return;
+  box.setAttribute('aria-busy','true');
+  try{const s=await root.VyraAuth.api('/api/admin/anvandare');
+    const ruta=(tal,rubrik,under)=>`<div class="siffra"><b>${Number(tal)||0}</b><span>${esc(rubrik)}</span>${under?`<small>${esc(under)}</small>`:''}</div>`;
+    const k=s.konton||{},i=s.inloggade||{},p=s.premium||{},t=s.tiktok||{};
+    const nar=s.uppdaterad?new Date(s.uppdaterad):null;
+    box.innerHTML='<div class="siffror">'
+      +ruta(k.totalt,'Konton',`${k.aktiva||0} aktiva · ${k.verifieradEpost||0} verifierad e-post`)
+      +ruta(k.nya7d,'Nya senaste 7 dagarna',`${k.nya30d||0} senaste 30 dagarna`)
+      +ruta(i.dygn,'Inloggade senaste dygnet',`${i.d7||0} senaste 7 d · ${i.d30||0} senaste 30 d`)
+      +ruta(p.totalt,'Premium nu',`${p.betalande||0} betalande · ${p.beta||0} i betan`)
+      +ruta(t.kopplade,'TikTok kopplat',`${t.aktiva||0} aktiva · ${t.verifierade||0} verifierade via TikTok`)
+      +`</div><div class="anvandare-fot"><span>Uppdaterad ${nar&&Number.isFinite(nar.getTime())?esc(nar.toLocaleString('sv-SE')):'—'}</span><button type="button" id="anvandareUppdatera">Uppdatera</button></div>`;
+    box.querySelector('#anvandareUppdatera').onclick=laddaAnvandare}
+  catch(error){box.innerHTML=`<p>${esc(error.message)}</p>`}
+  finally{box.removeAttribute('aria-busy')}}
+root.addEventListener('vyra-auth-ready',load);root.addEventListener('vyra-auth-ready',laddaVerifieringar);root.addEventListener('vyra-auth-ready',laddaAnvandare)
 // FILEN ANROPADES UTAN ARGUMENT. `root` var undefined, sa sista raden kastade TypeError och
 // supportkon laddades aldrig — den stod kvar pa "Laddar…" for alltid. Incidentformularet
 // overlevde, eftersom det kopplas raden innan kraschen, vilket ar precis darfor felet kunde ligga
