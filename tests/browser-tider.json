@@ -23,6 +23,7 @@
     "diamanter-vid-gransen.browser.test.js": 1,
     "dra-textdelar.browser.test.js": 39,
     "editor-ui-placering.browser.test.js": 18,
+    "laddning-alla-widgetar.browser.test.js": 25,
     "verifieringsbanner-plats.browser.test.js": 18,
     "widget-las.browser.test.js": 16,
     "widget-ordning.browser.test.js": 10,
