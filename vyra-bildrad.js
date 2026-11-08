@@ -256,10 +256,28 @@
   // (lyssnaren nedan registreras efter deras och körs därför sist). Efter ~5 s installeras den ändå.
   const RANG = 4;
   let djup = 0, forsok = 0;
-  function install() {
+  // sent: se approved-rankings.js install/ritaSnart — lindningen direkt, omritningen en gång per bildruta.
+  function ritaSnart() {
+    if (!window.VyraRitaSnart) {
+      let vantar = false;
+      // Ritar något annat om studion innan vi hunnit (vybyte, ett prov, en annan modul) behövs
+      // vår omritning inte längre: den använder redan de yttersta lagren. Den stryks, så att ingen
+      // sen omritning river en vy som just byggts (CI 2026-11-08: command-center-alltime).
+      if (typeof render === 'function') { const r0 = render; render = function () { vantar = false; return r0.apply(this, arguments); }; }
+      window.VyraRitaSnart = function () {
+        if (vantar) return;
+        vantar = true;
+        const kor = () => { if (!vantar) return; vantar = false; try { if (typeof render === 'function') render(); } catch (e) {} };
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(kor);
+        setTimeout(kor, 100);
+      };
+    }
+    window.VyraRitaSnart();
+  }
+  function install(sent) {
     if (document.readyState === 'loading') return;
     if (typeof wh !== 'function' || wh.__vyraYtter >= RANG) return;
-    if (!(wh.__vyraYtter >= 3) && forsok++ < 25) { setTimeout(install, 200); return; }
+    if (!(wh.__vyraYtter >= 3) && forsok++ < 25) { setTimeout(() => install(sent), 200); return; }
     const tidigare = wh;
     const f = function (w) {
       if (djup) return tidigare.apply(this, arguments);
@@ -268,12 +286,13 @@
     };
     f.__vyraYtter = RANG;
     wh = f;
+    if (sent) { ritaSnart(); return; }
     try { if (typeof render === 'function') render(); } catch (_) {}
   }
   install();
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install, { once: true });
-  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
-  addEventListener('load', install, { once: true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => install(), { once: true });
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(true); }, true);
+  addEventListener('load', () => install(), { once: true });
 
   window.VyraBildrad = Object.freeze({ FALT, BILD, RAD, RIKTNINGAR, PODIUM_MAX, kontroller, utoka, gruppFor, rkKompakt, bildFaktor, radTillagg, riktning, markera, rkGrupp, mvpGrupp });
 })();
