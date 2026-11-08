@@ -958,5 +958,50 @@
     "ojPaus": 8,
     "ojTopp": 3,
     "createdFrom": "catalog:vyrapaket:ordjakten"
+  },
+  "catalog:vyrapaket:quiz:fragerad": {
+    "type": "templateQuiz",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Quiz · Frågerad",
+    "qzDesign": "fragerad",
+    "qzRubrik": "QUIZ",
+    "qzPaket": "allman",
+    "qzEgna": "",
+    "qzTid": 20,
+    "qzPaus": 6,
+    "qzPoang": 100,
+    "createdFrom": "catalog:vyrapaket:quiz:fragerad"
+  },
+  "catalog:vyrapaket:quiz:spelkort": {
+    "type": "templateQuiz",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Quiz · Spelkort",
+    "qzDesign": "spelkort",
+    "qzRubrik": "QUIZ",
+    "qzPaket": "allman",
+    "qzEgna": "",
+    "qzTid": 20,
+    "qzPaus": 6,
+    "qzPoang": 100,
+    "createdFrom": "catalog:vyrapaket:quiz:spelkort"
+  },
+  "catalog:vyrapaket:quiz:quizshow": {
+    "type": "templateQuiz",
+    "x": 66,
+    "y": 110,
+    "width": 300,
+    "title": "Quiz · Quiz Show",
+    "qzDesign": "quizshow",
+    "qzRubrik": "QUIZ",
+    "qzPaket": "allman",
+    "qzEgna": "",
+    "qzTid": 20,
+    "qzPaus": 6,
+    "qzPoang": 100,
+    "createdFrom": "catalog:vyrapaket:quiz:quizshow"
   }
 }

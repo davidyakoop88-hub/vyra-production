@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `1f28333d`
+Commit: `cc39f91c`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **165** |
-| Sektioner | 31 |
-| Med katalognyckel | 165 / 165 |
-| Med shadow DOM-miniatyr | 133 / 165  ⚠️ |
-| Ritar sin design | 165 / 165 |
+| Kort totalt | **168** |
+| Sektioner | 32 |
+| Med katalognyckel | 168 / 168 |
+| Med shadow DOM-miniatyr | 136 / 168  ⚠️ |
+| Ritar sin design | 168 / 168 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -68,6 +68,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
+| QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -372,6 +373,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Ordjakten | `catalog:vyrapaket:ordjakten` | ✓ | ✓ | 2026-11-08 | — |
+
+### QUIZ
+
+| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
+|---|---|---|---|---|---|
+| Quiz · Frågerad | `catalog:vyrapaket:quiz:fragerad` | ✓ | ✓ | 2026-11-08 | — |
+| Quiz · Spelkort | `catalog:vyrapaket:quiz:spelkort` | ✓ | ✓ | 2026-11-08 | — |
+| Quiz · Quiz Show | `catalog:vyrapaket:quiz:quizshow` | ✓ | ✓ | 2026-11-08 | — |
 
 ### SOCIAL-ALERT
 

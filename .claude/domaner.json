@@ -149,6 +149,8 @@
         "viewer-showcase.js",
         "energimatare.js",
         "ordjakten.js",
+        "quiz.js",
+        "quiz.css",
         "ordjakten.css",
         "energimatare.css",
         "viewer-showcase.css",
@@ -392,7 +394,8 @@
         "tests/spotify-request-view.test.js",
         "tests/viewer-showcase.test.js",
         "tests/energimatare.test.js",
-        "tests/ordjakten.test.js"
+        "tests/ordjakten.test.js",
+        "tests/quiz.test.js"
       ],
       "matning": [
         {

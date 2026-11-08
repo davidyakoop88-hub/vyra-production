@@ -401,6 +401,11 @@
     // Energimätaren (energimatare.js, David 2026-11-07): fylls av tittarna, töms över tid. 270 bred
     // liggande, centrerad i den 432 breda duken, högt upp där TikToks egna knappar inte ligger.
     // Ordjakten (ordjakten.js, David 2026-11-07): chatten gissar det blandade ordet. 300 bred, centrerad.
+    // Quiz (quiz.js, David 2026-11-07): chatten svarar A, B eller C. Gratis anmälan, inga priser.
+    'quiz': v => ({
+      type: 'templateQuiz', x: 66, y: 110, width: 300, title: 'Quiz · ' + v.label,
+      qzDesign: v.design, qzRubrik: 'QUIZ', qzPaket: 'allman', qzEgna: '', qzTid: 20, qzPaus: 6, qzPoang: 100
+    }),
     'ordjakten': () => ({
       type: 'templateWordHunt', x: 66, y: 120, width: 300, title: 'Ordjakten',
       ojRubrik: 'ORDJAKTEN', ojOrd: '', ojBaraEgna: false, ojPoang: 100, ojPaus: 8, ojTopp: 3
@@ -798,6 +803,11 @@
     // sina grupper.
     'vyrapaket': parts => {
       if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'quiz') {
+        const namn = { fragerad: 'Frågerad', spelkort: 'Spelkort', quizshow: 'Quiz Show' };
+        if (!namn[parts[1]]) throw new Error('Okänd design för Quiz "' + parts[1] + '" — giltiga: fragerad, spelkort, quizshow');
+        return ['quiz', { design: parts[1], label: namn[parts[1]] }];
+      }
       if (parts[0] === 'ordjakten') return ['ordjakten', {}];
       if (parts[0] === 'energi') {
         const namn = { vital: 'Vital', arcade: 'Arcade', minimal: 'Minimal' };
