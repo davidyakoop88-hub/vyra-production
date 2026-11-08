@@ -1,0 +1,74 @@
+/* QUIZ (quiz.js, David 2026-11-07). Prototypens tre designer: Frågerad (turkos kant), Spelkort (ljust, som en
+   biljett) och Quiz Show (blå tv-studio med runda svar). Rätt svar blir grönt vid rättningen, fel svar tonas. */
+.vyra-quiz{position:absolute;width:300px;font-family:Inter,Arial,sans-serif;color:#fff}
+.widget.vyra-quiz{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.overlay-output .vyra-quiz.qz-dold{visibility:hidden}
+.vyra-quiz .qz-kort{border:1px solid #655078;border-radius:14px;padding:14px;background:linear-gradient(135deg,#282037,#151a28);box-sizing:border-box}
+.vyra-quiz .qz-topprad{display:flex;justify-content:space-between;gap:8px;font-size:9px;letter-spacing:.6px;color:#d0b4ee}
+.vyra-quiz .qz-topprad span{font-size:9px;color:inherit}
+.vyra-quiz .qz-klocka{font-variant-numeric:tabular-nums;font-weight:700}
+.vyra-quiz .qz-fraga{font-size:16px;line-height:1.35;font-weight:700;margin:12px 0;overflow-wrap:anywhere}
+.vyra-quiz .qz-alt{display:grid;gap:7px}
+.vyra-quiz .qz-rad{display:flex;gap:12px;align-items:center;background:#ffffff09;border:1px solid #ffffff13;border-radius:7px;padding:8px;font-size:12px}
+.vyra-quiz .qz-rad span{font-size:12px;color:inherit;overflow-wrap:anywhere}
+.vyra-quiz .qz-rad b{color:#c8aff0}
+.vyra-quiz .qz-rad.qz-ratt{background:#194b3a;border-color:#62d3a2}
+.vyra-quiz .qz-rad.qz-fel{opacity:.4}
+.vyra-quiz .qz-tips{font-size:10px;color:#c6b7d6;margin-top:12px}
+.vyra-quiz .qz-ledare{font-size:12px;color:#e8d3a7;margin-top:10px}
+.vyra-quiz .qz-topp{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.vyra-quiz .qz-topp li{display:flex;justify-content:space-between;font-size:14px}
+.vyra-quiz .qz-topp li span{font-size:14px;color:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vyra-quiz .qz-topp li b{color:#ffc86f;font-variant-numeric:tabular-nums}
+/* Frågerad */
+.vyra-quiz.qz-fragerad .qz-kort{border:0;border-left:3px solid #65d9de;border-radius:0;background:#15262d}
+.vyra-quiz.qz-fragerad .qz-alt{gap:0}
+.vyra-quiz.qz-fragerad .qz-rad{border:0;border-bottom:1px solid #ffffff15;border-radius:0;background:none;padding:9px 0}
+.vyra-quiz.qz-fragerad .qz-rad b{color:#6de2e5}
+.vyra-quiz.qz-fragerad .qz-topprad{color:#81d6da}
+.vyra-quiz.qz-fragerad .qz-rad.qz-ratt{background:#225346}
+/* Spelkort */
+.vyra-quiz.qz-spelkort .qz-kort{background:#f2e7cb;color:#25212b;border:0;border-radius:15px 15px 4px 4px;box-shadow:0 4px 0 #b19a6b}
+.vyra-quiz.qz-spelkort .qz-topprad{color:#6d5844;border-bottom:1px dashed #a58e6b;padding-bottom:10px}
+.vyra-quiz.qz-spelkort .qz-fraga{font-size:17px;color:#25212b}
+.vyra-quiz.qz-spelkort .qz-rad{background:#fff8e9;border-color:#d1be96;color:#26212a}
+.vyra-quiz.qz-spelkort .qz-rad b{background:#49364f;color:#fff;padding:3px 5px;border-radius:4px}
+.vyra-quiz.qz-spelkort .qz-tips{color:#695b4c}
+.vyra-quiz.qz-spelkort .qz-ledare,.vyra-quiz.qz-spelkort .qz-topp li b{color:#5a3e20}
+.vyra-quiz.qz-spelkort .qz-rad.qz-ratt{background:#c3e6cc;border-color:#44865b}
+/* Quiz Show */
+.vyra-quiz.qz-quizshow .qz-kort{background:radial-gradient(ellipse at top,#263d73,#111c35);border:1px solid #537fc5;border-radius:20px 5px 20px 5px}
+.vyra-quiz.qz-quizshow .qz-fraga{text-align:center;color:#fff0c3}
+.vyra-quiz.qz-quizshow .qz-alt{gap:9px}
+.vyra-quiz.qz-quizshow .qz-rad{border:1px solid #6078a3;border-radius:30px;background:#12223e}
+.vyra-quiz.qz-quizshow .qz-rad b{color:#ffc86f}
+.vyra-quiz.qz-quizshow .qz-topprad{color:#9cc2ff}
+.vyra-quiz.qz-quizshow .qz-rad.qz-ratt{background:#1d6249;border-color:#88e5a7}
+/* FASTA RADHÖJDER (storlek-matning och design-vid-storlek): med `zoom` avrundas line-height:normal olika vid
+   varje storlek — Quiz Show blev 0,223 hög vid 20 % och Spelkort 1,473 vid 150 %. Med radhöjd i px skalar
+   lådan exakt. */
+.vyra-quiz .qz-topprad,.vyra-quiz .qz-topprad span{line-height:12px}
+.vyra-quiz .qz-fraga{line-height:22px}
+.vyra-quiz.qz-spelkort .qz-fraga{line-height:23px}
+.vyra-quiz .qz-rad,.vyra-quiz .qz-rad span,.vyra-quiz .qz-rad b{line-height:16px}
+.vyra-quiz .qz-tips{line-height:14px}
+.vyra-quiz .qz-ledare{line-height:16px}
+.vyra-quiz .qz-topp li,.vyra-quiz .qz-topp li span,.vyra-quiz .qz-topp li b{line-height:19px}
+/* Vid små storlekar (20 %) avrundar typsnittets hintning tecknens bredd till hela pixlar, så frågan bröts en rad
+   tidigare än i full storlek och lådan blev högre än bredden skalade. Geometrisk precision följer zoomen exakt. */
+.vyra-quiz{text-rendering:geometricPrecision}
+/* KANTER SOM INRE SKUGGOR (design-vid-storlek): med `zoom` blir en kant aldrig tunnare än 1 px, så sex svarsrader
+   med kant gjorde lådan ×0,225 hög vid 20 % när bredden var ×0,200. En inre skugga ser likadan ut men tar ingen
+   plats, och lådan skalar exakt. */
+.vyra-quiz .qz-kort{border:0!important;box-shadow:inset 0 0 0 1px #655078}
+.vyra-quiz .qz-rad{border:0!important;box-shadow:inset 0 0 0 1px #ffffff13}
+.vyra-quiz .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #62d3a2}
+.vyra-quiz.qz-fragerad .qz-kort{box-shadow:inset 3px 0 0 #65d9de}
+.vyra-quiz.qz-fragerad .qz-rad,.vyra-quiz.qz-fragerad .qz-rad.qz-ratt{box-shadow:inset 0 -1px 0 #ffffff15}
+.vyra-quiz.qz-spelkort .qz-kort{box-shadow:0 4px 0 #b19a6b}
+.vyra-quiz.qz-spelkort .qz-topprad{border-bottom:0;box-shadow:inset 0 -1px 0 #a58e6b}
+.vyra-quiz.qz-spelkort .qz-rad{box-shadow:inset 0 0 0 1px #d1be96}
+.vyra-quiz.qz-spelkort .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #44865b}
+.vyra-quiz.qz-quizshow .qz-kort{box-shadow:inset 0 0 0 1px #537fc5}
+.vyra-quiz.qz-quizshow .qz-rad{box-shadow:inset 0 0 0 1px #6078a3}
+.vyra-quiz.qz-quizshow .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #88e5a7}

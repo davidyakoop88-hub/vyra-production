@@ -138,7 +138,7 @@ test('i OBS syns widgeten bara under ett firande; kompositionen har ingen kortra
 test('overlayn tar emot beskedet och grinden väntar inte på en händelse', () => {
   const access = fs.readFileSync(path.join(ROOT, 'overlay-access.js'), 'utf8');
   assert.match(access, /source\.addEventListener\('showcase',message=>\{try\{root\.dispatchEvent\(new CustomEvent\('vyra-showcase-overlay'/);
-  assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /'templateViewerShowcase'\]\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /const UNDANTAG = new Set\(\[[^\]]*'templateViewerShowcase'/);
   assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /viewer-showcase\.js\?v=\d{8}-\d+/);
 });
 

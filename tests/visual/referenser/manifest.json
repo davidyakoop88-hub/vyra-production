@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 231,
+ "antal": 239,
  "senaste": {
-  "motiv": "Viewer Showcase: tre nya katalognycklar (takeover, halo, spotlight), David 2026-11-07",
-  "nycklar": 3,
-  "filter": "vyrapaket:showcase",
-  "tid": "2026-11-08T00:02:56.477Z"
+  "motiv": "Quiz och Energimätaren: fasta radhöjder och kanter som inre skuggor (likformig storlek), David 2026-11-08",
+  "nycklar": 6,
+  "filter": "vyrapaket:quiz,vyrapaket:energi",
+  "tid": "2026-11-08T02:11:49.042Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -936,6 +936,38 @@
   },
   "catalog:vyrapaket:showcase:takeover": {
    "matt": "300x206",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:arcade": {
+   "matt": "270x104",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:minimal": {
+   "matt": "270x71",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:vital": {
+   "matt": "270x97",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:match:1v1": {
+   "matt": "320x182",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:ordjakten": {
+   "matt": "300x203",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:fragerad": {
+   "matt": "300x236",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:quizshow": {
+   "matt": "300x248",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:spelkort": {
+   "matt": "300x274",
    "fyllnad": 100
   }
  }

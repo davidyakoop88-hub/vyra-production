@@ -221,6 +221,14 @@
       // VIEWER SHOWCASE (viewer-showcase.js) har tre fasta kompositioner där namnets storlek följer dess längd;
       // ett delat typsnitt eller en textstorlek hade brutit layouten. Rubrik och budskap har egna fält.
       if (w.type === 'templateViewerShowcase') return ut;
+      // ENERGIMÄTAREN (energimatare.js): tre fasta modeller med läsbara tabellsiffror; namnet har eget fält.
+      if (w.type === 'templateEnergyBar') return ut;
+      // ORDJAKTEN (ordjakten.js): bokstavsbrickor med fast storlek; rubriken har eget fält.
+      if (w.type === 'templateWordHunt') return ut;
+      // QUIZ (quiz.js): tre fasta designer; rubriken har eget fält.
+      if (w.type === 'templateQuiz') return ut;
+      // MATCH 1 VS 1 (match-1v1.js): poängcirklar med fast typografi; sidornas namn har egna fält.
+      if (w.type === 'templateMatchDuel') return ut;
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.

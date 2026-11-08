@@ -1,0 +1,50 @@
+/* ENERGIMÄTAREN / HEALTH BAR (energimatare.js, David 2026-11-07). Tre modeller ur den sparade prototypen —
+   Vital, Arcade och Minimal — liggande eller stående. Stående fylls uppåt. Färgen är --energi. Nivån 0
+   gör mätaren röd. Läsbara siffror med tabellsiffror. */
+.vyra-energi{position:absolute;color:#fff;font-family:Inter,Arial,sans-serif;--energi:#74ddb5}
+.widget.vyra-energi{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.vyra-energi .em-kort{position:relative;width:270px;padding:13px;border:1px solid #4a465a;border-radius:10px;background:#1c1a26;box-sizing:border-box}
+.vyra-energi .em-huvud{display:flex;align-items:center;justify-content:space-between;gap:8px}
+/* Studions allmänna `.widget span` (grå, 8px) får inte vinna över mätarens text. */
+.vyra-energi .em-namn,.vyra-energi .em-varde{color:#fff}
+.vyra-energi .em-namn{font-size:12px;font-weight:700;letter-spacing:.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vyra-energi .em-varde{font-size:22px;font-weight:900;font-variant-numeric:tabular-nums}
+.vyra-energi .em-spar{height:10px;background:#ffffff10;margin-top:9px;border-radius:8px;overflow:hidden;position:relative}
+.vyra-energi .em-fyll{position:absolute;left:0;top:0;bottom:0;width:var(--niva,50%);background:var(--energi);transition:width .35s ease,height .35s ease}
+.vyra-energi .em-tips{font-size:10px;color:#c7b9d2;margin-top:8px}
+/* Arcade: kantig, segmenterad, accenten i kanten. */
+.vyra-energi.em-arcade .em-kort{background:#141b27;border:2px solid var(--energi);border-radius:0;box-shadow:3px 3px #29465c}
+.vyra-energi.em-arcade .em-namn{letter-spacing:1px;color:var(--energi)}
+.vyra-energi.em-arcade .em-spar{border-radius:0;height:15px;background:repeating-linear-gradient(90deg,#ffffff08 0 18px,transparent 18px 21px)}
+.vyra-energi.em-arcade .em-fyll{background:repeating-linear-gradient(90deg,var(--energi) 0 18px,transparent 18px 21px)}
+/* Minimal: bara text och en tunn linje. */
+.vyra-energi.em-minimal .em-kort{background:none;border:0;padding:4px 0}
+.vyra-energi.em-minimal .em-namn{color:var(--energi)}
+.vyra-energi.em-minimal .em-varde{color:#f2e8ff;text-shadow:0 1px 6px #0009}
+.vyra-energi.em-minimal .em-spar{height:4px}
+/* Stående: smal pelare som fylls uppåt. */
+.vyra-energi.em-staende .em-kort{width:108px;height:235px;display:flex;flex-direction:column;align-items:center;padding:13px 9px}
+.vyra-energi.em-staende .em-huvud{flex-direction:column;gap:7px;width:100%}
+.vyra-energi.em-staende .em-namn{font-size:10px;text-align:center;line-height:1.3;white-space:normal;overflow-wrap:anywhere;max-height:2.6em}
+.vyra-energi.em-staende .em-varde{font-size:25px}
+.vyra-energi.em-staende .em-spar{height:112px;width:24px;flex-shrink:0;margin-top:11px;background:#ffffff12}
+.vyra-energi.em-staende .em-fyll{top:auto;right:0;width:100%;height:var(--niva,50%)}
+.vyra-energi.em-staende.em-arcade .em-spar{width:27px;background:repeating-linear-gradient(0deg,#ffffff08 0 10px,transparent 10px 13px)}
+.vyra-energi.em-staende.em-arcade .em-fyll{background:repeating-linear-gradient(0deg,var(--energi) 0 10px,transparent 10px 13px)}
+.vyra-energi.em-staende.em-minimal .em-spar{width:6px}
+.vyra-energi.em-staende .em-tips{font-size:9px;text-align:center;line-height:1.3;margin-top:9px}
+/* Tom: röd. */
+.vyra-energi.em-tom .em-fyll{background:#e88181}
+.vyra-energi.em-tom .em-varde{color:#ffb2a6}
+/* Panelen: färgknapparna. */
+.em-farger{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.em-farger button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.em-farger button[aria-pressed="true"]{border-color:#fff}
+/* FASTA RADHÖJDER (storlek-matning.browser.test.js): med `zoom` avrundas line-height:normal olika vid varje
+   storlek, och höjden skalade 1,53 när bredden skalade 1,5. Med radhöjd i px skalar lådan exakt. */
+.vyra-energi .em-namn{line-height:16px}
+.vyra-energi .em-varde{line-height:28px}
+.vyra-energi .em-tips{line-height:14px}
+.vyra-energi.em-staende .em-namn{line-height:13px}
+.vyra-energi.em-staende .em-varde{line-height:30px}
+.vyra-energi.em-staende .em-tips{line-height:12px}

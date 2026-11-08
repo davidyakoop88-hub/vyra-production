@@ -395,4 +395,63 @@ const SHOWCASE_REGI = {
 };
 for (const d of ['takeover', 'halo', 'spotlight']) REGI['catalog:vyrapaket:showcase:' + d] = SHOWCASE_REGI;
 
+// ENERGIMÄTAREN (energimatare.js). Nivån töms varje sekund, så siffran och stapeln kan skilja en procent
+// mellan två fotograferingar. Regin använder widgetens egen krok: VyraEnergimatare.stilla() låser varje
+// mätare på startnivån utan tömning. Bilden är bestämd av kod.
+const ENERGI_REGI = {
+  fas: 'startniva', ms: 0,
+  varfor: 'nivån töms över tid; startnivån utan tömning är deterministisk',
+  regi: () => {
+    const E = window.VyraEnergimatare;
+    if (!E) return { fel: 'energimatare.js laddades inte' };
+    const n = E.stilla();
+    if (!n) return { fel: 'ingen .vyra-energi renderades' };
+    return { matare: n, varde: document.querySelector('.vyra-energi .em-varde')?.textContent };
+  },
+};
+for (const m of ['vital', 'arcade', 'minimal']) REGI['catalog:vyrapaket:energi:' + m] = ENERGI_REGI;
+
+// ORDJAKTEN (ordjakten.js). Ett sparat läge (runda, vinnare, topplista) och en paus-klocka ändrar bilden.
+// Regin använder widgetens egen krok: VyraOrdjakten.stilla() visar runda 1, olöst, utan topplista.
+// QUIZ (quiz.js). I OBS är den osynlig i vila, och en omgång går på en klocka. Regin använder widgetens egen
+// krok: VyraQuiz.stilla() visar första frågan öppen med full tid kvar och inga svar.
+const QUIZ_REGI = {
+  fas: 'fraga-1', ms: 0,
+  varfor: 'osynlig i vila och klockstyrd; första frågan öppen är deterministisk',
+  regi: () => {
+    const Q = window.VyraQuiz;
+    if (!Q) return { fel: 'quiz.js laddades inte' };
+    const n = Q.stilla();
+    if (!n) return { fel: 'ingen .vyra-quiz renderades' };
+    return { kort: n, rader: document.querySelectorAll('.vyra-quiz .qz-rad').length };
+  },
+};
+for (const d of ['fragerad', 'spelkort', 'quizshow']) REGI['catalog:vyrapaket:quiz:' + d] = QUIZ_REGI;
+
+// MATCH 1 VS 1 (match-1v1.js). I OBS osynlig utan match, och klockan räknar ned. Regin använder widgetens
+// egen krok: VyraMatch1v1.stilla() visar exempelmatchen 1 240 mot 860 med fast tid.
+REGI['catalog:vyrapaket:match:1v1'] = {
+  fas: 'exempelmatch', ms: 0,
+  varfor: 'osynlig utan match och klockstyrd; exempelmatchen är deterministisk',
+  regi: () => {
+    const M = window.VyraMatch1v1;
+    if (!M) return { fel: 'match-1v1.js laddades inte' };
+    const n = M.stilla();
+    if (!n) return { fel: 'ingen .vyra-match renderades' };
+    return { kort: n, poang: document.querySelector('.vyra-match .md-poang')?.textContent };
+  },
+};
+
+REGI['catalog:vyrapaket:ordjakten'] = {
+  fas: 'runda-1', ms: 0,
+  varfor: 'sparat läge och paus-klocka; runda 1 olöst är deterministisk',
+  regi: () => {
+    const O = window.VyraOrdjakten;
+    if (!O) return { fel: 'ordjakten.js laddades inte' };
+    const n = O.stilla();
+    if (!n) return { fel: 'ingen .vyra-ordjakten renderades' };
+    return { kort: n, bokstaver: document.querySelectorAll('.vyra-ordjakten .oj-bokstav').length };
+  },
+};
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
