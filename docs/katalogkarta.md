@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `f5c3e547`
+Commit: `058cf5d5`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -63,13 +63,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
-| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
-| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
-| ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
-| ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
-| QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
-| MATCH | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
+| ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| MATCH | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -345,13 +345,13 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-08 | — |
+| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### CHATTAVATAR
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-08 | — |
+| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### VIEWER SHOWCASE
 
@@ -365,29 +365,29 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Vital | `catalog:vyrapaket:energi:vital` | ✓ | ✓ | 2026-11-08 | — |
-| Arcade | `catalog:vyrapaket:energi:arcade` | ✓ | ✓ | 2026-11-08 | — |
-| Minimal | `catalog:vyrapaket:energi:minimal` | ✓ | ✓ | 2026-11-08 | — |
+| Vital | `catalog:vyrapaket:energi:vital` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Arcade | `catalog:vyrapaket:energi:arcade` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Minimal | `catalog:vyrapaket:energi:minimal` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### ORDJAKTEN
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Ordjakten | `catalog:vyrapaket:ordjakten` | ✓ | ✓ | 2026-11-08 | — |
+| Ordjakten | `catalog:vyrapaket:ordjakten` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### QUIZ
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Quiz · Frågerad | `catalog:vyrapaket:quiz:fragerad` | ✓ | ✓ | 2026-11-08 | — |
-| Quiz · Spelkort | `catalog:vyrapaket:quiz:spelkort` | ✓ | ✓ | 2026-11-08 | — |
-| Quiz · Quiz Show | `catalog:vyrapaket:quiz:quizshow` | ✓ | ✓ | 2026-11-08 | — |
+| Quiz · Frågerad | `catalog:vyrapaket:quiz:fragerad` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Quiz · Spelkort | `catalog:vyrapaket:quiz:spelkort` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Quiz · Quiz Show | `catalog:vyrapaket:quiz:quizshow` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### MATCH
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Match 1 vs 1 | `catalog:vyrapaket:match:1v1` | ✓ | ✓ | 2026-11-08 | — |
+| Match 1 vs 1 | `catalog:vyrapaket:match:1v1` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### SOCIAL-ALERT
 
