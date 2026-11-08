@@ -71,6 +71,9 @@
 
   // ---------- läget per widget ----------
   const LAGE = new Map();   // id → { niva, at, senast }
+  // STILLBILD FÖR PIXELVAKTEN (tests/helpers/katalognycklar.js REGI): tömningen ändrar nivån medan bilden
+  // tas. stilla() låser varje mätare på sin startnivå, utan tömning och utan händelser.
+  let STILLA = false;
   const widgetar = () => { try { return (typeof state !== 'undefined' && state && Array.isArray(state.widgets)) ? state.widgets.filter(w => w && w.type === TYP) : []; } catch (_) { return []; } };
   function lage(w, nu = Date.now()) {
     const id = String(w.id);
@@ -81,6 +84,7 @@
       LAGE.set(id, s);
     }
     // Tömningen fram till nu, lat: samma resultat oavsett hur ofta den räknas.
+    if (STILLA) { s.niva = regler(w).start; s.at = nu; return s; }
     s.niva = tomt(s.niva, regler(w), nu - s.at); s.at = nu;
     return s;
   }
@@ -135,7 +139,7 @@
   // ---------- livehändelserna ----------
   window.addEventListener('vyra-live-event', ev => {
     const e = ev && ev.detail, nu = Date.now();
-    if (!e || !arFarsk(e, nu)) return;
+    if (STILLA || !e || !arFarsk(e, nu)) return;
     for (const w of widgetar()) {
       if (w.hidden) continue;
       const s = lage(w, nu), p = poang(regler(w), e, nu, s.senast);
@@ -219,6 +223,7 @@
     });
   };
 
-  window.VyraEnergimatare = Object.freeze({ typ: TYP, MODELLER, FARGER, regler, poang, tomt, arFarsk, slag, tips, lage, andra, satt, MAX_PER_GAVA, FARSKT_MS, _lage: LAGE });
+  function stilla() { STILLA = true; for (const w of widgetar()) { lage(w); uppdatera(w); } return document.querySelectorAll('.vyra-energi').length; }
+  window.VyraEnergimatare = Object.freeze({ typ: TYP, MODELLER, FARGER, regler, poang, tomt, arFarsk, slag, tips, lage, andra, satt, stilla, MAX_PER_GAVA, FARSKT_MS, _lage: LAGE });
   try { if (typeof render === 'function') render(); } catch (_) {}
 })();

@@ -67,7 +67,8 @@ test('tömningen: poäng per minut, aldrig under noll', () => {
 });
 
 test('livehändelser fyller mätaren; gamla händelser och dolda widgetar räknas inte; taket är 100', () => {
-  const dom = sida(), E = dom.window.VyraEnergimatare, w = ny(), dold = ny('arcade', 'dold', { hidden: true });
+  // Egna id: nivån sparas per id i localStorage, och ett annat provs sparade nivå får inte läcka hit.
+  const dom = sida(), E = dom.window.VyraEnergimatare, w = ny('vital', 'fyll-' + Date.now()), dold = ny('arcade', 'fyll-dold-' + Date.now(), { hidden: true });
   try {
     dom.window.state.widgets.push(w, dold);
     const skicka = e => dom.window.dispatchEvent(new dom.window.CustomEvent('vyra-live-event', { detail: e }));
@@ -111,6 +112,18 @@ test('CSS: stående fylls uppåt, kortramen kommer inte från studion, overlayn 
   const css = fs.readFileSync(path.join(ROOT, 'energimatare.css'), 'utf8');
   assert.match(css, /\.em-staende \.em-fyll\{top:auto;right:0;width:100%;height:var\(--niva,50%\)\}/);
   assert.match(css, /\.widget\.vyra-energi\{background:transparent!important/);
-  assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /'templateEnergyBar'\]\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /const UNDANTAG = new Set\(\[[^\]]*'templateEnergyBar'/);
   assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /energimatare\.js\?v=\d{8}-\d+/);
+});
+
+test('pixelvaktens stillbild: startnivån utan tömning och utan händelser', () => {
+  const sparat = { 'vyra-energi-em1': JSON.stringify({ niva: 12, at: Date.now() - 60000 }) };
+  const dom = sida(undefined, sparat), E = dom.window.VyraEnergimatare, w = ny();
+  try {
+    dom.window.state.widgets.push(w);
+    E.stilla();
+    assert.equal(E.lage(w, Date.now() + 600000).niva, 50);
+    dom.window.dispatchEvent(new dom.window.CustomEvent('vyra-live-event', { detail: { type: 'follow', at: Date.now() } }));
+    assert.equal(E.lage(w).niva, 50);
+  } finally { dom.window.close(); }
 });

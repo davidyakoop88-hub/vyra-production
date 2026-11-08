@@ -1949,8 +1949,8 @@ Promise.resolve().then(()=>{
 });
 // Energimätaren - fylls av likes, gåvor, delningar, följare och chatt, töms över tid (energimatare.js).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-energimatare]')){let css=document.createElement('link');css.rel='stylesheet';css.href='energimatare.css?v=20261108-1';css.dataset.energimatare='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='energimatare.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda energimatare.js');document.body.append(s);
+  if(!document.querySelector('link[data-energimatare]')){let css=document.createElement('link');css.rel='stylesheet';css.href='energimatare.css?v=20261108-2';css.dataset.energimatare='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='energimatare.js?v=20261108-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda energimatare.js');document.body.append(s);
 });
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
