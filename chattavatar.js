@@ -17,7 +17,7 @@
 //
 // TIMRARNA. Allt som väntar (bubblans nästa del, klippets vakt, utfarten) läggs med planera(), som
 // minns timern och bär ett serienummer. stoppa() höjer numret och rensar alla timrar på en gång, så
-// en gammal timer kan aldrig fyra in i nästa kommando, och #stopp lämnar ingenting kvar som tänds
+// en gammal timer kan aldrig fyra in i nästa kommando, och !stopp lämnar ingenting kvar som tänds
 // senare. En widget som tas bort eller döljs stoppas av tickern.
 //
 // TEXTEN SKRIVS MED textContent, aldrig som HTML. Namn och meddelanden kommer från tittare.
@@ -51,6 +51,10 @@
   const publik = w => (w && w.caPublik === 'alla' ? 'alla' : 'mod');
   const halsa = w => !(w && w.caHalsa === false);
   const tacka = w => !(w && w.caTacka === false);
+  // Viloläget: vad avataren gör när ingen skriver. Se M.vilaNasta.
+  const vilaLage = w => M.vilaLage(w && w.caVila);
+  const vilaSek = w => M.vilaSek(w && w.caVilaSek);
+  const vilaText = w => M.tvatta(w && w.caVilaText, M.VILA_MAX_TEXT);
 
   // ---------- mätning av bubbeltexten ----------
   let mattDuk = null;
@@ -80,7 +84,8 @@
     let t = LIVE.get(id);
     if (!t) {
       t = { id, ko: M.skapaKo(), serial: 0, timers: new Set(), videor: new Map(), trasiga: new Set(),
-        spelar: null, klipp: null, videoSyns: false, sidor: [], sida: 0, bubbla: false, tap: false, status: 'Vilar' };
+        spelar: null, klipp: null, videoSyns: false, sidor: [], sida: 0, bubbla: false, tap: false, status: 'Vilar',
+        senast: Date.now(), vilaN: 0 };
       t.router = M.skapaRouter({
         nu: serverNu, streamer,
         publik: () => publik(widget(id)), halsa: () => halsa(widget(id)), tacka: () => tacka(widget(id))
@@ -130,13 +135,13 @@
     if (s) s.textContent = t.status + (t.ko.antal ? ' · ' + t.ko.antal + ' i kö' : '');
   }
 
-  // Avbryter det som spelas. tomKo: töm även kön (#stopp, ny sändning, dold widget).
+  // Avbryter det som spelas. tomKo: töm även kön (!stopp, ny sändning, dold widget).
   function stoppa(t, tomKo) {
     t.serial++; rensaTimrar(t);
     t.videor.forEach(v => { v.onended = v.onerror = v.onpause = null; try { v.pause(); } catch (_) {} });
     t.spelar = null; t.klipp = null; t.videoSyns = false; t.sidor = []; t.sida = 0; t.bubbla = false; t.tap = false;
     if (tomKo) t.ko.tom();
-    t.status = 'Vilar';
+    t.status = 'Vilar'; t.senast = Date.now();   // !stopp: viloläget väntar en hel period innan det tar vid igen
     applicera(t);
   }
 
@@ -153,7 +158,7 @@
     const k = M.KOMMANDON[item.key];
     t.serial++; rensaTimrar(t);
     const s = t.serial;
-    t.spelar = item; t.status = k.etikett;
+    t.spelar = item; t.status = k.etikett; t.senast = Date.now();
     // Bubblan: delar om två rader, 4 s var. Inget visas under en dans (bubbeltext ger '').
     const text = M.bubbeltext(item);
     t.sidor = text ? M.sidor(text, matt, TEXT_B) : []; t.sida = 0; t.bubbla = t.sidor.length > 0;
@@ -164,8 +169,8 @@
 
     const nyckel = k.klipp && !t.trasiga.has(k.klipp) ? k.klipp : null;
     if (!nyckel) {
-      // Tap tap och #säg har inget klipp; ett trasigt klipp visar texten utan rörelse.
-      t.tap = item.key === '#tap';
+      // Tap tap och !säg har inget klipp; ett trasigt klipp visar texten utan rörelse.
+      t.tap = item.key === '!tap' || !!k.tap;
       if (t.tap) planera(t, () => { t.tap = false; klippKlar = true; applicera(t); klart(); }, TAP_MS);
       else if (k.dans) planera(t, () => { klippKlar = true; klart(); }, 0);
       else klippKlar = true;
@@ -174,6 +179,7 @@
     }
     const v = videoFor(t, nyckel);
     t.klipp = nyckel; t.videoSyns = false;
+    t.tap = !!k.tap;          // uppmaningen: tap-hjärtat pulserar medan avataren vinkar
     applicera(t);
     const klippSlut = trasig => {
       if (t.serial !== s || klippKlar) return;
@@ -197,7 +203,7 @@
     // Text och klipp är klara: det som återstår (klippets vakt) behövs inte längre.
     rensaTimrar(t);
     const s = t.serial;
-    t.videoSyns = false; t.bubbla = false; t.tap = false; t.status = 'Vilar';
+    t.videoSyns = false; t.bubbla = false; t.tap = false; t.status = 'Vilar'; t.senast = Date.now();
     applicera(t);
     planera(t, () => {
       if (t.serial !== s) return;
@@ -210,7 +216,7 @@
   // Ett köobjekt från chatten, en automatisk hälsning eller ▶ Testa.
   function lagg(t, item) {
     if (!item) return 'okänt';
-    if (item.key === '#stopp') { stoppa(t, true); return 'stoppad'; }
+    if (item.key === '!stopp') { stoppa(t, true); return 'stoppad'; }
     const r = t.ko.lagg(item, t.spelar, Date.now());
     if (r === 'köad') nasta(t); else applicera(t);
     return r;
@@ -232,6 +238,22 @@
   window.addEventListener('vyra-live-session', ev => { if (ev && ev.detail && ev.detail.event === 'live:start') nollstall(); });
   window.addEventListener('vyra-session-ended', nollstall);
 
+  // VILOLÄGET (David 2026-11-08: "nu om ingen skriver något står den still"). Bara i OBS. När
+  // inget har spelats och kön är tom i vilaSek sekunder läggs nästa vilorörelse i kön — en dans
+  // eller en uppmaning att tappa på skärmen. Klockan räknas från när det senaste slutade, så ett
+  // kommando från chatten skjuter alltid upp nästa vilorörelse. Ett riktigt kommando går före:
+  // vilorörelsen köas bara när kön är tom, och !stopp stoppar den som vilken annan som helst.
+  function vila(t, w) {
+    if (!OVERLAY || !w || w.hidden || t.spelar || t.ko.antal || !rotFor(t.id)) return;
+    const nu = Date.now();
+    if (nu - t.senast < vilaSek(w) * 1000) return;
+    t.senast = nu;
+    const item = M.vilaNasta(vilaLage(w), t.vilaN, vilaText(w));
+    if (!item) return;
+    t.vilaN++;
+    lagg(t, item);
+  }
+
   // Borttagen eller dold widget: stoppa och släpp klippen, så att inga timrar eller videor lever kvar.
   const tickare = setInterval(() => {
     try {
@@ -239,7 +261,11 @@
         const w = widget(id);
         if (!w) { stoppa(t, true); t.videor.forEach(v => { try { v.removeAttribute('src'); v.load(); } catch (_) {} v.remove(); }); LIVE.delete(id); return; }
         if (OVERLAY && w.hidden && (t.spelar || t.ko.antal)) stoppa(t, true);
+        vila(t, w);
       });
+      // En widget som syns i OBS men ännu inte fått någon händelse har inget läge än: skapa det, så
+      // att viloläget börjar räkna från första bildrutan.
+      if (OVERLAY) widgetar().forEach(w => { if (!w.hidden && !LIVE.has(w.id) && rotFor(w.id)) till(w.id); });
     } catch (_) { clearInterval(tickare); }
   }, 1000);
 
@@ -280,7 +306,7 @@
   } catch (_) {}
 
   // ---------- panelen ----------
-  const TESTER = [['#d1', 'Dans 1'], ['#d2', 'Dans 2'], ['#d3', 'Dans 3'], ['#t', 'Tap tap'], ['#g', 'Handske'], ['#f', 'Fira'], ['#hej', 'Hej']];
+  const TESTER = [['!d1', 'Dans 1'], ['!d2', 'Dans 2'], ['!d3', 'Dans 3'], ['!t', 'Tap tap'], ['!g', 'Handske'], ['!f', 'Fira'], ['!hej', 'Hej']];
   const oldProps = props;
   props = function () {
     const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
@@ -288,17 +314,24 @@
     return `<h3>CHATTAVATAR</h3><div class="template-badge">AVATAR · STYRS FRÅN CHATTEN</div><div hidden><input id="pt" value="${NAMN}"><input id="pv" value=""></div>`
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
-      + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (#d1 #d2 #d3 #t)</option></select></label>`
-      + `<small>Moderatorer: #d1 #d2 #d3 dans · #t tap tap · #g handske · #f fira (eller #f egen text) · #hej namn · #s meddelande (eller #säg) · #stopp. `
+      + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (!d1 !d2 !d3 !t)</option></select></label>`
+      + `<small>Moderatorer: !d1 !d2 !d3 dans · !t tap tap · !g handske · !f fira (eller !f egen text) · !hej namn · !s meddelande (eller !säg) · !stopp. `
       + `Tittare har 20 s väntetid var och 8 s mellan två tittare. Högst ${M.MAX_KO} kommandon väntar i kön.</small></div>`
       + `<div class="property-group"><h4>AUTOMATISKT</h4>`
-      + `<label><input id="caHalsa" type="checkbox"${halsa(w) ? ' checked' : ''}> Hälsa fanklubbsmedlemmar välkomna när de kommer in</label>`
+      + `<label><input id="caHalsa" type="checkbox"${halsa(w) ? ' checked' : ''}> Hälsa medlemmar välkomna: nya prenumeranter och fanklubbsmedlemmar som kommer in</label>`
       + `<label><input id="caTacka" type="checkbox"${tacka(w) ? ' checked' : ''}> Tacka nya följare (högst var 10:e sekund)</label>`
       + `<small>Samma person hälsas högst en gång per tio minuter. Hälsningar tar aldrig mer än två platser i kön.</small></div>`
+      + `<div class="property-group"><h4>NÄR INGEN SKRIVER</h4><label>Avataren<select id="caVila">`
+      + [['bada', 'Dansar och ber om tap, varannan gång'], ['dans', 'Dansar'], ['tap', 'Ber tittarna tappa på skärmen'], ['av', 'Står still']]
+        .map(([v, n]) => `<option value="${v}"${vilaLage(w) === v ? ' selected' : ''}>${n}</option>`).join('')
+      + `</select></label><label>Hur ofta<select id="caVilaSek">`
+      + M.VILA_SEK.map(s => `<option value="${s}"${vilaSek(w) === s ? ' selected' : ''}>Efter ${s} s utan kommandon</option>`).join('')
+      + `</select></label><label>Text när den ber om tap<input id="caVilaText" maxlength="${M.VILA_MAX_TEXT}" value="${esc(vilaText(w))}" placeholder="${esc(M.KOMMANDON.uppmaning.text)}"></label>`
+      + `<small>Bara i OBS. Ett kommando från chatten går alltid före och skjuter upp nästa.</small></div>`
       + `<div class="property-group ca-panel"><h4>TESTA</h4><small>Spelas bara här i studion, aldrig i OBS.</small>`
       + `<div class="ca-knappar">${TESTER.map(([c, n]) => `<button type="button" data-ca-testa="${esc(c)}">${esc(n)}</button>`).join('')}</div>`
       + `<label>Eget meddelande<input id="caText" maxlength="${M.MAX_TEXT}" placeholder="Skriv ett meddelande"></label>`
-      + `<div class="ca-knappar"><button type="button" id="caSag">▶ Säg</button><button type="button" id="caStopp">■ Stopp</button></div></div>`
+      + `<div class="ca-knappar"><button type="button" id="caUppmaning">▶ Be om tap</button><button type="button" id="caSag">▶ Säg</button><button type="button" id="caStopp">■ Stopp</button></div></div>`
       + `<div class="property-group"><h4>POSITION & STORLEK</h4><button type="button" id="caStorlek">Samma storlek som paketet</button><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || STANDARD_B}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
   };
 
@@ -335,12 +368,16 @@
     if (el('#caPublik')) el('#caPublik').onchange = e => satt('caPublik', e.target.value === 'alla' ? 'alla' : 'mod');
     if (el('#caHalsa')) el('#caHalsa').onchange = e => satt('caHalsa', !!e.target.checked);
     if (el('#caTacka')) el('#caTacka').onchange = e => satt('caTacka', !!e.target.checked);
+    if (el('#caVila')) el('#caVila').onchange = e => satt('caVila', M.vilaLage(e.target.value));
+    if (el('#caVilaSek')) el('#caVilaSek').onchange = e => satt('caVilaSek', M.vilaSek(e.target.value));
+    if (el('#caVilaText')) el('#caVilaText').oninput = e => satt('caVilaText', M.tvatta(e.target.value, M.VILA_MAX_TEXT));
+    if (el('#caUppmaning')) el('#caUppmaning').onclick = () => lagg(till(w.id), { key: 'uppmaning', namn: vilaText(w), kalla: 'test' });
     document.querySelectorAll('[data-ca-testa]').forEach(b => b.onclick = () => testa(w, b.dataset.caTesta));
-    if (el('#caSag')) el('#caSag').onclick = () => { const v = el('#caText') ? el('#caText').value : ''; if (testa(w, '#säg ' + v) === 'okänt' && typeof toast === 'function') toast('Skriv ett meddelande först'); };
+    if (el('#caSag')) el('#caSag').onclick = () => { const v = el('#caText') ? el('#caText').value : ''; if (testa(w, '!säg ' + v) === 'okänt' && typeof toast === 'function') toast('Skriv ett meddelande först'); };
     if (el('#caStopp')) el('#caStopp').onclick = () => stoppa(till(w.id), true);
     if (el('#caStorlek')) el('#caStorlek').onclick = () => { w.width = STANDARD_B; if (typeof save === 'function') save(); if (typeof render === 'function') render(); };
   };
 
-  window.VyraChattavatar = Object.freeze({ typ: TYP, namn: NAMN, KLIPP, VILA, SCEN_B, SCEN_H, STANDARD_B, TEXT_B, testa, hantera, _live: LIVE, _till: till, _stoppa: stoppa });
+  window.VyraChattavatar = Object.freeze({ typ: TYP, namn: NAMN, KLIPP, VILA, SCEN_B, SCEN_H, STANDARD_B, TEXT_B, testa, hantera, _live: LIVE, _till: till, _stoppa: stoppa, _vila: vila });
   try { if (typeof render === 'function') render(); } catch (_) {}
 })();

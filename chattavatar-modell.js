@@ -16,24 +16,43 @@
 (function (root) {
   'use strict';
 
-  const ALIAS = { '#d1': '#dansa', '#d2': '#dansa2', '#d3': '#dansa3', '#t': '#tap', '#g': '#glove', '#f': '#fira', '#s': '#säg', '#sag': '#säg', '#stop': '#stopp' };
+  const ALIAS = { '!d1': '!dansa', '!d2': '!dansa2', '!d3': '!dansa3', '!t': '!tap', '!g': '!glove', '!f': '!fira', '!s': '!säg', '!sag': '!säg', '!stop': '!stopp' };
   // Klipp, etikett och förvald text per kommando. Danserna har ALDRIG text (Davids design 2026-11-06).
   const KOMMANDON = Object.freeze({
-    '#dansa':    { klipp: 'dance',  etikett: 'Dans 1',          text: null, dans: true },
-    '#dansa2':   { klipp: 'dance2', etikett: 'Dans 2',          text: null, dans: true },
-    '#dansa3':   { klipp: 'dance3', etikett: 'Dans 3',          text: null, dans: true },
-    '#tap':      { klipp: null,     etikett: 'Tap tap',         text: 'Tap tap!' },
-    '#glove':    { klipp: 'glove',  etikett: 'Handske',         text: 'Använd handsken!' },
-    '#fira':     { klipp: 'fira',   etikett: 'Fira',            text: 'Vi klarade det!' },
-    '#säg':      { klipp: null,     etikett: 'Meddelande',      text: null },
-    '#hej':      { klipp: 'wave',   etikett: 'Hälsning',        text: 'Hej allihopa!' },
-    '#stopp':    { klipp: null,     etikett: 'Stopp',           text: null },
+    '!dansa':    { klipp: 'dance',  etikett: 'Dans 1',          text: null, dans: true },
+    '!dansa2':   { klipp: 'dance2', etikett: 'Dans 2',          text: null, dans: true },
+    '!dansa3':   { klipp: 'dance3', etikett: 'Dans 3',          text: null, dans: true },
+    '!tap':      { klipp: null,     etikett: 'Tap tap',         text: 'Tap tap!' },
+    '!glove':    { klipp: 'glove',  etikett: 'Handske',         text: 'Använd handsken!' },
+    '!fira':     { klipp: 'fira',   etikett: 'Fira',            text: 'Vi klarade det!' },
+    '!säg':      { klipp: null,     etikett: 'Meddelande',      text: null },
+    '!hej':      { klipp: 'wave',   etikett: 'Hälsning',        text: 'Hej allihopa!' },
+    '!stopp':    { klipp: null,     etikett: 'Stopp',           text: null },
     // Automatiska, aldrig från chatten:
     'följare':   { klipp: 'wave',   etikett: 'Tack följare',    text: 'Tack alla nya följare!', auto: true },
-    'välkommen': { klipp: 'wave',   etikett: 'Medlemshälsning', text: null, auto: true }
+    'välkommen': { klipp: 'wave',   etikett: 'Medlemshälsning', text: null, auto: true },
+    // Viloläget (David 2026-11-08: "den ska dansa då och då, be folk tapa på skärmen — nu om ingen
+    // skriver något står den still"). Vinkar med tap-hjärtat och en text streamern kan ändra.
+    'uppmaning': { klipp: 'wave',   etikett: 'Be om tap',       text: 'Tappa på skärmen! ♡', auto: true, tap: true }
   });
+  // VILOLÄGET: vad avataren gör när inget har spelats på en stund. lage 'bada' växlar dans och
+  // uppmaning (dans 1, tap, dans 2, tap, dans 3, tap ...), 'dans' bara danser, 'tap' bara
+  // uppmaningen, 'av' ingenting. n är hur många vilorörelser som spelats sedan sidan laddades.
+  const VILA_LAGEN = ['bada', 'dans', 'tap', 'av'];
+  const VILA_SEK = [20, 30, 45, 60, 90, 120], VILA_STANDARD_SEK = 45, VILA_MAX_TEXT = 60;
+  const DANSER = ['!dansa', '!dansa2', '!dansa3'];
+  function vilaLage(v) { return VILA_LAGEN.includes(v) ? v : 'bada'; }
+  function vilaSek(v) { const n = Number(v); return VILA_SEK.includes(n) ? n : VILA_STANDARD_SEK; }
+  function vilaNasta(lage, n, text) {
+    lage = vilaLage(lage); n = Math.max(0, Math.floor(Number(n) || 0));
+    if (lage === 'av') return null;
+    const uppmaning = () => ({ key: 'uppmaning', namn: tvatta(text, VILA_MAX_TEXT), kalla: 'vila' });
+    if (lage === 'tap') return uppmaning();
+    if (lage === 'dans') return { key: DANSER[n % DANSER.length], namn: '', kalla: 'vila' };
+    return n % 2 ? uppmaning() : { key: DANSER[(n / 2) % DANSER.length], namn: '', kalla: 'vila' };
+  }
   // Tittarkommandon när streamern slagit på "Tittare får dansa". Inget av dem visar text.
-  const PUBLIKA = new Set(['#dansa', '#dansa2', '#dansa3', '#tap']);
+  const PUBLIKA = new Set(['!dansa', '!dansa2', '!dansa3', '!tap']);
   // TikToks kommentarer är högst 150 tecken. Hela meddelandet visas, uppdelat i delar.
   const MAX_TEXT = 150, MAX_NAMN = 40;
   const MAX_KO = 5, MAX_AUTO_I_KO = 2;
@@ -44,18 +63,18 @@
 
   function tolka(text) {
     const t = tvatta(text, 400);
-    if (t[0] !== '#') return null;
+    if (t[0] !== '!') return null;
     const delar = t.split(' '), forsta = delar.shift().toLowerCase(), key = ALIAS[forsta] || forsta;
     const k = KOMMANDON[key];
     if (!k || k.auto) return null;
     const rest = delar.join(' ');
-    if (key === '#säg' || key === '#fira') {
+    if (key === '!säg' || key === '!fira') {
       const namn = tvatta(rest, MAX_TEXT);
-      if (key === '#säg' && !namn) return null;
+      if (key === '!säg' && !namn) return null;
       return { key, namn };
     }
-    if (key === '#hej') return { key, namn: tvatta(rest, MAX_NAMN) };
-    // Danser, tap, handske och stopp tar inga argument: "#d1 hej" är inte ett kommando.
+    if (key === '!hej') return { key, namn: tvatta(rest, MAX_NAMN) };
+    // Danser, tap, handske och stopp tar inga argument: "!d1 hej" är inte ett kommando.
     return rest ? null : { key, namn: '' };
   }
 
@@ -63,10 +82,11 @@
   function bubbeltext(item) {
     const k = KOMMANDON[item && item.key];
     if (!k || k.dans) return '';
-    if (item.key === '#säg') return item.namn || '';
-    if (item.key === '#fira') return item.namn || k.text;
-    if (item.key === '#hej') return item.namn ? 'Hej ' + item.namn + '!' : k.text;
+    if (item.key === '!säg') return item.namn || '';
+    if (item.key === '!fira') return item.namn || k.text;
+    if (item.key === '!hej') return item.namn ? 'Hej ' + item.namn + '!' : k.text;
     if (item.key === 'välkommen') return 'Välkommen ' + item.namn + '!';
+    if (item.key === 'uppmaning') return item.namn || k.text;
     return k.text || '';
   }
 
@@ -82,8 +102,8 @@
   const arTest = e => !!(e.__test || e.__simulerad || e.test || e.simulated || /^test-/.test(String(e.id || '')));
 
   // Router per widget och sida. opts:
-  //   publik()     'alla' -> tittare får #d1 #d2 #d3 #t (20 s per person, 8 s mellan två tittare)
-  //   halsa()      hälsa fanklubbsmedlemmar och prenumeranter välkomna
+  //   publik()     'alla' -> tittare får !d1 !d2 !d3 !t (20 s per person, 8 s mellan två tittare)
+  //   halsa()      hälsa medlemmar välkomna: prenumeranter och fanklubbsmedlemmar
   //   tacka()      tacka nya följare
   //   streamer()   det anslutna kontots handtag, eller ''
   //   nu()         klockan (serverns om den finns)
@@ -105,7 +125,7 @@
       }
       const typ = String(e.type || e.event || '').toLowerCase().replace(/[\s_-]/g, '');
       if (typ === 'chat' || typ === 'chatcommand' || typ === 'comment') {
-        // Kommandot läses BARA ur kommentaren — aldrig ur namnet: en tittare som döpt sig till "#d1"
+        // Kommandot läses BARA ur kommentaren — aldrig ur namnet: en tittare som döpt sig till "!d1"
         // ska inte kunna dansa genom att gå in i rummet.
         const k = tolka(e.comment != null ? e.comment : e.message);
         if (!k) return null;
@@ -130,7 +150,9 @@
       // 'member' är att någon går in i rummet. Bara fanklubbsmedlemmar hälsas, och varje person högst
       // en gång var tionde minut — folk går in och ut hela kvällen. isSubscriber räknas INTE här:
       // live-client.js normalizeUserFlags sätter den till true på VARJE member-händelse (OBS-provet
-      // 2026-11-06 hälsade en vanlig tittare med fanklubbsnivå 0). Prenumeranter hälsas på 'subscribe'.
+      // 2026-11-06 hälsade en vanlig tittare med fanklubbsnivå 0).
+      // ALLA MEDLEMMAR HÄLSAS (David 2026-11-08: "Hälsa på alla medlemmar välkommen, sub och fan"):
+      // prenumeranter på 'subscribe', fanklubben när de går in. Samma person högst var tionde minut.
       const medlem = typ === 'subscribe' || ((typ === 'member' || typ === 'superfan')
         && Number(e.fanClubLevel || e.teamLevel) > 0);
       if (medlem) {
@@ -188,6 +210,7 @@
   }
 
   const api = Object.freeze({ tolka, bubbeltext, arFarsk, skapaRouter, skapaKo, sidor, tvatta, KOMMANDON, PUBLIKA,
+    vilaNasta, vilaLage, vilaSek, VILA_LAGEN, VILA_SEK, VILA_STANDARD_SEK, VILA_MAX_TEXT,
     MAX_TEXT, MAX_KO, MAX_AUTO_I_KO, FARSKT_MS, TITTARE_MS, PUBLIK_MS, FOLJARE_MS, HALSAD_MS, DUBBLETT_MS, SIDA_MS: 4000 });
   root.VyraChattavatarModell = api;
   if (typeof module === 'object' && module.exports) module.exports = api;
