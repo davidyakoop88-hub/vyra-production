@@ -630,3 +630,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Viewer Showcase: tre nya katalognycklar (takeover, halo, spotlight), David 2026-11-07
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 3 av 151 (filter: vyrapaket:showcase) — catalog:vyrapaket:showcase:halo, catalog:vyrapaket:showcase:spotlight, catalog:vyrapaket:showcase:takeover
+
+## 2026-11-08 — 3 referenser skrivna
+
+- **Motiv:** Energimätaren (Health Bar): tre nya katalognycklar (vital, arcade, minimal), David 2026-11-07
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 3 av 154 (filter: vyrapaket:energi) — catalog:vyrapaket:energi:arcade, catalog:vyrapaket:energi:minimal, catalog:vyrapaket:energi:vital
