@@ -148,6 +148,8 @@
         "chattavatar-modell.js",
         "viewer-showcase.js",
         "energimatare.js",
+        "ordjakten.js",
+        "ordjakten.css",
         "energimatare.css",
         "viewer-showcase.css",
         "bertil-paket.js",
@@ -389,7 +391,8 @@
         "tests/browser/bildrad.browser.test.js",
         "tests/spotify-request-view.test.js",
         "tests/viewer-showcase.test.js",
-        "tests/energimatare.test.js"
+        "tests/energimatare.test.js",
+        "tests/ordjakten.test.js"
       ],
       "matning": [
         {

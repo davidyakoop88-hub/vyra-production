@@ -29,6 +29,7 @@ const CONTRACT = [
   { name: 'Energimätare · Vital', key: 'catalog:vyrapaket:energi:vital' },
   { name: 'Energimätare · Arcade', key: 'catalog:vyrapaket:energi:arcade' },
   { name: 'Energimätare · Minimal', key: 'catalog:vyrapaket:energi:minimal' },
+  { name: 'Ordjakten', key: 'catalog:vyrapaket:ordjakten' },
   // Hjärtan & moln (hjartmoln.js): en nyckel per gallerivariant, samma fabriksbyggare.
   { name: 'Hjärtan & moln · Profilhjärtan', key: 'catalog:heartcloud:profilhjartan' },
   { name: 'Hjärtan & moln · Glödande hjärtmoln', key: 'catalog:heartcloud:glodande' },

@@ -411,4 +411,18 @@ const ENERGI_REGI = {
 };
 for (const m of ['vital', 'arcade', 'minimal']) REGI['catalog:vyrapaket:energi:' + m] = ENERGI_REGI;
 
+// ORDJAKTEN (ordjakten.js). Ett sparat läge (runda, vinnare, topplista) och en paus-klocka ändrar bilden.
+// Regin använder widgetens egen krok: VyraOrdjakten.stilla() visar runda 1, olöst, utan topplista.
+REGI['catalog:vyrapaket:ordjakten'] = {
+  fas: 'runda-1', ms: 0,
+  varfor: 'sparat läge och paus-klocka; runda 1 olöst är deterministisk',
+  regi: () => {
+    const O = window.VyraOrdjakten;
+    if (!O) return { fel: 'ordjakten.js laddades inte' };
+    const n = O.stilla();
+    if (!n) return { fel: 'ingen .vyra-ordjakten renderades' };
+    return { kort: n, bokstaver: document.querySelectorAll('.vyra-ordjakten .oj-bokstav').length };
+  },
+};
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };

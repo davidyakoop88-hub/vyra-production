@@ -944,5 +944,19 @@
     "emChattPaus": 10,
     "emTomning": 6,
     "createdFrom": "catalog:vyrapaket:energi:minimal"
+  },
+  "catalog:vyrapaket:ordjakten": {
+    "type": "templateWordHunt",
+    "x": 66,
+    "y": 120,
+    "width": 300,
+    "title": "Ordjakten",
+    "ojRubrik": "ORDJAKTEN",
+    "ojOrd": "",
+    "ojBaraEgna": false,
+    "ojPoang": 100,
+    "ojPaus": 8,
+    "ojTopp": 3,
+    "createdFrom": "catalog:vyrapaket:ordjakten"
   }
 }

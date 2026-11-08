@@ -1,0 +1,18 @@
+/* ORDJAKTEN (ordjakten.js, David 2026-11-07). Den sparade prototypens kort: mörk turkos, ljusa bokstavsbrickor
+   med skugga, ledtråd och vinnare. Långa ord får mindre brickor så att de ryms på en rad. */
+.vyra-ordjakten{position:absolute;width:300px;color:#fff;font-family:Inter,Arial,sans-serif}
+.widget.vyra-ordjakten{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;border-radius:0!important}
+.vyra-ordjakten .oj-kort{background:linear-gradient(140deg,#1b3037,#171b2b);border:1px solid #50757d;border-radius:14px;padding:18px;box-sizing:border-box}
+.vyra-ordjakten .oj-meta{display:flex;justify-content:space-between;font-size:10px;letter-spacing:1px;color:#a7d6d9}
+.vyra-ordjakten .oj-meta span{color:#a7d6d9;font-size:10px}
+.vyra-ordjakten .oj-titel{font-size:17px;font-weight:700;margin:14px 0 4px;color:#fff}
+.vyra-ordjakten .oj-bokstaver{display:flex;gap:5px;justify-content:center;margin:16px 0}
+.vyra-ordjakten .oj-bokstav{width:33px;height:40px;display:grid;place-items:center;border-radius:6px;background:#d2eee5;color:#17322e;font-size:22px;font-weight:900;box-shadow:0 3px 0 #5e9386}
+.vyra-ordjakten .oj-langt .oj-bokstav{width:25px;height:32px;font-size:17px}
+.vyra-ordjakten.oj-lost .oj-bokstav{background:#ffe1a0;color:#3a2a0a;box-shadow:0 3px 0 #b8924a}
+.vyra-ordjakten .oj-tips{font-size:12px;color:#c4d7d9;text-align:center}
+.vyra-ordjakten .oj-besked{font-size:14px;color:#ffe1a0;min-height:20px;margin-top:12px;text-align:center;font-weight:700;overflow-wrap:anywhere}
+.vyra-ordjakten .oj-topp{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid #ffffff1a;display:flex;flex-direction:column;gap:4px}
+.vyra-ordjakten .oj-topp li{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:#d6e8ea}
+.vyra-ordjakten .oj-topp li span{color:#d6e8ea;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vyra-ordjakten .oj-topp li b{color:#ffe1a0;font-variant-numeric:tabular-nums}

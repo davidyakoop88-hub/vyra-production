@@ -400,6 +400,11 @@
     // som lyfts fram i 8 sekunder. 300 bred, centrerad i den 432 breda duken, i övre tredjedelen.
     // Energimätaren (energimatare.js, David 2026-11-07): fylls av tittarna, töms över tid. 270 bred
     // liggande, centrerad i den 432 breda duken, högt upp där TikToks egna knappar inte ligger.
+    // Ordjakten (ordjakten.js, David 2026-11-07): chatten gissar det blandade ordet. 300 bred, centrerad.
+    'ordjakten': () => ({
+      type: 'templateWordHunt', x: 66, y: 120, width: 300, title: 'Ordjakten',
+      ojRubrik: 'ORDJAKTEN', ojOrd: '', ojBaraEgna: false, ojPoang: 100, ojPaus: 8, ojTopp: 3
+    }),
     'energi': v => ({
       type: 'templateEnergyBar', x: 81, y: 60, width: 270, title: 'Energimätare · ' + v.label,
       emModell: v.modell, emRiktning: 'liggande', emNamn: 'LIVE-ENERGI', emFarg: '#74ddb5',
@@ -793,6 +798,7 @@
     // sina grupper.
     'vyrapaket': parts => {
       if (parts[0] === 'chattavatar') return ['chattavatar', {}];
+      if (parts[0] === 'ordjakten') return ['ordjakten', {}];
       if (parts[0] === 'energi') {
         const namn = { vital: 'Vital', arcade: 'Arcade', minimal: 'Minimal' };
         if (!namn[parts[1]]) throw new Error('Okänd modell för Energimätaren "' + parts[1] + '" — giltiga: vital, arcade, minimal');

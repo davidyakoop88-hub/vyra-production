@@ -223,6 +223,8 @@
       if (w.type === 'templateViewerShowcase') return ut;
       // ENERGIMÄTAREN (energimatare.js): tre fasta modeller med läsbara tabellsiffror; namnet har eget fält.
       if (w.type === 'templateEnergyBar') return ut;
+      // ORDJAKTEN (ordjakten.js): bokstavsbrickor med fast storlek; rubriken har eget fält.
+      if (w.type === 'templateWordHunt') return ut;
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.
