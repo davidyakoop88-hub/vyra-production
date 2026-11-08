@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 231,
+ "antal": 234,
  "senaste": {
-  "motiv": "Viewer Showcase: tre nya katalognycklar (takeover, halo, spotlight), David 2026-11-07",
+  "motiv": "Energimätaren (Health Bar): tre nya katalognycklar (vital, arcade, minimal), David 2026-11-07",
   "nycklar": 3,
-  "filter": "vyrapaket:showcase",
-  "tid": "2026-11-08T00:02:56.477Z"
+  "filter": "vyrapaket:energi",
+  "tid": "2026-11-08T00:16:12.643Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -936,6 +936,18 @@
   },
   "catalog:vyrapaket:showcase:takeover": {
    "matt": "300x206",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:arcade": {
+   "matt": "270x100",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:minimal": {
+   "matt": "270x67",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:energi:vital": {
+   "matt": "270x93",
    "fyllnad": 100
   }
  }
