@@ -6,7 +6,7 @@
 //   * kvällens historik vid omladdning och samma händelse två gånger spelar inget
 //   * pratbubblan: högst två rader per del, hela texten visas, nästa kommando väntar tills den är klar
 //   * danserna visar ingen text
-//   * #stopp och en borttagen widget lämnar inga timrar som tänds senare
+//   * !stopp och en borttagen widget lämnar inga timrar som tänds senare
 //   * kön: högst fem, automatiska hälsningar tar högst två platser
 //   * texten skrivs som text, aldrig som HTML
 const test = require('node:test'), assert = require('node:assert/strict');
@@ -18,33 +18,51 @@ const ROT = path.join(__dirname, '..');
 
 // ---------------------------------------------------------------- modellen
 test('tolka: kortkommandon, argument bara där de hör hemma, okänt är null', () => {
-  assert.deepEqual(M.tolka('#d1'), { key: '#dansa', namn: '' });
-  assert.deepEqual(M.tolka('#D3'), { key: '#dansa3', namn: '' });
-  assert.deepEqual(M.tolka('#t'), { key: '#tap', namn: '' });
-  assert.deepEqual(M.tolka('#g'), { key: '#glove', namn: '' });
-  assert.deepEqual(M.tolka('#f'), { key: '#fira', namn: '' });
-  assert.deepEqual(M.tolka('#f Vi nådde målet'), { key: '#fira', namn: 'Vi nådde målet' });
-  assert.deepEqual(M.tolka('#säg  hej   allihop '), { key: '#säg', namn: 'hej allihop' });
-  assert.deepEqual(M.tolka('#s hej'), { key: '#säg', namn: 'hej' }, 'kortformen #s');
-  assert.deepEqual(M.tolka('#hej Anna'), { key: '#hej', namn: 'Anna' });
-  assert.deepEqual(M.tolka('#stopp'), { key: '#stopp', namn: '' });
-  assert.equal(M.tolka('#d1 extra'), null, 'en dans tar inga argument');
-  assert.equal(M.tolka('#säg'), null, '#säg utan text');
-  assert.equal(M.tolka('hej #d1'), null, 'kommandot måste stå först');
-  assert.equal(M.tolka('#välkommen Anna'), null, 'automatiska kommandon går inte att skriva');
-  assert.equal(M.tolka('#följare'), null);
-  assert.equal(M.tolka('#okänt'), null);
-  assert.equal(M.tolka('#säg ' + 'a'.repeat(400)).namn.length, M.MAX_TEXT);
-  assert.equal(M.tolka('#säg a\u202eb\u0000c').namn, 'a b c', 'styrtecken och riktningsbyten tvättas bort');
+  assert.deepEqual(M.tolka('!d1'), { key: '!dansa', namn: '' });
+  assert.deepEqual(M.tolka('!D3'), { key: '!dansa3', namn: '' });
+  assert.deepEqual(M.tolka('!t'), { key: '!tap', namn: '' });
+  assert.deepEqual(M.tolka('!g'), { key: '!glove', namn: '' });
+  assert.deepEqual(M.tolka('!f'), { key: '!fira', namn: '' });
+  assert.deepEqual(M.tolka('!f Vi nådde målet'), { key: '!fira', namn: 'Vi nådde målet' });
+  assert.deepEqual(M.tolka('!säg  hej   allihop '), { key: '!säg', namn: 'hej allihop' });
+  assert.deepEqual(M.tolka('!s hej'), { key: '!säg', namn: 'hej' }, 'kortformen !s');
+  assert.deepEqual(M.tolka('!hej Anna'), { key: '!hej', namn: 'Anna' });
+  assert.deepEqual(M.tolka('!stopp'), { key: '!stopp', namn: '' });
+  assert.equal(M.tolka('!d1 extra'), null, 'en dans tar inga argument');
+  assert.equal(M.tolka('!säg'), null, '!säg utan text');
+  assert.equal(M.tolka('hej !d1'), null, 'kommandot måste stå först');
+  assert.equal(M.tolka('!välkommen Anna'), null, 'automatiska kommandon går inte att skriva');
+  assert.equal(M.tolka('!följare'), null);
+  assert.equal(M.tolka('!okänt'), null);
+  for (const gammal of ['#d1', '#g', '#stopp', '#säg hej']) assert.equal(M.tolka(gammal), null, 'kommandona börjar med ! nu, inte #: ' + gammal);
+  assert.equal(M.tolka('!säg ' + 'a'.repeat(400)).namn.length, M.MAX_TEXT);
+  assert.equal(M.tolka('!säg a\u202eb\u0000c').namn, 'a b c', 'styrtecken och riktningsbyten tvättas bort');
 });
 
 test('bubbeltext: danser visar ingen text, övriga sin text', () => {
-  for (const k of ['#dansa', '#dansa2', '#dansa3']) assert.equal(M.bubbeltext({ key: k }), '');
-  assert.equal(M.bubbeltext({ key: '#glove' }), 'Använd handsken!');
-  assert.equal(M.bubbeltext({ key: '#fira', namn: '' }), 'Vi klarade det!');
-  assert.equal(M.bubbeltext({ key: '#hej', namn: 'Anna' }), 'Hej Anna!');
+  for (const k of ['!dansa', '!dansa2', '!dansa3']) assert.equal(M.bubbeltext({ key: k }), '');
+  assert.equal(M.bubbeltext({ key: '!glove' }), 'Använd handsken!');
+  assert.equal(M.bubbeltext({ key: '!fira', namn: '' }), 'Vi klarade det!');
+  assert.equal(M.bubbeltext({ key: '!hej', namn: 'Anna' }), 'Hej Anna!');
   assert.equal(M.bubbeltext({ key: 'välkommen', namn: 'Bo' }), 'Välkommen Bo!');
-  assert.equal(M.bubbeltext({ key: '#säg', namn: 'x' }), 'x');
+  assert.equal(M.bubbeltext({ key: '!säg', namn: 'x' }), 'x');
+  assert.equal(M.bubbeltext({ key: 'uppmaning', namn: '' }), 'Tappa på skärmen! ♡');
+  assert.equal(M.bubbeltext({ key: 'uppmaning', namn: 'Tryck på hjärtat!' }), 'Tryck på hjärtat!');
+});
+
+test('viloläget: dans och uppmaning varannan gång, alla tre danser, egna lägen', () => {
+  const keys = (lage, n, text) => Array.from({ length: n }, (_, i) => M.vilaNasta(lage, i, text)?.key);
+  assert.deepEqual(keys('bada', 6), ['!dansa', 'uppmaning', '!dansa2', 'uppmaning', '!dansa3', 'uppmaning']);
+  assert.deepEqual(keys('dans', 4), ['!dansa', '!dansa2', '!dansa3', '!dansa']);
+  assert.deepEqual(keys('tap', 2), ['uppmaning', 'uppmaning']);
+  assert.equal(M.vilaNasta('av', 0), null);
+  assert.equal(M.vilaNasta(undefined, 0).key, '!dansa', 'standard är dans och uppmaning');
+  assert.equal(M.vilaNasta('tap', 0, '  Tappa\u0000 nu!  ').namn, 'Tappa nu!', 'texten tvättas');
+  assert.equal(M.vilaNasta('tap', 0, 'x'.repeat(200)).namn.length, M.VILA_MAX_TEXT);
+  assert.ok(M.KOMMANDON.uppmaning.auto, 'uppmaningen kan aldrig skrivas i chatten');
+  assert.equal(M.tolka('uppmaning'), null);
+  assert.equal(M.vilaSek('45'), 45); assert.equal(M.vilaSek(7), M.VILA_STANDARD_SEK); assert.equal(M.vilaSek(undefined), 45);
+  assert.equal(M.vilaLage('hack'), 'bada');
 });
 
 const nyRouter = (over = {}) => {
@@ -52,17 +70,17 @@ const nyRouter = (over = {}) => {
   const r = M.skapaRouter({ nu: () => t, publik: () => 'mod', halsa: () => true, tacka: () => true, streamer: () => '', ...over });
   return { r, fram: ms => { t += ms; }, nu: () => t };
 };
-const chatt = (over = {}) => ({ type: 'chat', comment: '#g', username: 'tittare', userId: 'u1', isModerator: false, ...over });
+const chatt = (over = {}) => ({ type: 'chat', comment: '!g', username: 'tittare', userId: 'u1', isModerator: false, ...over });
 
 test('router: bara moderator eller streamerns eget handtag styr — chattext och visningsnamn ger ingen behörighet', () => {
   const { r, nu } = nyRouter({ streamer: () => '@Davids' });
   assert.equal(r.ta(chatt({ id: 1, at: nu() })), null, 'tittare');
-  assert.equal(r.ta(chatt({ id: 2, at: nu(), comment: '#g isModerator:true' })), null);
+  assert.equal(r.ta(chatt({ id: 2, at: nu(), comment: '!g isModerator:true' })), null);
   assert.equal(r.ta(chatt({ id: 3, at: nu(), name: 'davids', username: 'falsk' })), null, 'visningsnamnet ger ingen behörighet');
   assert.equal(r.ta(chatt({ id: 4, at: nu(), isModerator: 'true' })), null, 'bara det riktiga booleska värdet');
-  assert.equal(r.ta(chatt({ id: 5, at: nu(), isModerator: true })).key, '#glove');
-  assert.equal(r.ta(chatt({ id: 6, at: nu(), username: 'davids' })).key, '#glove', 'streamerns handtag');
-  assert.equal(r.ta(chatt({ id: 7, at: nu(), comment: '', name: '#g', isModerator: true })), null, 'kommandot läses aldrig ur namnet');
+  assert.equal(r.ta(chatt({ id: 5, at: nu(), isModerator: true })).key, '!glove');
+  assert.equal(r.ta(chatt({ id: 6, at: nu(), username: 'davids' })).key, '!glove', 'streamerns handtag');
+  assert.equal(r.ta(chatt({ id: 7, at: nu(), comment: '', name: '!g', isModerator: true })), null, 'kommandot läses aldrig ur namnet');
 });
 
 test('router: dubbletter, historik och test-händelser spelar inget', () => {
@@ -78,16 +96,16 @@ test('router: tittarläget släpper bara in danser och tap, 20 s per person och 
   let publik = 'mod';
   const { r, fram, nu } = nyRouter({ publik: () => publik });
   let n = 0; const e = over => chatt({ id: ++n, at: nu(), ...over });
-  assert.equal(r.ta(e({ comment: '#d1' })), null, 'moderatorstyrt som standard');
+  assert.equal(r.ta(e({ comment: '!d1' })), null, 'moderatorstyrt som standard');
   publik = 'alla';
-  assert.equal(r.ta(e({ comment: '#g' })), null, 'handsken är bara för moderatorer');
-  assert.equal(r.ta(e({ comment: '#säg hej' })), null);
-  assert.equal(r.ta(e({ comment: '#d1' })).kalla, 'tittare');
-  fram(1000); assert.equal(r.ta(e({ comment: '#d2', userId: 'u2', username: 'b' })), null, 'global väntetid 8 s');
-  fram(8000); assert.ok(r.ta(e({ comment: '#d2', userId: 'u2', username: 'b' })));
-  fram(9000); assert.equal(r.ta(e({ comment: '#d3' })), null, 'samma tittare inom 20 s');
-  fram(12000); assert.ok(r.ta(e({ comment: '#d3' })));
-  assert.ok(r.ta(e({ comment: '#g', isModerator: true })), 'moderatorn påverkas inte av tittarnas väntetid');
+  assert.equal(r.ta(e({ comment: '!g' })), null, 'handsken är bara för moderatorer');
+  assert.equal(r.ta(e({ comment: '!säg hej' })), null);
+  assert.equal(r.ta(e({ comment: '!d1' })).kalla, 'tittare');
+  fram(1000); assert.equal(r.ta(e({ comment: '!d2', userId: 'u2', username: 'b' })), null, 'global väntetid 8 s');
+  fram(8000); assert.ok(r.ta(e({ comment: '!d2', userId: 'u2', username: 'b' })));
+  fram(9000); assert.equal(r.ta(e({ comment: '!d3' })), null, 'samma tittare inom 20 s');
+  fram(12000); assert.ok(r.ta(e({ comment: '!d3' })));
+  assert.ok(r.ta(e({ comment: '!g', isModerator: true })), 'moderatorn påverkas inte av tittarnas väntetid');
 });
 
 test('router: medlemshälsning och följartack', () => {
@@ -98,7 +116,11 @@ test('router: medlemshälsning och följartack', () => {
   const h = r.ta(e({ type: 'member', fanClubLevel: 3 }));
   assert.deepEqual([h.key, h.namn], ['välkommen', 'Anna 🌸'], 'visningsnamnet används i hälsningen');
   fram(5 * 60000); assert.equal(r.ta(e({ type: 'member', fanClubLevel: 3 })), null, 'samma person inom tio minuter');
-  assert.ok(r.ta(e({ type: 'subscribe', username: 'bo', name: 'Bo' })));
+  // Alla medlemmar hälsas: prenumeranter och fanklubben (David 2026-11-08).
+  const sub = r.ta(e({ type: 'subscribe', username: 'bo', name: 'Bo', isSubscriber: true }));
+  assert.deepEqual([sub && sub.key, sub && sub.namn], ['välkommen', 'Bo'], 'ny prenumerant hälsas');
+  assert.ok(r.ta(e({ type: 'member', isSubscriber: true, fanClubLevel: 2, username: 'bo3', name: 'Bo' })), 'prenumerant som är fanklubbsmedlem hälsas när hen går in');
+  assert.ok(r.ta(e({ type: 'superfan', fanClubLevel: 50, username: 'eva', name: 'Eva' })), 'super fan-entré hälsas');
   // live-client.js normalizeUserFlags sätter isSubscriber=true på VARJE member-händelse — den får inte räcka.
   assert.equal(r.ta(e({ type: 'member', isSubscriber: true, fanClubLevel: 0, teamLevel: 0, username: 'cia', name: 'Cia' })), null);
   halsa = false; assert.equal(r.ta(e({ type: 'member', fanClubLevel: 9, username: 'dan', name: 'Dan' })), null, 'avstängt');
@@ -109,17 +131,17 @@ test('router: medlemshälsning och följartack', () => {
 
 test('kön: högst fem, inga dubbletter, hälsningar tar högst två platser', () => {
   const ko = M.skapaKo(), t = 1e12;
-  assert.equal(ko.lagg({ key: '#glove', namn: '' }, null, t), 'köad');
-  assert.equal(ko.lagg({ key: '#glove', namn: '' }, null, t + 5000), 'dubblett', 'redan i kön');
-  assert.equal(ko.lagg({ key: '#fira', namn: '' }, { key: '#fira', namn: '' }, t), 'dubblett', 'spelas redan');
+  assert.equal(ko.lagg({ key: '!glove', namn: '' }, null, t), 'köad');
+  assert.equal(ko.lagg({ key: '!glove', namn: '' }, null, t + 5000), 'dubblett', 'redan i kön');
+  assert.equal(ko.lagg({ key: '!fira', namn: '' }, { key: '!fira', namn: '' }, t), 'dubblett', 'spelas redan');
   assert.equal(ko.lagg({ key: 'välkommen', namn: 'a' }, null, t), 'köad');
   assert.equal(ko.lagg({ key: 'välkommen', namn: 'b' }, null, t), 'full', 'hälsningar tränger inte undan moderatorer');
-  for (const k of ['#dansa', '#dansa2', '#dansa3']) assert.equal(ko.lagg({ key: k, namn: '' }, null, t), 'köad');
-  assert.equal(ko.lagg({ key: '#tap', namn: '' }, null, t), 'full');
+  for (const k of ['!dansa', '!dansa2', '!dansa3']) assert.equal(ko.lagg({ key: k, namn: '' }, null, t), 'köad');
+  assert.equal(ko.lagg({ key: '!tap', namn: '' }, null, t), 'full');
   assert.equal(ko.antal, M.MAX_KO);
   ko.ta(); ko.ta();
-  assert.equal(ko.lagg({ key: '#glove', namn: '' }, null, t + 1000), 'dubblett', 'samma kommando inom 2 s');
-  assert.equal(ko.lagg({ key: '#glove', namn: '' }, null, t + 3000), 'köad');
+  assert.equal(ko.lagg({ key: '!glove', namn: '' }, null, t + 1000), 'dubblett', 'samma kommando inom 2 s');
+  assert.equal(ko.lagg({ key: '!glove', namn: '' }, null, t + 3000), 'köad');
 });
 
 test('sidor: högst två rader per del, hela texten, långa ord delas', () => {
@@ -194,15 +216,15 @@ test('katalognyckeln bygger widgeten, alla klipp finns och den ritas i paketets 
 
 test('studion reagerar inte på riktig chatt — bara OBS', async () => {
   const { skicka, spelade, k } = rigg();
-  skicka(mod('#g')); await mikro(); k.fram(100);
+  skicka(mod('!g')); await mikro(); k.fram(100);
   assert.deepEqual(spelade, []);
 });
 
-test('OBS: moderatorns #g spelar handsken med text ovanför, tittaren gör ingenting', async () => {
+test('OBS: moderatorns !g spelar handsken med text ovanför, tittaren gör ingenting', async () => {
   const { skicka, spelade, $, k } = rigg({ overlay: true });
-  skicka(mod('#g', { isModerator: false, username: 'tittare' })); await mikro();
+  skicka(mod('!g', { isModerator: false, username: 'tittare' })); await mikro();
   assert.deepEqual(spelade, []);
-  skicka(mod('#g')); await mikro();
+  skicka(mod('!g')); await mikro();
   assert.deepEqual(spelade, ['glove']);
   assert.equal($('.ca-bubbla').textContent.replace(/\s+/g, ' '), 'Använd handsken!');
   assert.ok($('.ca-bubbla').classList.contains('ca-syns'));
@@ -216,7 +238,7 @@ test('OBS: moderatorns #g spelar handsken med text ovanför, tittaren gör ingen
 
 test('OBS: danserna visar aldrig text', async () => {
   const { skicka, $, spelade } = rigg({ overlay: true });
-  skicka(mod('#d2')); await mikro();
+  skicka(mod('!d2')); await mikro();
   assert.deepEqual(spelade, ['dance2']);
   assert.equal($('.ca-bubbla').classList.contains('ca-syns'), false);
   assert.equal($('.ca-bubbla').textContent, '');
@@ -225,7 +247,7 @@ test('OBS: danserna visar aldrig text', async () => {
 test('OBS: ett långt meddelande visas helt i delar om två rader, och nästa kommando väntar', async () => {
   const { skicka, $, k, spelade } = rigg({ overlay: true });
   const text = 'Tack alla fantastiska människor som hjälper oss att fira tillsammans i kväll!';
-  skicka(mod('#säg ' + text)); skicka(mod('#g')); await mikro();
+  skicka(mod('!säg ' + text)); skicka(mod('!g')); await mikro();
   const delar = [];
   for (let i = 0; i < 10 && $('.ca-bubbla').classList.contains('ca-syns'); i++) {
     delar.push($('.ca-bubbla').textContent);
@@ -239,11 +261,11 @@ test('OBS: ett långt meddelande visas helt i delar om två rader, och nästa ko
   assert.deepEqual(spelade, ['glove'], 'sedan nästa i kön');
 });
 
-test('OBS: #stopp tömmer kön och lämnar inga timrar som tänds senare', async () => {
+test('OBS: !stopp tömmer kön och lämnar inga timrar som tänds senare', async () => {
   const { skicka, $, k, spelade } = rigg({ overlay: true });
-  skicka(mod('#säg ett ganska långt meddelande som behöver flera delar för att visas helt')); skicka(mod('#d1')); skicka(mod('#f'));
+  skicka(mod('!säg ett ganska långt meddelande som behöver flera delar för att visas helt')); skicka(mod('!d1')); skicka(mod('!f'));
   await mikro();
-  skicka(mod('#stopp')); await mikro();
+  skicka(mod('!stopp')); await mikro();
   assert.equal($('.ca-bubbla').classList.contains('ca-syns'), false);
   assert.equal(k.vantande(), 0, 'alla timrar rensade');
   k.fram(60000); await mikro();
@@ -253,8 +275,8 @@ test('OBS: #stopp tömmer kön och lämnar inga timrar som tänds senare', async
 
 test('OBS: kön tar högst fem, och en borttagen widget stoppas', async () => {
   const { h, skicka, k, CA } = rigg({ overlay: true });
-  skicka(mod('#g')); await mikro();
-  for (let i = 0; i < 8; i++) skicka(mod('#säg meddelande ' + i));
+  skicka(mod('!g')); await mikro();
+  for (let i = 0; i < 8; i++) skicka(mod('!säg meddelande ' + i));
   await mikro();
   assert.equal(CA._live.get('ca1').ko.antal, 5);
   h.window.eval('state.widgets.length=0;render()');
@@ -267,13 +289,13 @@ test('OBS: en dold widget ritas inte och reagerar inte', async () => {
   const { h, skicka, spelade, $ } = rigg({ overlay: true });
   h.window.eval("state.widgets[0].hidden=true;render()");
   assert.equal($('.vyra-chattavatar'), null);
-  skicka(mod('#g')); await mikro();
+  skicka(mod('!g')); await mikro();
   assert.deepEqual(spelade, []);
 });
 
 test('OBS: namn och meddelanden skrivs som text, aldrig som HTML', async () => {
   const { skicka, $ } = rigg({ overlay: true });
-  skicka(mod('#säg <img src=x onerror=alert(1)>')); await mikro();
+  skicka(mod('!säg <img src=x onerror=alert(1)>')); await mikro();
   assert.equal($('.ca-bubbla img'), null);
   assert.match($('.ca-bubbla').textContent, /<img/);
   skicka({ type: 'member', id: 'm1', fanClubLevel: 2, username: 'x', name: '<b>Elak</b>' });
@@ -293,12 +315,69 @@ test('OBS: en vanlig tittare som går in hälsas inte, även efter klientens nor
   assert.deepEqual(spelade, ['wave'], 'fanklubbsmedlemmen hälsades');
 });
 
+// Viloläget räknar på Date.now; provklockan flyttar båda.
+function vilaRigg(over) {
+  const r = rigg({ overlay: true });
+  if (over) r.h.window.eval(`Object.assign(state.widgets[0], ${JSON.stringify(over)});render()`);
+  const bas = Date.now(); let plus = 0;
+  r.h.window.Date.now = () => bas + plus;
+  r.skicka = e => r.h.window.dispatchEvent(new r.h.window.CustomEvent('vyra-live-event', { detail: { at: bas + plus, ...e } }));
+  r.steg = async ms => { for (let i = 0; i < ms; i += 500) { plus += 500; r.k.fram(500); await mikro(); } };
+  return r;
+}
+
+test('OBS: när ingen skriver dansar avataren och ber om tap, varannan gång', async () => {
+  const { $, spelade, steg } = vilaRigg();
+  await steg(40000);
+  assert.deepEqual(spelade, [], 'inget före 45 s');
+  await steg(6000);
+  assert.deepEqual(spelade, ['dance'], 'första vilorörelsen är en dans');
+  assert.equal($('.ca-bubbla').classList.contains('ca-syns'), false, 'dansen har ingen text');
+  await steg(12500);                                     // klippet slutar (vakten 8 s + 4 s)
+  await steg(40000);
+  assert.deepEqual(spelade, ['dance'], 'nästa räknas från när dansen slutade');
+  await steg(6000);
+  assert.deepEqual(spelade, ['dance', 'wave'], 'sedan uppmaningen');
+  assert.equal($('.ca-bubbla').textContent.replace(/\s+/g, ' '), 'Tappa på skärmen! ♡', 'texten, i högst två rader');
+  assert.ok($('.ca-tap').classList.contains('ca-pa'), 'tap-hjärtat pulserar');
+  await steg(13000 + 46000);
+  assert.deepEqual(spelade, ['dance', 'wave', 'dance2'], 'och nästa dans');
+});
+
+test('OBS: ett kommando skjuter upp viloläget, och "Står still" står still', async () => {
+  const a = vilaRigg({ caVilaSek: 30, caVilaText: 'Tryck på hjärtat!' });
+  await a.steg(20000);
+  a.skicka(mod('!g'));
+  await a.steg(12500);
+  assert.deepEqual(a.spelade, ['glove']);
+  await a.steg(25000);
+  assert.deepEqual(a.spelade, ['glove'], '30 s räknas från när handsken slutade');
+  await a.steg(6000);
+  assert.deepEqual(a.spelade, ['glove', 'dance']);
+  a.skicka(mod('!stopp')); await a.steg(28000);
+  assert.deepEqual(a.spelade, ['glove', 'dance'], '!stopp väntar en hel period');
+  await a.steg(3000);
+  assert.deepEqual(a.spelade, ['glove', 'dance', 'wave']);
+  assert.equal(a.$('.ca-bubbla').textContent.replace(/\s+/g, ' '), 'Tryck på hjärtat!', 'streamerns egen text');
+
+  const b = vilaRigg({ caVila: 'av' });
+  await b.steg(300000);
+  assert.deepEqual(b.spelade, []);
+});
+
+test('studion: viloläget körs bara i OBS', async () => {
+  const { h, k, spelade } = rigg();
+  const bas = Date.now(); let plus = 0; h.window.Date.now = () => bas + plus;
+  for (let i = 0; i < 200; i++) { plus += 1000; k.fram(1000); await mikro(); }
+  assert.deepEqual(spelade, []);
+});
+
 test('studion: ▶ Testa spelar i fliken; panelen och katalogen är på svenska', async () => {
   const { h, $, spelade } = rigg();
   h.window.eval("selected='ca1'");
   const panel = h.window.eval('props()');
-  for (const ord of ['VEM FÅR STYRA', 'Bara du och dina moderatorer', 'Hälsa fanklubbsmedlemmar', '#s meddelande', 'TESTA', 'Eget meddelande']) assert.ok(panel.includes(ord), ord);
-  h.window.VyraChattavatar.testa(h.window.eval('state.widgets[0]'), '#d1'); await mikro();
+  for (const ord of ['VEM FÅR STYRA', 'Bara du och dina moderatorer', 'Hälsa medlemmar välkomna', 'NÄR INGEN SKRIVER', 'Dansar och ber om tap', '▶ Be om tap', '!s meddelande', 'TESTA', 'Eget meddelande']) assert.ok(panel.includes(ord), ord);
+  h.window.VyraChattavatar.testa(h.window.eval('state.widgets[0]'), '!d1'); await mikro();
   assert.deepEqual(spelade, ['dance']);
   assert.ok($('.ca-status').textContent.startsWith('Dans 1'));
 });
