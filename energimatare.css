@@ -40,3 +40,11 @@
 .em-farger{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
 .em-farger button{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer}
 .em-farger button[aria-pressed="true"]{border-color:#fff}
+/* FASTA RADHÖJDER (storlek-matning.browser.test.js): med `zoom` avrundas line-height:normal olika vid varje
+   storlek, och höjden skalade 1,53 när bredden skalade 1,5. Med radhöjd i px skalar lådan exakt. */
+.vyra-energi .em-namn{line-height:16px}
+.vyra-energi .em-varde{line-height:28px}
+.vyra-energi .em-tips{line-height:14px}
+.vyra-energi.em-staende .em-namn{line-height:13px}
+.vyra-energi.em-staende .em-varde{line-height:30px}
+.vyra-energi.em-staende .em-tips{line-height:12px}

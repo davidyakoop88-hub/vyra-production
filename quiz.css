@@ -44,3 +44,31 @@
 .vyra-quiz.qz-quizshow .qz-rad b{color:#ffc86f}
 .vyra-quiz.qz-quizshow .qz-topprad{color:#9cc2ff}
 .vyra-quiz.qz-quizshow .qz-rad.qz-ratt{background:#1d6249;border-color:#88e5a7}
+/* FASTA RADHÖJDER (storlek-matning och design-vid-storlek): med `zoom` avrundas line-height:normal olika vid
+   varje storlek — Quiz Show blev 0,223 hög vid 20 % och Spelkort 1,473 vid 150 %. Med radhöjd i px skalar
+   lådan exakt. */
+.vyra-quiz .qz-topprad,.vyra-quiz .qz-topprad span{line-height:12px}
+.vyra-quiz .qz-fraga{line-height:22px}
+.vyra-quiz.qz-spelkort .qz-fraga{line-height:23px}
+.vyra-quiz .qz-rad,.vyra-quiz .qz-rad span,.vyra-quiz .qz-rad b{line-height:16px}
+.vyra-quiz .qz-tips{line-height:14px}
+.vyra-quiz .qz-ledare{line-height:16px}
+.vyra-quiz .qz-topp li,.vyra-quiz .qz-topp li span,.vyra-quiz .qz-topp li b{line-height:19px}
+/* Vid små storlekar (20 %) avrundar typsnittets hintning tecknens bredd till hela pixlar, så frågan bröts en rad
+   tidigare än i full storlek och lådan blev högre än bredden skalade. Geometrisk precision följer zoomen exakt. */
+.vyra-quiz{text-rendering:geometricPrecision}
+/* KANTER SOM INRE SKUGGOR (design-vid-storlek): med `zoom` blir en kant aldrig tunnare än 1 px, så sex svarsrader
+   med kant gjorde lådan ×0,225 hög vid 20 % när bredden var ×0,200. En inre skugga ser likadan ut men tar ingen
+   plats, och lådan skalar exakt. */
+.vyra-quiz .qz-kort{border:0!important;box-shadow:inset 0 0 0 1px #655078}
+.vyra-quiz .qz-rad{border:0!important;box-shadow:inset 0 0 0 1px #ffffff13}
+.vyra-quiz .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #62d3a2}
+.vyra-quiz.qz-fragerad .qz-kort{box-shadow:inset 3px 0 0 #65d9de}
+.vyra-quiz.qz-fragerad .qz-rad,.vyra-quiz.qz-fragerad .qz-rad.qz-ratt{box-shadow:inset 0 -1px 0 #ffffff15}
+.vyra-quiz.qz-spelkort .qz-kort{box-shadow:0 4px 0 #b19a6b}
+.vyra-quiz.qz-spelkort .qz-topprad{border-bottom:0;box-shadow:inset 0 -1px 0 #a58e6b}
+.vyra-quiz.qz-spelkort .qz-rad{box-shadow:inset 0 0 0 1px #d1be96}
+.vyra-quiz.qz-spelkort .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #44865b}
+.vyra-quiz.qz-quizshow .qz-kort{box-shadow:inset 0 0 0 1px #537fc5}
+.vyra-quiz.qz-quizshow .qz-rad{box-shadow:inset 0 0 0 1px #6078a3}
+.vyra-quiz.qz-quizshow .qz-rad.qz-ratt{box-shadow:inset 0 0 0 1px #88e5a7}

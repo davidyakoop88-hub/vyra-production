@@ -1949,7 +1949,7 @@ Promise.resolve().then(()=>{
 });
 // Energimätaren - fylls av likes, gåvor, delningar, följare och chatt, töms över tid (energimatare.js).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-energimatare]')){let css=document.createElement('link');css.rel='stylesheet';css.href='energimatare.css?v=20261108-2';css.dataset.energimatare='1';document.head.append(css)}
+  if(!document.querySelector('link[data-energimatare]')){let css=document.createElement('link');css.rel='stylesheet';css.href='energimatare.css?v=20261108-3';css.dataset.energimatare='1';document.head.append(css)}
   const s=document.createElement('script');s.src='energimatare.js?v=20261108-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda energimatare.js');document.body.append(s);
 });
 // Ordjakten - chatten gissar det blandade ordet, moderatorer styr med !nästa och !lösning (ordjakten.js).
@@ -1959,7 +1959,7 @@ Promise.resolve().then(()=>{
 });
 // Quiz - chatten svarar A, B eller C, en moderator startar med !quiz (quiz.js).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-quiz]')){let css=document.createElement('link');css.rel='stylesheet';css.href='quiz.css?v=20261108-1';css.dataset.quiz='1';document.head.append(css)}
+  if(!document.querySelector('link[data-quiz]')){let css=document.createElement('link');css.rel='stylesheet';css.href='quiz.css?v=20261108-3';css.dataset.quiz='1';document.head.append(css)}
   const s=document.createElement('script');s.src='quiz.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda quiz.js');document.body.append(s);
 });
 // Match 1 vs 1 - TikToks egen match med poängcirklar, syns i OBS bara under en match (match-1v1.js).
