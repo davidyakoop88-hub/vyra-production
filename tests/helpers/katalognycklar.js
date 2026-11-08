@@ -395,4 +395,20 @@ const SHOWCASE_REGI = {
 };
 for (const d of ['takeover', 'halo', 'spotlight']) REGI['catalog:vyrapaket:showcase:' + d] = SHOWCASE_REGI;
 
+// ENERGIMÄTAREN (energimatare.js). Nivån töms varje sekund, så siffran och stapeln kan skilja en procent
+// mellan två fotograferingar. Regin använder widgetens egen krok: VyraEnergimatare.stilla() låser varje
+// mätare på startnivån utan tömning. Bilden är bestämd av kod.
+const ENERGI_REGI = {
+  fas: 'startniva', ms: 0,
+  varfor: 'nivån töms över tid; startnivån utan tömning är deterministisk',
+  regi: () => {
+    const E = window.VyraEnergimatare;
+    if (!E) return { fel: 'energimatare.js laddades inte' };
+    const n = E.stilla();
+    if (!n) return { fel: 'ingen .vyra-energi renderades' };
+    return { matare: n, varde: document.querySelector('.vyra-energi .em-varde')?.textContent };
+  },
+};
+for (const m of ['vital', 'arcade', 'minimal']) REGI['catalog:vyrapaket:energi:' + m] = ENERGI_REGI;
+
 module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
