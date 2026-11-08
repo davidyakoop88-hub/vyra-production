@@ -30,12 +30,26 @@
   const TYP = 'templateChatAvatar';
   const NAMN = 'Chattavatar';
   const OVERLAY = (typeof VYRA_OVERLAY !== 'undefined' && VYRA_OVERLAY) || /[?&]overlay(=|&|$)/.test(location.search);
-  const MAPP = 'assets/chattavatar/';
-  const VILA = MAPP + 'vyra-avatar-idle.png';
-  const KLIPP = Object.freeze({
-    dance: MAPP + 'vyra-avatar-flow-dance-v2.webm', dance2: MAPP + 'vyra-avatar-flow-dance2.webm', dance3: MAPP + 'vyra-avatar-flow-dance3.webm',
-    wave: MAPP + 'vyra-avatar-flow-wave.webm', glove: MAPP + 'vyra-avatar-flow-glove.webm', fira: MAPP + 'vyra-avatar-flow-fira-v2.webm'
+  // AVATARERNA. Varje modell är en egen mapp med samma sju filnamn. Nr 1 är originalet från
+  // 2026-11-06 och förblir standard, så befintliga widgetar ser ut som förut. Nr 2 (Codex, 2026-11-08):
+  // helkropp, 360 x 530 = samma proportioner som avatarlådan 180 x 265. En ny avatar = en ny mapp och
+  // en rad här — ta aldrig bort en gammal, widgetar i molnet pekar på den.
+  const FILER = { vila: 'vyra-avatar-idle.png', dance: 'vyra-avatar-flow-dance-v2.webm', dance2: 'vyra-avatar-flow-dance2.webm',
+    dance3: 'vyra-avatar-flow-dance3.webm', wave: 'vyra-avatar-flow-wave.webm', glove: 'vyra-avatar-flow-glove.webm', fira: 'vyra-avatar-flow-fira-v2.webm' };
+  const MODELLER = Object.freeze({
+    nr1: Object.freeze({ namn: 'Avatar 1', mapp: 'assets/chattavatar/' }),
+    nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', mapp: 'assets/chattavatar/nr2/' })
   });
+  const STANDARD_MODELL = 'nr1';
+  const modell = w => (w && Object.prototype.hasOwnProperty.call(MODELLER, w.caModell) ? w.caModell : STANDARD_MODELL);
+  function filerFor(m) {
+    const mapp = (MODELLER[m] || MODELLER[STANDARD_MODELL]).mapp;
+    const klipp = {};
+    for (const k of Object.keys(FILER)) if (k !== 'vila') klipp[k] = mapp + FILER[k];
+    return Object.freeze({ vila: mapp + FILER.vila, klipp: Object.freeze(klipp) });
+  }
+  const VILA = filerFor(STANDARD_MODELL).vila;
+  const KLIPP = filerFor(STANDARD_MODELL).klipp;
   // Scenen i designmått: avataren 180 x 265 längst ned, plats för bubblan ovanför.
   const SCEN_B = 180, SCEN_H = 325, STANDARD_B = 72;
   // Bubblan är 168 bred med 12 px luft på var sida = 144. Mätningen görs mot 134: i OBS skalas texten
@@ -85,7 +99,7 @@
     if (!t) {
       t = { id, ko: M.skapaKo(), serial: 0, timers: new Set(), videor: new Map(), trasiga: new Set(),
         spelar: null, klipp: null, videoSyns: false, sidor: [], sida: 0, bubbla: false, tap: false, status: 'Vilar',
-        senast: Date.now(), vilaN: 0 };
+        senast: Date.now(), vilaN: 0, modell: modell(widget(id)) };
       t.router = M.skapaRouter({
         nu: serverNu, streamer,
         publik: () => publik(widget(id)), halsa: () => halsa(widget(id)), tacka: () => tacka(widget(id))
@@ -108,7 +122,7 @@
       v = document.createElement('video');
       v.className = 'ca-klipp'; v.muted = true; v.defaultMuted = true; v.setAttribute('muted', '');
       v.playsInline = true; v.setAttribute('playsinline', ''); v.disablePictureInPicture = true;
-      v.preload = OVERLAY ? 'auto' : 'metadata'; v.src = KLIPP[nyckel]; v.dataset.klipp = nyckel;
+      v.preload = OVERLAY ? 'auto' : 'metadata'; v.src = filerFor(t.modell).klipp[nyckel]; v.dataset.klipp = nyckel;
       t.videor.set(nyckel, v);
     }
     return v;
@@ -116,7 +130,20 @@
 
   // Lägger in videonoderna och läget i den aktuella lådan. Körs efter varje render(), som bygger om
   // DOM:en, och efter varje lägesbyte.
+  // Byt avatar: det som spelas stoppas och den gamla modellens videor släpps, så att nästa klipp
+  // laddas ur den nya mappen. Kön behålls.
+  function bytModell(t, m) {
+    if (t.modell === m) return;
+    t.modell = m;                // först: stoppa() anropar applicera(), som annars bytte igen
+    t.serial++; rensaTimrar(t);
+    t.videor.forEach(v => { v.onended = v.onerror = v.onpause = null; try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} v.remove(); });
+    t.videor.clear(); t.trasiga.clear();
+    stoppa(t, false);
+  }
+
   function applicera(t) {
+    const w = widget(t.id);
+    if (w && t.modell !== modell(w)) { bytModell(t, modell(w)); return; }
     const rot = rotFor(t.id); if (!rot) return;
     const vard = rot.querySelector('.ca-vard');
     if (vard) {
@@ -285,7 +312,7 @@
     const valt = typeof selected !== 'undefined' && selected === w.id;
     return `<div class="widget vyra-chattavatar${OVERLAY ? '' : ' ca-studio'}${valt ? ' selected' : ''}" data-id="${esc(w.id)}" `
       + `style="left:${Number(w.x) || 0}px;top:${Number(w.y) || 0}px;width:${bredd}px;height:${hojd}px;--ca-z:${(bredd / SCEN_B).toFixed(4)}">`
-      + `<div class="ca-scen"><div class="ca-avatar"><img class="ca-vila" src="${VILA}" alt="" draggable="false"><div class="ca-vard"></div></div>`
+      + `<div class="ca-scen"><div class="ca-avatar"><img class="ca-vila" src="${esc(filerFor(modell(w)).vila)}" alt="" draggable="false"><div class="ca-vard"></div></div>`
       + `<div class="ca-bubbla" aria-live="polite"></div><div class="ca-tap" aria-hidden="true">♡</div></div>`
       + (OVERLAY ? '' : '<span class="ca-status"></span>')
       + (valt ? '<span class="resize-handle">↘</span>' : '') + '</div>';
@@ -312,6 +339,9 @@
     const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
     if (!w || w.type !== TYP) return oldProps();
     return `<h3>CHATTAVATAR</h3><div class="template-badge">AVATAR · STYRS FRÅN CHATTEN</div><div hidden><input id="pt" value="${NAMN}"><input id="pv" value=""></div>`
+      + `<div class="property-group"><h4>AVATAR</h4><label>Vilken avatar<select id="caModell">`
+      + Object.entries(MODELLER).map(([v, m]) => `<option value="${v}"${modell(w) === v ? ' selected' : ''}>${esc(m.namn)}</option>`).join('')
+      + `</select></label><small>Alla kommandon fungerar likadant med båda.</small></div>`
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
       + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (!d1 !d2 !d3 !t)</option></select></label>`
@@ -365,6 +395,10 @@
     if (!w || w.type !== TYP) return;
     const satt = (falt, v) => { w[falt] = v; if (typeof save === 'function') save(); };
     const el = id => document.querySelector(id);
+    if (el('#caModell')) el('#caModell').onchange = e => {
+      w.caModell = Object.prototype.hasOwnProperty.call(MODELLER, e.target.value) ? e.target.value : STANDARD_MODELL;
+      if (typeof save === 'function') save(); if (typeof render === 'function') render();
+    };
     if (el('#caPublik')) el('#caPublik').onchange = e => satt('caPublik', e.target.value === 'alla' ? 'alla' : 'mod');
     if (el('#caHalsa')) el('#caHalsa').onchange = e => satt('caHalsa', !!e.target.checked);
     if (el('#caTacka')) el('#caTacka').onchange = e => satt('caTacka', !!e.target.checked);
@@ -378,6 +412,6 @@
     if (el('#caStorlek')) el('#caStorlek').onclick = () => { w.width = STANDARD_B; if (typeof save === 'function') save(); if (typeof render === 'function') render(); };
   };
 
-  window.VyraChattavatar = Object.freeze({ typ: TYP, namn: NAMN, KLIPP, VILA, SCEN_B, SCEN_H, STANDARD_B, TEXT_B, testa, hantera, _live: LIVE, _till: till, _stoppa: stoppa, _vila: vila });
+  window.VyraChattavatar = Object.freeze({ typ: TYP, namn: NAMN, KLIPP, VILA, MODELLER, STANDARD_MODELL, filerFor, SCEN_B, SCEN_H, STANDARD_B, TEXT_B, testa, hantera, _live: LIVE, _till: till, _stoppa: stoppa, _vila: vila });
   try { if (typeof render === 'function') render(); } catch (_) {}
 })();
