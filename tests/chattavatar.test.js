@@ -214,6 +214,49 @@ test('katalognyckeln bygger widgeten, alla klipp finns och den ritas i paketets 
   assert.doesNotMatch(css, /\.ca-bubbla\{[^}]*(?:left:auto|right:\d{3})/);
 });
 
+test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och byter alla filer', async () => {
+  const { $, CA, w, h, skicka, spelade, k } = rigg({ overlay: true });
+  assert.deepEqual(Object.keys(CA.MODELLER), ['nr1', 'nr2']);
+  assert.equal(CA.STANDARD_MODELL, 'nr1', 'befintliga widgetar behåller sin avatar');
+  for (const m of Object.keys(CA.MODELLER)) {
+    const f = CA.filerFor(m);
+    assert.equal(Object.keys(f.klipp).sort().join(), Object.keys(CA.KLIPP).sort().join(), m + ' har alla klipp');
+    for (const fil of [...Object.values(f.klipp), f.vila]) {
+      assert.ok(fil.startsWith(CA.MODELLER[m].mapp), fil);
+      assert.ok(fs.existsSync(path.join(ROT, fil)), fil + ' saknas');
+    }
+  }
+  assert.notEqual(CA.filerFor('nr2').vila, CA.VILA, 'nr 2 skriver inte över nr 1');
+  assert.equal(CA.filerFor('hack').vila, CA.VILA, 'okänd modell faller tillbaka på nr 1');
+
+  assert.equal(w().caModell, undefined);
+  assert.equal($('.ca-vila').getAttribute('src'), CA.VILA);
+  skicka(mod('!g')); await mikro();
+  assert.equal($('.ca-klipp[data-klipp="glove"]').getAttribute('src'), CA.KLIPP.glove);
+
+  h.window.eval(`state.widgets[0].caModell='nr2';render()`); await mikro();
+  assert.equal($('.ca-vila').getAttribute('src'), CA.filerFor('nr2').vila, 'vilobilden byts');
+  assert.equal($('.ca-klipp.ca-pa'), null, 'det som spelades stoppas vid bytet');
+  spelade.length = 0; k.fram(3000);
+  skicka(mod('!f')); await mikro();
+  assert.deepEqual(spelade, ['fira']);
+  const klipp = [...h.window.document.querySelectorAll('.ca-klipp')].map(v => v.getAttribute('src'));
+  assert.ok(klipp.length && klipp.every(s => s.startsWith(CA.MODELLER.nr2.mapp)), 'bara nr 2:s klipp finns kvar: ' + klipp.join(' '));
+
+  h.window.eval(`state.widgets[0].caModell='finns-inte';render()`); await mikro();
+  assert.equal($('.ca-vila').getAttribute('src'), CA.VILA);
+});
+
+test('panelen: avatarvalet listar båda, och den valda är markerad', () => {
+  const { h } = rigg();
+  h.window.eval(`selected='ca1'`);
+  const val = () => [...h.window.eval('props()').matchAll(/<option value="(nr\d)"( selected)?/g)].map(m => m[1] + (m[2] ? '*' : ''));
+  assert.match(h.window.eval('props()'), /<h4>AVATAR<\/h4><label>Vilken avatar<select id="caModell">/);
+  assert.deepEqual(val(), ['nr1*', 'nr2']);
+  h.window.eval(`state.widgets[0].caModell='nr2'`);
+  assert.deepEqual(val(), ['nr1', 'nr2*']);
+});
+
 test('studion reagerar inte på riktig chatt — bara OBS', async () => {
   const { skicka, spelade, k } = rigg();
   skicka(mod('!g')); await mikro(); k.fram(100);
