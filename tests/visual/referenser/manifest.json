@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 234,
+ "antal": 239,
  "senaste": {
-  "motiv": "Energimätaren (Health Bar): tre nya katalognycklar (vital, arcade, minimal), David 2026-11-07",
-  "nycklar": 3,
-  "filter": "vyrapaket:energi",
-  "tid": "2026-11-08T00:16:12.643Z"
+  "motiv": "Ordjakten, Quiz (tre designer) och Match 1 vs 1: fem nya katalognycklar, David 2026-11-07",
+  "nycklar": 5,
+  "filter": "vyrapaket:ordjakten,vyrapaket:quiz,vyrapaket:match",
+  "tid": "2026-11-08T00:56:49.357Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -948,6 +948,26 @@
   },
   "catalog:vyrapaket:energi:vital": {
    "matt": "270x93",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:match:1v1": {
+   "matt": "320x182",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:ordjakten": {
+   "matt": "300x203",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:fragerad": {
+   "matt": "300x233",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:quizshow": {
+   "matt": "300x250",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:quiz:spelkort": {
+   "matt": "300x275",
    "fyllnad": 100
   }
  }
