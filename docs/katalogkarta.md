@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5b93ad45`
+Commit: `d0d5d251`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -65,7 +65,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
 | BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
 | CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
-| VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
+| VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
 | ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
 | ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | — |
 | QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | — |
@@ -357,9 +357,9 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Name Takeover | `catalog:vyrapaket:showcase:takeover` | ✓ | ✓ | 2026-11-08 | — |
-| Halo Reveal | `catalog:vyrapaket:showcase:halo` | ✓ | ✓ | 2026-11-08 | — |
-| Spotlight Slide | `catalog:vyrapaket:showcase:spotlight` | ✓ | ✓ | 2026-11-08 | — |
+| Name Takeover | `catalog:vyrapaket:showcase:takeover` | ✓ | ✓ | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
+| Halo Reveal | `catalog:vyrapaket:showcase:halo` | ✓ | ✓ | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
+| Spotlight Slide | `catalog:vyrapaket:showcase:spotlight` | ✓ | ✓ | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
 
 ### ENERGIMÄTARE
 
