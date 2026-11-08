@@ -559,6 +559,10 @@
   function ritaSnart() {
     if (!window.VyraRitaSnart) {
       let vantar = false;
+      // Ritar något annat om studion innan vi hunnit (vybyte, ett prov, en annan modul) behövs
+      // vår omritning inte längre: den använder redan de yttersta lagren. Den stryks, så att ingen
+      // sen omritning river en vy som just byggts (CI 2026-11-08: command-center-alltime).
+      if (typeof render === 'function') { const r0 = render; render = function () { vantar = false; return r0.apply(this, arguments); }; }
       window.VyraRitaSnart = function () {
         if (vantar) return;
         vantar = true;

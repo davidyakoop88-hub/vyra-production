@@ -45,6 +45,17 @@ test('lindningen sker ändå direkt: de tre ligger ytterst efter varje sent skri
   assert.equal(h.window.eval('wh.__sent'), undefined, 'det sena skriptets lager ligger ytterst');
 });
 
+test('ritar något annat om studion först, stryks den väntande omritningen', async () => {
+  // CI 2026-11-08 (command-center-alltime): provet bytte vy med render() och läste listan direkt,
+  // och den väntande omritningen kom 100 ms senare och byggde om vyn mitt i läsningen.
+  const { sentSkript, ritningar, run } = rigg();
+  sentSkript(1); sentSkript(2);
+  run('render()');
+  assert.equal(ritningar(), 1);
+  await vanta(150);
+  assert.equal(ritningar(), 1, 'den väntande omritningen kom ändå, efter en omritning som redan använde de yttersta lagren');
+});
+
 test('en ny omgång sena skript efter omritningen ritar om igen', async () => {
   const { sentSkript, ritningar } = rigg();
   sentSkript(1); await vanta(150);
