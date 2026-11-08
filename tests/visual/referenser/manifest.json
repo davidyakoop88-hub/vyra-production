@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 228,
+ "antal": 231,
  "senaste": {
-  "motiv": "Låtönskningar · Spotify får två designer i mörk VYRA-lila (Spotifykö, Ren musikrad) med Spotifys kö och ett märkt exempel i studion, David 2026-11-07",
-  "nycklar": 1,
-  "filter": "latonskningar:spotify",
-  "tid": "2026-11-07T22:20:21.822Z"
+  "motiv": "Viewer Showcase: tre nya katalognycklar (takeover, halo, spotlight), David 2026-11-07",
+  "nycklar": 3,
+  "filter": "vyrapaket:showcase",
+  "tid": "2026-11-08T00:02:56.477Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -924,6 +924,18 @@
   },
   "catalog:vyrapaket:chattavatar": {
    "matt": "72x130",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:showcase:halo": {
+   "matt": "300x206",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:showcase:spotlight": {
+   "matt": "300x206",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:showcase:takeover": {
+   "matt": "300x206",
    "fyllnad": 100
   }
  }
