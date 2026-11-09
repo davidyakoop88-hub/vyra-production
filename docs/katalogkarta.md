@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `eddc310b`
+Commit: `3404e8b0`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **169** |
+| Kort totalt | **170** |
 | Sektioner | 33 |
-| Med katalognyckel | 169 / 169 |
-| Med shadow DOM-miniatyr | 137 / 169  ⚠️ |
-| Ritar sin design | 169 / 169 |
+| Med katalognyckel | 170 / 170 |
+| Med shadow DOM-miniatyr | 138 / 170  ⚠️ |
+| Ritar sin design | 170 / 170 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -63,11 +63,11 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | TOP GIFTERS PODIUM · VARJE RAM SEPARAT | 13 | 13/13 | 0/13 ⚠️ | 13/13 | 2026-10-19 | [#662](https://github.com/davidyakoop88-hub/vyra-production/pull/662) |
 | BOXGAME | 1 | 1/1 | 1/1 | 1/1 | 2026-10-25 | [#706](https://github.com/davidyakoop88-hub/vyra-production/pull/706) |
 | HJÄRTAN & MOLN | 9 | 9/9 | 9/9 | 9/9 | 2026-10-25 | [#709](https://github.com/davidyakoop88-hub/vyra-production/pull/709) |
-| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
-| CHATTAVATAR | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| BERTIL PAKET | 1 | 1/1 | 1/1 | 1/1 | 2026-11-09 | — |
+| CHATTAVATAR | 2 | 2/2 | 2/2 | 2/2 | 2026-11-09 | — |
 | VIEWER SHOWCASE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#742](https://github.com/davidyakoop88-hub/vyra-production/pull/742) |
 | ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
-| ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-09 | — |
 | QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | MATCH | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
@@ -345,13 +345,14 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Bertil paket | `catalog:vyrapaket:bertil` | ✓ | ✓ | 2026-11-09 | — |
 
 ### CHATTAVATAR
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Chattavatar | `catalog:vyrapaket:chattavatar` | ✓ | ✓ | 2026-11-09 | — |
+| Chattavatar 2 · helkropp | `catalog:vyrapaket:chattavatar:2` | ✓ | ✓ | 2026-11-09 | — |
 
 ### VIEWER SHOWCASE
 
@@ -373,7 +374,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Ordjakten | `catalog:vyrapaket:ordjakten` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
+| Ordjakten | `catalog:vyrapaket:ordjakten` | ✓ | ✓ | 2026-11-09 | — |
 
 ### QUIZ
 
