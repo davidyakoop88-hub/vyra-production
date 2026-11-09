@@ -166,6 +166,31 @@
   }
   flikar.forEach(f => { f.onclick = () => visaFlik(f.dataset.loginFlik) });
 
+  // "Skapa konto — 3 dagar gratis" i prisrutan och längst ner (granskningen 2026-11-09): sidans
+  // enda stora knapp var Logga in. Knapparna går genom SAMMA kort — ingen egen registrering —
+  // byter till fliken, tar kortet i bild och lägger markören i första fältet. Under minskad
+  // rörelse hoppar sidan i stället för att glida. tests/browser/framsida-konto-yta F34.
+  // Målet räknas EFTER flikbytet: kortet växer när Skapa konto visar namnfältet och villkoren, och
+  // en glidning (styles.css har scroll-behavior:smooth) mot den gamla positionen stannade 561 px
+  // för tidigt på telefon — uppmätt. Därför en bildruta väntan, sedan ett eget mål.
+  const lugn = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  document.querySelectorAll('[data-prova-gratis]').forEach(b => {
+    b.onclick = () => {
+      visaFlik('register');
+      requestAnimationFrame(() => {
+        const r = kort.getBoundingClientRect();
+        const mal = Math.max(0, window.scrollY + r.top - Math.max(16, (window.innerHeight - r.height) / 2));
+        const falt = namnFalt.querySelector('input');
+        let klar = false;
+        const fokusera = () => { if (klar) return; klar = true; if (falt) falt.focus({ preventScroll: true }); };
+        if (lugn) { window.scrollTo({ top: mal, behavior: 'instant' }); fokusera(); return; }
+        window.addEventListener('scrollend', fokusera, { once: true });
+        setTimeout(fokusera, 900);   // scrollend saknas i äldre Safari
+        window.scrollTo({ top: mal, behavior: 'smooth' });
+      });
+    };
+  });
+
   // Piltangenter, Home och End — automatisk aktivering, som i WAI-ARIA:s flikmönster. Två flikar
   // och inget dyrt bakom bytet, så fokus och val följs åt.
   const flikrad = kort.querySelector('[data-login-flikrad]');

@@ -195,3 +195,38 @@ test('F33 · på telefon visar första skärmen produkten — bilden före inlog
   }
   assert.deepEqual(brott, [], 'första skärmen på telefon:\n  ' + brott.join('\n  '));
 });
+
+// GRANSKNINGEN 2026-11-09: sidans enda stora knapp var "Logga in" — "Skapa konto" en flik bredvid,
+// "3 dagar gratis" bara text, och efter exemplen längst ner fanns ingen knapp alls. Två knappar
+// "Skapa konto — 3 dagar gratis" (prisrutan och sidans slut) går genom SAMMA kort: de byter till
+// fliken Skapa konto, tar kortet i bild och lägger markören i första fältet. Inget nytt flöde.
+test('F34 · "Skapa konto — 3 dagar gratis" i prisrutan och längst ner leder till registreringen',
+  { skip, timeout: 120000 }, async () => {
+  for (const vy of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    for (const vilken of ['forsta', 'sista']) {
+      const { context, page } = await sidan(vy);
+      try {
+        const knappar = await page.$$('[data-prova-gratis]');
+        assert.ok(knappar.length >= 2, `${vy.width}: ${knappar.length} knappar — en i prisrutan och en längst ner`);
+        assert.ok(await page.$('.hero-prisrad [data-prova-gratis]'), 'prisrutan saknar knappen');
+        const knapp = vilken === 'forsta' ? knappar[0] : knappar[knappar.length - 1];
+        await knapp.scrollIntoViewIfNeeded();
+        assert.match(await knapp.innerText(), /Skapa konto.*3 dagar gratis/);
+        await knapp.click();
+        await page.waitForTimeout(700);
+        const m = await page.evaluate(() => {
+          const kort = document.querySelector('[data-login]').getBoundingClientRect();
+          return {
+            flik: document.querySelector('[data-login-flik="register"]').getAttribute('aria-selected'),
+            fokus: document.activeElement && document.activeElement.id,
+            kortSyns: kort.top < innerHeight && kort.bottom > 0,
+          };
+        });
+        const vid = `${vy.width} ${vilken}`;
+        assert.equal(m.flik, 'true', `${vid}: fliken Skapa konto valdes inte`);
+        assert.equal(m.fokus, 'loginName', `${vid}: markören står i ${m.fokus}, inte i första fältet`);
+        assert.ok(m.kortSyns, `${vid}: kortet syns inte efter klicket`);
+      } finally { await context.close() }
+    }
+  }
+});

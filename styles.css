@@ -1000,3 +1000,26 @@ html.vyra-kollar-session{visibility:hidden}
   .hero-botten .hero-mobil-scen{order:-1;margin:4px auto 26px}
   .hero-botten .hero-mobil{width:min(220px,58vw)}
 }
+
+/* ==== "SKAPA KONTO — 3 DAGAR GRATIS" (granskningen 2026-11-09). Sidans enda stora knapp var Logga
+   in; den som scrollat igenom exemplen hittade ingen knapp alls langst ner. Tva knappar som leder
+   till kortets flik Skapa konto (landing-login.js): en i prisrutan, en i en avslutande ruta fore
+   sidfoten. Knappen i prisrutan ar medvetet mindre an .big — prisraden maste rymmas pa forsta
+   skarmen i laga fonster (F30-provet mater det). SIST I FILEN med flit. */
+.hero-prova{margin-top:8px;padding:10px 20px;font-size:14px;min-height:44px;
+  display:inline-flex;align-items:center;gap:8px}
+.avslut-cta{position:relative;z-index:1;max-width:760px;margin:48px auto 72px;padding:44px 22px 46px;
+  text-align:center;border-radius:22px;background:linear-gradient(165deg,#171022f2,#0d0815e6);
+  border:1px solid #3a284899;box-shadow:0 30px 70px -36px #000,0 0 60px -24px rgba(168,58,239,.34)}
+.avslut-cta h2{font:800 34px/1.15 var(--font-display);letter-spacing:-.02em;color:#fff;margin:0 0 12px;
+  text-wrap:balance}
+.avslut-cta p{color:var(--muted);max-width:520px;margin:0 auto 24px;line-height:1.6}
+.avslut-cta .primary{display:inline-flex;align-items:center;gap:10px}
+/* Laptop med webblasarlist (1366 x 657): prisraden star dar redan pa bredden for att rymmas, och
+   knappen gjorde den 42 px for hog (slutade pa y=699, framsida-logo-provet). Kortet med fliken Skapa
+   konto star bredvid pa samma skarm och knappen langst ner finns kvar — har far den ge vika. */
+@media (min-width:981px) and (max-height:720px){.hero-prisrad .hero-prova{display:none}}
+@media (max-width:760px){
+  .avslut-cta{margin:32px 16px 56px;padding:32px 18px 34px}
+  .avslut-cta h2{font-size:26px}
+}
