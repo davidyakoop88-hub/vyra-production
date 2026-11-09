@@ -986,3 +986,17 @@ html.vyra-kollar-session{visibility:hidden}
 }
 /* Slutgranskning 2026-10-20 C-023: den tomma felraden gav en extra lucka i rutnatet (Skapa konto). */
 .login-kort #loginError:empty{display:none}
+
+/* ==== TELEFON: PRODUKTEN FORST (granskningen 2026-11-09, David: "fixa alla tre").
+   Datorns regler for KORTA fonster ovan (max-height 1000 / 820 px) slog till aven pa telefoner,
+   som ocksa ar korta: mobilbilden krympte till min(168px,20vw) = 94 px pa en iPhone 390x844 och
+   72 px pa en 360-bred Android, och lag UNDER inloggningskortet pa y=819 av 844. Rubriken fick
+   samma lacka — datorns 50 px i stallet for telefonens 42 (regeln vid max-width 760 ovan).
+   Pa telefon kommer darfor bilden FORE kortet och ar tillrackligt stor for att visa vad VYRA ar;
+   kortet foljer direkt under. Datorns placering (kortet till vanster, bilden i mitten) ror vi inte.
+   SIST I FILEN med flit, samma skal som blocken ovan. tests/browser/framsida-konto-yta F33. */
+@media (max-width:760px){
+  .hero h1{font-size:42px}
+  .hero-botten .hero-mobil-scen{order:-1;margin:4px auto 26px}
+  .hero-botten .hero-mobil{width:min(220px,58vw)}
+}

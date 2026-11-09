@@ -166,3 +166,32 @@ test('F30 · kortet, rubriken, underrubriken, bilden och prisraden har var sin y
   }
   assert.deepEqual(brott, [], 'ytor som konkurrerar:\n  ' + brott.join('\n  '));
 });
+
+// GRANSKNINGEN 2026-11-09 (David: "fixa alla tre"): på en telefon var första skärmen rubrik och
+// inloggningsformulär — produkten syntes inte. Datorns regler för KORTA fönster (max-height 1000 /
+// 820 px) slog till även på telefoner, som också är korta: bilden krympte till min(168px, 20vw) =
+// 94 px på en iPhone och 72 px på en 360-bred Android, och låg UNDER kortet på y=819 av 844. Samma
+// läcka gav rubriken datorns 50 px i stället för telefonens 42 px.
+// Kravet: bilden kommer före kortet, är minst 200 px bred och står i sin helhet på första skärmen,
+// och rubriken har telefonens storlek. Kortet ligger aldrig över bilden.
+test('F33 · på telefon visar första skärmen produkten — bilden före inloggningen, och hel',
+  { skip, timeout: 120000 }, async () => {
+  const brott = [];
+  for (const vy of [{ width: 390, height: 844 }, { width: 360, height: 740 }, { width: 414, height: 896 }]) {
+    const { context, page } = await sidan(vy);
+    try {
+      const m = await page.evaluate(() => {
+        const r = sel => document.querySelector(sel).getBoundingClientRect();
+        const bild = r('.hero-mobil'), kort = r('[data-login]');
+        return { bildB: Math.round(bild.width), bildT: Math.round(bild.top), bildBotten: Math.round(bild.bottom),
+          kortT: Math.round(kort.top), h1: parseFloat(getComputedStyle(document.querySelector('.hero h1')).fontSize) };
+      });
+      const vid = `${vy.width}×${vy.height}`;
+      if (m.bildB < 200) brott.push(`${vid}: bilden är ${m.bildB} px bred (minst 200)`);
+      if (m.bildT >= m.kortT) brott.push(`${vid}: bilden (y=${m.bildT}) kommer efter inloggningen (y=${m.kortT})`);
+      if (m.bildBotten > vy.height) brott.push(`${vid}: bilden slutar på y=${m.bildBotten}, under första skärmen (${vy.height})`);
+      if (m.h1 > 42) brott.push(`${vid}: rubriken är ${m.h1} px — datorns storlek, inte telefonens 42`);
+    } finally { await context.close() }
+  }
+  assert.deepEqual(brott, [], 'första skärmen på telefon:\n  ' + brott.join('\n  '));
+});
