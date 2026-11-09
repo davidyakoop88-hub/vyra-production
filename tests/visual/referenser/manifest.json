@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 239,
+ "antal": 240,
  "senaste": {
-  "motiv": "Quiz och Energimätaren: fasta radhöjder och kanter som inre skuggor (likformig storlek), David 2026-11-08",
-  "nycklar": 6,
-  "filter": "vyrapaket:quiz,vyrapaket:energi",
-  "tid": "2026-11-08T02:11:49.042Z"
+  "motiv": "Ny katalognyckel catalog:vyrapaket:chattavatar:2 (PR #750) — förra körningen tog bilden men pushen studsade",
+  "nycklar": 160,
+  "filter": null,
+  "tid": "2026-11-09T12:25:16.266Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -968,6 +968,10 @@
   },
   "catalog:vyrapaket:quiz:spelkort": {
    "matt": "300x274",
+   "fyllnad": 100
+  },
+  "catalog:vyrapaket:chattavatar:2": {
+   "matt": "72x130",
    "fyllnad": 100
   }
  }
