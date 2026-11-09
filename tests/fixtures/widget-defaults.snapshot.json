@@ -849,6 +849,17 @@
     "caHalsa": true,
     "caTacka": true
   },
+  "catalog:vyrapaket:chattavatar:2": {
+    "type": "templateChatAvatar",
+    "x": 350,
+    "y": 400,
+    "width": 72,
+    "title": "Chattavatar 2 · helkropp",
+    "caPublik": "mod",
+    "caHalsa": true,
+    "caTacka": true,
+    "caModell": "nr2"
+  },
   "catalog:vyrapaket:showcase:takeover": {
     "type": "templateViewerShowcase",
     "x": 66,

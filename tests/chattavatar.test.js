@@ -247,14 +247,37 @@ test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och b
   assert.equal($('.ca-vila').getAttribute('src'), CA.VILA);
 });
 
-test('panelen: avatarvalet listar båda, och den valda är markerad', () => {
-  const { h } = rigg();
+test('varje avatar är en egen widget: egen nyckel, inget avatarval i panelen', () => {
+  // David 2026-11-08: "jag vill varje avatar ska vara för sig själv".
+  const { h, CA } = rigg();
+  const W = h.window.VyraWidgets;
+  const ett = W.create('catalog:vyrapaket:chattavatar'), tva = W.create('catalog:vyrapaket:chattavatar:2');
+  assert.equal(ett.caModell, undefined, 'avatar 1 är standardmodellen');
+  assert.equal(tva.caModell, 'nr2');
+  assert.equal(tva.type, 'templateChatAvatar');
+  assert.equal(tva.title, 'Chattavatar 2 · helkropp');
+  assert.throws(() => W.create('catalog:vyrapaket:chattavatar:9'), /Okänd chattavatar/);
+  assert.deepEqual(Object.values(CA.MODELLER).map(m => m.nyckel), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2']);
+
   h.window.eval(`selected='ca1'`);
-  const val = () => [...h.window.eval('props()').matchAll(/<option value="(nr\d)"( selected)?/g)].map(m => m[1] + (m[2] ? '*' : ''));
-  assert.match(h.window.eval('props()'), /<h4>AVATAR<\/h4><label>Vilken avatar<select id="caModell">/);
-  assert.deepEqual(val(), ['nr1*', 'nr2']);
+  const panel1 = h.window.eval('props()');
+  assert.doesNotMatch(panel1, /id="caModell"/, 'panelen har fortfarande ett avatarval');
+  assert.match(panel1, /<h3>CHATTAVATAR<\/h3><div class="template-badge">AVATAR 1 · STYRS FRÅN CHATTEN/);
   h.window.eval(`state.widgets[0].caModell='nr2'`);
-  assert.deepEqual(val(), ['nr1', 'nr2*']);
+  assert.match(h.window.eval('props()'), /<h3>CHATTAVATAR 2 · HELKROPP<\/h3><div class="template-badge">AVATAR 2 · HELKROPP · STYRS FRÅN CHATTEN/);
+});
+
+test('katalogen: ett kort per avatar, och varje kort skapar sin egen avatar', () => {
+  const { h, CA } = rigg();
+  h.document.body.insertAdjacentHTML('beforeend', '<div class="widget-catalog"></div>');
+  h.window.eval(`view='editor'; try { bind() } catch (e) {}`);
+  const kort = [...h.document.querySelectorAll('.ca-katalog [data-ca-skapa]')];
+  assert.deepEqual(kort.map(b => b.dataset.catalogKey), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2']);
+  assert.deepEqual(kort.map(b => b.querySelector('img').getAttribute('src')), [CA.VILA, CA.filerFor('nr2').vila]);
+  assert.deepEqual(kort.map(b => b.querySelector('b').textContent), ['Chattavatar', 'Chattavatar 2 · helkropp']);
+  kort[1].click();
+  const ny = h.window.eval('state.widgets[state.widgets.length-1]');
+  assert.equal(ny.caModell, 'nr2', 'kortet för avatar 2 skapade inte avatar 2');
 });
 
 test('studion reagerar inte på riktig chatt — bara OBS', async () => {
