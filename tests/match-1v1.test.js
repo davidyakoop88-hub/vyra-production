@@ -91,3 +91,46 @@ test('CSS och koppling: dold i OBS utan match, ingen kortram, grinden väntar in
   assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /const UNDANTAG = new Set\(\[[^\]]*'templateMatchDuel'/);
   assert.match(fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8'), /match-1v1\.js\?v=\d{8}-\d+/);
 });
+
+// 2026-11-09, Davids sändning: efter sändningens första match ritades HELA layouten om en gång i
+// sekunden (render() i klockan, villkoret MATCH.aktiv blir aldrig falskt igen) — även utan någon
+// Match 1 vs 1 i layouten. Varje annan widget revs varje sekund; Top Gifts gåvovideo kom aldrig igång.
+test('en match ritar aldrig om hela layouten: bara matchwidgetens egna noder skrivs', () => {
+  const dom = sida(), win = dom.window, M = win.VyraMatch1v1, w = ny();
+  try {
+    let renders = 0;
+    win.render = () => { renders += 1; };
+    win.state.widgets.push(w);
+    win.document.body.innerHTML = win.wh(w) + '<div class="widget annan" data-id="x">orörd</div>';
+    const nod = win.document.querySelector('.vyra-match'), annan = win.document.querySelector('.annan');
+    assert.ok(nod.classList.contains('md-dold'), 'utan match ska widgeten vara dold i OBS');
+    win.dispatchEvent(new win.CustomEvent('vyra-live-event', { detail: { type: 'battle', battleId: 'b1', battleStatus: 'battle_started', scoreUs: 300, scoreThem: 100, remainingSec: 200 } }));
+    assert.equal(renders, 0, 'en battle-händelse anropade render() — hela layouten byggdes om');
+    assert.equal(win.document.querySelector('.vyra-match'), nod, 'matchwidgetens nod byttes ut i stället för att skrivas på plats');
+    assert.ok(!nod.classList.contains('md-dold'), 'widgeten visades inte när matchen började');
+    assert.deepEqual([...nod.querySelectorAll('.md-poang')].map(e => e.textContent), ['300', '100']);
+    win.dispatchEvent(new win.CustomEvent('vyra-live-event', { detail: { type: 'battle', battleId: 'b1', battleStatus: 'battle_finished', scoreUs: 900, scoreThem: 100 } }));
+    assert.ok(nod.classList.contains('md-slut'));
+    assert.match(nod.textContent, /SLUT · Du vinner/);
+    assert.equal(renders, 0);
+    assert.equal(win.document.querySelector('.annan'), annan, 'en annan widget i layouten byttes ut');
+  } finally { dom.window.close(); }
+});
+
+test('klockan anropar inte render(), och utan Match 1 vs 1 i layouten rörs ingenting', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'match-1v1.js'), 'utf8');
+  const klocka = src.split('\n').filter(r => /setInterval\(/.test(r));
+  assert.equal(klocka.length, 1);
+  assert.doesNotMatch(klocka[0], /render\(/, 'klockan ritar om hela layouten varje sekund');
+  assert.match(klocka[0], /ritaMatch\(\)/);
+  const lyssnare = src.slice(src.indexOf("addEventListener('vyra-live-event'"), src.indexOf('// ---------- panelen'));
+  assert.doesNotMatch(lyssnare, /render\(/, 'battle-händelsen ritar om hela layouten');
+  const dom = sida(), win = dom.window;
+  try {
+    win.document.body.innerHTML = '<div class="widget vyra-topgift" data-id="t1"><canvas></canvas></div>';
+    const fore = win.document.body.innerHTML;
+    win.VyraMatch1v1.ta({ type: 'battle', battleStatus: 'battle_started', scoreUs: 1, scoreThem: 2 }, Date.now());
+    win.VyraMatch1v1.ritaMatch();
+    assert.equal(win.document.body.innerHTML, fore);
+  } finally { dom.window.close(); }
+});

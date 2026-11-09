@@ -377,15 +377,45 @@ test('en länk utanför https://*.tiktokcdn.com spelas aldrig', async () => {
   }
 });
 
-test('en omritad widget får tillbaka videon inom en sekund', async () => {
+// 2026-11-09, Davids sändning: "Top Gift spelar inte hela videon". Varje render() stoppade spelaren och
+// startade en ny från första rutan upp till en sekund senare. Nu flyttas samma canvas till den nya noden.
+test('en omritad widget behåller SAMMA video — den stoppas inte och börjar inte om', async () => {
   const w = sida();
   gava(w);
   await vanta(50);
+  const canvas = canvasar(w)[0];
   w.document.body.innerHTML = WIDGET;                // render() byter ut widgetens DOM
+  await vanta(30);                                   // observatören, inte sekundtimern
+  assert.equal(w.__spelat.length, 1, 'en ny uppspelning startades — videon började om från första rutan');
+  assert.equal(w.__spelat[0].stoppad, false, 'spelaren stoppades av omritningen');
+  assert.equal(canvasar(w).length, 1, 'videon följde inte med till den omritade widgeten');
+  assert.equal(canvasar(w)[0], canvas, 'det ska vara samma canvas, så att WebGL-ytan och videon följer med');
+  assert.ok(w.document.querySelector('.vyra-gift-face').classList.contains('tgv-aktiv'));
+  assert.equal(bild(w).style.visibility, 'hidden', 'gåvobilden syntes ovanpå videon efter omritningen');
+});
+
+test('omritad medan zip-filen ännu hämtas: videon visas i den NYA noden när den är klar', async () => {
+  const w = sida();
+  let slapp; const klar = new Promise(r => { slapp = r; });
+  w.VyraGavovideo = { spela: () => klar };
+  gava(w);
+  await vanta(20);
+  w.document.body.innerHTML = WIDGET;
+  await vanta(30);
+  slapp({ stoppa() {} });
+  await vanta(20);
+  assert.equal(canvasar(w).length, 1);
+  assert.ok(w.document.querySelector('.vyra-gift-face').classList.contains('tgv-aktiv'), 'den nya gåvosidan öppnades inte för videon');
+  assert.equal(bild(w).style.visibility, 'hidden');
+});
+
+test('försvinner widgeten helt släpps spelaren', async () => {
+  const w = sida();
+  gava(w);
+  await vanta(50);
+  w.document.body.innerHTML = '';
   await vanta(1200);
-  assert.equal(w.__spelat[0].stoppad, true, 'spelaren för den bortritade bilden släpptes inte');
-  assert.equal(canvasar(w).length, 1, 'videon kom inte tillbaka efter omritningen');
-  assert.equal(w.__spelat.at(-1).url, URL_LION);
+  assert.equal(w.__spelat[0].stoppad, true, 'spelaren för den borttagna widgeten släpptes inte');
 });
 
 test('en omladdad OBS-källa fortsätter med samma rekord; live:start nollar det', async () => {

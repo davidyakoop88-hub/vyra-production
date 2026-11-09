@@ -381,14 +381,15 @@
     if (root.getComputedStyle(ansikte).position === 'static') ansikte.style.position = 'relative';
     ansikte.insertBefore(canvas, bild.nextSibling);
     ansikte.insertBefore(ram, canvas);
-    var post = { bild: bild, ansikte: ansikte, ram: ram, canvas: canvas, url: url, form: form, spelare: null, stoppad: false };
+    var post = { bild: bild, ansikte: ansikte, ram: ram, canvas: canvas, url: url, form: form, spelare: null, stoppad: false, id: widgetId(bild) };
     spelare.push(post);
     placera(post);
     motor.spela(canvas, url, { loopa: true }).then(function (s) {
       if (post.stoppad) { s.stoppa(); return; }
       post.spelare = s;
-      ansikte.classList.add('tgv-aktiv');
-      bild.style.visibility = 'hidden';
+      // post.ansikte/post.bild, inte de lokala: flytta() kan ha bytt nod medan zip:en hämtades.
+      post.ansikte.classList.add('tgv-aktiv');
+      post.bild.style.visibility = 'hidden';
       setTimeout(function () { if (!post.stoppad && !post.egenGlod) glod(post); }, 700);
     }).catch(function () {
       // Spelas den inte står bilden kvar — samma läge som innan modulen fanns.
@@ -397,12 +398,41 @@
     });
   }
 
-  // Varje Top Gift-bild ska ha exakt en spelare för den aktuella länken. Körs efter varje rekord
-  // och en gång i sekunden: en render() byter ut widgetens DOM, och då ska videon komma tillbaka.
+  // EN OMRITNING RIVER INTE VIDEON (2026-11-09, Davids sändning: "Top Gift spelar inte hela videon").
+  //
+  // render() byter ut widgetens DOM. Förut stoppades då spelaren, och en ny startades från första
+  // rutan när stam() nästa gång gick — upp till en sekund senare, plus tiden att starta videon.
+  // Uppmätt i Chrome med en render() var sjätte sekund: videon borta 0,5–1,6 s varje gång, och i
+  // Design 2 och 3 (som inte vänder) kom den aldrig längre än 4–6 s av 9. Nu flyttas samma canvas
+  // och samma video över till widgetens nya nod: WebGL-ytan följer med canvasen och videon spelar
+  // vidare där den var. En MutationObserver nedan gör det i samma bildruta som omritningen.
+  function widgetId(bild) {
+    var rot = bild.closest ? bild.closest('.vyra-topgift') : null;
+    return (rot && rot.dataset && rot.dataset.id) || '';
+  }
+  function flytta(post) {
+    if (!post.id || post.stoppad) return false;
+    var bilder = root.document.querySelectorAll('.vyra-topgift .vyra-gift-face img');
+    for (var i = 0; i < bilder.length; i += 1) {
+      var b = bilder[i], a = b.parentNode;
+      if (!a || widgetId(b) !== post.id || formFor(b) !== post.form) continue;
+      if (spelare.some(function (p) { return p !== post && p.bild === b; })) continue;
+      if (root.getComputedStyle(a).position === 'static') a.style.position = 'relative';
+      a.insertBefore(post.canvas, b.nextSibling);
+      a.insertBefore(post.ram, post.canvas);
+      post.bild = b; post.ansikte = a;
+      if (post.spelare) { a.classList.add('tgv-aktiv'); b.style.visibility = 'hidden'; }
+      return true;
+    }
+    return false;
+  }
+
+  // Varje Top Gift-bild ska ha exakt en spelare för den aktuella länken. Körs efter varje rekord,
+  // när en Top Gift ritats om och en gång i sekunden.
   function stam() {
     var doc = root.document;
     spelare = spelare.filter(function (p) {
-      var kvar = p.url === aktuell && p.bild.isConnected && p.canvas.isConnected && p.form === formFor(p.bild);
+      var kvar = p.url === aktuell && (p.bild.isConnected || flytta(p)) && p.canvas.isConnected && p.form === formFor(p.bild);
       if (!kvar) stoppa(p);
       return kvar;
     });
@@ -437,6 +467,21 @@
   });
   setInterval(stam, 1000);
   setInterval(synka, 100);
+  // En ny Top Gift-nod i DOM:en = en omritning. Observatören körs innan bildrutan målas, så videon
+  // står redan i den nya noden när den syns. Bara när en video spelar, och bara för Top Gift-noder —
+  // modulens egna canvas och ram matchar inte och kan inte väcka den igen.
+  if (typeof root.MutationObserver === 'function' && root.document.body) {
+    new root.MutationObserver(function (lista) {
+      if (!spelare.length) return;
+      for (var i = 0; i < lista.length; i += 1) {
+        var nya = lista[i].addedNodes;
+        for (var j = 0; j < nya.length; j += 1) {
+          var n = nya[j];
+          if (n.nodeType === 1 && ((n.matches && n.matches('.vyra-topgift')) || (n.querySelector && n.querySelector('.vyra-topgift')))) { stam(); return; }
+        }
+      }
+    }).observe(root.document.body, { childList: true, subtree: true });
+  }
   root.VyraTopGiftVideo = {
     stam: stam,
     synka: synka,
