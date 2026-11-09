@@ -93,6 +93,23 @@
     'Skapa konto — 3 dagar gratis →': 'Create account — 3 days free →',
     'Skapa konto — 3 dagar gratis': 'Create account — 3 days free',
     'Redo att få din LIVE att sticka ut?': 'Ready to make your LIVE stand out?',
+    // ---- "Över 150 widgetdesigner" (2026-11-09): familjenamnen på engelska står kvar, svenska översätts
+    'Över 150 widgetdesigner för din LIVE': 'Over 150 widget designs for your LIVE',
+    'Varje familj finns i flera designer, och allt styrs från samma studio. Designerna ser du när du har skapat ett konto.':
+      'Every family comes in several designs, all controlled from the same studio. You see the designs once you have created an account.',
+    'Gåvor': 'Gifts',
+    'Topplistor': 'Leaderboards',
+    'Mål & mätare': 'Goals & meters',
+    'Fans & nivåer': 'Fans & levels',
+    'Chatt & spel': 'Chat & games',
+    'Top Gifters-podium': 'Top Gifters podium',
+    'Follower-, Like- och Diamond-mål': 'Follower, Like and Diamond goals',
+    'Energimätare': 'Energy meter',
+    'Battle-firanden': 'Battle celebrations',
+    'Chattavatar': 'Chat avatar',
+    'Ordjakten': 'Word hunt',
+    'Låtönskningar': 'Song requests',
+    'Skattkista': 'Treasure chest',
     '3 dagar gratis, därefter 15 USD/månad. Ingen kodning — funkar direkt med OBS, Streamlabs och TikTok Live Studio.':
       '3 days free, then 15 USD/month. No coding — works right away with OBS, Streamlabs and TikTok Live Studio.',
     'Ladda ner appen': 'Download the app',
