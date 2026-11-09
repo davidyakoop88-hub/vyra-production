@@ -87,7 +87,26 @@
     return s;
   }
   function spara(w) { const s = LAGE.get(String(w.id)); if (!s) return; try { localStorage.setItem(LAGRING + w.id, JSON.stringify({ nr: s.nr, lost: s.lost, poang: s.poang })); } catch (_) {} }
-  const ritaOm = () => { try { if (typeof render === 'function') render(); } catch (_) {} };
+  // I OBS RITAS BARA DEN HÄR WIDGETENS EGNA NODER OM — ALDRIG HELA LAYOUTEN (2026-11-09).
+  // render() bygger om varje widget i layouten. Under en sändning rev det allt annat som just spelade
+  // (uppmätt med Match 1 vs 1, som gjorde samma sak varje sekund: Battle MVP syntes 0,8 s i stället
+  // för 10 s och Top Gifts gåvovideo kom aldrig igång). I overlayn finns ingen panel att bygga om, så
+  // där skrivs widgetens egen nod om med wh() — samma mönster som triggerBattleMvp i media.js.
+  // I studion är det render() som förut: där ska panelen och katalogen följa med.
+  function ritaEgna() {
+    if (typeof wh !== 'function') return false;
+    const noder = [...document.querySelectorAll('.widget[data-id]')];
+    let alla = true;
+    for (const w of widgetar()) {
+      if (w.hidden) continue;
+      const mina = noder.filter(n => n.dataset.id === String(w.id));
+      if (!mina.length) { alla = false; continue; }
+      const html = wh(w);
+      for (const n of mina) n.outerHTML = html;
+    }
+    return alla;
+  }
+  const ritaOm = () => { try { if (OVERLAY && ritaEgna()) return; if (typeof render === 'function') render(); } catch (_) {} };
   function planeraNasta(w) {
     const s = lage(w);
     clearTimeout(s.timer);
