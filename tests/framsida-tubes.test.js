@@ -29,6 +29,31 @@ test('framsidan laddar tubes-strimman — och Studio gör det aldrig', () => {
     'studio.html refererar tubes-effekten — OBS-vägen går genom studio.html och ska vara ren');
 });
 
+// 757 KB (774 791 byte) WebGL-modul. Uppmätt 2026-11-09 med statisk import: hämtades även på telefoner,
+// där det inte finns någon pekare att följa, och blockerade huvudtråden 4,6 s vid start och 18 s
+// av 10 s vila på mobil utan grafikkort (7 s / 22 s på dator) — mot 0 ms utan modulen.
+test('modulen hämtas bara med riktig mus, först efter laddningen, och i skärmens egen upplösning', () => {
+  const js = las('landing-tubes.js');
+  assert.doesNotMatch(js, /^\s*import\s+\w+\s+from\s/m,
+    'statisk import: 757 KB laddas före allt annat, även på telefoner och vid minskad rörelse');
+  assert.match(js, /import\(\s*MODUL\s*\)/, 'modulen ska laddas med dynamisk import(MODUL)');
+  assert.match(js, /\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)/,
+    'saknar musvakten — en pekskärm har ingen pekare för strimman att följa');
+  assert.match(js, /addEventListener\(\s*'load'/, 'modulen ska vänta tills sidan laddat klart');
+  assert.match(js, /minPixelRatio\s*=/, 'biblioteket ritar alltid i 2x — ska följa skärmens egen upplösning');
+  // Biblioteket mäter sin FÖRÄLDER (size: 'parent'). Låg duken direkt i <body> blev den hela sidans
+  // höjd — 1440x3404 på en skärm som visar 1440x900, nästan fyra gånger fler pixlar än någon ser.
+  // En egen fönsterstor ruta runt duken gör föräldern lika stor som det synliga.
+  const index = las('index.html');
+  assert.match(index, /<div class="tubes-fx"[^>]*>\s*<canvas id="tubes-fx"/,
+    'duken ligger inte i en egen fönsterstor ruta — då ritar biblioteket hela sidans höjd');
+  // Utan grafikkort ritas WebGL i processorn: uppmätt 1-4 bilder/s även efter de andra vakterna.
+  assert.match(js, /swiftshader\|llvmpipe/i, 'saknar vakten mot mjukvaruritare (ingen grafikacceleration)');
+  // Ordningen: vakterna FÖRE import(), annars hämtas modulen ändå.
+  const vakt = js.search(/pointer:\s*fine/), hamtning = js.search(/import\(\s*MODUL/);
+  assert.ok(vakt >= 0 && hamtning > vakt, 'musvakten måste stå före hämtningen');
+});
+
 test('strimman respekterar prefers-reduced-motion och ligger bakom innehållet', () => {
   const js = las('landing-tubes.js');
   assert.match(js, /prefers-reduced-motion:\s*reduce/,

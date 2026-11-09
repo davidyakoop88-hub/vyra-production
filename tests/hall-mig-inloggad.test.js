@@ -151,7 +151,10 @@ test('valet och lösenordet sparas aldrig i webbläsaren', async () => {
 
 test('cachebustarna höjdes med filerna', () => {
   const index = las('index.html'), studio = las('studio.html');
-  assert.match(index, /landing-login\.js\?v=20261021-\d+"/);
+  // Minst den version som bar "Håll mig inloggad" — knapparna "Skapa konto — 3 dagar gratis"
+  // (2026-11-09) höjde den, samma regel som styles.css nedan.
+  const login = (index.match(/landing-login\.js\?v=(\d{8})-\d+"/) || [])[1] || '';
+  assert.ok(login >= '20261021', 'landing-login.js har en äldre cachebust än Håll mig inloggad: ' + login);
   // Minst den version som bar "Håll mig inloggad" — en senare ändring i styles.css (prisraden
   // 2026-10-23) får höja den utan att det här provet faller.
   const stil = (index.match(/styles\.css\?v=(\d{8})-\d+"/) || [])[1] || '';

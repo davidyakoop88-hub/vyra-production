@@ -225,7 +225,10 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // arbetsflödet. Vaktas av samma prov: en ny del syns här i diffen.
     // 2026-11-06 (David godkände OBS-provet): "Nytt i VYRA: Gift Campaign" — Fokus, Classic och Gåvoflöde
     // som videor inspelade i OBS — direkt under Fan Level Up.
-    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'logos', 'premium', 'mini-sidfot'],
+    // 2026-11-09 (David: "fixa alla tre"): "Redo att få din LIVE att sticka ut?" med knappen "Skapa
+    // konto — 3 dagar gratis" sist före sidfoten — efter exemplen fanns ingen knapp alls. Vaktas av
+    // framsida-konto-yta.browser.test.js F34.
+    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'logos', 'premium', 'avslut-cta', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

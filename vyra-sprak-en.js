@@ -90,6 +90,11 @@
     '3 dagar gratis': '3 days free',
     'Så funkar det': 'How it works',
     'Om provperioden': 'About the trial',
+    'Skapa konto — 3 dagar gratis →': 'Create account — 3 days free →',
+    'Skapa konto — 3 dagar gratis': 'Create account — 3 days free',
+    'Redo att få din LIVE att sticka ut?': 'Ready to make your LIVE stand out?',
+    '3 dagar gratis, därefter 15 USD/månad. Ingen kodning — funkar direkt med OBS, Streamlabs och TikTok Live Studio.':
+      '3 days free, then 15 USD/month. No coding — works right away with OBS, Streamlabs and TikTok Live Studio.',
     'Ladda ner appen': 'Download the app',
     'Ladda ner · Microsoft Store': 'Download · Microsoft Store',
 

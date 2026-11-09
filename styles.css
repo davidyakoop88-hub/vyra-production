@@ -583,6 +583,9 @@ nav a:hover{color:#fff}
    och startmodalen (z 100) ligger redan over. Biblioteket lyssnar pa pekaren sjalvt;
    duken far INTE pointer-events:none (da tystnar effekten over tomma ytor). */
 .tubes-fx{position:fixed;inset:0;z-index:0;display:block}
+/* Duken ligger i en egen fönsterstor ruta: biblioteket mäter sin förälder, och direkt i body blev
+   den hela sidans höjd (1440x3404 i ett 1440x900-fönster). */
+.tubes-fx>canvas{display:block;width:100%;height:100%}
 main,.mini-sidfot{position:relative;z-index:1}
 
 /* ==== Framsidan som inloggningssida (2026-08-19, Davids skiss). Kortet till vanster talar
@@ -983,3 +986,40 @@ html.vyra-kollar-session{visibility:hidden}
 }
 /* Slutgranskning 2026-10-20 C-023: den tomma felraden gav en extra lucka i rutnatet (Skapa konto). */
 .login-kort #loginError:empty{display:none}
+
+/* ==== TELEFON: PRODUKTEN FORST (granskningen 2026-11-09, David: "fixa alla tre").
+   Datorns regler for KORTA fonster ovan (max-height 1000 / 820 px) slog till aven pa telefoner,
+   som ocksa ar korta: mobilbilden krympte till min(168px,20vw) = 94 px pa en iPhone 390x844 och
+   72 px pa en 360-bred Android, och lag UNDER inloggningskortet pa y=819 av 844. Rubriken fick
+   samma lacka — datorns 50 px i stallet for telefonens 42 (regeln vid max-width 760 ovan).
+   Pa telefon kommer darfor bilden FORE kortet och ar tillrackligt stor for att visa vad VYRA ar;
+   kortet foljer direkt under. Datorns placering (kortet till vanster, bilden i mitten) ror vi inte.
+   SIST I FILEN med flit, samma skal som blocken ovan. tests/browser/framsida-konto-yta F33. */
+@media (max-width:760px){
+  .hero h1{font-size:42px}
+  .hero-botten .hero-mobil-scen{order:-1;margin:4px auto 26px}
+  .hero-botten .hero-mobil{width:min(220px,58vw)}
+}
+
+/* ==== "SKAPA KONTO — 3 DAGAR GRATIS" (granskningen 2026-11-09). Sidans enda stora knapp var Logga
+   in; den som scrollat igenom exemplen hittade ingen knapp alls langst ner. Tva knappar som leder
+   till kortets flik Skapa konto (landing-login.js): en i prisrutan, en i en avslutande ruta fore
+   sidfoten. Knappen i prisrutan ar medvetet mindre an .big — prisraden maste rymmas pa forsta
+   skarmen i laga fonster (F30-provet mater det). SIST I FILEN med flit. */
+.hero-prova{margin-top:8px;padding:10px 20px;font-size:14px;min-height:44px;
+  display:inline-flex;align-items:center;gap:8px}
+.avslut-cta{position:relative;z-index:1;max-width:760px;margin:48px auto 72px;padding:44px 22px 46px;
+  text-align:center;border-radius:22px;background:linear-gradient(165deg,#171022f2,#0d0815e6);
+  border:1px solid #3a284899;box-shadow:0 30px 70px -36px #000,0 0 60px -24px rgba(168,58,239,.34)}
+.avslut-cta h2{font:800 34px/1.15 var(--font-display);letter-spacing:-.02em;color:#fff;margin:0 0 12px;
+  text-wrap:balance}
+.avslut-cta p{color:var(--muted);max-width:520px;margin:0 auto 24px;line-height:1.6}
+.avslut-cta .primary{display:inline-flex;align-items:center;gap:10px}
+/* Laptop med webblasarlist (1366 x 657): prisraden star dar redan pa bredden for att rymmas, och
+   knappen gjorde den 42 px for hog (slutade pa y=699, framsida-logo-provet). Kortet med fliken Skapa
+   konto star bredvid pa samma skarm och knappen langst ner finns kvar — har far den ge vika. */
+@media (min-width:981px) and (max-height:720px){.hero-prisrad .hero-prova{display:none}}
+@media (max-width:760px){
+  .avslut-cta{margin:32px 16px 56px;padding:32px 18px 34px}
+  .avslut-cta h2{font-size:26px}
+}
