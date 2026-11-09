@@ -68,8 +68,8 @@
   // ---------- render ----------
   let STILLA = false;
   const oldWh = wh;
-  wh = function (w) {
-    if (!w || w.type !== TYP) return oldWh(w);
+  wh = function (w) { return !w || w.type !== TYP ? oldWh(w) : rita(w); };
+  function rita(w) {
     const nu = Date.now(), l = STILLA ? 'match' : lage(w, nu);
     const visa = l || (OVERLAY ? null : 'exempel');
     const ex = visa === 'exempel' || STILLA;
@@ -86,16 +86,43 @@
       + `<div class="md-kort"><div class="md-duell">${sida(namnVi(w), a, ex ? 1 : MATCH.segrarVi, 'vi')}<div class="md-vs">VS${tid ? `<small>${esc(tid)}</small>` : ''}</div>${sida(namnDe(w), b, ex ? 0 : MATCH.segrarDe, 'de')}</div>`
       + `<div class="md-stapel"><div class="md-fyll" style="width:${andel.toFixed(1)}%"></div></div><div class="md-text">${esc(caption)}</div></div>`
       + (valt ? '<span class="resize-handle">↘</span>' : '') + '</div>';
-  };
-  // Klockan och uttoningen: rita om varje sekund under en match.
-  setInterval(() => { if (STILLA) return; if (MATCH.aktiv || MATCH.slut) { try { if (typeof render === 'function') render(); } catch (_) {} } }, 1000);
+  }
+  // BARA MATCHWIDGETENS EGNA NODER — ALDRIG render() (2026-11-09, Davids sändning: "layouten glappar,
+  // Top Gift spelar inte hela videon").
+  //
+  // Klockan ritades om med render() varje sekund och vid varje battle-händelse. render() bygger om
+  // HELA layouten, och villkoret var MATCH.aktiv — som aldrig blir falskt igen efter sändningens
+  // första match. Från den första matchen revs alltså varje widget en gång i sekunden resten av
+  // sändningen, även i en layout UTAN Match 1 vs 1. Uppmätt i Chrome: 40 render() på 40 s, Top Gifts
+  // gåvovideo kom aldrig längre än 0,3 s och saknades 84 % av tiden.
+  //
+  // Nu skrivs kortets innehåll och de två lägesklasserna på de noder som redan står på skärmen, och
+  // bara när något faktiskt ändrats. Finns ingen Match 1 vs 1 i layouten görs ingenting.
+  function ritaMatch() {
+    let lista = [];
+    try { lista = (typeof state !== 'undefined' && state && Array.isArray(state.widgets)) ? state.widgets : []; } catch (_) {}
+    for (const w of lista) {
+      if (!w || w.type !== TYP) continue;
+      let mall = null;
+      for (const nod of document.querySelectorAll('.vyra-match')) {
+        if (nod.dataset.id !== String(w.id)) continue;
+        if (!mall) { mall = document.createElement('template'); mall.innerHTML = rita(w); }
+        const ny = mall.content.firstElementChild, kort = nod.querySelector('.md-kort'), nyKort = ny && ny.querySelector('.md-kort');
+        if (!ny || !kort || !nyKort) continue;
+        for (const k of ['md-dold', 'md-slut']) nod.classList.toggle(k, ny.classList.contains(k));
+        if (kort.innerHTML !== nyKort.innerHTML) kort.innerHTML = nyKort.innerHTML;
+      }
+    }
+  }
+  // Klockan och uttoningen: en gång i sekunden under och efter en match.
+  setInterval(() => { if (STILLA) return; if (MATCH.aktiv || MATCH.slut) { try { ritaMatch(); } catch (_) {} } }, 1000);
 
   // ---------- livehändelserna ----------
   window.addEventListener('vyra-live-event', ev => {
     const e = ev && ev.detail;
     if (!e || !arBattle(e)) return;
     ta(e);
-    try { if (typeof render === 'function') render(); } catch (_) {}
+    try { ritaMatch(); } catch (_) {}
   });
 
   // ---------- panelen ----------
@@ -150,12 +177,12 @@
     if ((el = q('#mdTesta'))) el.onclick = () => {
       const id = 'test-' + Date.now();
       [[0, 0, 0, 'battle_started'], [1500, 320, 180], [3000, 880, 940], [4500, 1640, 1210], [6000, 1640, 1210, 'battle_finished']]
-        .forEach(([ms, vi, de, st]) => setTimeout(() => { ta({ type: 'battle', battleId: id, scoreUs: vi, scoreThem: de, remainingSec: 300 - ms / 1000, battleStatus: st || '' }); if (typeof render === 'function') render(); }, ms));
+        .forEach(([ms, vi, de, st]) => setTimeout(() => { ta({ type: 'battle', battleId: id, scoreUs: vi, scoreThem: de, remainingSec: 300 - ms / 1000, battleStatus: st || '' }); ritaMatch(); }, ms));
     };
   };
 
   function stilla() { STILLA = true; try { if (typeof render === 'function') render(); } catch (_) {} return document.querySelectorAll('.vyra-match').length; }
   function nollstall() { Object.assign(MATCH, { aktiv: false, slut: false, vi: 0, de: 0, segrarVi: null, segrarDe: null, kvar: null, kvarAt: 0, senast: 0, slutAt: 0, id: '' }); }
-  window.VyraMatch1v1 = Object.freeze({ typ: TYP, ta, lage, text, klocka, stilla, nollstall, _match: MATCH });
+  window.VyraMatch1v1 = Object.freeze({ typ: TYP, ta, lage, text, klocka, stilla, nollstall, ritaMatch, _match: MATCH });
   try { if (typeof render === 'function') render(); } catch (_) {}
 })();
