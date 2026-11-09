@@ -494,6 +494,35 @@ test('en lång video (16,9 s) får ett längre varv och hinner spelas hel', asyn
   assert.ok(Math.abs(video.currentTime - 16.5) < 0.01, 'slutet av videon ska nås innan kortet vänder');
 });
 
+// 2026-11-09, uppmätt i Davids layout under sändning: videon var 2,67 s och sidan 9,5 s — det fjärde
+// varvet klipptes vid 1,1 s när kortet vände.
+test('en kort video spelas ett helt antal gånger: sidan förlängs till nästa hela uppspelning', () => {
+  const w = sida();
+  assert.ok(Math.abs(w.VyraTopGiftVideo.varvS(2.67) - 2 * 4 * 2.67) < 1e-9, '2,67 s ska ge fyra hela uppspelningar per sida (10,68 s)');
+  assert.equal(w.VyraTopGiftVideo.varvS(5), 20, '5 s ska ge två hela uppspelningar');
+  assert.equal(w.VyraTopGiftVideo.varvS(9.07), 19, 'blir bara 0,43 s över står sidan kvar på 9,5 s');
+  assert.equal(w.VyraTopGiftVideo.varvS(3), 19, '0,5 s över ryms i vändningen — sidan står kvar på 9,5 s');
+});
+
+test('en kort video klipps aldrig mitt i: sista uppspelningen går till slutet, sedan vänder kortet', async () => {
+  const { w, video } = vandSida(2.67);
+  gava(w);
+  await vanta(250);
+  assert.match(varvRegel(w), /animation-duration:21.36s/);
+  w.__p = 0.465 + 10.5 / 21.36; video.currentTime = 0; w.VyraTopGiftVideo.synka();   // 10,5 s in: fjärde uppspelningen
+  assert.ok(Math.abs(video.currentTime - (10.5 - 3 * 2.67)) < 0.01, `fjärde uppspelningen ska ligga 2,49 s in, låg ${video.currentTime}`);
+  assert.equal(video.paused, false);
+});
+
+test('det lilla som blir över efter sista hela uppspelningen börjar inte om videon', async () => {
+  const { w, video } = vandSida(9.07);
+  gava(w);
+  await vanta(250);
+  w.__p = 0.465 + 9.3 / 19; video.currentTime = 9.0; w.VyraTopGiftVideo.synka();     // 9,3 s in: videon (9,07 s) är slut
+  assert.equal(video.paused, true, 'videon började om för 0,4 s innan kortet vände');
+  assert.ok(video.currentTime > 8.9, `videon ska stå på sista rutan, stod på ${video.currentTime}`);
+});
+
 // GAMING OVERLAY (spellayout.js): Top Gifter vänder varje sida för sig med spel-flip, gåvosidan ett
 // halvt varv efter profilen. Samma regel ska gälla där: 9,5 s per sida och hela videon varje gång.
 test('Gaming overlayns Top Gifter: videon väntar bakom profilen och spelas från början när gåvan vänds fram', async () => {

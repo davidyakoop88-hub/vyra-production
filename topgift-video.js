@@ -38,9 +38,24 @@
   // Och videon börjar om när gåvosidan vänds fram: synka() läser var i varvet kortet står och lägger
   // videon på samma ställe — från första rutan när kortet står på kant och gåvan kommer fram, pausad
   // på första rutan medan profilen syns. Kortare videor loopar inom sin sida.
-  var MIN_SIDA_S = 9.5, KANT = 0.465, SIDA = 0.5;
+  //
+  // BARA HELA UPPSPELNINGAR (2026-11-09, uppmätt i Davids layout under sändning: rekordgåvans video
+  // var 2,67 s, sidan 9,5 s — tre hela varv och sedan ett fjärde som klipptes vid 1,1 s när kortet
+  // vände. "Top Gift spelar inte hela videon"). En kort video spelas nu ett helt antal gånger:
+  //   • blir det mer än VANDTID_S över efter de hela uppspelningarna förlängs sidan till nästa hela
+  //     (2,67 s → 4 × 2,67 = 10,68 s per sida),
+  //   • blir det mindre över (9,07 s → 0,43 s) står sidan kvar på 9,5 s och videon stannar på sista
+  //     rutan den korta stunden — det är medan kortet redan vrider sig bort.
+  var MIN_SIDA_S = 9.5, VANDTID_S = 0.7, KANT = 0.465, SIDA = 0.5;
   var varvFor = {};   // url -> varvets längd i s, när videons längd är känd
-  function varvS(langd) { return 2 * Math.max(MIN_SIDA_S, langd || 0); }
+  function sidaS(langd) {
+    var l = langd || 0;
+    if (!(l > 0)) return MIN_SIDA_S;
+    if (l >= MIN_SIDA_S) return l;
+    var hela = Math.floor(MIN_SIDA_S / l + 1e-6), over = MIN_SIDA_S - hela * l;
+    return over <= VANDTID_S ? MIN_SIDA_S : (hela + 1) * l;
+  }
+  function varvS(langd) { return 2 * sidaS(langd); }
   function varvStil() {
     var doc = root.document, id = 'vyra-topgift-varv-stil';
     var s = doc.getElementById(id), v = aktuell && varvFor[aktuell];
@@ -87,7 +102,15 @@
         if (v.currentTime > 0.05) v.currentTime = 0;
         return;
       }
-      var mal = (inne * varv) % langd;
+      // Efter den sista hela uppspelningen börjar videon inte om: den står på sista rutan tills
+      // kortet vänt (högst VANDTID_S, se sidaS).
+      var spelat = inne * varv, hela = Math.max(1, Math.floor(varv / 2 / langd + 1e-6));
+      if (spelat >= hela * langd) {
+        if (!v.paused) v.pause();
+        if (Math.abs(v.currentTime - (langd - 0.05)) > 0.1) v.currentTime = Math.max(0, langd - 0.05);
+        return;
+      }
+      var mal = spelat % langd;
       if (Math.abs(v.currentTime - mal) > 0.25) v.currentTime = mal;
       if (v.paused) v.play().catch(function () {});
     });
