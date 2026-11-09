@@ -555,7 +555,25 @@
     f.__vyraYtter = RANG;
     return f;
   }
-  function install() {
+  // sent: se approved-rankings.js install/ritaSnart — lindningen direkt, omritningen en gång per bildruta.
+  function ritaSnart() {
+    if (!window.VyraRitaSnart) {
+      let vantar = false;
+      // Ritar något annat om studion innan vi hunnit (vybyte, ett prov, en annan modul) behövs
+      // vår omritning inte längre: den använder redan de yttersta lagren. Den stryks, så att ingen
+      // sen omritning river en vy som just byggts (CI 2026-11-08: command-center-alltime).
+      if (typeof render === 'function') { const r0 = render; render = function () { vantar = false; return r0.apply(this, arguments); }; }
+      window.VyraRitaSnart = function () {
+        if (vantar) return;
+        vantar = true;
+        const kor = () => { if (!vantar) return; vantar = false; try { if (typeof render === 'function') render(); } catch (e) {} };
+        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(kor);
+        setTimeout(kor, 100);
+      };
+    }
+    window.VyraRitaSnart();
+  }
+  function install(sent) {
     let andrat = false;
     if (typeof wh === 'function' && !(wh.__vyraYtter >= RANG)) {
       const tidigare = wh;
@@ -573,12 +591,12 @@
       });
       andrat = true;
     }
-    if (andrat) { try { if (typeof render === 'function') render(); } catch (e) {} }
+    if (andrat) { if (sent) ritaSnart(); else { try { if (typeof render === 'function') render(); } catch (e) {} } }
   }
 
   install();
-  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(); }, true);
-  addEventListener('load', install, { once: true });
+  document.addEventListener('load', e => { if (e.target && e.target.tagName === 'SCRIPT') install(true); }, true);
+  addEventListener('load', () => install(), { once: true });
 
   window.VyraSpellayout = Object.freeze({ teman: TEMAN, delar: DELAR, hela: HELA, html, delFor, skapaHela, sida });
 })();
