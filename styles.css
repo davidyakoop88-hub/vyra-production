@@ -1023,3 +1023,20 @@ html.vyra-kollar-session{visibility:hidden}
   .avslut-cta{margin:32px 16px 56px;padding:32px 18px 34px}
   .avslut-cta h2{font-size:26px}
 }
+
+/* ==== "OVER 150 WIDGETDESIGNER" (David 2026-11-09: "fixa bredden" + "jag vill inte visa ut alla vara
+   widget sa de inte blir kopierade"). Familjerna som TEXT i sex grupper — ingen bild av en design.
+   Samma material som prisrutan och avslutet. tests/browser/landningssida prov 10. SIST I FILEN. */
+.widgetar{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:44px 20px 52px;text-align:center}
+.widgetar>h2{margin:0 0 8px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text)}
+.widgetar-ingress{margin:0 auto 26px;max-width:620px;color:var(--muted);font-size:14px;line-height:1.6}
+.widgetar-galleri{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;text-align:left}
+.widgetar-grupp{padding:18px 18px 16px;border-radius:18px;background:linear-gradient(165deg,#171022f2,#0d0815e6);
+  border:1px solid #3a284899}
+.widgetar-grupp h3{margin:0 0 10px;font:700 15px/1.3 var(--font-display);color:#fff;letter-spacing:.01em}
+.widgetar-grupp ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.widgetar-grupp li{padding:5px 10px;border-radius:999px;background:#ffffff0d;border:1px solid #ffffff14;
+  color:var(--muted);font-size:12.5px;line-height:1.3}
+.widgetar-knapp{display:inline-flex;align-items:center;gap:10px;margin-top:26px}
+@media (max-width:900px){.widgetar-galleri{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.widgetar-galleri{grid-template-columns:1fr}.widgetar{padding:32px 16px 40px}}

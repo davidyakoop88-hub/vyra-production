@@ -228,7 +228,40 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // 2026-11-09 (David: "fixa alla tre"): "Redo att få din LIVE att sticka ut?" med knappen "Skapa
     // konto — 3 dagar gratis" sist före sidfoten — efter exemplen fanns ingen knapp alls. Vaktas av
     // framsida-konto-yta.browser.test.js F34.
-    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'logos', 'premium', 'avslut-cta', 'mini-sidfot'],
+    // 2026-11-09 (David: "fixa bredden, visa fler widgetar" + "jag vill inte visa ut alla våra
+    // widget så de inte blir kopierade"): "Över 150 widgetdesigner" efter Gift Campaign — familjerna
+    // i sex grupper, som TEXT. Vaktas av provet nedan.
+    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'widgetar', 'logos', 'premium', 'avslut-cta', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
+  } finally { await context.close() }
+});
+
+// ---- Prov 10 · bredden utan designerna ----------------------------------------------------------
+// David 2026-11-09: sidan visade två nyheter av ~170 designer, men han vill inte visa ut designerna
+// "så de inte blir kopierade". Sektionen visar därför FAMILJERNA som text, i sex grupper — ingen
+// bild, ingen video, ingen miniatyr, inget som går att kopiera av. Designerna finns i studion.
+test('bredden: familjerna i sex grupper, som text och utan en enda bild av en design', { skip, timeout: 60000 }, async () => {
+  const { context, page } = await sidan();
+  try {
+    const m = await page.evaluate(() => {
+      const s = document.querySelector('#widgetar');
+      if (!s) return null;
+      const r = s.getBoundingClientRect();
+      return {
+        synlig: r.width > 0 && r.height > 0 && getComputedStyle(s).visibility !== 'hidden',
+        rubrik: (s.querySelector('h2') || {}).textContent || '',
+        grupper: [...s.querySelectorAll('.widgetar-grupp h3')].map(h => h.textContent.trim()),
+        familjer: s.querySelectorAll('.widgetar-grupp li').length,
+        media: s.querySelectorAll('img, video, picture, canvas, svg image, iframe, [style*="url("]').length,
+        knapp: !!s.querySelector('[data-prova-gratis]'),
+      };
+    });
+    assert.ok(m, 'sektionen #widgetar saknas');
+    assert.ok(m.synlig, 'sektionen syns inte');
+    assert.match(m.rubrik, /Över 150 widgetdesigner/);
+    assert.deepEqual(m.grupper, ['Gåvor', 'Topplistor', 'Mål & mätare', 'Fans & nivåer', 'Battle', 'Chatt & spel']);
+    assert.ok(m.familjer >= 25, `bara ${m.familjer} familjer listade`);
+    assert.equal(m.media, 0, 'sektionen visar en bild eller video — designerna ska inte gå att kopiera härifrån');
+    assert.ok(m.knapp, 'sektionen leder inte till registreringen');
   } finally { await context.close() }
 });
