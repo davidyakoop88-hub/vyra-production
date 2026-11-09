@@ -1962,11 +1962,6 @@ Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-quiz]')){let css=document.createElement('link');css.rel='stylesheet';css.href='quiz.css?v=20261108-3';css.dataset.quiz='1';document.head.append(css)}
   const s=document.createElement('script');s.src='quiz.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda quiz.js');document.body.append(s);
 });
-// Match 1 vs 1 - TikToks egen match med poängcirklar, syns i OBS bara under en match (match-1v1.js).
-Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-match1v1]')){let css=document.createElement('link');css.rel='stylesheet';css.href='match-1v1.css?v=20261108-1';css.dataset.match1v1='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='match-1v1.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda match-1v1.js');document.body.append(s);
-});
 
 // Katalogens ordning - utgångna kort bort, sektionerna i grupper med flikar (katalog-ordning.js, David 2026-11-03).
 Promise.resolve().then(()=>{

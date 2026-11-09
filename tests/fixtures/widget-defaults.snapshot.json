@@ -1014,16 +1014,5 @@
     "qzPaus": 6,
     "qzPoang": 100,
     "createdFrom": "catalog:vyrapaket:quiz:quizshow"
-  },
-  "catalog:vyrapaket:match:1v1": {
-    "type": "templateMatchDuel",
-    "x": 56,
-    "y": 100,
-    "width": 320,
-    "title": "Match 1 vs 1",
-    "mdVi": "Du",
-    "mdDe": "Motståndare",
-    "mdSlutSek": 10,
-    "createdFrom": "catalog:vyrapaket:match:1v1"
   }
 }
