@@ -1945,7 +1945,7 @@ Promise.resolve().then(()=>{
 // Viewer Showcase - streamern eller en moderator lyfter fram en tittare i 8 sekunder (viewer-showcase.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-viewer-showcase]')){let css=document.createElement('link');css.rel='stylesheet';css.href='viewer-showcase.css?v=20261108-2';css.dataset.viewerShowcase='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='viewer-showcase.js?v=20261108-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda viewer-showcase.js');document.body.append(s);
+  const s=document.createElement('script');s.src='viewer-showcase.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda viewer-showcase.js');document.body.append(s);
 });
 // Energimätaren - fylls av likes, gåvor, delningar, följare och chatt, töms över tid (energimatare.js).
 Promise.resolve().then(()=>{
@@ -1955,12 +1955,12 @@ Promise.resolve().then(()=>{
 // Ordjakten - chatten gissar det blandade ordet, moderatorer styr med !nästa och !lösning (ordjakten.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-ordjakten]')){let css=document.createElement('link');css.rel='stylesheet';css.href='ordjakten.css?v=20261108-1';css.dataset.ordjakten='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='ordjakten.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda ordjakten.js');document.body.append(s);
+  const s=document.createElement('script');s.src='ordjakten.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda ordjakten.js');document.body.append(s);
 });
 // Quiz - chatten svarar A, B eller C, en moderator startar med !quiz (quiz.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-quiz]')){let css=document.createElement('link');css.rel='stylesheet';css.href='quiz.css?v=20261108-3';css.dataset.quiz='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='quiz.js?v=20261108-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda quiz.js');document.body.append(s);
+  const s=document.createElement('script');s.src='quiz.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda quiz.js');document.body.append(s);
 });
 // Match 1 vs 1 - TikToks egen match med poängcirklar, syns i OBS bara under en match (match-1v1.js).
 Promise.resolve().then(()=>{
