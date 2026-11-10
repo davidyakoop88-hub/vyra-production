@@ -1939,8 +1939,8 @@ Promise.resolve().then(()=>{
 // Chattavatar - streamerns avatar i OBS, styrd från TikTok-chatten (chattavatar.js). Modellen (vem får styra,
 // väntetider, kö, pratbubblans delar) laddas först.
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261106-2';css.dataset.chattavatar='1';document.head.append(css)}
-  for(const f of ['chattavatar-modell.js?v=20261108-1','chattavatar.js?v=20261109-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+  if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261110-1';css.dataset.chattavatar='1';document.head.append(css)}
+  for(const f of ['chattavatar-modell.js?v=20261110-1','chattavatar.js?v=20261110-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 // Viewer Showcase - streamern eller en moderator lyfter fram en tittare i 8 sekunder (viewer-showcase.js).
 Promise.resolve().then(()=>{
