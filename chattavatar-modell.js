@@ -16,12 +16,14 @@
 (function (root) {
   'use strict';
 
-  const ALIAS = { '!d1': '!dansa', '!d2': '!dansa2', '!d3': '!dansa3', '!t': '!tap', '!g': '!glove', '!f': '!fira', '!s': '!säg', '!sag': '!säg', '!stop': '!stopp' };
+  const ALIAS = { '!d1': '!dansa', '!d2': '!dansa2', '!d3': '!dansa3', '!k': '!kickbox', '!t': '!tap', '!g': '!glove', '!f': '!fira', '!s': '!säg', '!sag': '!säg', '!stop': '!stopp' };
   // Klipp, etikett och förvald text per kommando. Danserna har ALDRIG text (Davids design 2026-11-06).
   const KOMMANDON = Object.freeze({
     '!dansa':    { klipp: 'dance',  etikett: 'Dans 1',          text: null, dans: true },
     '!dansa2':   { klipp: 'dance2', etikett: 'Dans 2',          text: null, dans: true },
     '!dansa3':   { klipp: 'dance3', etikett: 'Dans 3',          text: null, dans: true },
+    // Kickboxningsshowen (2026-11-10): bara avatar 1 har klippet, bara moderatorer, inte i viloläget.
+    '!kickbox':  { klipp: 'kick',   etikett: 'Kickboxning',     text: null, dans: true },
     '!tap':      { klipp: null,     etikett: 'Tap tap',         text: 'Tap tap!' },
     '!glove':    { klipp: 'glove',  etikett: 'Handske',         text: 'Använd handsken!' },
     '!fira':     { klipp: 'fira',   etikett: 'Fira',            text: 'Vi klarade det!' },

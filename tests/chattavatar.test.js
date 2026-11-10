@@ -220,7 +220,10 @@ test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och b
   assert.equal(CA.STANDARD_MODELL, 'nr1', 'befintliga widgetar behåller sin avatar');
   for (const m of Object.keys(CA.MODELLER)) {
     const f = CA.filerFor(m);
-    assert.equal(Object.keys(f.klipp).sort().join(), Object.keys(CA.KLIPP).sort().join(), m + ' har alla klipp');
+    const grund = Object.keys(CA.filerFor('nr2').klipp);
+    assert.ok(grund.every(k => k in f.klipp), m + ' har alla grundklipp');
+    const extra = Object.keys(CA.MODELLER[m].extra || {});
+    assert.deepEqual(Object.keys(f.klipp).filter(k => !grund.includes(k)).sort(), extra.sort(), m + ' har bara sina egna extraklipp');
     for (const fil of [...Object.values(f.klipp), f.vila]) {
       assert.ok(fil.startsWith(CA.MODELLER[m].mapp), fil);
       assert.ok(fs.existsSync(path.join(ROT, fil)), fil + ' saknas');
@@ -245,6 +248,36 @@ test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och b
 
   h.window.eval(`state.widgets[0].caModell='finns-inte';render()`); await mikro();
   assert.equal($('.ca-vila').getAttribute('src'), CA.VILA);
+});
+
+test('kickboxningen: !k spelar klippet på avatar 1, gör ingenting på avatar 2, och lådan är bredare', async () => {
+  // David 2026-11-10: kickboxningsshowen som egen animation för avatar 1.
+  const { $, CA, h, skicka, spelade, k } = rigg({ overlay: true });
+  const M = h.window.VyraChattavatarModell;
+  assert.equal(JSON.stringify(M.tolka('!k')), JSON.stringify({ key: '!kickbox', namn: '' }));
+  assert.equal(M.tolka('!k hej'), null, 'tar inga argument');
+  assert.equal(M.bubbeltext({ key: '!kickbox' }), '', 'ingen text under showen');
+  assert.equal(M.PUBLIKA.has('!kickbox'), false, 'bara moderatorer');
+  assert.equal(CA.KLIPP.kick, 'assets/chattavatar/vyra-avatar-flow-kickboxning.webm');
+  assert.ok(fs.existsSync(path.join(ROT, CA.KLIPP.kick)));
+  for (let n = 0; n < 12; n++) { const v = M.vilaNasta('dans', n, ''); assert.notEqual(v && v.key, '!kickbox', 'inte i viloläget'); }
+
+  spelade.length = 0;
+  skicka(mod('!k')); await mikro();
+  assert.deepEqual(spelade, ['kick']);
+  assert.equal($('.ca-klipp[data-klipp="kick"]').getAttribute('src'), CA.KLIPP.kick);
+  const css = fs.readFileSync(path.join(ROT, 'chattavatar.css'), 'utf8');
+  // 580 x 640 mot 360 x 640: 180 * 580 / 360 = 290 bred, centrerad (-55 px).
+  assert.ok(css.includes('.ca-klipp[data-klipp="kick"]{left:-55px;right:auto;width:290px}'), 'kickboxningens låda');
+
+  h.window.eval(`state.widgets[0].caModell='nr2';render()`); await mikro();
+  assert.equal('kick' in CA.filerFor('nr2').klipp, false, 'avatar 2 har inget kickboxningsklipp');
+  spelade.length = 0; k.fram(3000);
+  skicka(mod('!k')); await mikro();
+  assert.deepEqual(spelade, [], 'avatar 2 spelar inget');
+  assert.equal(h.window.document.querySelector('.ca-klipp[data-klipp="kick"]'), null);
+  skicka(mod('!f')); await mikro();
+  assert.deepEqual(spelade, ['fira'], 'kön fastnar inte efter ett kommando utan klipp');
 });
 
 test('varje avatar är en egen widget: egen nyckel, inget avatarval i panelen', () => {

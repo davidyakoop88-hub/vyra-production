@@ -7,6 +7,9 @@
 .vyra-chattavatar .ca-scen{zoom:var(--ca-z,1);position:relative;width:180px;height:325px;pointer-events:none}
 .vyra-chattavatar .ca-avatar{position:absolute;left:0;bottom:0;width:180px;height:265px}
 .vyra-chattavatar .ca-vila,.vyra-chattavatar .ca-klipp{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity .18s ease}
+/* Kickboxningen är ritad på 580 x 640 i stället för 360 x 640: lådan blir lika mycket bredare och centrerad,
+   så att avataren har samma storlek som i de andra klippen och sparken får plats. */
+.vyra-chattavatar .ca-klipp[data-klipp="kick"]{left:-55px;right:auto;width:290px}
 .vyra-chattavatar .ca-vila{filter:drop-shadow(0 8px 7px #0005)}
 .vyra-chattavatar .ca-vila.ca-dold{opacity:0}
 .vyra-chattavatar .ca-vard{position:absolute;inset:0}

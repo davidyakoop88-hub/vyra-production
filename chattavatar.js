@@ -40,7 +40,11 @@
   // ska vara för sig själv") — inget avatarval i panelen. En ny avatar = en ny mapp, en rad här och en
   // gren i widget-factory.js vyrapaket.
   const MODELLER = Object.freeze({
-    nr1: Object.freeze({ namn: 'Avatar 1', kort: 'Chattavatar', nyckel: 'catalog:vyrapaket:chattavatar', mapp: 'assets/chattavatar/' }),
+    // extra: klipp som bara den här avataren har. Kickboxningen (OpenArt, 2026-11-10) är ritad på en
+    // bredare yta, 580 x 640, så att sparken får plats utan att avataren krymper: samma höjd och fotlinje
+    // som de andra klippen. chattavatar.css ger dess video motsvarande bredare låda.
+    nr1: Object.freeze({ namn: 'Avatar 1', kort: 'Chattavatar', nyckel: 'catalog:vyrapaket:chattavatar', mapp: 'assets/chattavatar/',
+      extra: Object.freeze({ kick: 'vyra-avatar-flow-kickboxning.webm' }) }),
     nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', kort: 'Chattavatar 2 · helkropp', nyckel: 'catalog:vyrapaket:chattavatar:2', mapp: 'assets/chattavatar/nr2/' })
   });
   const STANDARD_MODELL = 'nr1';
@@ -49,10 +53,14 @@
     const mapp = (MODELLER[m] || MODELLER[STANDARD_MODELL]).mapp;
     const klipp = {};
     for (const k of Object.keys(FILER)) if (k !== 'vila') klipp[k] = mapp + FILER[k];
+    const extra = (MODELLER[m] || MODELLER[STANDARD_MODELL]).extra || {};
+    for (const k of Object.keys(extra)) klipp[k] = mapp + extra[k];
     return Object.freeze({ vila: mapp + FILER.vila, klipp: Object.freeze(klipp) });
   }
   const VILA = filerFor(STANDARD_MODELL).vila;
   const KLIPP = filerFor(STANDARD_MODELL).klipp;
+  // Har den här avataren klippet? Ett kommando för ett klipp som modellen saknar (!k på avatar 2) gör ingenting.
+  const harKlipp = (m, k) => Object.prototype.hasOwnProperty.call(filerFor(m).klipp, k);
   // Scenen i designmått: avataren 180 x 265 längst ned, plats för bubblan ovanför.
   const SCEN_B = 180, SCEN_H = 325, STANDARD_B = 72;
   // Bubblan är 168 bred med 12 px luft på var sida = 144. Mätningen görs mot 134: i OBS skalas texten
@@ -150,7 +158,7 @@
     const rot = rotFor(t.id); if (!rot) return;
     const vard = rot.querySelector('.ca-vard');
     if (vard) {
-      if (OVERLAY) Object.keys(KLIPP).forEach(k => { if (!t.trasiga.has(k)) videoFor(t, k); });
+      if (OVERLAY) Object.keys(filerFor(t.modell).klipp).forEach(k => { if (!t.trasiga.has(k)) videoFor(t, k); });
       t.videor.forEach(v => { if (v.parentNode !== vard) vard.append(v); v.classList.toggle('ca-pa', t.videoSyns && v.dataset.klipp === t.klipp); });
     }
     const vila = rot.querySelector('.ca-vila'); if (vila) vila.classList.toggle('ca-dold', t.videoSyns);
@@ -197,7 +205,8 @@
     for (let i = 1; i < t.sidor.length; i++) planera(t, () => { t.sida = i; applicera(t); }, i * M.SIDA_MS);
     if (t.bubbla) planera(t, () => { textKlar = true; t.bubbla = false; applicera(t); klart(); }, t.sidor.length * M.SIDA_MS);
 
-    const nyckel = k.klipp && !t.trasiga.has(k.klipp) ? k.klipp : null;
+    if (k.klipp && !harKlipp(t.modell, k.klipp) && k.dans) { klippKlar = true; klart(); return; }
+    const nyckel = k.klipp && !t.trasiga.has(k.klipp) && harKlipp(t.modell, k.klipp) ? k.klipp : null;
     if (!nyckel) {
       // Tap tap och !säg har inget klipp; ett trasigt klipp visar texten utan rörelse.
       t.tap = item.key === '!tap' || !!k.tap;
@@ -336,7 +345,7 @@
   } catch (_) {}
 
   // ---------- panelen ----------
-  const TESTER = [['!d1', 'Dans 1'], ['!d2', 'Dans 2'], ['!d3', 'Dans 3'], ['!t', 'Tap tap'], ['!g', 'Handske'], ['!f', 'Fira'], ['!hej', 'Hej']];
+  const TESTER = [['!d1', 'Dans 1'], ['!d2', 'Dans 2'], ['!d3', 'Dans 3'], ['!k', 'Kickboxning', 'kick'], ['!t', 'Tap tap'], ['!g', 'Handske'], ['!f', 'Fira'], ['!hej', 'Hej']];
   const oldProps = props;
   props = function () {
     const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
@@ -345,7 +354,7 @@
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
       + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (!d1 !d2 !d3 !t)</option></select></label>`
-      + `<small>Moderatorer: !d1 !d2 !d3 dans · !t tap tap · !g handske · !f fira (eller !f egen text) · !hej namn · !s meddelande (eller !säg) · !stopp. `
+      + `<small>Moderatorer: !d1 !d2 !d3 dans${harKlipp(modell(w), 'kick') ? ' · !k kickboxning' : ''} · !t tap tap · !g handske · !f fira (eller !f egen text) · !hej namn · !s meddelande (eller !säg) · !stopp. `
       + `Tittare har 20 s väntetid var och 8 s mellan två tittare. Högst ${M.MAX_KO} kommandon väntar i kön.</small></div>`
       + `<div class="property-group"><h4>AUTOMATISKT</h4>`
       + `<label><input id="caHalsa" type="checkbox"${halsa(w) ? ' checked' : ''}> Hälsa medlemmar välkomna: nya prenumeranter och fanklubbsmedlemmar som kommer in</label>`
@@ -359,7 +368,7 @@
       + `</select></label><label>Text när den ber om tap<input id="caVilaText" maxlength="${M.VILA_MAX_TEXT}" value="${esc(vilaText(w))}" placeholder="${esc(M.KOMMANDON.uppmaning.text)}"></label>`
       + `<small>Bara i OBS. Ett kommando från chatten går alltid före och skjuter upp nästa.</small></div>`
       + `<div class="property-group ca-panel"><h4>TESTA</h4><small>Spelas bara här i studion, aldrig i OBS.</small>`
-      + `<div class="ca-knappar">${TESTER.map(([c, n]) => `<button type="button" data-ca-testa="${esc(c)}">${esc(n)}</button>`).join('')}</div>`
+      + `<div class="ca-knappar">${TESTER.filter(([, , kl]) => !kl || harKlipp(modell(w), kl)).map(([c, n]) => `<button type="button" data-ca-testa="${esc(c)}">${esc(n)}</button>`).join('')}</div>`
       + `<label>Eget meddelande<input id="caText" maxlength="${M.MAX_TEXT}" placeholder="Skriv ett meddelande"></label>`
       + `<div class="ca-knappar"><button type="button" id="caUppmaning">▶ Be om tap</button><button type="button" id="caSag">▶ Säg</button><button type="button" id="caStopp">■ Stopp</button></div></div>`
       + `<div class="property-group"><h4>POSITION & STORLEK</h4><button type="button" id="caStorlek">Samma storlek som paketet</button><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x || 0}"></label><label>Y<input id="propY" type="number" value="${w.y || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width || STANDARD_B}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer || 1}"></label></div></div><button class="delete" id="del">Ta bort</button>`;
