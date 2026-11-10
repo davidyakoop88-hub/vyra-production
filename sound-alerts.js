@@ -244,7 +244,7 @@ function saSetPlaying(button,playing){if(!button)return;button.dataset.saPlaying
 function saActiveRow(item){const sound=saSound(item.event.soundAlertId),action=item.action;return `<article class="sa-alert-row" data-alert="${saEsc(item.event.id)}"><button class="sa-row-play sa-ik sa-ik--spela" type="button" data-sa-playing="0" title="Testa ljudet" aria-label="Testa ${saEsc(sound?.name||action.name)}">${SA_IKON.spela}</button><div class="sa-alert-copy"><b>${saEsc(sound?.name||action.name||'Ljudalert')}</b><small>${saEsc(saEventLabel(item))}</small></div><span class="sa-alert-meta">${Number(action.volume??80)}% · ${Number(action.cooldown||0)} s väntetid</span><label class="sa-switch"><input type="checkbox" class="sa-toggle"${item.event.enabled?' checked':''}><span></span></label><button class="sa-remove sa-ik sa-ik--radera" type="button" title="Ta bort" aria-label="Ta bort">${SA_IKON.radera}</button></article>`}
 function soundAlertCard(sound){const linked=saConnection(sound.id);return `<article class="media-card sound-card" data-sound="${saEsc(sound.id)}"><div class="sound-icon"><i>♪</i><button class="media-play sa-ik sa-ik--spela" type="button" data-sa-playing="0" title="Spela" aria-label="Spela ${saEsc(sound.name)}">${SA_IKON.spela}</button></div><div class="media-info"><b>${saEsc(sound.name)}</b><small>${linked?`Används i ${saEsc(saEventLabel(linked))}`:'Tillgängligt i biblioteket'}</small></div></article>`}
 function saGiftPickerHtml(){return `<div class="sa-gift-picker"><label>Gåva <button type="button" class="sa-gift-open"><span>Alla gåvor</span><b>Välj ur ${saGavor().length} gåvor</b></button></label><div class="sa-gift-popover" hidden><input class="sa-gift-search" type="search" placeholder="Sök gåva, t.ex. Lion"><div class="sa-gift-results"></div></div></div>`}
-function saNewAlertHtml(){return `<section class="sa-create-card"><div><span class="sa-kicker">NY SOUND ALERT</span><h3>Välj vad som ska höras i din LIVE</h3><p>Koppla ett ljud till en gåva, följare eller ett annat event. Du kan alltid testa innan du sparar.</p></div><form class="sa-form" id="saNewAlert"><label>När detta händer<select name="trigger">${saTriggerOptions()}</select></label><div class="sa-condition-wrap">${saGiftPickerHtml()}</div><label>Ljud från biblioteket<select name="sound">${saSounds().map(sound=>`<option value="${saEsc(sound.id)}">${saEsc(sound.name)}</option>`).join('')}</select></label><label>Volym <output>80%</output><input name="volume" type="range" min="0" max="100" value="80"></label><label>Väntetid (sekunder)<input name="cooldown" type="number" min="0" max="300" value="2"></label><div class="sa-form-actions"><button type="button" class="sa-test-new">▶ Testa ljud</button><button type="submit" class="primary">Spara alert</button></div></form></section>`}
+function saNewAlertHtml(){return `<section class="sa-create-card"><div><span class="sa-kicker">NY SOUND ALERT</span><h3>Välj vad som ska höras i din LIVE</h3><p>Koppla ett ljud till en gåva, följare eller ett annat event. Du kan alltid testa innan du sparar.</p></div><form class="sa-form" id="saNewAlert"><label>När detta händer<select name="trigger">${saTriggerOptions()}</select></label><div class="sa-condition-wrap">${saGiftPickerHtml()}</div><label>Ljud från biblioteket<select name="sound">${saSounds().map(sound=>`<option value="${saEsc(sound.id)}">${saEsc(sound.name)}</option>`).join('')}</select></label><label>Volym <output>80%</output><input name="volume" type="range" min="0" max="100" value="80"></label><label>Väntetid (sekunder)<input name="cooldown" type="number" min="0" max="300" value="0"></label><div class="sa-form-actions"><button type="button" class="sa-test-new">▶ Testa ljud</button><button type="submit" class="primary">Spara alert</button></div></form></section>`}
 function saLibraryCards(sounds){return sounds.slice(0,48).map(soundAlertCard).join('')||'<p class="sa-gift-none">Inget ljud hittades.</p>'}
 function saLibraryHtml(){const sounds=saSounds();return `<div class="sa-library-head"><div><h3>Ditt ljudbibliotek</h3><p>${sounds.length} ljud · välj ett ljud när du skapar en alert</p></div><label class="sa-upload">＋ Lägg till eget ljud<input type="file" accept="audio/*,.mp3,.wav,.ogg" hidden></label></div><input class="sa-library-search" type="search" placeholder="Sök bland dina ljud"><div class="media-grid sa-library-grid">${saLibraryCards(sounds)}</div>`}
 function soundAlertsHtml(){const active=saConnections();return `<div class="page-header section-head sa-page-head"><div><span class="sa-kicker">LIVE-AUTOMATIK</span><h2>Sound Alerts</h2><p>Spela ett ljud när din community gör något i liven.</p></div><button class="primary sa-new-open" type="button">＋ Ny sound alert</button></div><div class="sa-tabs" role="tablist"><button class="active" data-sa-tab="alerts" type="button">Aktiva alerts <b>${active.length}</b></button><button data-sa-tab="library" type="button">Ljudbibliotek <b>${saSounds().length}</b></button></div><div class="sa-pane active" data-sa-pane="alerts"><section class="sa-active-card"><div class="sa-active-head"><div><h3>Aktiva alerts</h3><p>Slå av, testa eller ta bort utan att radera ditt ljud.</p></div><button class="btn btn-secondary sa-new-open" type="button">＋ Ny alert</button></div>${active.length?`<div class="sa-alert-list">${active.map(saActiveRow).join('')}</div>`:`<div class="sa-empty"><strong>Inga sound alerts ännu</strong><span>Skapa din första alert och ge din LIVE en egen känsla.</span><button class="primary sa-new-open" type="button">Skapa första alerten</button></div>`}</section></div><div class="sa-pane" data-sa-pane="library">${saLibraryHtml()}</div><div class="sa-modal" hidden><div class="sa-modal-backdrop"></div><div class="sa-modal-card" role="dialog" aria-modal="true"><button class="sa-modal-close sa-ik sa-ik--stang" type="button" title="Stäng" aria-label="Stäng">${SA_IKON.stang}</button>${saNewAlertHtml()}</div></div>`}
@@ -346,7 +346,30 @@ async function saSpelaAlert(alert){
   const url=meta.packagePath||URL.createObjectURL(blob),audio=new Audio(url),bas=Math.max(0,Math.min(100,Number(alert.volume??80)))/100;
   if(!meta.packagePath)audio.onended=audio.onerror=()=>URL.revokeObjectURL(url);
   if(window.VyraTal?.duckaLjud)window.VyraTal.duckaLjud(audio,bas);else audio.volume=bas;
-  await audio.play().catch(()=>{if(!saSparrSagd){saSparrSagd=true;toast('Klicka en gång i VYRA så att webbläsaren tillåter ljud')}});
+  // Löftet löser när ljudet SLUTAT (eller inte kunde spelas) — kön i saKoa väntar på det. Taket på
+  // 20 s gör att ett ljud som aldrig rapporterar slut inte låser kön resten av sändningen.
+  await new Promise(klar=>{let gjort=false;const slut=()=>{if(!gjort){gjort=true;klar()}};
+    audio.addEventListener('ended',slut);audio.addEventListener('error',slut);setTimeout(slut,20000);
+    Promise.resolve(audio.play()).catch(()=>{if(!saSparrSagd){saSparrSagd=true;toast('Klicka en gång i VYRA så att webbläsaren tillåter ljud')}slut()})});
+}
+/* ETT LJUD PER GÅVA, I KÖ (David 2026-11-10: "vid flera gift kommer endast ett ljud"; valt: "Ett ljud per
+   gåva, i kö"). En streak är EN gift-händelse med repeatCount N (tiktok-bridge/bridge.js: streakens
+   slutframe), så ljudet spelade en gång för tio Doughnuts. Nu köas N uppspelningar per alert, högst
+   SA_TAK per händelse — femhundra Rosor ska inte låta i fem minuter — och kön rymmer högst SA_KO_MAX.
+   Nästa börjar när förra slutat: tio ljud ovanpå varandra är ett oljud, inte tio ljud.
+   tests/sound-alerts-fristaende.test.js. */
+const SA_TAK=10,SA_KO_MAX=30,saKoer={};
+function saKoa(alert,antal){
+  const k=saKoer[alert.id]||(saKoer[alert.id]={n:0,spelar:false});
+  k.n=Math.min(SA_KO_MAX,k.n+Math.max(1,antal|0));
+  if(!k.spelar)saNasta(alert);
+}
+async function saNasta(alert){
+  const k=saKoer[alert.id];if(!k)return;
+  if(k.n<=0){k.spelar=false;return}
+  k.n--;k.spelar=true;
+  try{await saSpelaAlert(alert)}catch{}
+  saNasta(alert);
 }
 function saTaEmot(e){
   if(!e||saIOverlay())return;
@@ -359,7 +382,9 @@ function saTaEmot(e){
   saHandelser(e).forEach(([trigger,info])=>alerts.forEach(alert=>{
     if(spelade.has(alert.id)||!saTraffar(alert,trigger,info))return;
     if(alert.cooldown&&nu-(saSenast[alert.id]||0)<alert.cooldown*1000)return;
-    spelade.add(alert.id);saSenast[alert.id]=nu;saSpelaAlert(alert).catch(()=>{});
+    // En gåva med repeatCount N är N gåvor; ett coin-värde, en följare eller en kommentar är ett ljud.
+    const antal=trigger==='gift'?Math.min(SA_TAK,Math.max(1,Math.floor(Number(e.repeatCount??e.repeat_count??e.count)||1))):1;
+    spelade.add(alert.id);saSenast[alert.id]=nu;saKoa(alert,antal);
   }));
 }
 addEventListener('vyra-live-event',ev=>saTaEmot(ev?.detail));
