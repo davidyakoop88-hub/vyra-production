@@ -15,7 +15,8 @@
     Object.freeze(['prism-horizontal', 'VYRA Prism (horisontal)']),
     Object.freeze(['celestial', 'VYRA Celestial']),
     Object.freeze(['royal-rose', 'VYRA Royal Rose']),
-    Object.freeze(['metall', 'VYRA Guld · Silver · Brons'])
+    Object.freeze(['metall', 'VYRA Guld · Silver · Brons']),
+    Object.freeze(['ljusring', 'VYRA Neonramar'])
   ]);
   const defaults = Object.freeze({
     'clean-bar': Object.freeze({
@@ -61,6 +62,9 @@
     }),
     metall: Object.freeze({
       id: 'metall', name: 'VYRA Guld · Silver · Brons', layout: 'clean', frame: 'none', count: 5
+    }),
+    ljusring: Object.freeze({
+      id: 'ljusring', name: 'VYRA Neonramar', layout: 'clean', frame: 'none', count: 3
     })
   });
 
@@ -83,6 +87,8 @@
     widget.showDataValue = true;
     widget.showBackground = false;
     widget.rankingCycle = false;
+    // Neonramar (toplike-ljusring.js) visar rubriken och är bredare: tre ramar på pall.
+    if (preset.id === 'ljusring') { widget.showTitle = true; widget.width = 350; }
     return true;
   };
 })(typeof window !== 'undefined' ? window : globalThis);

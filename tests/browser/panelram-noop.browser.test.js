@@ -67,7 +67,7 @@ const vm = require('vm');
 // Registret med familjernas poster, utan webbläsare: samma två filer som studio.html laddar.
 function registret() {
   const window = {};
-  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js', 'vyra-mal-panel.js', 'vyra-streak-panel.js', 'vyra-playground-panel.js', 'vyra-fyrverkeri-panel.js', 'vyra-fontan-panel.js', 'vyra-fl50-panel.js', 'vyra-glove-panel.js', 'vyra-egen-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
+  const kod = ['vyra-panelregister.js', 'vyra-topgift-panel.js', 'vyra-lastx-panel.js', 'vyra-alert-panel.js', 'vyra-mvp-panel.js', 'vyra-ranking-panel.js', 'toplike-ljusring-panel.js', 'vyra-mal-panel.js', 'vyra-streak-panel.js', 'vyra-playground-panel.js', 'vyra-fyrverkeri-panel.js', 'vyra-fontan-panel.js', 'vyra-fl50-panel.js', 'vyra-glove-panel.js', 'vyra-egen-panel.js'].map(f => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n;\n');
   vm.runInNewContext(kod, { window });
   return window.VyraPanelregister;
 }

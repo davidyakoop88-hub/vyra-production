@@ -72,6 +72,8 @@
   // Modellnyckeln = designen ranking-sixpack.js ritar (designFor), eller null.
   function modell(w) {
     if (!w || !TYPER.includes(w.type)) return null;
+    // Neonramar har en egen panel (toplike-ljusring.js) — den här rankingposten ska inte ta den.
+    if (w.type === 'templateTopLike' && w.skin === 'ljusring') return null;
     if (w.type === 'templateTopCoins') return IDS.includes(w.topCoinsDesign) ? w.topCoinsDesign : null;
     const falt = w.type === 'templateTopLike' ? [w.skin] : [w.topPointsDesign, w.skin, w.likeTheme];
     for (const f of falt) if (IDS.includes(f)) return f;
