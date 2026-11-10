@@ -70,6 +70,8 @@ test('"Alla gåvor" och minsta coin-värde', async () => {
   skicka(w, gava({ giftName: 'Ros', giftId: '5655', diamondCount: 1 }));
   await vanta(30);
   assert.deepEqual(spelat(w).map(s => s.fil), ['pew-pew.mp3']);
+  // Ljuden köas per alert sedan 2026-11-10 (se slutet av filen): nästa pew-pew börjar när förra slutat.
+  await avsluta(w);
   skicka(w, gava({ diamondCount: 1999 }));
   await vanta(30);
   assert.deepEqual(spelat(w).map(s => s.fil).sort(), ['jackpot.mp3', 'pew-pew.mp3', 'pew-pew.mp3']);
@@ -131,4 +133,50 @@ test('gamla alerts flyttas ur Action & Event, och Actions som används av annat 
   skicka(w, gava());
   await vanta(30);
   assert.equal(spelat(w).length, 1);
+});
+
+// ---- FLERA GÅVOR = FLERA LJUD (David 2026-11-10: "DJ Airhorn … vid flera gift kommer endast ett ljud";
+// valt: "Ett ljud per gåva, i kö"). Uppmätt i en riktig studioflik innan: en streak på 10 Doughnuts är
+// EN gift-händelse med repeatCount 10 och spelade 1 gång; tre separata Doughnuts inom 2 s spelade 1
+// gång, för att formulärets standardväntetid var 2 s. Nu:
+//   * en gåva med repeatCount N spelar ljudet N gånger, högst SA_TAK (10) per händelse,
+//   * ljuden står i kö per alert — nästa börjar när förra slutat, aldrig två ovanpå varandra,
+//   * en ny alert har väntetid 0.
+const doughnut = { id: 'dj', trigger: 'gift', condition: 'Doughnut', giftId: '5879', soundId: 'djAirhorn', volume: 80, cooldown: 0, enabled: true };
+const dg = (over = {}) => gava({ giftName: 'Doughnut', giftId: '5879', diamondCount: 30, ...over });
+const spelar = w => w.__ljud.filter(a => a.paused === false && !a.__slut).length;
+const avsluta = async w => { const a = w.__ljud.find(x => x.paused === false && !x.__slut); if (a) { a.__slut = true; a.__avsluta(); } await vanta(15); };
+
+test('en streak på 10 Doughnuts spelar ljudet 10 gånger, ett i taget', async () => {
+  const w = await studio({ alerts: [doughnut] });
+  skicka(w, dg({ repeatCount: 10 }));
+  await vanta(30);
+  for (let i = 1; i <= 10; i++) {
+    assert.equal(w.__ljud.length, i, `efter ${i - 1} avslutade ljud borde ${i} ha startat`);
+    assert.equal(spelar(w), 1, 'två ljud spelade samtidigt');
+    await avsluta(w);
+  }
+  await vanta(30);
+  assert.equal(w.__ljud.length, 10, 'fler än 10 ljud för 10 gåvor');
+});
+
+test('taket: 500 Rosor på en gång ger högst 10 ljud', async () => {
+  const w = await studio({ alerts: [doughnut] });
+  skicka(w, dg({ repeatCount: 500 }));
+  await vanta(30);
+  for (let i = 0; i < 20; i++) await avsluta(w);
+  assert.equal(w.__ljud.length, 10);
+});
+
+test('separata gåvor medan ett ljud spelar köas — inget tappas, inget krockar', async () => {
+  const w = await studio({ alerts: [doughnut] });
+  skicka(w, dg()); skicka(w, dg()); skicka(w, dg());
+  await vanta(30);
+  assert.equal(w.__ljud.length, 1, 'alla tre startade på en gång');
+  await avsluta(w); await avsluta(w); await avsluta(w);
+  assert.equal(w.__ljud.length, 3, 'en av de tre gåvorna tappades');
+});
+
+test('en ny alert har väntetid 0 som standard', () => {
+  assert.match(las('sound-alerts.js'), /name="cooldown" type="number" min="0" max="300" value="0"/);
 });
