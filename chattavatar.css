@@ -10,6 +10,8 @@
 /* Kickboxningen är ritad på 580 x 640 i stället för 360 x 640: lådan blir lika mycket bredare och centrerad,
    så att avataren har samma storlek som i de andra klippen och sparken får plats. */
 .vyra-chattavatar .ca-klipp[data-klipp="kick"]{left:-55px;right:auto;width:290px}
+/* Dans 4 är ritad på 420 x 640: 180 * 420 / 360 = 210 bred, centrerad. */
+.vyra-chattavatar .ca-klipp[data-klipp="dance4"]{left:-15px;right:auto;width:210px}
 .vyra-chattavatar .ca-vila{filter:drop-shadow(0 8px 7px #0005)}
 .vyra-chattavatar .ca-vila.ca-dold{opacity:0}
 .vyra-chattavatar .ca-vard{position:absolute;inset:0}
