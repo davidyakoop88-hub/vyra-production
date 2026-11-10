@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `680bf80a`
+Commit: `df20cd57`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **170** |
-| Sektioner | 33 |
-| Med katalognyckel | 170 / 170 |
-| Med shadow DOM-miniatyr | 138 / 170  ⚠️ |
-| Ritar sin design | 170 / 170 |
+| Kort totalt | **169** |
+| Sektioner | 32 |
+| Med katalognyckel | 169 / 169 |
+| Med shadow DOM-miniatyr | 137 / 169  ⚠️ |
+| Ritar sin design | 169 / 169 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -69,7 +69,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | ENERGIMÄTARE | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | ORDJAKTEN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-09 | — |
 | QUIZ | 3 | 3/3 | 3/3 | 3/3 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
-| MATCH | 1 | 1/1 | 1/1 | 1/1 | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | SOCIAL-ALERT | 2 | 2/2 | 2/2 | 2/2 | 2026-10-25 | [#707](https://github.com/davidyakoop88-hub/vyra-production/pull/707) |
 | SKATTKISTA · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
 | LÅTÖNSKNINGAR · LIVE | 2 | 2/2 | 2/2 | 2/2 | 2026-10-21 | [#676](https://github.com/davidyakoop88-hub/vyra-production/pull/676) |
@@ -383,11 +382,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Quiz · Frågerad | `catalog:vyrapaket:quiz:fragerad` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | Quiz · Spelkort | `catalog:vyrapaket:quiz:spelkort` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 | Quiz · Quiz Show | `catalog:vyrapaket:quiz:quizshow` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
-
-### MATCH
-
-| Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
-|---|---|---|---|---|---|
 
 ### SOCIAL-ALERT
 
