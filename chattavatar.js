@@ -44,7 +44,7 @@
     // bredare yta, 580 x 640, så att sparken får plats utan att avataren krymper: samma höjd och fotlinje
     // som de andra klippen. chattavatar.css ger dess video motsvarande bredare låda.
     nr1: Object.freeze({ namn: 'Avatar 1', kort: 'Chattavatar', nyckel: 'catalog:vyrapaket:chattavatar', mapp: 'assets/chattavatar/',
-      extra: Object.freeze({ kick: 'vyra-avatar-flow-kickboxning.webm' }) }),
+      extra: Object.freeze({ kick: 'vyra-avatar-flow-kickboxning.webm', dance4: 'vyra-avatar-flow-dance4.webm' }) }),
     nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', kort: 'Chattavatar 2 · helkropp', nyckel: 'catalog:vyrapaket:chattavatar:2', mapp: 'assets/chattavatar/nr2/' })
   });
   const STANDARD_MODELL = 'nr1';
@@ -345,7 +345,7 @@
   } catch (_) {}
 
   // ---------- panelen ----------
-  const TESTER = [['!d1', 'Dans 1'], ['!d2', 'Dans 2'], ['!d3', 'Dans 3'], ['!k', 'Kickboxning', 'kick'], ['!t', 'Tap tap'], ['!g', 'Handske'], ['!f', 'Fira'], ['!hej', 'Hej']];
+  const TESTER = [['!d1', 'Dans 1'], ['!d2', 'Dans 2'], ['!d3', 'Dans 3'], ['!d4', 'Dans 4', 'dance4'], ['!k', 'Kickboxning', 'kick'], ['!t', 'Tap tap'], ['!g', 'Handske'], ['!f', 'Fira'], ['!hej', 'Hej']];
   const oldProps = props;
   props = function () {
     const w = typeof liveWidget === 'function' ? liveWidget(selected) : null;
@@ -354,7 +354,7 @@
       + `<div class="property-group"><h4>VEM FÅR STYRA</h4><label>Kommandon<select id="caPublik">`
       + `<option value="mod"${publik(w) === 'mod' ? ' selected' : ''}>Bara du och dina moderatorer</option>`
       + `<option value="alla"${publik(w) === 'alla' ? ' selected' : ''}>Tittare får också dansa (!d1 !d2 !d3 !t)</option></select></label>`
-      + `<small>Moderatorer: !d1 !d2 !d3 dans${harKlipp(modell(w), 'kick') ? ' · !k kickboxning' : ''} · !t tap tap · !g handske · !f fira (eller !f egen text) · !hej namn · !s meddelande (eller !säg) · !stopp. `
+      + `<small>Moderatorer: !d1 !d2 !d3 dans${harKlipp(modell(w), 'dance4') ? ' · !d4 dans 4' : ''}${harKlipp(modell(w), 'kick') ? ' · !k kickboxning' : ''} · !t tap tap · !g handske · !f fira (eller !f egen text) · !hej namn · !s meddelande (eller !säg) · !stopp. `
       + `Tittare har 20 s väntetid var och 8 s mellan två tittare. Högst ${M.MAX_KO} kommandon väntar i kön.</small></div>`
       + `<div class="property-group"><h4>AUTOMATISKT</h4>`
       + `<label><input id="caHalsa" type="checkbox"${halsa(w) ? ' checked' : ''}> Hälsa medlemmar välkomna: nya prenumeranter och fanklubbsmedlemmar som kommer in</label>`

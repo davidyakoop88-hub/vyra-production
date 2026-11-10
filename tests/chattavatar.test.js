@@ -280,6 +280,33 @@ test('kickboxningen: !k spelar klippet på avatar 1, gör ingenting på avatar 2
   assert.deepEqual(spelade, ['fira'], 'kön fastnar inte efter ett kommando utan klipp');
 });
 
+test('dans 4: !d4 spelar klippet på avatar 1, gör ingenting på avatar 2, och lådan är bredare', async () => {
+  // David 2026-11-10: "!d4 dans och !k för sparkar".
+  const { $, CA, h, skicka, spelade, k } = rigg({ overlay: true });
+  const M = h.window.VyraChattavatarModell;
+  assert.equal(JSON.stringify(M.tolka('!d4')), JSON.stringify({ key: '!dansa4', namn: '' }));
+  assert.equal(M.tolka('!d4 hej'), null, 'tar inga argument');
+  assert.equal(M.bubbeltext({ key: '!dansa4' }), '', 'ingen text under dansen');
+  assert.equal(M.PUBLIKA.has('!dansa4'), false, 'bara moderatorer');
+  for (let n = 0; n < 12; n++) { const v = M.vilaNasta('dans', n, ''); assert.notEqual(v && v.key, '!dansa4', 'inte i viloläget'); }
+  assert.equal(CA.KLIPP.dance4, 'assets/chattavatar/vyra-avatar-flow-dance4.webm');
+  assert.ok(fs.existsSync(path.join(ROT, CA.KLIPP.dance4)));
+
+  spelade.length = 0;
+  skicka(mod('!d4')); await mikro();
+  assert.deepEqual(spelade, ['dance4']);
+  const css = fs.readFileSync(path.join(ROT, 'chattavatar.css'), 'utf8');
+  // 420 x 640 mot 360 x 640: 180 * 420 / 360 = 210 bred, centrerad (-15 px).
+  assert.ok(css.includes('.ca-klipp[data-klipp="dance4"]{left:-15px;right:auto;width:210px}'), 'dans 4:s låda');
+
+  h.window.eval(`state.widgets[0].caModell='nr2';render()`); await mikro();
+  spelade.length = 0; k.fram(30000);
+  skicka(mod('!d4')); await mikro();
+  assert.deepEqual(spelade, [], 'avatar 2 har ingen dans 4');
+  skicka(mod('!f')); await mikro();
+  assert.deepEqual(spelade, ['fira'], 'kön fastnar inte');
+});
+
 test('varje avatar är en egen widget: egen nyckel, inget avatarval i panelen', () => {
   // David 2026-11-08: "jag vill varje avatar ska vara för sig själv".
   const { h, CA } = rigg();
