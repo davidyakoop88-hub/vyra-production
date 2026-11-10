@@ -227,8 +227,6 @@
       if (w.type === 'templateWordHunt') return ut;
       // QUIZ (quiz.js): tre fasta designer; rubriken har eget fält.
       if (w.type === 'templateQuiz') return ut;
-      // MATCH 1 VS 1 (match-1v1.js): poängcirklar med fast typografi; sidornas namn har egna fält.
-      if (w.type === 'templateMatchDuel') return ut;
       // GIFT FIREWORKS PÅ DUK (2026-10-17) ritar namnet själv i canvas och har Textfärg och
       // Typsnitt i sin STIL-grupp (gift-supernova-panel.js). DOM-textstilen når inte duken, så
       // TEXT-gruppen vore reglage som inte gör något.

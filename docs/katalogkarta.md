@@ -388,7 +388,6 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Match 1 vs 1 | `catalog:vyrapaket:match:1v1` | ✓ | ✓ | 2026-11-08 | [#744](https://github.com/davidyakoop88-hub/vyra-production/pull/744) |
 
 ### SOCIAL-ALERT
 

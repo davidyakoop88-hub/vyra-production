@@ -24,6 +24,7 @@
     "dra-textdelar.browser.test.js": 39,
     "editor-ui-placering.browser.test.js": 18,
     "laddning-alla-widgetar.browser.test.js": 25,
+    "ingen-omritning-under-sandning.browser.test.js": 62,
     "verifieringsbanner-plats.browser.test.js": 18,
     "widget-las.browser.test.js": 16,
     "widget-ordning.browser.test.js": 10,

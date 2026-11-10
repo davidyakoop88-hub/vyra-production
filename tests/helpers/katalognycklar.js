@@ -428,20 +428,6 @@ const QUIZ_REGI = {
 };
 for (const d of ['fragerad', 'spelkort', 'quizshow']) REGI['catalog:vyrapaket:quiz:' + d] = QUIZ_REGI;
 
-// MATCH 1 VS 1 (match-1v1.js). I OBS osynlig utan match, och klockan räknar ned. Regin använder widgetens
-// egen krok: VyraMatch1v1.stilla() visar exempelmatchen 1 240 mot 860 med fast tid.
-REGI['catalog:vyrapaket:match:1v1'] = {
-  fas: 'exempelmatch', ms: 0,
-  varfor: 'osynlig utan match och klockstyrd; exempelmatchen är deterministisk',
-  regi: () => {
-    const M = window.VyraMatch1v1;
-    if (!M) return { fel: 'match-1v1.js laddades inte' };
-    const n = M.stilla();
-    if (!n) return { fel: 'ingen .vyra-match renderades' };
-    return { kort: n, poang: document.querySelector('.vyra-match .md-poang')?.textContent };
-  },
-};
-
 REGI['catalog:vyrapaket:ordjakten'] = {
   fas: 'runda-1', ms: 0,
   varfor: 'sparat läge och paus-klocka; runda 1 olöst är deterministisk',
