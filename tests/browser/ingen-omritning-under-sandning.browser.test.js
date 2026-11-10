@@ -74,9 +74,15 @@ async function sandning() {
   }
   skicka({ type: 'battle', event: 'battle', battleId: 'vakt-1', battleStatus: 'battle_finished', scoreUs: 900, scoreThem: 400 });
   skicka({ type: 'battle_mvp', event: 'battle_mvp', battleId: 'vakt-1', name: 'U1', username: 'u1', score: 900 });
+  // MVP går genom alertkön (runtime-controls.js): står en följar- eller level-alert före väntar den
+  // på sin tur, upp till några sekunder. Vänta därför tills den TÄNDS, och mät sedan från det
+  // ögonblicket — annars avgör köns läge provet, inte det provet vaktar.
+  const tand = () => { const m = document.querySelector('.battle-mvp'); return !!(m && m.classList.contains('mvp-active')); };
+  const start = Date.now();
+  while (!tand() && Date.now() - start < 20000) await vanta(100);
+  const mvpTandes = tand();
   await vanta(3500);                                   // efter matchen: det var HÄR klockan fortsatte gå
-  const mvp = document.querySelector('.battle-mvp');
-  return { mvpFinns: !!mvp, mvpAktiv: !!(mvp && mvp.classList.contains('mvp-active')) };
+  return { mvpFinns: !!document.querySelector('.battle-mvp'), mvpTandes, mvpAktiv: tand() };
 }
 
 for (const [namn, adress] of [['studion', 'studio.html'], ['OBS (overlay-läget)', 'studio.html?overlay=1']]) {
@@ -121,7 +127,7 @@ for (const [namn, adress] of [['studion', 'studio.html'], ['OBS (overlay-läget)
         await new Promise(k => setTimeout(k, 200));
         return { under, kontroll: window.__omritningar - under, rot: window.__vaktRot, widgetar: document.querySelectorAll('.widget[data-id]').length };
       });
-      console.log(`[sändning · ${namn}] ${lagd.typer} widgettyper, ${r.under} omritningar under sändningen, MVP aktiv 3,5 s efter matchslut: ${efter.mvpAktiv}; sidfel: ${sidfel.slice(0, 2).join(' | ') || 'inga'}`);
+      console.log(`[sändning · ${namn}] ${lagd.typer} widgettyper, ${r.under} omritningar under sändningen, MVP tändes: ${efter.mvpTandes}, står kvar 3,5 s senare: ${efter.mvpAktiv}; sidfel: ${sidfel.slice(0, 2).join(' | ') || 'inga'}`);
 
       assert.ok(r.rot, '#view hittades inte — provet mäter ingenting');
       assert.ok(r.kontroll > 0, 'en riktig render() syntes inte i räknaren — provet mäter ingenting');
@@ -130,7 +136,8 @@ for (const [namn, adress] of [['studion', 'studio.html'], ['OBS (overlay-läget)
         `${r.under} omritningar av HELA layouten under sändningen. En widget anropar render() från en timer eller en `
         + `livehändelse — den ska skriva på sin egen nod i stället (se ritaEgna i quiz.js eller triggerBattleMvp i media.js).`);
       assert.ok(efter.mvpFinns, 'Battle MVP ritades inte');
-      assert.ok(efter.mvpAktiv, 'Battle MVP var inte tänd 3,5 s efter matchslut — något rev den (den ska stå i 7–10 s)');
+      assert.ok(efter.mvpTandes, 'Battle MVP tändes aldrig inom 20 s efter matchslut');
+      assert.ok(efter.mvpAktiv, 'Battle MVP var inte tänd 3,5 s efter att den tändes — något rev den (den ska stå i 7–10 s)');
     } finally { await ctx.close(); }
   });
 }
