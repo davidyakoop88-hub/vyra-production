@@ -307,7 +307,7 @@ test('studio.html laddar registret och ramen före panelordningen, med cachebust
   const mvp = plats('vyra-mvp-panel.js', '20261023-1');
   assert.ok(mvp > reg && mvp > testspel && mvp < ordning, 'Battle MVP:s poster laddas efter registret och testmotorn, före panelordningen');
   // Rankingens poster (vyra-ranking-panel.js, PR 8) på samma sätt.
-  const ranking = plats('vyra-ranking-panel.js', '20261104-1');
+  const ranking = plats('vyra-ranking-panel.js', '20261111-1');
   assert.ok(ranking > reg && ranking > testspel && ranking < ordning, 'rankingens poster laddas efter registret och testmotorn, före panelordningen');
   // Målens poster (vyra-mal-panel.js, PR 9) på samma sätt.
   const mal = plats('vyra-mal-panel.js', '20261106-1');  // 20261106-1: Fokus, Classic och Gåvoflöde

@@ -654,3 +654,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny katalognyckel catalog:vyrapaket:chattavatar:2 (PR #750) — förra körningen tog bilden men pushen studsade
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** alla 160
+
+## 2026-11-10 — 1 referenser skrivna
+
+- **Motiv:** Ny katalognyckel catalog:toplike:ljusring (Top Like Neonramar) behöver referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 160 (filter: toplike:ljusring) — catalog:toplike:ljusring

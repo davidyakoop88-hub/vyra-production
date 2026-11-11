@@ -1,0 +1,266 @@
+/* TOP LIKE · NEONRAMAR (toplike-ljusring.js). GENERERAD från Davids lekplats (G:\widget-lekplats\widget.js,
+   exportera-css.cjs): ändra helst där och exportera om, så att lekplatsen och VYRA ser likadana ut.
+   Lekplatsens mått är i 1080-dukens pixlar; VYRA:s duk är 432 breda, därav zoom .4 på .tl. */
+.widget.vyra-toplike.tln { width: max-content !important; height: auto !important; background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
+.tln .tl { zoom: .4; }
+.tln .tl-bild img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.tln .tl-antal::after { content: attr(data-ikon); padding-left: .25em; }
+.tln .toplike-row small { display: none !important; }
+.tln .tln-data { display: none !important; }
+/* studio.css har ".widget span { font-size: 8px; color: … }": text inne i designen ärver i stället. */
+.tln .tl span, .tln .tl b, .tln .tl i { font: inherit; color: inherit; letter-spacing: inherit; }
+/* Panelens Visa-rutor (namn, profilbild, värde, placering). Utan bild visas ramen tom. */
+.tln .utan-namn .tl-namn, .tln .utan-varde .tl-antal, .tln .utan-plats .tl-placering { display: none !important; }
+.tln .utan-bild .tln-foto { visibility: hidden; }
+/* Nolläget i overlay (samma regel som ranking-sixpack.css): demotexten bär storleken men syns inte. */
+.tln [data-noll-plats]:empty::before { content: attr(data-noll-plats); visibility: hidden; }
+.tln .tl { color: #fff; font-family: var(--tl-font, system-ui, sans-serif); text-align: center; }
+    .tln .tl-rubrik, .tln .tl-text { zoom: var(--tl-zoom, 1); }
+    .tln .tl-rubrik, .tln .tl-namn, .tln .tl-antal, .tln .tl-placering { font-family: var(--tl-font, system-ui, sans-serif) !important; font-weight: 900 !important; }
+    .tln .tl-rubrik { font: 900 64px/1 system-ui; letter-spacing: .12em; margin-bottom: 24px; text-shadow: 0 0 18px var(--tl-farg), 0 4px 12px #000; white-space: nowrap; }
+    .tln .tl-rubrik span { color: var(--tl-farg); }
+    .tln .tl-lista { display: flex; justify-content: center; align-items: flex-end; gap: 24px; }
+    .tln .tl-plats { position: relative; width: var(--s); --s: 230px; flex: none; }
+    .tln .tl-ring { position: relative; width: var(--s); aspect-ratio: 1; }
+    .tln .tl-ring .tl-ram { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; animation: tln-glod 2.4s ease-in-out infinite; }
+    .tln .tl-bild { position: absolute; inset: var(--tl-inset); border-radius: 50%; display: grid; place-items: center; overflow: hidden;
+      font: 900 calc(var(--s) * .3) system-ui; background: radial-gradient(circle at 35% 30%, #4a3a6e, #160f24); box-shadow: inset 0 0 20px #000; }
+    /* Placeringssiffran ser ut som antalet (David 2026-11-10: "siffrorna 1 2 3 4 5 matchar de andra siffror"):
+       samma typsnitt, färg, kontur och skugga, ingen ruta. */
+    .tln .tl-placering { position: absolute; left: 50%; bottom: -.35em; translate: -50% 0; font: 900 44px/1 var(--tl-font, system-ui);
+      color: var(--tl-antalfarg, var(--tl-farg)); -webkit-text-stroke: 3px rgba(8, 4, 16, .9); paint-order: stroke fill;
+      text-shadow: 0 0 4px #000, 0 0 10px rgba(0, 0, 0, .8), 0 2px 5px #000; zoom: var(--tl-zoom, 1); }
+    .tln .p1 .tl-placering { font-size: 54px; }
+    /* Luft mellan placeringssiffran (som sticker ner under ramen) och namnet. */
+    /* Siffran bredvid fotot i alla lägen (David 2026-11-10: "lägga den foto på sidan"). Stående: mitt för fotot.
+       Pall och liggande: vid ramens vänstra nederkant, så att den inte går in i grannramen. */
+    .tln .lage-staende .tl-placering { bottom: auto; top: 50%; left: -1.05em; translate: 0 -50%; }
+    .tln .lage-pall .tl-placering, .tln .lage-liggande .tl-placering { bottom: 4%; left: 6%; translate: -50% 0; }
+    .tln .lage-pall .tl-text, .tln .lage-liggande .tl-text, .tln .lage-staende .tl-text { padding-top: 0; }
+    /* Sidolistorna: siffran står bredvid ramen, inte under (David 2026-11-10: "lägg de siffror på sidan inte under foto
+       så det inte blir så mycket mellanrum"). Vänster sida: till vänster om ramen. Höger sida: till höger. */
+    .tln .lage-vanster .tl-plats { padding-left: 1.1em; } .tln .lage-hoger .tl-plats { padding-right: 1.1em; }
+    .tln .lage-vanster .tl-placering, .tln .lage-hoger .tl-placering { bottom: auto; top: 50%; translate: 0 -50%; }
+    .tln .lage-vanster .tl-placering { left: -1.05em; } .tln .lage-hoger .tl-placering { left: auto; right: -1.05em; }
+    .tln .lage-vanster .tl-lista, .tln .lage-hoger .tl-lista { gap: 6px; }
+    .tln .tl-text { min-width: 0; }
+    .tln .tl-namn { margin-top: 14px; font: 800 32px/1.1 system-ui; color: var(--tl-namnfarg, #fff);
+      font-weight: 900; -webkit-text-stroke: 3px rgba(8, 4, 16, .9); paint-order: stroke fill;
+      text-shadow: 0 0 4px #000, 0 0 10px rgba(0, 0, 0, .9), 0 0 18px rgba(0, 0, 0, .7), 0 3px 6px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tln .tl-antal { font: 900 36px/1.2 system-ui; color: var(--tl-antalfarg, var(--tl-farg)); -webkit-text-stroke: 3px rgba(8, 4, 16, .9); paint-order: stroke fill;
+      text-shadow: 0 0 4px #000, 0 0 10px rgba(0, 0, 0, .8), 0 2px 5px #000; }
+    /* pall */
+    .tln .lage-pall .tl-plats.p1 { --s: 340px; order: 3; } .tln .lage-pall .tl-plats.p2 { --s: 250px; order: 2; } .tln .lage-pall .tl-plats.p3 { --s: 250px; order: 4; }
+    .tln .lage-pall .tl-plats.p4 { --s: 190px; order: 1; } .tln .lage-pall .tl-plats.p5 { --s: 190px; order: 5; }
+    .tln .lage-pall .p1 .tl-namn { font-size: 40px; } .tln .lage-pall .p1 .tl-antal { font-size: 48px; }
+    /* topp 5 på pallen: 280 + 2 x 210 + 2 x 160 + 4 x 8 = 1052 av 1080 */
+    .tln .lage-pall.antal-5 .tl-lista { gap: 8px; } .tln .lage-pall.antal-5 .p1 { --s: 280px; }
+    .tln .lage-pall.antal-5 .p2, .tln .lage-pall.antal-5 .p3 { --s: 210px; } .tln .lage-pall.antal-5 .p4, .tln .lage-pall.antal-5 .p5 { --s: 160px; }
+    .tln .lage-pall.antal-5 .tl-namn { font-size: 26px; } .tln .lage-pall.antal-5 .tl-antal { font-size: 28px; }
+    /* liggande */
+    .tln .lage-liggande .tl-lista { align-items: flex-start; gap: 14px; } .tln .lage-liggande .tl-plats { --s: 200px; }
+    .tln .lage-liggande.antal-3 .tl-plats { --s: 280px; } .tln .lage-liggande .tl-namn { font-size: 28px; } .tln .lage-liggande .tl-antal { font-size: 30px; }
+    /* stående */
+    .tln .lage-staende .tl-lista { flex-direction: column; align-items: center; gap: 22px; } .tln .lage-staende .tl-plats { --s: 210px; }
+    .tln .lage-staende.antal-5 .tl-plats { --s: 170px; } .tln .lage-staende .tl-namn { margin-top: 10px; }
+    /* vänster och höger sida */
+    .tln .lage-vanster .tl-lista, .tln .lage-hoger .tl-lista { flex-direction: column; align-items: stretch; gap: 16px; }
+    .tln .lage-vanster .tl-plats, .tln .lage-hoger .tl-plats { --s: 190px; width: 620px; display: flex; align-items: center; gap: 26px; }
+    .tln .lage-vanster.antal-5 .tl-plats, .tln .lage-hoger.antal-5 .tl-plats { --s: 160px; }
+    .tln .lage-vanster .tl-ring, .tln .lage-hoger .tl-ring { flex: none; }
+    .tln .lage-vanster .tl-text, .tln .lage-vanster .tl-rubrik { text-align: left; }
+    .tln .lage-hoger .tl-plats { flex-direction: row-reverse; } .tln .lage-hoger .tl-text, .tln .lage-hoger .tl-rubrik { text-align: right; }
+    .tln .lage-vanster .tl-namn, .tln .lage-hoger .tl-namn { margin-top: 0; font-size: 40px; } .tln .lage-vanster .tl-antal, .tln .lage-hoger .tl-antal { font-size: 44px; }
+    .tln .lage-vanster .p1 .tl-namn, .tln .lage-hoger .p1 .tl-namn { font-size: 46px; }
+    .tln .tl-plats.puls .tl-ring { animation: tln-puls .45s ease-out; }
+    @keyframes tln-glod { 50% { filter: brightness(1.25) saturate(1.15); } }
+    @keyframes tln-puls { 40% { transform: scale(1.08); } }
+    .tln .tl-tom .tl-bild { opacity: .35; } .tln .tl-tom .tl-namn, .tln .tl-tom .tl-antal { opacity: .4; }
+    /* TYDLIG TEXT (David 2026-11-10: "jag vill den ska vara tydligt och synas bra"): större namn, tjock kontur
+       och en mörk platta bakom namn och antal, så att texten syns mot alla bakgrunder. */
+    .tln .tl-namn { font-size: 40px !important; -webkit-text-stroke-width: 4px; }
+    .tln .lage-pall .p1 .tl-namn, .tln .lage-vanster .p1 .tl-namn, .tln .lage-hoger .p1 .tl-namn { font-size: 50px !important; }
+    .tln .lage-pall.antal-5 .tl-namn, .tln .lage-liggande.antal-5 .tl-namn { font-size: 30px !important; }
+    .tln .tl.platta .tl-text { display: inline-block; max-width: 100%; margin-top: 12px; padding: 8px 18px 10px; border-radius: 16px;
+      background: rgba(8, 4, 16, .78); border: 2px solid color-mix(in srgb, var(--tl-farg) 70%, transparent);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--tl-farg) 45%, transparent), inset 0 0 12px rgba(0, 0, 0, .6); }
+    .tln .tl.platta .tl-namn { margin-top: 0; }
+    /* Textrutan får vara lite bredare än ramen (utom i trånga topp 5-pallen); längre namn krymps i rita(). */
+    .tln .lage-pall .tl-text, .tln .lage-liggande .tl-text, .tln .lage-staende .tl-text { max-width: calc(var(--s) + 40px) !important; margin-left: -20px; margin-right: -20px; }
+    .tln .lage-pall.antal-5 .tl-text, .tln .lage-liggande.antal-5 .tl-text { max-width: calc(var(--s) + 6px) !important; margin-left: -3px; margin-right: -3px; }
+    .tln .tl.platta.lage-vanster .tl-text, .tln .tl.platta.lage-hoger .tl-text { margin-top: 0; }
+    /* NAMNSTILAR (David 2026-11-10: "hitta lösningar till mig") — sex sätt att få namnet tydligt utan ruta. */
+    .tln .namnstil-moln .tl-text { background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(0,0,0,.85), rgba(0,0,0,.55) 55%, transparent 80%); padding: 10px 26px; }
+    .tln .namnstil-band .tl-text { background: linear-gradient(90deg, transparent, rgba(6,3,14,.85) 18%, rgba(6,3,14,.85) 82%, transparent); padding: 8px 34px; }
+    .tln .namnstil-kontur .tl-namn { -webkit-text-stroke: 6px var(--tl-farg) !important; text-shadow: 0 0 12px var(--tl-farg), 0 3px 6px #000 !important; color: #fff !important; }
+    .tln .namnstil-guld .tl-namn { background: linear-gradient(180deg, #fff7d1 0%, #ffd34a 45%, #c8891a 55%, #ffe58a 100%); -webkit-background-clip: text; background-clip: text;
+      color: transparent !important; -webkit-text-stroke: 0 !important; filter: drop-shadow(0 0 2px #000) drop-shadow(0 3px 4px #000); text-shadow: none !important; }
+    /* 3D (David 2026-11-10: "gör namnet i 3d"): sju lager djup i ramens färg, mörkare längre bak, och en mjuk skugga
+       under. Lätt lutning framåt så att djupet syns. */
+    .tln .namnstil-3d .tl-namn { color: var(--tl-namnfarg, #fff) !important; -webkit-text-stroke: 1.5px color-mix(in srgb, var(--tl-farg) 40%, #000) !important;
+      text-shadow: 0.03em 0.03em 0 color-mix(in srgb, var(--tl-farg) 72%, #000), 0.06em 0.06em 0 color-mix(in srgb, var(--tl-farg) 66%, #000), 0.09em 0.09em 0 color-mix(in srgb, var(--tl-farg) 60%, #000), 0.12em 0.12em 0 color-mix(in srgb, var(--tl-farg) 54%, #000), 0.15em 0.15em 0 color-mix(in srgb, var(--tl-farg) 48%, #000), 0.18em 0.18em 0 color-mix(in srgb, var(--tl-farg) 42%, #000), 0.21em 0.21em 0 color-mix(in srgb, var(--tl-farg) 36%, #000), 0.24em 0.24em 0 color-mix(in srgb, var(--tl-farg) 30%, #000), 0.3em 0.36em 0.25em rgba(0, 0, 0, .8) !important; transform: perspective(260px) rotateX(18deg); padding-bottom: .3em; overflow: visible; }
+    .tln .namnstil-3d .tl-antal, .tln .namnstil-3d .tl-placering { text-shadow: 1px 1px 0 #000, 2px 2px 0 #000, 3px 3px 0 #000, 5px 6px 6px rgba(0, 0, 0, .7) !important; }
+    .tln .namnstil-versaler .tl-namn { text-transform: uppercase; letter-spacing: .04em; font-stretch: condensed; }
+    .tln .tl-namnstilar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+    .tln .tl-namnstilar button { margin: 0; padding: 8px 2px; text-align: center; background: #110d1b; font-size: 12px; }
+    .tln .tl-namnstilar button.vald { border-color: #b98cff; background: #2b2044; }
+    /* GLANS ÖVER PROFILBILDEN (David 2026-11-10). En glaskupa: ljust sken uppe till vänster, ljus kant,
+       och i läget "svep" ett ljusstråk som går över bilden var femte sekund. Ligger över fotot, under ramen. */
+    .tln .glans-glans .tl-bild::before, .tln .glans-svep .tl-bild::before { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(ellipse 70% 55% at 32% 22%, rgba(255,255,255,.55), rgba(255,255,255,.12) 45%, transparent 62%),
+        linear-gradient(180deg, transparent 60%, rgba(0,0,0,.25));
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.28), inset 0 -10px 18px rgba(0,0,0,.35); }
+    .tln .glans-svep .tl-bild::after { content: ''; position: absolute; inset: -20%; pointer-events: none;
+      background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.65) 48%, rgba(255,255,255,.1) 55%, transparent 62%);
+      translate: -120% 0; animation: tln-svep 5s ease-in-out infinite; }
+    .tln .glans-svep .p2 .tl-bild::after { animation-delay: .4s; } .tln .glans-svep .p3 .tl-bild::after { animation-delay: .8s; }
+    .tln .glans-svep .p4 .tl-bild::after { animation-delay: 1.2s; } .tln .glans-svep .p5 .tl-bild::after { animation-delay: 1.6s; }
+    @keyframes tln-svep { 0%, 55% { translate: -120% 0; } 85%, 100% { translate: 120% 0; } }
+    /* OMKÖRNING SOM SYNS (David 2026-11-10: "när de byter plats det ska vara synligt jag vill alla ska se det").
+       Den som klättrar: ljusblixt i ramen, blir större en stund, pil som stiger. Ny etta: banderoll med krona. */
+    .tln .tl-plats.klattrar { z-index: 5; }
+    .tln .tl-plats.klattrar .tl-ring { animation: tln-blixt 1.4s ease-out; }
+    @keyframes tln-blixt { 0% { filter: brightness(2.6) drop-shadow(0 0 30px var(--tl-farg)); scale: 1.18; }
+      35% { filter: brightness(1.8) drop-shadow(0 0 22px var(--tl-farg)); scale: 1.12; } 100% { filter: none; scale: 1; } }
+    .tln .tln-pil { position: absolute; left: 50%; top: -.2em; translate: -50% 0; z-index: 6; pointer-events: none; white-space: nowrap;
+      font: 900 56px/1 var(--tl-font, system-ui); color: #5dff8f; -webkit-text-stroke: 4px rgba(4, 20, 8, .95); paint-order: stroke fill;
+      text-shadow: 0 0 14px #5dff8f, 0 3px 6px #000; animation: tln-pil 2.2s ease-out forwards; zoom: var(--tl-zoom, 1); }
+    @keyframes tln-pil { 0% { opacity: 0; transform: translateY(30px) scale(.6); } 15% { opacity: 1; transform: translateY(0) scale(1.15); }
+      70% { opacity: 1; transform: translateY(-40px) scale(1); } 100% { opacity: 0; transform: translateY(-80px) scale(.9); } }
+    .tln .tl-plats.ny-in { animation: tln-ny-in .8s cubic-bezier(.2,1.4,.4,1); }
+    @keyframes tln-ny-in { from { opacity: 0; transform: scale(.3); } }
+    .tln .tln-banderoll { position: absolute; left: 50%; top: 0; translate: -50% -78%; z-index: 10; pointer-events: none; text-align: center; white-space: nowrap;
+      padding: 18px 46px 22px; border-radius: 24px; background: linear-gradient(180deg, rgba(20, 10, 40, .92), rgba(8, 4, 18, .92));
+      box-shadow: 0 0 0 4px var(--tl-farg), 0 0 50px var(--tl-farg), 0 10px 30px #000; animation: tln-banderoll 3.2s ease-in-out forwards; zoom: var(--tl-zoom, 1); }
+    .tln .tln-banderoll b { display: block; font: 900 72px/1 var(--tl-font, system-ui); color: #ffd84a; -webkit-text-stroke: 4px #2a1600; paint-order: stroke fill;
+      text-shadow: 0 0 20px #ffb800, 0 4px 8px #000; letter-spacing: .04em; }
+    .tln .tln-banderoll span { display: block; margin-top: 8px; font: 900 48px/1.1 var(--tl-font, system-ui); color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
+    @keyframes tln-banderoll { 0% { opacity: 0; transform: scale(.2) rotate(-8deg); } 12% { opacity: 1; transform: scale(1.12) rotate(2deg); }
+      20% { transform: scale(1) rotate(0); } 82% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(.85) translateY(-30px); } }
+    /* LUTNING OCH VRIDNING (David 2026-11-10: "vrida på profilbilden lutning höger och vänster").
+       --tl-lut = rotateY i grader (3D), --tl-vrid = rotate i grader (platt). Gäller bilden eller hela ringen. */
+    .tln .tl-ring { perspective: 700px; }
+    .tln .tl-vrid { position: absolute; inset: 0; transform: rotateY(var(--tl-lut, 0deg)) rotate(var(--tl-vrid, 0deg)); transition: transform .3s ease; }
+    /* LEVANDE RAM (David 2026-11-10: "så på ramen ska röra runt så den känns mer levande").
+       "ljus": ett ljusstråk i ramens färg springer runt ringen (konisk gradient, maskad till en ring mellan bildens
+       kant och ramens yttre kant). Ramen och golvskenet under står still. "snurra": hela ramen roterar. */
+    .tln .tl-ljus { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; z-index: 2;
+      background: conic-gradient(from 0deg, transparent 0deg, transparent 220deg, color-mix(in srgb, var(--tl-farg) 50%, transparent) 290deg,
+        color-mix(in srgb, var(--tl-farg) 40%, #fff) 335deg, #fff 352deg, #fff 357deg, transparent 360deg);
+      --tl-mask: radial-gradient(circle closest-side, transparent calc(var(--tl-band-i) * 100%), #000 calc(var(--tl-band-i) * 100% + 1.5%), #000 calc(var(--tl-band-i) * 100% + 4.5%), transparent calc(var(--tl-band-i) * 100% + 6%));
+      -webkit-mask: var(--tl-mask); mask: var(--tl-mask);
+      filter: brightness(1.3) drop-shadow(0 0 3px #fff) drop-shadow(0 0 6px var(--tl-farg));
+      animation: tln-runt 3.2s linear infinite; }
+    .tln .p2 .tl-ljus { animation-delay: -.8s; } .tln .p3 .tl-ljus { animation-delay: -1.6s; } .tln .p4 .tl-ljus { animation-delay: -2.4s; } .tln .p5 .tl-ljus { animation-delay: -1.2s; }
+    @keyframes tln-runt { to { rotate: 360deg; } }
+    .tln .levande-snurra .tl-vrid > .tl-ram-ring { animation: tln-runt 14s linear infinite, tln-glod 2.4s ease-in-out infinite; }
+    .tln .tl-namn.tva-rader { white-space: normal; overflow-wrap: anywhere; line-height: 1.05; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+    /* FYRKANTIG PROFILBILD (David 2026-11-10: "kan man ha tiktok profilbild i fyrkantig ram"). Dina ramar är runda
+       bilder, så den fyrkantiga ramen ritas i kod i den valda ramens färg: dubbel kant, sken, hörnpunkter,
+       golvsken som står still och ljuset som springer runt kanten. */
+    .tln .form-fyrkant .tl-bild { inset: 15%; border-radius: 16%; z-index: 3; }
+    .tln .form-fyrkant .tl-fyr { z-index: 1; }
+    /* Ljuset springer runt kanten: en konisk gradient bakom fotot som snurrar med --tl-a. */
+    .tln .tl-fyr-ljus { position: absolute; inset: 8%; border-radius: 21%; z-index: 2; pointer-events: none;
+      background: conic-gradient(from var(--tl-a), transparent 0 290deg, color-mix(in srgb, var(--tl-farg) 60%, #fff) 330deg, #fff 352deg, transparent 360deg);
+      filter: drop-shadow(0 0 5px #fff); animation: tln-regnbage 3.2s linear infinite; }
+    .tln .fyr-teknik .tl-fyr-ljus { border-radius: 0; clip-path: polygon(14% 0, 100% 0, 100% 86%, 86% 100%, 0 100%, 0 14%); }
+    .tln .form-fyrkant .glans-glans .tl-bild::before, .tln .form-fyrkant.glans-glans .tl-bild::before, .tln .form-fyrkant.glans-svep .tl-bild::before { border-radius: inherit; }
+    .tln .form-fyrkant.glans-svep .tl-bild { overflow: hidden; }
+    .tln .tl-fyr { position: absolute; inset: 9%; border-radius: 20%; pointer-events: none;
+      border: calc(var(--s) * .028) solid color-mix(in srgb, var(--tl-farg) 75%, #fff);
+      box-shadow: 0 0 calc(var(--s) * .03) var(--tl-farg), 0 0 calc(var(--s) * .08) var(--tl-farg), inset 0 0 calc(var(--s) * .05) var(--tl-farg);
+      animation: tln-glod 2.4s ease-in-out infinite; }
+    .tln .tl-fyr::before { content: ''; position: absolute; inset: calc(var(--s) * .022); border-radius: 16%;
+      border: calc(var(--s) * .008) solid color-mix(in srgb, var(--tl-farg) 50%, #fff); opacity: .8; }
+    .tln .tl-fyr b { position: absolute; width: calc(var(--s) * .045); aspect-ratio: 1; border-radius: 50%; background: #fff;
+      box-shadow: 0 0 6px #fff, 0 0 14px var(--tl-farg); translate: -50% -50%; }
+    .tln .tl-fyr-golv { position: absolute; left: 12%; right: 12%; bottom: 1%; height: 9%; border-radius: 50%; pointer-events: none;
+      background: radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--tl-farg) 80%, transparent), transparent 70%); filter: blur(4px); }
+    /* FYRKANTIGA MODELLER (David 2026-11-10: "kan vi ha andra modeller"). .tl-fyr ritar ramen, modellen i fyr-<namn>. */
+    .tln .fyr-horn .tl-fyr { border-color: transparent; box-shadow: none; }
+    .tln .fyr-horn .tl-fyr::before { display: none; }
+    .tln .fyr-horn .tl-fyr i { position: absolute; width: 34%; height: 34%; border: calc(var(--s) * .03) solid color-mix(in srgb, var(--tl-farg) 70%, #fff);
+      filter: drop-shadow(0 0 4px var(--tl-farg)) drop-shadow(0 0 10px var(--tl-farg)); }
+    .tln .fyr-horn .tl-fyr i:nth-of-type(1) { left: -4%; top: -4%; border-right: 0; border-bottom: 0; border-top-left-radius: 30%; }
+    .tln .fyr-horn .tl-fyr i:nth-of-type(2) { right: -4%; top: -4%; border-left: 0; border-bottom: 0; border-top-right-radius: 30%; }
+    .tln .fyr-horn .tl-fyr i:nth-of-type(3) { left: -4%; bottom: -4%; border-right: 0; border-top: 0; border-bottom-left-radius: 30%; }
+    .tln .fyr-horn .tl-fyr i:nth-of-type(4) { right: -4%; bottom: -4%; border-left: 0; border-top: 0; border-bottom-right-radius: 30%; }
+    .tln .fyr-horn .tl-fyr b { display: none; }
+    .tln .tl-fyr i { display: none; } .tln .fyr-horn .tl-fyr i { display: block; }
+    .tln .fyr-diamant .tl-fyr::after { content: ''; position: absolute; inset: 6%; rotate: 45deg; border-radius: 12%; z-index: -1;
+      border: calc(var(--s) * .014) solid color-mix(in srgb, var(--tl-farg) 60%, #fff); box-shadow: 0 0 12px var(--tl-farg), inset 0 0 10px var(--tl-farg); scale: 1.18; }
+    .tln .fyr-diamant .tl-fyr b { left: 50% !important; } .tln .fyr-diamant .tl-fyr b:nth-of-type(1) { top: -20% !important; } .tln .fyr-diamant .tl-fyr b:nth-of-type(2) { top: 120% !important; }
+    .tln .fyr-diamant .tl-fyr b:nth-of-type(3) { left: -20% !important; top: 50% !important; } .tln .fyr-diamant .tl-fyr b:nth-of-type(4) { left: 120% !important; top: 50% !important; }
+    .tln .fyr-teknik .tl-fyr { border-radius: 0; border: 0; box-shadow: none; background: color-mix(in srgb, var(--tl-farg) 85%, #fff);
+      clip-path: polygon(14% 0, 100% 0, 100% 86%, 86% 100%, 0 100%, 0 14%, 14% 0, 14% 4%, 4% 14%, 4% 96%, 82% 96%, 96% 82%, 96% 4%, 14% 4%);
+      filter: drop-shadow(0 0 6px var(--tl-farg)); }
+    .tln .fyr-teknik .tl-fyr::before { display: none; } .tln .fyr-teknik .tl-fyr b { display: none; }
+    .tln .fyr-teknik .tl-fyr-golv { filter: blur(3px); }
+    .tln .fyr-teknik.form-fyrkant .tl-bild { border-radius: 0; clip-path: polygon(12% 0, 100% 0, 100% 88%, 88% 100%, 0 100%, 0 12%); }
+    @property --tl-a { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+    .tln .fyr-regnbage .tl-fyr { border-color: transparent; box-shadow: 0 0 18px rgba(255,255,255,.25);
+      background: conic-gradient(from var(--tl-a), #ff4fd8, #ffd84f, #4fff7a, #4fd8ff, #8a4dff, #ff4fd8);
+      animation: tln-regnbage 3s linear infinite; }
+    @keyframes tln-regnbage { to { --tl-a: 360deg; } }
+    .tln .fyr-regnbage .tl-fyr::before { border-color: rgba(255,255,255,.45); } .tln .fyr-regnbage .tl-fyr b { box-shadow: 0 0 8px #fff; }
+    .tln .fyr-glas .tl-fyr { border: calc(var(--s) * .012) solid rgba(255,255,255,.9); box-shadow: 0 0 10px rgba(255,255,255,.7), 0 0 26px var(--tl-farg);
+      background: linear-gradient(135deg, rgba(255,255,255,.18), transparent 40%); }
+    .tln .fyr-glas .tl-fyr::before { display: none; } .tln .fyr-glas .tl-fyr b { display: none; }
+    /* FLER FYRKANTIGA MODELLER (David 2026-11-10: "kan vi se andra modeller"). */
+    .tln .fyr-metall .tl-fyr, .tln .fyr-cyber .tl-fyr, .tln .fyr-pixel .tl-fyr, .tln .fyr-elektrisk .tl-fyr, .tln .fyr-polaroid .tl-fyr, .tln .fyr-kristall .tl-fyr { animation: none; }
+    .tln .fyr-metall .tl-fyr::before, .tln .fyr-cyber .tl-fyr::before, .tln .fyr-pixel .tl-fyr::before, .tln .fyr-elektrisk .tl-fyr::before, .tln .fyr-polaroid .tl-fyr::before, .tln .fyr-kristall .tl-fyr::before { display: none; }
+    .tln .fyr-metall .tl-fyr b, .tln .fyr-cyber .tl-fyr b, .tln .fyr-pixel .tl-fyr b, .tln .fyr-elektrisk .tl-fyr b, .tln .fyr-polaroid .tl-fyr b { display: none; }
+    /* 7 Metall: tjock blank ram, ljus överkant och mörk underkant. */
+    .tln .fyr-metall .tl-fyr { inset: 6%; border-radius: 14%; border: calc(var(--s) * .055) solid transparent;
+      background: linear-gradient(160deg, #fff, color-mix(in srgb, var(--tl-farg) 70%, #fff) 25%, color-mix(in srgb, var(--tl-farg) 70%, #000) 55%, color-mix(in srgb, var(--tl-farg) 80%, #fff) 80%, color-mix(in srgb, var(--tl-farg) 60%, #000)) border-box;
+      box-shadow: 0 6px 14px rgba(0,0,0,.7), inset 0 0 0 2px rgba(0,0,0,.5); }
+    /* 8 Cyber: två förskjutna streckade kanter. */
+    .tln .fyr-cyber .tl-fyr { border: calc(var(--s) * .014) dashed color-mix(in srgb, var(--tl-farg) 70%, #fff); border-radius: 6%; box-shadow: 0 0 10px var(--tl-farg); }
+    .tln .fyr-cyber .tl-fyr::after { content: ''; position: absolute; inset: -9%; border: calc(var(--s) * .01) solid var(--tl-farg); border-radius: 6%;
+      translate: 4% -4%; opacity: .8; filter: drop-shadow(0 0 6px var(--tl-farg)); clip-path: polygon(0 0, 60% 0, 60% 6%, 6% 6%, 6% 60%, 0 60%, 40% 100%, 100% 100%, 100% 40%, 94% 40%, 94% 94%, 40% 94%); }
+    /* 9 Pixel: hackiga hörn i retrostil. */
+    .tln .fyr-pixel .tl-fyr { border-radius: 0; border: 0; box-shadow: none; inset: 8%; background: var(--tl-farg); filter: drop-shadow(0 0 6px var(--tl-farg));
+      clip-path: polygon(8% 0, 92% 0, 92% 4%, 96% 4%, 96% 8%, 100% 8%, 100% 92%, 96% 92%, 96% 96%, 92% 96%, 92% 100%, 8% 100%, 8% 96%, 4% 96%, 4% 92%, 0 92%, 0 8%, 4% 8%, 4% 4%, 8% 4%,
+        8% 7%, 7% 7%, 7% 8%, 7% 92%, 7% 93%, 8% 93%, 92% 93%, 93% 93%, 93% 92%, 93% 8%, 93% 7%, 92% 7%, 8% 7%); }
+    .tln .fyr-pixel.form-fyrkant .tl-bild { border-radius: 0; inset: 15%; }
+    /* 10 Elektrisk: streckad kant som rör sig runt. */
+    .tln .fyr-elektrisk .tl-fyr { border: 0; box-shadow: 0 0 12px var(--tl-farg); border-radius: 16%;
+      background: repeating-linear-gradient(90deg, #fff 0 10%, transparent 10% 20%) top / 200% calc(var(--s) * .022) repeat-x,
+        repeating-linear-gradient(90deg, #fff 0 10%, transparent 10% 20%) bottom / 200% calc(var(--s) * .022) repeat-x,
+        repeating-linear-gradient(0deg, #fff 0 10%, transparent 10% 20%) left / calc(var(--s) * .022) 200% repeat-y,
+        repeating-linear-gradient(0deg, #fff 0 10%, transparent 10% 20%) right / calc(var(--s) * .022) 200% repeat-y;
+      filter: drop-shadow(0 0 4px var(--tl-farg)) drop-shadow(0 0 10px var(--tl-farg)); animation: tln-elektrisk 1.2s linear infinite; }
+    @keyframes tln-elektrisk { to { background-position: 100% 0, -100% 100%, 0 100%, 100% -100%; } }
+    /* 11 Polaroid: vit fotoram med bredare nederkant. */
+    .tln .fyr-polaroid .tl-fyr { inset: 7% 9% 1% 9%; border-radius: 3%; border: 0; background: linear-gradient(#fdfdfd, #e9e9ee);
+      box-shadow: 0 6px 16px rgba(0,0,0,.6), 0 0 18px color-mix(in srgb, var(--tl-farg) 50%, transparent); rotate: -3deg; }
+    .tln .fyr-polaroid.form-fyrkant .tl-bild { inset: 13% 15% 21% 15%; border-radius: 2%; rotate: -3deg; }
+    /* 12 Kristall: fasetterad kant som glittrar. */
+    .tln .fyr-kristall .tl-fyr { border: calc(var(--s) * .04) solid transparent; border-radius: 10%;
+      background: conic-gradient(from 20deg, #fff, color-mix(in srgb, var(--tl-farg) 70%, #fff), var(--tl-farg), #fff, color-mix(in srgb, var(--tl-farg) 50%, #000), #fff, var(--tl-farg), color-mix(in srgb, var(--tl-farg) 70%, #fff), #fff) border-box;
+      box-shadow: 0 0 14px var(--tl-farg), 0 0 30px color-mix(in srgb, var(--tl-farg) 50%, transparent); animation: tln-glitter 2.6s ease-in-out infinite; }
+    .tln .fyr-kristall .tl-fyr b { width: calc(var(--s) * .06); background: radial-gradient(circle, #fff 20%, transparent 70%); box-shadow: none; animation: tln-blink 1.8s ease-in-out infinite; }
+    @keyframes tln-glitter { 50% { filter: brightness(1.35) saturate(1.2); } }
+    @keyframes tln-blink { 50% { opacity: .2; } }
+    /* ENKLA RAMAR I KOD. Wrappern ger skenet (filter verkar på det maskade barnet), <i> är själva ringen:
+       en gradient maskad till ett smalt band mellan --e-i och --e-y (andel av radien). */
+    .tln .tl-enkel { position: absolute; inset: 0; pointer-events: none; --e-i: 80%; --e-y: 84%; }
+    .tln .tl-enkel i { position: absolute; inset: 0; border-radius: 50%;
+      -webkit-mask: radial-gradient(circle closest-side, transparent calc(var(--e-i) - .5%), #000 var(--e-i), #000 var(--e-y), transparent calc(var(--e-y) + .5%));
+      mask: radial-gradient(circle closest-side, transparent calc(var(--e-i) - .5%), #000 var(--e-i), #000 var(--e-y), transparent calc(var(--e-y) + .5%)); }
+    .tln .enkel-formorkelse { filter: drop-shadow(0 0 3px #fff) drop-shadow(-6px -8px 18px #ff4fc8) drop-shadow(0 0 10px #c04dff); }
+    .tln .enkel-formorkelse i { background: conic-gradient(from 200deg, #fff6c8, #8affc0, #4fd8ff, #8a4dff, #ff4f8a, #ffb04f, #fff6c8); }
+    .tln .enkel-neonring { --e-y: 84.5%; filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 12px #c04dff) drop-shadow(0 0 22px #ff4fd8); }
+    .tln .enkel-neonring i { background: conic-gradient(from 300deg, #4fd8ff, #c04dff 25%, #ff4fd8 45%, #4fd8ff 60%, #ffd84f 75%, #ff9a2f 85%, #4fd8ff); }
+    .tln .enkel-duo { --e-y: 84.5%; filter: drop-shadow(0 0 3px #fff) drop-shadow(0 -6px 14px #ff4fd8) drop-shadow(0 6px 14px #2fc8ff); }
+    .tln .enkel-duo i { background: linear-gradient(180deg, #ff4fd8, #b04fff 50%, #2fc8ff); }
+    .tln .enkel-duo::after { content: ''; position: absolute; inset: 0; border-radius: 50%; opacity: .45; background: linear-gradient(180deg, #ff4fd8, #2fc8ff);
+      -webkit-mask: radial-gradient(circle closest-side, transparent 75.5%, #000 76%, #000 76.8%, transparent 77.3%);
+      mask: radial-gradient(circle closest-side, transparent 75.5%, #000 76%, #000 76.8%, transparent 77.3%); }
+    .tln .tl-enkel-golv { position: absolute; left: 14%; right: 14%; bottom: 3%; height: 8%; border-radius: 50%; pointer-events: none; filter: blur(5px); opacity: .8; }
+    .tln .tl-enkel-golv.enkel-formorkelse { background: radial-gradient(ellipse, #c04dff, transparent 70%); filter: blur(5px); }
+    .tln .tl-enkel-golv.enkel-neonring { background: radial-gradient(ellipse, #ff9a2f, transparent 70%); filter: blur(5px); }
+    .tln .tl-enkel-golv.enkel-duo { background: radial-gradient(ellipse, #2fc8ff, transparent 70%); filter: blur(5px); }
+    .tln .tl-ring .tl-enkel { animation: none; } .tln .levande-snurra .tl-vrid > .tl-enkel { animation: tln-runt 14s linear infinite; }
+    .tln .tl-enkel-tumme { position: relative; display: block; width: 100%; aspect-ratio: 1; }

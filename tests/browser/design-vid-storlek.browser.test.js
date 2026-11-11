@@ -26,6 +26,10 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css
 const NYCKLAR = kravNycklar();
 const EGET = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'video']);
 const SKALOR = [1, 0.75, 0.5, 0.3, 0.2, 1];
+// Designer där David med flit valt att texten INTE krymper likformigt, med panelvalet som stänger av det.
+// Provet mäter kompositionen med valet av, så att resten av designen fortfarande måste följa skalan.
+// Neonramar (2026-11-10): "Texten krymper mindre än ramarna", så att namnen går att läsa i liten storlek.
+const LIKFORMIG_MED = { 'catalog:toplike:ljusring': { tlnTextVaxer: false } };
 // Granskningens repro och de tre container-familjerna den inte nådde.
 const REPRO = ['catalog:toplike:metall', 'catalog:toplike:voltage', 'catalog:fanlevel:layout:hero'];
 
@@ -118,12 +122,12 @@ test('hela katalogen: Storlek 100 → 75 → 50 → 30 → 20 → 100 % byter al
   const p = await editorn();
   const fel = [];
   for (const nyckel of NYCKLAR) {
-    const ut = await p.evaluate(([k, skalor, eget]) => {
-      const w = window.__lagg(k);
+    const ut = await p.evaluate(([k, skalor, eget, over]) => {
+      const w = window.__lagg(k, over);
       if (eget.includes(w.type)) return { hoppa: true };
       const bas = window.__steg({ widgetScale: 1 });
       return { bas, steg: skalor.map(z => ({ z, s: window.__steg({ widgetScale: z }) })) };
-    }, [nyckel, SKALOR, [...EGET]]);
+    }, [nyckel, SKALOR, [...EGET], LIKFORMIG_MED[nyckel] || null]);
     if (ut.hoppa) continue;
     if (!ut.bas) { fel.push(`${nyckel}: ingen widgetrot`); continue; }
     for (const { z, s } of ut.steg) {

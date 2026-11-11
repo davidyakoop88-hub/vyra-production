@@ -20,7 +20,7 @@
   // efter VyraWidgets.create() for sina egna katalogknappar, sa dessa tva listor blockerar inte
   // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
   // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
-  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
+  const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall', 'ljusring']);
   // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
   // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
   // podium ...) bygger i stället närmaste nya design, så inget gammalt val sparas i state eller molnet.
@@ -499,6 +499,9 @@
         if (typeof root.applyVyraTopLikeStyle === 'function') root.applyVyraTopLikeStyle(w, v.theme);
       }
       if (RAD_DESIGNER.has(v.theme)) w.x = RAD_X;
+      // NEONRAMAR (toplike-ljusring.js): det David valde på lekplatsen 2026-11-10. Rubriken syns, topp 3 på pall.
+      if (v.theme === 'ljusring') Object.assign(w, { showTitle: true, templateTitle: 'TOP LIKE', likeCount: 3, profileFrame: 'none', x: 40, width: 350,
+        tlnLage: 'pall', tlnRam: 'bla', tlnForm: 'rund', tlnLevande: 'ljus', tlnGlans: 'glans', tlnNamnstil: 'skugga' });
       return w;
     },
     'ranking.theme': v => {
