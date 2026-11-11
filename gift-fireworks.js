@@ -163,8 +163,8 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
   }
   frame.src=url.href;
   group.style.animation='none';
-  /* toggle, inte add: samma skrivning som duksgrenen nedan. Vakten i gift-fireworks-live-path raknar
-     classList.add('play') och tillater exakt ett — fwSpela ar fortfarande enda stallet som tander. */
+  /* toggle, inte add: samma skrivning som duksgrenen nedan. Vakten i tests/alert-queue.test.js raknar
+     hur manga ganger klassen laggs till med add och tillater exakt en — fwSpela ar fortfarande enda stallet som tander. */
   group.append(frame);e.append(group);e.classList.toggle('play',true);
   return group;
  }
