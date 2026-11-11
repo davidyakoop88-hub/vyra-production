@@ -359,7 +359,7 @@
       type: 'templateGiftFireworks', x: 36, y: 120, width: 360, title: 'Gift Fireworks · '+v.label,
       fwTheme: v.theme, fwMotion: v.motion, fwMin: 1, fwSpeed: 0.6, fwDuration: 5, fwGiftSize: 110,
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
-      ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
+      ...(v.theme==='supernova'?{fwNovaStyle:'classic',fwNovember:true}:{})
     }),
     // Gift Bubbles - systerwidget. En design; storleken foljer combo + gbSize-valjaren.
     'giftbubbles': () => ({

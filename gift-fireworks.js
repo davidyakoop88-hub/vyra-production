@@ -17,6 +17,24 @@ const fwAntalOf=input=>{const d=input&&typeof input==='object'?input:{combo:inpu
 const fwComboOf=input=>Math.min(100,fwAntalOf(input));
 const FW_LEVELS={single:{name:'single',lead:0,points:[],gain:1},burst:{name:'burst',lead:.9,points:[[-90,-35,0],[90,-55,.45]],gain:1.15},show:{name:'show',lead:4.2,points:[[-110,-30,0],[110,-30,.65],[-85,-100,1.3],[85,-100,2],[-125,-50,2.65],[125,-50,3.3]],gain:1.35}};
 const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
+const fwNovember=w=>w?.fwNovember===true&&w.fwTheme==='supernova';
+/* NOVEMBER-FYRVERKERIETS TIDER. Den inbaddade sidan (assets/gift-fireworks-november/app.js) har sin
+   egen tidslinje, och den har rakningen maste folja den — andras talen dar ska de andras har:
+     raket k skjuts vid k x 0,085 s (SPACING), flyger 1,57 s (ROCKET_TIME), och den stora gavan lever
+     4,6 s, eller 3,5 s i en megakombo pa 50 eller fler. Den borjar synas 1,5 s in (HERO_AT) och ar
+     fullt framme 0,4 s senare.
+   Forsta versionen gav 7 s + 0,085 s per raket. Marginalen pa 0,9 s ats upp av tva saker som inte var
+   inraknade: sidan ska laddas och vantar upp till 0,8 s pa gavobilden, och hela widgeten tonar ut de
+   sista 0,6 s (fw-out). Slutet av den stora gavan kunde alltsa klippas (granskning 2026-11-12).
+   SPELTIDEN ar darfor uppstart + animationens egen langd + uttoningen.
+   PLATSEN SLAPPS nar den sista stora gavan varit fullt framme i 0,8 s — inte forst nar allt tonat ut.
+   Sa gor de andra dukstemana (toppen), och utan det tog varje gava drygt 7 s: kon hann cirka atta i
+   minuten, och en gava som vantat over 60 s spelas inte alls (gift-fireworks-session.js). */
+const FW_NOV={start:1,spacing:.085,raket:1.57,storSyns:1.5,storIn:.4,storKvar:.8};
+function fwNovemberTider(w,combo){const n=Math.max(1,combo),sista=(n-1)*FW_NOV.spacing,stor=n>=50?3.5:4.6;
+ const duration=FW_NOV.start+sista+FW_NOV.raket+stor+FW_OUTRO[fwOutroOf(w)]/1000;
+ const release=FW_NOV.start+sista+FW_NOV.raket+FW_NOV.storSyns+FW_NOV.storIn+FW_NOV.storKvar;
+ return {duration,release:Math.min(duration,release)}}
 const fwCanvas=w=>['festival','royal','ice','rose','comet','supernova'].includes(w.fwTheme);
 // Rörelsehastighet (stilpanelen) gör hela programmet kortare/längre; köns bokföring följer med.
 const fwFart=w=>Math.min(2.5,Math.max(.4,Number(w.fwPlaySpeed)||1));
@@ -36,7 +54,7 @@ const fwTempoOf=d=>Math.min(2,Math.max(1,Number(d&&d.__tempo)||1));
    ger 3,09 s av 7. CSS-temana har ingen sol: där är innehållet gåvo-/profilkortet mitt i bild hela
    tiden, så nästa raket skjuts upp så att den landar just när det förra kortet tonar ut
    (duration - flight) — överlappet blir utgången, aldrig två kort ovanpå varandra. */
-function fwSequence(w,combo,tempo=1){const t=Math.min(2,Math.max(1,Number(tempo)||1)),bas=fwLevelOf(combo),level=t===1?bas:{...bas,lead:bas.lead/t,points:bas.points.map(([x,y,d])=>[x,y,d/t])};if(fwCanvas(w)){const f=fwFart(w)*t,sn=window.VyraSupernova;return{level,duration:sn.duration(combo)/f,release:(sn.toppen?sn.toppen(combo,w.fwTheme):sn.duration(combo))/f,impact:1.6,flight:1.4}}const duration=(fwDurationOf(w)+bas.lead)/t,flight=fwFlightOf(w)/t;return {level,duration,release:Math.max(flight,duration-flight),impact:(fwFlightOf(w)+bas.lead)/t,flight}}
+function fwSequence(w,combo,tempo=1){const t=Math.min(2,Math.max(1,Number(tempo)||1)),bas=fwLevelOf(combo),level=t===1?bas:{...bas,lead:bas.lead/t,points:bas.points.map(([x,y,d])=>[x,y,d/t])};if(fwNovember(w)){const n=fwNovemberTider(w,combo);return {level,duration:n.duration,release:n.release,impact:1.57,flight:1.57}}if(fwCanvas(w)){const f=fwFart(w)*t,sn=window.VyraSupernova;return{level,duration:sn.duration(combo)/f,release:(sn.toppen?sn.toppen(combo,w.fwTheme):sn.duration(combo))/f,impact:1.6,flight:1.4}}const duration=(fwDurationOf(w)+bas.lead)/t,flight=fwFlightOf(w)/t;return {level,duration,release:Math.max(flight,duration-flight),impact:(fwFlightOf(w)+bas.lead)/t,flight}}
 const FW_THEMES=VyraWidgets.variants('giftfireworks.theme');
 // Entré per fyrverkeri (stilpanelens Entré / utgång); keyframes i gift-fireworks.css.
 const FW_ENTREER={zoom:'fw-en-zoom {t}s cubic-bezier(.2,1.4,.4,1) both',drop:'fw-en-drop {t}s cubic-bezier(.2,1.2,.4,1) both',bounce:'fw-en-bounce {t}s ease-out both',rise:'fw-en-rise {t}s ease-out both',glass:'fw-en-glass {t}s ease-out both',neon:'fw-en-neon {t}s steps(6) both'};
@@ -72,7 +90,7 @@ function fwSchedule(e){
 }
 
 const fwPresets={classic:{fwSpeed:.6,fwDuration:5,fwExplosion:100,fwDensity:70,fwColor:'#ff4fa3',fwColor2:'#ffd45b'},slowmo:{fwSpeed:1.3,fwDuration:8,fwExplosion:130,fwDensity:55,fwColor:'#7fd8ff',fwColor2:'#ffffff'},chaos:{fwSpeed:.25,fwDuration:4,fwExplosion:150,fwDensity:100,fwColor:'#ff2d2d',fwColor2:'#ffe600'}};
-const oldWh=wh;wh=function(w){if(w.type!=='templateGiftFireworks')return oldWh(w);return `<div class="widget templateGiftFireworks${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||360}px${fwCanvas(w)?';height:'+((w.width||540)*800/960)+'px!important':''}"><div class="gift-fireworks-fx" data-fw-theme="${fwThemeOf(w)}" style="--duration:${fwDurationOf(w)}s;--gift:${w.fwGiftSize||110}px"></div><span class="resize-handle">↘</span></div>`};
+const oldWh=wh;wh=function(w){if(w.type!=='templateGiftFireworks')return oldWh(w);return `<div class="widget templateGiftFireworks${selected===w.id?' selected':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.width||360}px${fwNovember(w)?';height:'+((w.width||360)*640/360)+'px!important':fwCanvas(w)?';height:'+((w.width||540)*800/960)+'px!important':''}"><div class="gift-fireworks-fx" data-fw-theme="${fwThemeOf(w)}" style="--duration:${fwDurationOf(w)}s;--gift:${w.fwGiftSize||110}px"></div><span class="resize-handle">↘</span></div>`};
 
 const oldProps=props;props=function(){let w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks')return oldProps();let range=(id,label,min,max,val,step=1)=>`<label class="range-label">${label}<b>${val}</b><span class="range-row"><input id="${id}" type="range" min="${min}" max="${max}" step="${step}" value="${val}"><input id="${id}Num" class="range-number" type="number" min="${min}" max="${max}" step="${step}" value="${val}"></span></label>`;return `<h3>GIFT FIREWORKS</h3><div class="template-badge">GÅVOR · TRANSPARENT</div><div hidden><input id="pt" value="Gift Fireworks"><input id="pv" value=""></div><div class="property-group"><h4>TRIGGER</h4><label>Minsta gåvovärde (coins)<input id="fwMin" type="number" min="1" value="${w.fwMin||1}"></label><small>Gåvor under gränsen tänder inget fyrverkeri.</small><label>Stor final från (coins)<input id="fwFinal" type="number" min="1" value="${fwFinalOf(w)}"></label><small>Firandet ligger på en tiondel av detta. Med 1000 blir det firande vid 100 och stor final vid 1000.</small></div><div class="property-group"><h4>ANIMATION</h4><label>Intro<select id="fwIntro"><option value="fade">Tonar in</option><option value="pop">Zoomar in</option><option value="instant">Direkt, ingen intro</option></select></label><label>Outro<select id="fwOutro"><option value="fade">Tonar bort</option><option value="cut">Klipps bort direkt</option></select></label><small>Intron och outron har egna tider och äter inte av visningstiden.</small></div><div class="property-group"><h4>DESIGN · EFFEKT</h4><label>Förinställning<select id="fwPreset"><option value="">Anpassad</option><option value="classic">Klassisk</option><option value="slowmo">Långsam</option><option value="chaos">Intensiv</option></select></label>${range('fwSpeed','Rakettid (s)',.2,1.5,w.fwSpeed||.6,.1)}${range('fwDuration','Grundtid (s)',2,10,w.fwDuration||5)}${range('fwGiftSize','Gåvostorlek (px)',50,320,w.fwGiftSize||110)}${range('fwExplosion','Spridning (%)',40,160,w.fwExplosion||100)}${range('fwDensity','Partikeltäthet (%)',20,100,w.fwDensity||70)}<div class="color-grid"><label>Färg 1<input id="fwColor" type="color" value="${w.fwColor||'#ff4fa3'}" ${w.inheritBrandKit?'disabled':''}></label><label>Färg 2<input id="fwColor2" type="color" value="${w.fwColor2||'#ffd45b'}" ${w.inheritBrandKit?'disabled':''}></label></div>${bkCheckbox(w)}<label><input id="fwSound" type="checkbox" ${w.fwSound===false?'':'checked'}> Aktivera ljud</label>${w.fwSound===false?'':range('fwVolume','Ljudvolym',0,100,w.fwVolume??60)}<label><input id="fwExcludeAnon" type="checkbox" ${w.fwExcludeAnon?'checked':''}> Exkludera anonyma tittare</label></div><div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${w.x||0}"></label><label>Y<input id="propY" type="number" value="${w.y||0}"></label><label>Bredd<input id="propWidth" type="number" value="${w.width||360}"></label><label>Lager<input id="propLayer" type="number" value="${w.layer||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
 const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay')return;/* EN gemensam katalogsektion for Gift Fireworks + Heart Fireworks + Gift Bubbles, markor
@@ -129,6 +147,25 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
  const properties={'--duration':sequence.duration+'s','--fw-flight':sequence.impact+'s','--fw-reveal':(sequence.duration-sequence.impact)+'s','--fw-primary':primary,'--fw-secondary':secondary,'--gift':Math.min(100,Math.max(38,(Number(w.fwGiftSize)||110)*.6))+'px','--blast':String((Number(w.fwExplosion)||100)/100*sequence.level.gain),'--fw-in':FW_INTRO[fwIntroOf(w)]+'ms','--fw-out':FW_OUTRO[fwOutroOf(w)]+'ms','--return-strength':String((w.fwReturn||80)/100)};
  Object.entries(properties).forEach(([key,value])=>{group.style.setProperty(key,value);e.style.setProperty(key,value)});
  e.dataset.fwTheme=theme;e.dataset.fwLevel=sequence.level.name;
+ if(fwNovember(w)){
+  const frame=document.createElement('iframe');
+  frame.title='Gift Fireworks · Supernova';
+  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none';
+  const url=new URL('assets/gift-fireworks-november/widget.html',document.baseURI);
+  url.searchParams.set('combo',String(combo));
+  url.searchParams.set('style',({willow:'prism',sparkle:'comet'})[w.fwNovaStyle]||'classic');
+  for(const [key,value] of [['gift',gavobild||w.fwGiftImage],['profile',avatarbild]]){
+   if(!value)continue;
+   try{
+    const src=new URL(value,document.baseURI);
+    if(src.protocol==='https:'||src.protocol==='http:')url.searchParams.set(key,src.href);
+   }catch{}
+  }
+  frame.src=url.href;
+  group.style.animation='none';
+  group.append(frame);e.append(group);e.classList.add('play');
+  return group;
+ }
  if(fwCanvas(w)){
   // FILER BREDVID VARANDRA (2026-10-17): tidigare stängdes förskjutningen av här, så samtidiga
   // fyrverkerier ritades exakt ovanpå varandra (Davids "hjärta o smail på varandra"). Nu får fil 1
@@ -290,6 +327,7 @@ const fwTotalOf=d=>{const summa=[d.diamonds,d.coins,d.value].map(Number).find(n=
 const FW_FINAL=1000;
 const fwFinalOf=w=>{const n=Number(w&&w.fwFinal);return Number.isFinite(n)&&n>0?n:FW_FINAL};
 const fwStyrkaOf=(input,w)=>{const d=input&&typeof input==='object'?input:{combo:input};
+ if(fwNovember(w))return fwComboOf(d);
  const varde=fwTotalOf(d);
  if(!Number.isFinite(varde))return fwComboOf(d);
  const final=fwFinalOf(w);
