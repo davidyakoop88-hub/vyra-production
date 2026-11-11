@@ -58,7 +58,9 @@
 
   const KLASSISKA = { inferno: 'Inferno', royal: 'Royal', cyber: 'Cyber', storm: 'Storm', aurora: 'Aurora', samurai: 'Samurai' };
   const RAMAR = ['royal-ribbon', 'laurel-star', 'dark-wings', 'dragon-fire', 'nautical-helm', 'shadow-star'];
-  const FIRANDEN = ['gold-ribbon', 'lion-clash', 'coronation', 'wings', 'portal', 'rosegold', 'pearl', 'moon'];
+  const FIRANDEN = ['gold-ribbon', 'lion-clash', 'coronation', 'wings', 'portal', 'rosegold', 'pearl', 'moon',
+    // Rambilderna (2026-11-11): sju modeller med fyra malade ramar var, se RAMMATT i battle-mvp-celebrations.js.
+    'ram-royal', 'ram-inferno', 'ram-ice', 'ram-cyber', 'ram-storm', 'ram-aurora', 'ram-samurai'];
   const PREMIUM = ['royal-purple', 'neon-cyber', 'diamond-elite'];
   // Firandena med partikelduk (battle-mvp-particles.js PROFILES).
   const MED_PARTIKLAR = ['coronation', 'wings', 'portal', 'rosegold', 'pearl', 'moon'];
@@ -168,6 +170,8 @@
     const guld = id === 'gold-ribbon', lejon = id === 'lion-clash';
     const rubrik = !guld && !lejon;
     const partiklar = MED_PARTIKLAR.includes(id);
+    // Rambilderna: anvandaren valjer en av modellens fyra ramar. Namnen kommer ur fabrikens register.
+    const ramar = FIRANDEDATA[id] && FIRANDEDATA[id].bespoke === 'rambild' ? (FIRANDEDATA[id].ramar || {}) : null;
     return post('firande:' + id, firandeNamn(id), 'firande', 'catalog:battlemvp:celebration:' + id, [
       ...(rubrik ? [
         { sektion: 2, typ: 'text', falt: 'mvpLabel', etikett: 'Rubrik', legacyId: '#mvpLabel' },
@@ -187,11 +191,14 @@
         { sektion: 5, typ: 'tal', falt: 'mvpFxHole', etikett: 'Fri yta runt profilbilden', enhet: '%', legacyId: '#mvpFxHole' },
         { sektion: 5, typ: 'val', falt: 'mvpFxTint', etikett: 'Partikelfärg', legacyId: '#mvpFxTint' },
       ] : []),
+      ...(ramar ? [
+        { sektion: 5, typ: 'val', falt: 'mvpRam', etikett: 'Ram', alternativ: ['a', 'b', 'c', 'd'].map(k => [k, ramar[k] || k.toUpperCase()]) },
+      ] : []),
       fastBild,
       bakgrund,
       visningstid,
       aterstall,
-    ], [], partiklar ? PARTIKELFALT : []);
+    ], [], partiklar ? PARTIKELFALT : (ramar ? ['mvpRam'] : []));
   }
 
   Object.keys(KLASSISKA).forEach(s => R.definiera(klassisk(s)));
@@ -211,6 +218,7 @@
   function fastText(w) {
     const m = modell(w);
     if (m === 'firande:gold-ribbon') return 'Guldbandet är en fast bild: färgerna och ordet MVP går inte att ändra.';
+    if (m.startsWith('firande:ram-')) return 'Ramen är en fast bild med fyra varianter att välja mellan. Färgschemat påverkar den inte.';
     if (m === 'firande:lion-clash') return 'Lion Clash är en fast bild utan rubrik: bara namnet och profilbilden byts.';
     if (m.startsWith('ram:')) return 'Ramen är en fast bild och påverkas inte av färgschemat. Poängen visas inte i ramarna.';
     if (m.startsWith('firande:')) return 'Motivet är en fast bild och påverkas inte av färgschemat. Poängen visas inte i firandena.';
