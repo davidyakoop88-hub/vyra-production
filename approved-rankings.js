@@ -120,8 +120,9 @@
     state.widgets.push(w); selected = w.id; save(); render(); toast(w.title + ' skapad');
   }
 
-  function createApprovedLike(theme) {
-    const w = VyraWidgets.create('catalog:toplike:' + theme);
+  // `led` = katalognyckelns andra led, för teman med flera kort (Neonramar: ett kort per läge).
+  function createApprovedLike(theme, led) {
+    const w = VyraWidgets.create('catalog:toplike:' + theme + (led ? ':' + led : ''));
     window.applyVyraTopLikeStyle?.(w, theme);
     // Temats topplista (spellayout.js) är också en Top Like, men den hör till gaming overlayn och står kvar.
     state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.spelTema || item.type !== 'templateTopLike');

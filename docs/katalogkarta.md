@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **170** |
+| Kort totalt | **174** |
 | Sektioner | 32 |
-| Med katalognyckel | 170 / 170 |
-| Med shadow DOM-miniatyr | 138 / 170  ⚠️ |
-| Ritar sin design | 170 / 170 |
+| Med katalognyckel | 174 / 174 |
+| Med shadow DOM-miniatyr | 142 / 174  ⚠️ |
+| Ritar sin design | 174 / 174 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -40,7 +40,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Sektion | Kort | Nyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|---|
-| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 16 | 16/16 | 16/16 | 16/16 | 2026-11-11 | — |
+| RANKING · SAMMA DESIGN FÖR TOP LIKE, TOP COINS OCH TOP POINTS | 20 | 20/20 | 20/20 | 20/20 | 2026-11-11 | — |
 | VYRA TOP STREAK | 4 | 4/4 | 0/4 ⚠️ | 4/4 | 2026-10-19 | [#661](https://github.com/davidyakoop88-hub/vyra-production/pull/661) |
 | FOLLOWER, LIKE & DIAMOND GOALS · 18 RÖRLIGA DESIGNER | 18 | 18/18 | 9/18 ⚠️ | 18/18 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | FAN LEVEL 50 · MILSTOLPE | 1 | 1/1 | 1/1 | 1/1 | 2026-10-20 | [#666](https://github.com/davidyakoop88-hub/vyra-production/pull/666) |
@@ -95,6 +95,10 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Top Coins | `catalog:ranking:templateTopCoins:metall` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Top Points | `catalog:ranking:templateTopPoints:metall` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Top Like | `catalog:toplike:ljusring` | ✓ | ✓ | 2026-11-11 | — |
+| Top Like | `catalog:toplike:ljusring:liggande` | ✓ | ✓ | 2026-11-11 | — |
+| Top Like | `catalog:toplike:ljusring:staende` | ✓ | ✓ | 2026-11-11 | — |
+| Top Like | `catalog:toplike:ljusring:vanster` | ✓ | ✓ | 2026-11-11 | — |
+| Top Like | `catalog:toplike:ljusring:hoger` | ✓ | ✓ | 2026-11-11 | — |
 
 ### VYRA TOP STREAK
 

@@ -20,6 +20,9 @@
   // efter VyraWidgets.create() for sina egna katalogknappar, sa dessa tva listor blockerar inte
   // den vagen - men andra anropare av samma fabriksnyckel (t.ex. widgetlank-kopiering) far INGEN
   // sadan efterhandsratt, sa listorna maste anda halla samma sex nya ID:n som de tva filerna ovan.
+  // Neonramarnas lägen (toplike-ljusring-panel.js LAGEN). Står här också, eftersom fabriken ska kunna
+  // avvisa en okänd nyckel utan att panelfilen är laddad; tests/toplike-ljusring.test.js håller dem lika.
+  const NEONRAM_LAGEN = new Set(['pall', 'liggande', 'staende', 'vanster', 'hoger']);
   const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall', 'ljusring']);
   // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
   // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
@@ -501,7 +504,7 @@
       if (RAD_DESIGNER.has(v.theme)) w.x = RAD_X;
       // NEONRAMAR (toplike-ljusring.js): det David valde på lekplatsen 2026-11-10. Rubriken syns, topp 3 på pall.
       if (v.theme === 'ljusring') Object.assign(w, { showTitle: true, templateTitle: 'TOP LIKE', likeCount: 3, profileFrame: 'none', x: 40, width: 350,
-        tlnLage: 'pall', tlnRam: 'bla', tlnForm: 'rund', tlnLevande: 'ljus', tlnGlans: 'glans', tlnNamnstil: 'skugga' });
+        tlnLage: NEONRAM_LAGEN.has(v.lage) ? v.lage : 'pall', tlnRam: 'bla', tlnForm: 'rund', tlnLevande: 'ljus', tlnGlans: 'glans', tlnNamnstil: 'skugga' });
       return w;
     },
     'ranking.theme': v => {
@@ -758,6 +761,12 @@
     },
     'toplike': parts => {
       if (!parts[0]) throw new Error('catalog:toplike kräver ett tema');
+      // NEONRAMAR har ett kort per läge: catalog:toplike:ljusring (pall, den ursprungliga nyckeln) och
+      // catalog:toplike:ljusring:<läge>. Inget annat Top Like-tema tar ett andra led.
+      if (parts[1] !== undefined) {
+        if (parts[0] !== 'ljusring' || !NEONRAM_LAGEN.has(parts[1])) throw new Error('catalog:toplike:' + parts.join(':') + ' — okänt led "' + parts[1] + '"');
+        return ['toplike.theme', { theme: parts[0], lage: parts[1] }];
+      }
       return ['toplike.theme', { theme: parts[0] }];
     },
     'ranking': parts => {

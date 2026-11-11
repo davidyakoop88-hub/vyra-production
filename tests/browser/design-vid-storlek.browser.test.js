@@ -29,7 +29,8 @@ const SKALOR = [1, 0.75, 0.5, 0.3, 0.2, 1];
 // Designer där David med flit valt att texten INTE krymper likformigt, med panelvalet som stänger av det.
 // Provet mäter kompositionen med valet av, så att resten av designen fortfarande måste följa skalan.
 // Neonramar (2026-11-10): "Texten krymper mindre än ramarna", så att namnen går att läsa i liten storlek.
-const LIKFORMIG_MED = { 'catalog:toplike:ljusring': { tlnTextVaxer: false } };
+// Ett kort per läge sedan 2026-11-11: samma val gäller alla fem.
+const LIKFORMIG_MED = Object.fromEntries(['', ':liggande', ':staende', ':vanster', ':hoger'].map(l => ['catalog:toplike:ljusring' + l, { tlnTextVaxer: false }]));
 // Granskningens repro och de tre container-familjerna den inte nådde.
 const REPRO = ['catalog:toplike:metall', 'catalog:toplike:voltage', 'catalog:fanlevel:layout:hero'];
 

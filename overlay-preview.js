@@ -470,6 +470,21 @@ function owgRenderCardThumb(btn) {
     }
   }
 
+  // Neonramar (toplike-ljusring.js) har samma problem, med ett annat utfall: roten ar absolut placerad
+  // (left/top fran widgeten) och dokumentets centreringsregel nar inte in i skuggan, sa designen ritades
+  // forskjuten och klippt — "TOP LIKE" uppe i hornet och ramarna avskurna i nederkant. Den forskjutna
+  // bilden tackte anda over halva rutan, sa owgFitThumbToContentIfEmpty raknade kortet som fyllt och
+  // lat det vara. Uppmatt 2026-11-11: roten lag pa (-24, 47) i en 183 x 140 px ruta. Centrerad ryms
+  // hela designen, i alla fem lagen.
+  if (preview?.type === 'templateTopLike' && preview.skin === 'ljusring') {
+    const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner'), widget = inner && inner.firstElementChild;
+    if (widget) {
+      inner.style.position = 'absolute'; inner.style.left = '50%'; inner.style.top = '50%';
+      widget.style.setProperty('position', 'relative', 'important');
+      widget.style.setProperty('left', '0', 'important'); widget.style.setProperty('top', '0', 'important');
+    }
+  }
+
   // Skalan raknas pa widgetens matt, och en bildbaserad widget har ingen hojd forran bilden laddats.
   // Uppmatt pa Tower: 205 x ~50 innan bilden kom, 205 x 1094 efter — skalan blev tjugo ganger for
   // stor och kortet tomt. Raknas darfor om nar varje bild i miniatyren har laddats.
