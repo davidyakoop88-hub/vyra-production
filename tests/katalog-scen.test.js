@@ -54,3 +54,14 @@ test('laddas via skript-svansen i media.js, efter katalog-ordning.js', () => {
   assert.match(media, /katalog-scen\.css\?v=/);
   assert.ok(media.indexOf('katalog-scen.js?v=') > media.indexOf('katalog-ordning.js?v='), 'galleriet läser ordningens grupper');
 });
+
+test('testet på scenen går genom testmotorn, som har ett eget läge för katalogen', () => {
+  const utanKommentarer = kod.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.match(utanKommentarer, /spelaIKatalog/);
+  const motor = fs.readFileSync(path.join(ROT, 'vyra-testspel.js'), 'utf8');
+  assert.match(motor, /api\.spelaIKatalog\s*=/);
+  // Katalogläget finns bara i studion: det definieras EFTER overlay-grenens return.
+  assert.ok(motor.indexOf('api.spelaIKatalog =') > motor.indexOf('api.kanIOverlay ='), 'spelaIKatalog får inte finnas i ?overlay=1');
+  // Klonen läggs i galleriets värd — aldrig på duken, och ingen riktig nod göms.
+  assert.match(motor, /if \(kat\) kat\.vard\.append\(s\.nod\);/);
+});

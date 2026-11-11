@@ -17,6 +17,9 @@
  *   • Scenens knappar skickar klicket vidare till kortets egna (.owg-configure, .owg-preview,
  *     .owg-copylink, .owg-star) och "Lägg till" klickar kortet. Ingen lägg-till-logik finns här.
  *
+ * ▶ TESTA WIDGET spelar designen på scenen med exempeldata, genom testmotorn (vyra-testspel.js).
+ * Knappen visas bara för familjer som har en testadapter.
+ *
  * KLICK PÅ ETT KORT. En riktig användargest (isTrusted) VÄLJER kortet till scenen. Ett klick från kod
  * — kort.click() från scenens knapp, från sökningen eller från ett prov — gör som förut och lägger
  * widgeten i layouten. Så förblir varje befintlig väg som klickar ett kort oförändrad.
@@ -36,6 +39,7 @@
   let valdFamilj = null;            // rubriktexten för vald familj
   const valtKort = new Map();       // rubriktext → katalognyckel
   let ritadNyckel = null;           // nyckeln som står på scenen just nu
+  let testar = false;               // ett test spelas på scenen
 
   const galleri = () => document.querySelector('.overlay-widget-gallery');
   const katalog = g => g && g.querySelector(':scope > .widget-catalog');
@@ -99,6 +103,7 @@
         '<div class="kat-scen-yta" tabindex="0" aria-label="Scen. Bläddra med vänster- och högerpil.">' +
           '<div class="kat-scen-bakgrund" aria-hidden="true"><i></i></div>' +
           '<div class="kat-scen-vard"></div>' +
+          '<div class="kat-scen-prov"><div class="kat-scen-prov-inre"></div></div>' +
           '<span class="kat-scen-raknare"></span>' +
           '<button type="button" class="kat-scen-pil kat-scen-bak" aria-label="Föregående design">‹</button>' +
           '<button type="button" class="kat-scen-pil kat-scen-fram" aria-label="Nästa design">›</button>' +
@@ -106,6 +111,7 @@
         '<div class="kat-scen-info">' +
           '<div class="kat-scen-namn"><b></b><small></small></div>' +
           '<div class="kat-scen-knappar">' +
+            '<button type="button" class="btn btn-secondary kat-scen-testa" data-kat-gor="testa" aria-pressed="false">▶ Testa widget</button>' +
             '<button type="button" class="btn btn-primary" data-kat-gor="lagg">+ Lägg till i Layout</button>' +
             '<button type="button" class="btn btn-secondary" data-kat-gor="anpassa">⚙ Anpassa</button>' +
             '<button type="button" class="btn btn-secondary" data-kat-gor="visa">▶ Förhandsvisa</button>' +
@@ -180,16 +186,67 @@
     const g = galleri(), cat = katalog(g); if (!cat) return;
     const f = valdFam(cat); if (!f) return;
     const kort = valtI(f);
+    if (vad === 'testa') return testa(g.querySelector(':scope > .kat-scen'), kort);
     if (vad === 'lagg') return kort.click();
     const mal = { anpassa: '.owg-configure', visa: '.owg-preview', lank: '.owg-copylink', stjarna: '.owg-star' }[vad];
     kort.querySelector(mal)?.click();
     if (vad === 'stjarna') visaInfo(g.querySelector(':scope > .kat-scen'), f, kort);
   }
 
+  // ▶ TESTA WIDGET. Motorn (vyra-testspel.js, garanti 7) spelar designen med exempeldata i scenens
+  // provyta: samma klon, vakter och tidslinje som ▶ Testa widget i Layout. Testet når aldrig
+  // sändningen, servern eller layouten. Här finns bara knappen och skalningen av klonen.
+  const motor = () => (window.VyraTestspel && typeof window.VyraTestspel.spelaIKatalog === 'function') ? window.VyraTestspel : null;
+  function provWidget(kort) {
+    try { return typeof window.overlayPreviewWidget === 'function' ? window.overlayPreviewWidget(kort) : null; } catch (_) { return null; }
+  }
+  function kanTestas(kort) {
+    const m = motor(); if (!m) return false;
+    const w = provWidget(kort);
+    try { return !!w && m.kanIKatalog(w); } catch (_) { return false; }
+  }
+  function visaTestlage(scen, pa) {
+    klass(scen, 'kat-scen-testar', pa);
+    const b = scen.querySelector('[data-kat-gor="testa"]');
+    const text = pa ? '■ Stoppa test' : '▶ Testa widget';
+    if (b.textContent !== text) b.textContent = text;
+    b.setAttribute('aria-pressed', String(pa));
+  }
+  function stoppaTest() {
+    const m = motor();
+    if (m && testar) { try { m.stoppa(); } catch (_) {} }
+  }
+  function testa(scen, kort) {
+    const m = motor(); if (!m) return;
+    if (testar) return stoppaTest();
+    const w = provWidget(kort); if (!w) return;
+    const yta = scen.querySelector('.kat-scen-prov'), inre = scen.querySelector('.kat-scen-prov-inre');
+    inre.replaceChildren(); inre.style.transform = '';
+    testar = true;
+    visaTestlage(scen, true);
+    const igang = m.spelaIKatalog(w, inre, { vidStopp: () => {
+      testar = false;
+      inre.replaceChildren();
+      const s = galleri()?.querySelector(':scope > .kat-scen');
+      if (s) visaTestlage(s, false);
+    } });
+    if (!igang) { testar = false; visaTestlage(scen, false); return; }
+    // Klonen har widgetens egen storlek (duken är 432 px bred). Den skalas så att den ryms, och
+    // högst 1,5× uppåt så att en liten alert inte försvinner på scenen.
+    const nod = inre.firstElementChild;
+    // Några familjer (goal-motion m.fl.) sätter position:absolute!important på roten. Inline-important
+    // vinner över stilmallen, så klonen står i provytans mitt — samma grepp som miniatyrerna använder.
+    if (nod) ['position:relative', 'left:0', 'top:0'].forEach(r => { const [k, v] = r.split(':'); nod.style.setProperty(k, v, 'important'); });
+    const b = (nod && nod.offsetWidth) || 300, h = (nod && nod.offsetHeight) || 150;
+    const skala = Math.min((yta.clientWidth - 24) / b, (yta.clientHeight - 24) / h, 1.5);
+    inre.style.transform = 'translate(-50%,-50%) scale(' + (skala > 0 ? skala : 1) + ')';
+  }
+
   function ritaScen(scen, kort) {
     const vard = scen.querySelector('.kat-scen-vard');
     const nyckel = kort.dataset.catalogKey;
     if (ritadNyckel === nyckel && vard.firstElementChild) return;
+    stoppaTest();
     ritadNyckel = nyckel;
     vard.replaceChildren();
     if (typeof window.owgRenderCardThumb !== 'function') return;
@@ -215,6 +272,8 @@
     scen.querySelector('.kat-scen-raknare').textContent = 'Design ' + (f.kort.indexOf(kort) + 1) + ' av ' + f.kort.length;
     const flera = f.kort.length > 1;
     scen.querySelectorAll('.kat-scen-pil').forEach(p => { p.hidden = !flera; });
+    const nyckel = kort.dataset.catalogKey, testknapp = scen.querySelector('[data-kat-gor="testa"]');
+    if (testknapp.dataset.katNyckel !== nyckel) { testknapp.dataset.katNyckel = nyckel; testknapp.hidden = !kanTestas(kort); }
     const finns = { anpassa: '.owg-configure', visa: '.owg-preview', lank: '.owg-copylink', stjarna: '.owg-star' };
     Object.keys(finns).forEach(k => { scen.querySelector('[data-kat-gor="' + k + '"]').hidden = !kort.querySelector(finns[k]); });
     const stjarna = kort.querySelector('.owg-star'), knapp = scen.querySelector('[data-kat-gor="stjarna"]');
@@ -278,7 +337,7 @@
     });
     const aktivtKort = vald ? valtI(vald) : null;
     cat.querySelectorAll('.kat-scen-aktiv').forEach(k => { if (k !== aktivtKort) k.classList.remove('kat-scen-aktiv'); });
-    if (!pa) { ritadNyckel = null; delar.scen.querySelector('.kat-scen-vard').replaceChildren(); return; }
+    if (!pa) { stoppaTest(); ritadNyckel = null; delar.scen.querySelector('.kat-scen-vard').replaceChildren(); return; }
     valdFamilj = vald.rubrik;
     ritaFamiljer(delar.fam, alla, vald);
     if (!aktivtKort.classList.contains('kat-scen-aktiv')) {

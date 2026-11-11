@@ -38,6 +38,14 @@
 /* Kort med handplockad helbild (ramar, Video FX) fyller sin ruta med cover. På scenen ska hela motivet synas. */
 .kat-scen-kort .owg-thumb>.owg-thumb-inner>img{object-fit:contain!important}
 .kat-scen-kort>i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-style:normal;font-size:44px;color:#b490ff}
+/* Provytan: testmotorns klon, i widgetens egen storlek, mitt på scenen. Stillbilden vilar under testet. */
+.kat-scen-prov{position:absolute;inset:0;pointer-events:none;display:none}
+.kat-scen-testar .kat-scen-prov{display:block}
+/* display, inte visibility: miniatyrens skuggrot tänder sina barn med visibility:visible!important. */
+.kat-scen-testar .kat-scen-vard{display:none}
+.kat-scen-prov-inre{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.kat-scen-prov-inre>*{position:relative!important;left:auto!important;top:auto!important}
+.kat-scen-testa[aria-pressed="true"]{border-color:#ff4da6;color:#fff}
 .kat-scen-raknare{position:absolute;right:12px;top:12px;font-size:10px;color:#d8ccea;background:rgba(19,11,28,.85);border:1px solid #3a2a4f;border-radius:999px;padding:4px 10px;font-variant-numeric:tabular-nums}
 .kat-scen-pil{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid #3a2a4f;background:rgba(19,11,28,.85);color:#fff;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
 .kat-scen-pil:hover{border-color:#b13cff}

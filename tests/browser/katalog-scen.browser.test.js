@@ -133,3 +133,55 @@ test('sökning visar listan, och galleriet kommer tillbaka när sökfältet töm
     assert.equal(t.synligaFamiljer, 1);
   } finally { await page.close(); }
 });
+
+test('▶ Testa widget spelar designen på scenen utan att röra layouten', { skip, timeout: 120000 }, async () => {
+  const page = await oppna();
+  try {
+    await page.evaluate(() => window.VyraKatalogScen.vy('galleri'));
+    const valj = rubrik => page.evaluate(r => {
+      const b = [...document.querySelectorAll('.kat-familjer [data-kat-familj]')].find(x => new RegExp(r).test(x.dataset.katFamilj));
+      b.click();
+      return new Promise(k => setTimeout(k, 400));
+    }, rubrik);
+    const bild = () => page.evaluate(() => JSON.stringify(state.widgets) + '|' + JSON.stringify(Object.entries(localStorage).sort()));
+
+    // En familj utan testadapter visar ingen knapp.
+    await valj('^QUIZ');
+    assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), true, 'Quiz har ingen testadapter och ska inte visa knappen');
+
+    await valj('^LAST-X');
+    assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), false, 'Last-X har en testadapter');
+    const fore = await bild();
+    await page.click('.kat-scen [data-kat-gor="testa"]');
+    await page.waitForTimeout(600);
+    const m = await page.evaluate(() => {
+      const st = window.VyraTestspel.status(), inre = document.querySelector('.kat-scen-prov-inre'), nod = inre.firstElementChild;
+      const q = nod ? nod.getBoundingClientRect() : null, y = document.querySelector('.kat-scen-yta').getBoundingClientRect();
+      return {
+        aktiv: st.aktiv, adapter: st.adapter, klon: !!nod && nod.dataset.testspelKlon === '1',
+        paDuken: !!document.querySelector('.canvas [data-testspel-klon]'),
+        inne: !!q && q.width > 20 && q.left >= y.left - 2 && q.right <= y.right + 2 && q.top >= y.top - 2 && q.bottom <= y.bottom + 2,
+        stillbildSyns: document.querySelector('.kat-scen-vard').getClientRects().length > 0,
+        knapp: document.querySelector('[data-kat-gor="testa"]').textContent
+      };
+    });
+    assert.equal(m.aktiv, true, 'testet startade inte');
+    assert.equal(m.adapter, 'lastx');
+    assert.equal(m.klon, true, 'klonen ska ligga i scenens provyta');
+    assert.equal(m.paDuken, false, 'ett katalogtest får aldrig lägga en klon på duken');
+    assert.equal(m.inne, true, 'klonen ska rymmas på scenen');
+    assert.equal(m.stillbildSyns, false, 'stillbilden ska vila under testet, annars syns widgeten dubbelt');
+    assert.equal(m.knapp, '■ Stoppa test');
+
+    // Byter man familj mitt i testet stoppas det, och scenen är ren.
+    await valj('^GIFT JAR');
+    await page.waitForTimeout(400);
+    const efter = await page.evaluate(() => ({
+      aktiv: window.VyraTestspel.status().aktiv, kvar: document.querySelector('.kat-scen-prov-inre').children.length,
+      testar: document.querySelector('.kat-scen').classList.contains('kat-scen-testar'),
+      knapp: document.querySelector('[data-kat-gor="testa"]').textContent, brott: window.VyraTestspel.brott().length
+    }));
+    assert.deepEqual(efter, { aktiv: false, kvar: 0, testar: false, knapp: '▶ Testa widget', brott: 0 });
+    assert.equal(await bild(), fore, 'testet ändrade layouten eller lagringen');
+  } finally { await page.close(); }
+});

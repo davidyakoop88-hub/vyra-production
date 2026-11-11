@@ -39,6 +39,8 @@ async function overlayKatalog() {
       n = document.querySelectorAll('.widget-catalog [data-catalog-key]').length;
       if (n > 100 && n === forra) break; forra = n;
     }
+    // Provet mäter LISTAN. I galleriet (katalog-scen.js) syns en familj i taget.
+    window.VyraKatalogScen?.vy('lista'); await new Promise(r => setTimeout(r, 200));
     return n;
   });
   assert.ok(n > 100, `katalogen byggdes inte (${n} kort)`);
