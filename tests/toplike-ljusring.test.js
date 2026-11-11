@@ -126,3 +126,38 @@ test('studio.html laddar Neonramar efter ranking-sixpack.js', () => {
   assert.match(js, /const RANG = 3\.5;/);
   assert.ok(html.includes('toplike-ljusring.css?v='));
 });
+
+// ETT KATALOGKORT PER LÄGE (David 2026-11-11). Förut fanns ett kort, och de fyra andra lägena syntes
+// först i panelen efter att widgeten lagts till.
+test('fabriken: varje läge har en egen katalognyckel, och pall behåller den ursprungliga', () => {
+  const h = rigg();
+  const skapa = k => h.window.VyraWidgets.create(k);
+  assert.equal(skapa('catalog:toplike:ljusring').tlnLage, 'pall');
+  for (const l of ['liggande', 'staende', 'vanster', 'hoger']) {
+    const w = skapa('catalog:toplike:ljusring:' + l);
+    assert.equal(w.tlnLage, l);
+    assert.equal(w.skin, 'ljusring');
+    assert.equal(w.likeCount, 3);
+  }
+  assert.equal(skapa('catalog:toplike:ljusring:pall').tlnLage, 'pall');
+  assert.throws(() => skapa('catalog:toplike:ljusring:snett'), /okänt led/);
+  assert.throws(() => skapa('catalog:toplike:voltage:liggande'), /okänt led/, 'bara Neonramar tar ett andra led');
+});
+
+test('fabrikens lägen är panelens lägen', () => {
+  const fabrik = fs.readFileSync(path.join(ROT, 'widget-factory.js'), 'utf8');
+  const panel = fs.readFileSync(path.join(ROT, 'toplike-ljusring-panel.js'), 'utf8');
+  const iFabrik = fabrik.match(/NEONRAM_LAGEN = new Set\(\[([^\]]+)\]\)/)[1].match(/[a-z]+/g).sort();
+  const iPanel = panel.match(/const LAGEN = \{([^}]+)\}/)[1].match(/([a-z]+):/g).map(s => s.slice(0, -1)).sort();
+  assert.deepEqual(iFabrik, iPanel);
+});
+
+test('katalogen: ett kort per läge, och miniatyren centreras i sin ruta', () => {
+  const js = fs.readFileSync(path.join(ROT, 'toplike-ljusring.js'), 'utf8');
+  assert.match(js, /Object\.keys\(LAGEN\)\.map\(/);
+  assert.match(js, /const nyckelFor = l => 'catalog:toplike:' \+ SKIN \+ \(l === 'pall' \? '' : ':' \+ l\);/);
+  assert.doesNotMatch(js, /21 ramar, 5 lägen/, 'det gamla samlingskortet ska vara borta');
+  // Roten är absolut placerad; utan centreringen ritas designen förskjuten och klippt i kortet.
+  const forhands = fs.readFileSync(path.join(ROT, 'overlay-preview.js'), 'utf8');
+  assert.match(forhands, /preview\.skin === 'ljusring'\) \{[\s\S]{0,400}position', 'relative', 'important'/);
+});

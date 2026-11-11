@@ -229,6 +229,7 @@
   // ---------- katalogen ----------
   // Ett eget kort i rankinggruppen (ranking-sixpack.js bygger sektionen). Skapas via approved-rankings.js
   // createLike, som alla Top Like-designer.
+  const nyckelFor = l => 'catalog:toplike:' + SKIN + (l === 'pall' ? '' : ':' + l);
   function katalog() {
     const sec = document.querySelector('.widget-catalog section[data-rk6-katalog]');
     // ranking-sixpack.js bygger sektionen i SIN bind, som ligger utanför vår och körs efter den: finns den inte
@@ -237,10 +238,16 @@
     if (sec.querySelector('[data-rk6-grupp="' + SKIN + '"]')) return;
     const g = document.createElement('div');
     g.className = 'rk6-grupp'; g.dataset.rk6Grupp = SKIN;
-    g.innerHTML = '<h5>Neonramar</h5><button type="button" data-tln-skapa="1" data-catalog-key="catalog:toplike:' + SKIN + '">'
-      + '<i class="rk6-kort-ikon">❤</i><span><b>Top Like</b><small>Neonramar · 21 ramar, 5 lägen</small></span></button>';
+    // ETT KORT PER LÄGE (David 2026-11-11). Förut fanns ett enda kort, och de fyra andra lägena syntes
+    // först i panelen efter att widgeten lagts till. Pall behåller den ursprungliga nyckeln, så att
+    // sparade länkar och referensbilden gäller; övriga lägen bär läget som nyckelns andra led.
+    g.innerHTML = '<h5>Neonramar</h5>' + Object.keys(LAGEN).map(l => '<button type="button" data-tln-skapa="' + l + '" data-catalog-key="' + nyckelFor(l) + '">'
+      + '<i class="rk6-kort-ikon">❤</i><span><b>Top Like</b><small>Neonramar · ' + esc(LAGEN[l]) + '</small></span></button>').join('');
     sec.append(g);
-    g.querySelector('[data-tln-skapa]').onclick = () => window.VyraApprovedRankings?.createLike?.(SKIN);
+    g.querySelectorAll('[data-tln-skapa]').forEach(b => {
+      const l = b.dataset.tlnSkapa;
+      b.onclick = () => window.VyraApprovedRankings?.createLike?.(SKIN, l === 'pall' ? undefined : l);
+    });
   }
   function installBind() {
     if (typeof bind !== 'function' || bind.__tlnKatalog) return;
@@ -251,7 +258,7 @@
     bind = f;
   }
 
-  window.VyraTopLikeLjusring = Object.freeze({ SKIN, RAMAR, LAGEN, FYRMODELLER, NAMNSTILAR, TYPSNITT, STANDARD, innehall, omslut, synka, antal });
+  window.VyraTopLikeLjusring = Object.freeze({ nyckelFor, SKIN, RAMAR, LAGEN, FYRMODELLER, NAMNSTILAR, TYPSNITT, STANDARD, innehall, omslut, synka, antal });
 
   install();
   installBind();

@@ -72,8 +72,12 @@ async function katalogsida() {
   await page.goto(`${bas}/studio.html`, { waitUntil: 'load' });
   await page.waitForFunction(() => typeof window.owgRenderCardThumb === 'function', null, { timeout: 20000 });
   await page.evaluate(async () => {
+    // Provet mäter LISTAN. I galleriet (katalog-scen.js) syns en familj i taget.
+    try { localStorage.setItem('vyra-katalog-vy', 'lista') } catch (_) {}
+    window.VyraKatalogScen?.vy('lista');
     view = 'overlay'; selected = null; render(); bind();
     await new Promise(r => setTimeout(r, 800));
+    window.VyraKatalogScen?.vy('lista');
     document.querySelectorAll('.overlay-widget-gallery .widget-catalog button')
       .forEach(b => { try { owgRenderCardThumb(b) } catch (_) {} });
     await new Promise(r => setTimeout(r, 400));

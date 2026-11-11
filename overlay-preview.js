@@ -258,7 +258,10 @@ function scaleThumbnailToFit(thumb) {
   const widget = inner && inner.firstElementChild;
   if (!widget) return;
   const w = widget.offsetWidth || 300, h = widget.offsetHeight || 150;
-  const scale = Math.min((thumb.clientWidth - 16) / w, (thumb.clientHeight - 16) / h, 1);
+  // Luften runt motivet ar 16 px om kortet inte sager annat (data-owg-luft). Neonramar i staende lage ar
+  // 1:3 i en liggande ruta: med 16 px luft tackte den 21 % av bildytan, med 8 px ryms hela och tacker 23 %.
+  const luft = Number(thumb.dataset.owgLuft) || 16;
+  const scale = Math.min((thumb.clientWidth - luft) / w, (thumb.clientHeight - luft) / h, 1);
   inner.style.transform = `translate(-50%,-50%) scale(${scale})`;
 }
 
@@ -464,6 +467,22 @@ function owgRenderCardThumb(btn) {
   if (preview?.type === 'templateSocialGoal') {
     const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner'), widget = inner && inner.firstElementChild;
     if (widget && widget.classList.contains('goal-motion')) {
+      inner.style.position = 'absolute'; inner.style.left = '50%'; inner.style.top = '50%';
+      widget.style.setProperty('position', 'relative', 'important');
+      widget.style.setProperty('left', '0', 'important'); widget.style.setProperty('top', '0', 'important');
+    }
+  }
+
+  // Neonramar (toplike-ljusring.js) har samma problem, med ett annat utfall: roten ar absolut placerad
+  // (left/top fran widgeten) och dokumentets centreringsregel nar inte in i skuggan, sa designen ritades
+  // forskjuten och klippt — "TOP LIKE" uppe i hornet och ramarna avskurna i nederkant. Den forskjutna
+  // bilden tackte anda over halva rutan, sa owgFitThumbToContentIfEmpty raknade kortet som fyllt och
+  // lat det vara. Uppmatt 2026-11-11: roten lag pa (-24, 47) i en 183 x 140 px ruta. Centrerad ryms
+  // hela designen, i alla fem lagen.
+  if (preview?.type === 'templateTopLike' && preview.skin === 'ljusring') {
+    const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner'), widget = inner && inner.firstElementChild;
+    if (widget) {
+      thumb.dataset.owgLuft = '8';
       inner.style.position = 'absolute'; inner.style.left = '50%'; inner.style.top = '50%';
       widget.style.setProperty('position', 'relative', 'important');
       widget.style.setProperty('left', '0', 'important'); widget.style.setProperty('top', '0', 'important');

@@ -135,8 +135,13 @@ if (require.main !== module) return;
   await page.waitForFunction(() => typeof window.owgRenderCardThumb === 'function', null, { timeout: 30000 });
 
   const data = await page.evaluate(async () => {
+    // Kartan mater LISTAN. I galleriet (katalog-scen.js) syns en familj i taget, och ett kort som
+    // inte syns har ingen yta att mata - da hade "Ritar" blivit falskt for nastan hela katalogen.
+    try { localStorage.setItem('vyra-katalog-vy', 'lista') } catch (_) {}
+    if (window.VyraKatalogScen) window.VyraKatalogScen.vy('lista');
     view = 'overlay'; selected = null; render(); bind();
     await new Promise(r => setTimeout(r, 1200));
+    if (window.VyraKatalogScen) window.VyraKatalogScen.vy('lista');
     // Miniatyrerna ar lata och en headless-flik scrollar inte. Ritas explicit, annars mater
     // kartan observatorn i stallet for katalogen.
     document.querySelectorAll('.overlay-widget-gallery .widget-catalog button')

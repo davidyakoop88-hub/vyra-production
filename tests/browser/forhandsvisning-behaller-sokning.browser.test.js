@@ -96,6 +96,9 @@ test('ett byte till Overlay fran en annan vy borjar med tom sokning', { skip, ti
   try {
     await sokOchForhandsvisa(page, 'voltage', /voltage/);
     await page.evaluate(async () => { go('home'); await new Promise(r => setTimeout(r, 200)); go('overlay'); await new Promise(r => setTimeout(r, 400)); });
+    // "Hela katalogen" mäts i LISTAN: i galleriet (katalog-scen.js) syns en familj i taget, och
+    // då säger antalet synliga kort ingenting om huruvida sökfiltret följde med.
+    await page.evaluate(async () => { window.VyraKatalogScen?.vy('lista'); await new Promise(r => setTimeout(r, 200)); });
     const m = await page.evaluate(las);
     assert.equal(m.q, '', 'sokningen foljde med till ett nytt besok i Overlay');
     assert.ok(m.namn.length > 100, 'hela katalogen visas inte efter ett nytt besok');

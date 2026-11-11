@@ -75,6 +75,8 @@ test('N-C-002: rankingkorten fyller katalogens bredd vid 390 px', { skip, timeou
   const { page, stang } = await studion(390, { vy: 'overlay' });
   try {
     const m = await page.evaluate(() => {
+      // Provet mäter LISTAN. I galleriet (katalog-scen.js) syns en familj i taget.
+      window.VyraKatalogScen?.vy('lista');
       const sek = document.querySelector('.overlay-widget-gallery .rk6-katalog');
       const grupper = [...sek.querySelectorAll(':scope > .rk6-grupp')];
       const cs = getComputedStyle(sek), r = sek.getBoundingClientRect();

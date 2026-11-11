@@ -1,0 +1,90 @@
+/* katalog-scen.css — galleriet i Overlay-vyn: familjelista, scen och remsa (katalog-scen.js). */
+
+/* Växeln Galleri/Lista syns alltid; resten bara när galleriet är på. */
+.overlay-widget-gallery{position:relative}
+.overlay-widget-gallery>.kat-vy{display:flex;gap:0;width:max-content;position:absolute;top:12px;right:18px;margin:0;border:1px solid #3a2a4f;border-radius:999px;padding:2px;background:#170c20}
+.kat-vy button{appearance:none;border:0;background:transparent;color:#b8aac8;border-radius:999px;padding:5px 12px;font:600 11px/1.2 inherit;cursor:pointer}
+.kat-vy button[aria-pressed="true"]{background:#2a1a3c;color:#fff}
+.kat-vy button:focus-visible,.kat-familjer button:focus-visible,.kat-scen button:focus-visible,.kat-scen-yta:focus-visible{outline:2px solid #c9a7ff;outline-offset:2px}
+.overlay-widget-gallery>.kat-familjer,.overlay-widget-gallery>.kat-scen{display:none}
+
+/* Galleriet: två spalter. Allt som fanns förut spänner över båda; familjelistan står till vänster. */
+.overlay-widget-gallery.kat-scen-pa{display:grid;grid-template-columns:210px minmax(0,1fr);column-gap:16px;align-items:start}
+.overlay-widget-gallery.kat-scen-pa>*{grid-column:1/-1;min-width:0}
+.overlay-widget-gallery.kat-scen-pa>.kat-familjer{display:flex;flex-direction:column;gap:2px;grid-column:1;grid-row:span 2;order:1;max-height:650px;overflow-y:auto;padding-right:4px;scrollbar-width:thin}
+.overlay-widget-gallery.kat-scen-pa>.kat-scen{display:block;grid-column:2;order:2}
+.overlay-widget-gallery.kat-scen-pa>.widget-catalog{grid-column:2;order:3;margin-top:10px}
+
+.kat-familjer h5{margin:10px 0 4px;padding:0 10px;font:700 9px/1.2 inherit;letter-spacing:.12em;text-transform:uppercase;color:#8a7a95}
+.kat-familjer h5:first-child{margin-top:0}
+.kat-familjer button{appearance:none;display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:0;background:transparent;color:#b8aac8;border-radius:8px;padding:7px 10px;font:500 12px/1.3 inherit;cursor:pointer}
+.kat-familjer button i{font-style:normal;font-size:10px;color:#746982;font-variant-numeric:tabular-nums}
+.kat-familjer button:hover{background:#170c20;color:#fff}
+.kat-familjer button[aria-current="true"]{background:#24143a;color:#fff;font-weight:700}
+
+/* Scenen */
+.kat-scen{border:1px solid #2b2438;border-radius:12px;overflow:hidden;background:#0d0714}
+.kat-scen-yta{position:relative;height:360px;overflow:hidden;background:#0b0511}
+.kat-scen-bakgrund{position:absolute;inset:0;background:
+  radial-gradient(40% 60% at 22% 30%,rgba(255,77,166,.22),transparent 70%),
+  radial-gradient(45% 70% at 80% 25%,rgba(80,150,255,.20),transparent 70%),
+  radial-gradient(60% 60% at 50% 100%,rgba(139,61,255,.28),transparent 70%),
+  linear-gradient(180deg,#171024,#0d0816)}
+.kat-scen-bakgrund i{position:absolute;left:50%;bottom:-20%;width:44%;aspect-ratio:1/1.05;transform:translateX(-50%);border-radius:46% 46% 0 0;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));filter:blur(6px)}
+.kat-scen-bakgrund i::before{content:"";position:absolute;left:50%;top:-46%;width:42%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:rgba(255,255,255,.06)}
+.kat-scen-vard,.kat-scen-kort{position:absolute;inset:0}
+.kat-scen-kort .owg-thumb{position:relative;width:100%;height:100%;overflow:hidden}
+.kat-scen-kort .owg-thumb-inner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+/* Kort med handplockad helbild (ramar, Video FX) fyller sin ruta med cover. På scenen ska hela motivet synas. */
+.kat-scen-kort .owg-thumb>.owg-thumb-inner>img{object-fit:contain!important}
+.kat-scen-kort>i{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-style:normal;font-size:44px;color:#b490ff}
+/* Provytan: testmotorns klon, i widgetens egen storlek, mitt på scenen. Stillbilden vilar under testet. */
+.kat-scen-prov{position:absolute;inset:0;pointer-events:none;display:none}
+.kat-scen-testar .kat-scen-prov{display:block}
+/* display, inte visibility: miniatyrens skuggrot tänder sina barn med visibility:visible!important. */
+.kat-scen-testar .kat-scen-vard{display:none}
+.kat-scen-prov-inre{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
+.kat-scen-prov-inre>*{position:relative!important;left:auto!important;top:auto!important}
+.kat-scen-testa[aria-pressed="true"]{border-color:#ff4da6;color:#fff}
+/* Växeln: en design, flera varianter (Top Like / Top Coins / Top Points). */
+.kat-scen-varianter{position:absolute;left:12px;top:12px;display:flex;background:rgba(19,11,28,.9);border:1px solid #3a2a4f;border-radius:999px;padding:3px;z-index:2}
+.kat-scen-varianter[hidden]{display:none}
+.kat-scen-varianter button{appearance:none;border:0;background:transparent;color:#b8aac8;border-radius:999px;padding:5px 12px;font:600 11px/1.2 inherit;cursor:pointer}
+.kat-scen-varianter button[aria-pressed="true"]{background:#8b3dff;color:#fff}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog button.kat-scen-variant{display:none!important}
+.kat-scen-raknare{position:absolute;right:12px;top:12px;font-size:10px;color:#d8ccea;background:rgba(19,11,28,.85);border:1px solid #3a2a4f;border-radius:999px;padding:4px 10px;font-variant-numeric:tabular-nums}
+.kat-scen-pil{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid #3a2a4f;background:rgba(19,11,28,.85);color:#fff;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
+.kat-scen-pil:hover{border-color:#b13cff}
+.kat-scen-pil[hidden]{display:none}
+.kat-scen-bak{left:12px}.kat-scen-fram{right:12px}
+.kat-scen-info{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid #2b2438}
+.kat-scen-namn{display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0}
+.kat-scen-namn b{font-size:15px;color:#fff}
+.kat-scen-namn small{font-size:10px;color:#9d87ac}
+.kat-scen-knappar{display:flex;gap:6px;flex-wrap:wrap}
+.kat-scen-knappar [hidden]{display:none}
+.kat-scen-knappar [aria-pressed="true"]{color:#ffd23c}
+
+/* Remsan: vald familj på en rad. Övriga familjer finns kvar i sidan men visas inte. */
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-dold{display:none!important}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald:not(section){display:block}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>section.kat-scen-vald,
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald section{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:thin}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald h4,
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald h5{display:none}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald div:not(.owg-thumb):not(.owg-thumb *):not(.owg-actions):not(.owg-action-row){display:contents}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald button[data-catalog-key]{flex:0 0 190px;width:190px}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald button[data-catalog-key]>.owg-actions,
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald button[data-catalog-key]>.owg-add,
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald button[data-catalog-key]>.owg-star{display:none}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald button[data-catalog-key]>span:not(.btn){padding-bottom:10px}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog button.kat-scen-aktiv{border-color:#b13cff;box-shadow:0 0 0 1px #b13cff}
+
+@media(max-width:900px){
+  .overlay-widget-gallery.kat-scen-pa{grid-template-columns:minmax(0,1fr)}
+  .overlay-widget-gallery.kat-scen-pa>.kat-familjer{grid-column:1;grid-row:auto;flex-direction:row;max-height:none;overflow-x:auto;overflow-y:hidden;padding:0 0 8px}
+  .overlay-widget-gallery.kat-scen-pa>.kat-familjer button{flex:none;white-space:nowrap}
+  .overlay-widget-gallery.kat-scen-pa>.kat-familjer h5{display:none}
+  .overlay-widget-gallery.kat-scen-pa>.kat-scen,.overlay-widget-gallery.kat-scen-pa>.widget-catalog{grid-column:1}
+  .kat-scen-yta{height:280px}
+}

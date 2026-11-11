@@ -49,6 +49,11 @@
   // 5. STOPP. ■ Stoppa test, Esc, byte av vald widget, vybyte och varje render() stoppar testet
   //    först. render() bygger om duken, så en omritning kan aldrig lämna en föräldralös klon.
   // 6. OVERLAY. I ?overlay=1 gör motorn ingenting: ingen knapp, inga omslag, spela() är en no-op.
+  // 7. KATALOG (spelaIKatalog, David 2026-11-11). Galleriet i Overlay-vyn (katalog-scen.js) spelar en
+  //    KATALOGDESIGN på sin scen: widgeten kommer från VyraWidgets.create(katalognyckel) och finns
+  //    aldrig i state, och klonen läggs i den värd galleriet pekar ut i stället för på duken. Det
+  //    finns alltså ingen riktig nod att gömma. Allt annat — klonen, vakterna, state-bilden,
+  //    tidslinjen och stoppet — är exakt detsamma. Finns aldrig i ?overlay=1.
 
   const KLON_SUFFIX = '__prov';
   const MAX_TOTAL_MS = 60000;
@@ -344,15 +349,20 @@
   // `iOverlayLage` = studion bad overlayn spela samma test (overlay-testspel.js, bara nar ingen
   // sandning pagar). Da finns ingen editor och inget val; widgeten och typen kommer fran beskedet.
   // Allt annat - klonen, vakterna, state-bilden, tidslinjen och stoppet - ar exakt detsamma.
+  //
+  // `iOverlayLage.katalog` = galleriet i Overlay-vyn spelar en katalogdesign pa sin scen (garanti 7):
+  // { vard, vidStopp }. Widgeten finns inte i state och klonen laggs i `vard` — aldrig pa duken.
   function spela(w, iOverlayLage) {
-    if (iOverlayLage ? !iOverlay() : (iOverlay() || !iEditor())) return false;
+    const kat = (iOverlayLage && iOverlayLage.katalog) || null;
+    if (kat) { if (iOverlay() || !kat.vard || !kat.vard.isConnected) return false; }
+    else if (iOverlayLage ? !iOverlay() : (iOverlay() || !iEditor())) return false;
     w = w || (iOverlayLage ? null : vald());
     if (!w || (!iOverlayLage && w.id !== valtId())) return false;   // bara VALD widget spelas
     const p = adapterFor(w);
     if (!p) return false;
     if (spel) stoppa('omstart');
-    const riktig = riktigNod(w.id);
-    if (!riktig || !riktig.parentElement) return false;
+    const riktig = kat ? null : riktigNod(w.id);
+    if (!kat && (!riktig || !riktig.parentElement)) return false;
 
     let k;
     try { k = typeof structuredClone === 'function' ? structuredClone(w) : JSON.parse(JSON.stringify(w)); }
@@ -363,7 +373,7 @@
       : null;
 
     const s = {
-      iOverlay: !!iOverlayLage,
+      iOverlay: !!iOverlayLage && !kat, katalog: kat,
       wid: w.id, adapterId: p.id, adapter: p.a, k, typ, nod: null, stil: null,
       ctrl: new AbortController(), timers: new Set(), intervaller: new Set(), rafs: new Set(),
       motor: [], brott: [], faser: null, fas: null, forlopp: [], stoppar: false, startad: false, rensa: () => {},
@@ -376,11 +386,12 @@
     // den ritar en klon är också ett brott.
     const r = skyddat(s, () => {
       const mall = document.createElement('div');
+      if (kat && typeof wh !== 'function') throw new Error('katalogtestet kräver renderaren');
       mall.innerHTML = typeof wh === 'function' ? wh(k) : riktig.outerHTML;
       const nod = mall.firstElementChild;
       if (!nod) throw new Error('klonen kunde inte ritas');
       nod.setAttribute('data-id', k.id);
-      nod.style.cssText = riktig.style.cssText;   // exakt samma placering, även transform satt efter render
+      if (riktig) nod.style.cssText = riktig.style.cssText;   // exakt samma placering, även transform satt efter render
       // I overlayn ar den riktiga noden dold (dold tills aktiverad / overlay-dolda.js) - klonen ska synas.
       if (iOverlayLage) { nod.style.removeProperty('display'); nod.style.removeProperty('visibility'); nod.classList.remove('widget-hidden'); }
       nod.style.pointerEvents = 'none';
@@ -392,8 +403,9 @@
     });
     if (!r.ok || spel !== s) { if (spel === s) stoppa('fel'); return false; }
     s.nod = r.ut;
-    riktig.after(s.nod);
-    s.stil = dolj(w.id);
+    // Katalogen har ingen riktig nod: klonen laggs i galleriets vard och ingenting behover gommas.
+    if (kat) kat.vard.append(s.nod);
+    else { riktig.after(s.nod); s.stil = dolj(w.id); }
 
     const ex = window.VyraExempeldata && typeof window.VyraExempeldata.hamta === 'function'
       ? window.VyraExempeldata.hamta(p.id, typ) : Object.freeze({});
@@ -428,7 +440,7 @@
     // Selected-vakten: byte av vald widget eller vy utan render() (som annars stoppar först).
     s.bevakning = setInterval(() => {
       if (spel !== s) return;
-      if (s.iOverlay) { if (!s.nod.isConnected) stoppa('val'); return; }
+      if (s.iOverlay || s.katalog) { if (!s.nod.isConnected) stoppa('val'); return; }
       if (valtId() !== s.wid || !iEditor() || !s.nod.isConnected) stoppa('val');
     }, BEVAKNING_MS);
   }
@@ -462,6 +474,8 @@
     document.querySelectorAll('[data-testspel] .pr-tidslinje li').forEach(li => {
       li.removeAttribute('aria-current'); li.style.fontWeight = ''; li.style.opacity = '';
     });
+    // Galleriet far veta att scenen ar ledig igen. Anropas EFTER att vakterna slappts och spelet nollats.
+    if (s.katalog && typeof s.katalog.vidStopp === 'function') { try { s.katalog.vidStopp(orsak || 'stopp'); } catch (e) { console.error('[VyraTestspel]', e); } }
     return true;
   }
 
@@ -575,10 +589,16 @@
     const foregaende = bind;
     bind = function () {
       const ut = foregaende.apply(this, arguments);
-      if (spel && (valtId() !== spel.wid || !iEditor())) stoppa('val');
+      if (spel && !spel.katalog && (valtId() !== spel.wid || !iEditor())) stoppa('val');
       return ut;
     };
   }
+  // Katalogen (garanti 7): bara i studion, och bara for en design som har en registrerad adapter.
+  api.kanIKatalog = w => !!adapterFor(w);
+  api.spelaIKatalog = (w, vard, val) => {
+    try { return spela(w, { katalog: { vard, vidStopp: val && val.vidStopp }, typ: (val && val.typ) || null }); }
+    catch (e) { console.error('[VyraTestspel]', e); if (spel) stoppa('fel'); return false; }
+  };
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && spel) stoppa('esc'); });
   if (window.VyraPanelram && typeof window.VyraPanelram.tillagg === 'function') {
     window.VyraPanelram.tillagg(1, w => byggSektion(w));
