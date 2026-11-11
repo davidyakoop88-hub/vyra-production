@@ -65,3 +65,19 @@ test('testet på scenen går genom testmotorn, som har ett eget läge för katal
   // Klonen läggs i galleriets värd — aldrig på duken, och ingen riktig nod göms.
   assert.match(motor, /if \(kat\) kat\.vard\.append\(s\.nod\);/);
 });
+
+test('fyra familjer utan registerpost testas genom katalogadaptrar, som bara rör klonen', () => {
+  const fil = fs.readFileSync(path.join(ROT, 'katalog-testadaptrar.js'), 'utf8');
+  const ren = fil.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  for (const typ of ['templateEnergyBar', 'templateQuiz', 'templateViewerShowcase', 'templateHeartCloud']) assert.ok(ren.includes(typ), typ + ' saknar katalogadapter');
+  // Familjernas egna motorer sparar och ritar om; det får en adapter aldrig göra.
+  assert.doesNotMatch(ren, /localStorage|\brender\s*\(|state\.widgets|\bsave\s*\(|\.starta\(|\.andra\(|\.satt\(|\.spela\(/);
+  const motor = fs.readFileSync(path.join(ROT, 'vyra-testspel.js'), 'utf8');
+  // Uppslaget på widgettyp används bara av katalogläget: editorns och overlayns väg är adapterFor.
+  assert.match(motor, /const p = kat \? katalogAdapterFor\(w\) : adapterFor\(w\);/);
+  assert.match(motor, /const kan = w => !!\(iEditor\(\) && adapterFor\(w \|\| vald\(\)\)\);/);
+  assert.match(motor, /api\.kanIOverlay = w => !!adapterFor\(w\);/);
+  assert.ok(motor.indexOf('api.registreraKatalog =') > motor.indexOf('api.kanIOverlay ='), 'registreraKatalog får inte finnas i ?overlay=1');
+  const media = fs.readFileSync(path.join(ROT, 'media.js'), 'utf8');
+  assert.match(media, /katalog-testadaptrar\.js\?v=/);
+});

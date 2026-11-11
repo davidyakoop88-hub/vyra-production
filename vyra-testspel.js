@@ -129,6 +129,24 @@
     const a = adaptrar.get(R.test);
     return a ? { id: R.test, a, R } : null;
   }
+  // KATALOGADAPTRAR (registreraKatalog). En familj utan registerpost (Quiz, Energimätare, Viewer
+  // Showcase, Hjärtan & moln — de har egna paneler) kan inte bära `test` i registret, och ska inte
+  // få en ▶ Testa widget-knapp i sin panel på köpet. Galleriet (garanti 7) slår därför upp dem på
+  // WIDGETTYP. Uppslaget används BARA av katalogläget: editorn och overlayn ser dem aldrig.
+  const katalogTyper = new Map();               // widgettyp → adapter-id
+  function registreraKatalog(typ, id) {
+    if (typeof typ !== 'string' || !typ.trim()) throw new Error('VyraTestspel.registreraKatalog: widgettyp saknas');
+    if (!adaptrar.has(id)) throw new Error('VyraTestspel.registreraKatalog: adaptern ' + id + ' är inte registrerad');
+    if (katalogTyper.has(typ)) throw new Error('VyraTestspel: ' + typ + ' har redan en katalogadapter');
+    katalogTyper.set(typ, id);
+    return typ;
+  }
+  function katalogAdapterFor(w) {
+    const viaRegister = adapterFor(w);
+    if (viaRegister) return viaRegister;
+    const id = w && katalogTyper.get(w.type), a = id && adaptrar.get(id);
+    return a ? { id, a, R: null } : null;
+  }
   // Knappen visas bara här: editorn, inte overlay, och en registerpost med en registrerad adapter.
   const kan = w => !!(iEditor() && adapterFor(w || vald()));
 
@@ -358,7 +376,7 @@
     else if (iOverlayLage ? !iOverlay() : (iOverlay() || !iEditor())) return false;
     w = w || (iOverlayLage ? null : vald());
     if (!w || (!iOverlayLage && w.id !== valtId())) return false;   // bara VALD widget spelas
-    const p = adapterFor(w);
+    const p = kat ? katalogAdapterFor(w) : adapterFor(w);
     if (!p) return false;
     if (spel) stoppa('omstart');
     const riktig = kat ? null : riktigNod(w.id);
@@ -594,7 +612,8 @@
     };
   }
   // Katalogen (garanti 7): bara i studion, och bara for en design som har en registrerad adapter.
-  api.kanIKatalog = w => !!adapterFor(w);
+  api.kanIKatalog = w => !!katalogAdapterFor(w);
+  api.registreraKatalog = registreraKatalog;
   api.spelaIKatalog = (w, vard, val) => {
     try { return spela(w, { katalog: { vard, vidStopp: val && val.vidStopp }, typ: (val && val.typ) || null }); }
     catch (e) { console.error('[VyraTestspel]', e); if (spel) stoppa('fel'); return false; }

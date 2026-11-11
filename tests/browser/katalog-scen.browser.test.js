@@ -156,8 +156,8 @@ test('▶ Testa widget spelar designen på scenen utan att röra layouten', { sk
     const bild = () => page.evaluate(() => JSON.stringify(state.widgets) + '|' + localStorage.getItem('vyra-state'));
 
     // En familj utan testadapter visar ingen knapp.
-    await valj('^QUIZ');
-    assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), true, 'Quiz har ingen testadapter och ska inte visa knappen');
+    await valj('^ORDJAKTEN');
+    assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), true, 'Ordjakten har ingen testadapter och ska inte visa knappen');
 
     await valj('^LAST-X');
     assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), false, 'Last-X har en testadapter');
@@ -247,5 +247,72 @@ test('Top Like, Top Coins och Top Points är en design med en växel', { skip, t
     await page.evaluate(() => window.VyraKatalogScen.vy('lista'));
     const synligaILista = await page.evaluate(() => [...document.querySelectorAll('.rk6-katalog button[data-catalog-key]')].filter(b => b.getClientRects().length).length);
     assert.equal(synligaILista, start.alla, 'Lista ska visa varje variant som ett eget kort');
+  } finally { await page.close(); }
+});
+
+// Fyra familjer utan registerpost testas genom katalogadaptrar (katalog-testadaptrar.js).
+test('Quiz, Hjärtan & moln, Energimätare och Viewer Showcase spelar på scenen', { skip, timeout: 180000 }, async () => {
+  const page = await oppna();
+  try {
+    await page.evaluate(() => window.VyraKatalogScen.vy('galleri'));
+    const bild = () => page.evaluate(() => JSON.stringify(state.widgets) + '|' + localStorage.getItem('vyra-state')
+      + '|' + Object.keys(localStorage).filter(k => /^vyra-(quiz|energi)-/.test(k)).sort().join(','));
+    const fore = await bild();
+    const spela = async (rubrik, adapter) => {
+      await page.evaluate(r => {
+        [...document.querySelectorAll('.kat-familjer [data-kat-familj]')].find(x => new RegExp(r).test(x.dataset.katFamilj)).click();
+        return new Promise(k => setTimeout(k, 400));
+      }, rubrik);
+      assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), false, rubrik + ' ska ha en testknapp');
+      await page.click('.kat-scen [data-kat-gor="testa"]');
+      await page.waitForFunction(() => {
+        const n = document.querySelector('.kat-scen-prov-inre')?.firstElementChild;
+        return window.VyraTestspel.status().aktiv && !!n && n.getBoundingClientRect().width > 20;
+      }, null, { timeout: 10000, polling: 50 });
+      assert.equal(await page.evaluate(() => window.VyraTestspel.status().adapter), adapter);
+    };
+    const stoppa = async () => {
+      await page.evaluate(() => window.VyraTestspel.stoppa());
+      await page.waitForFunction(() => !window.VyraTestspel.status().aktiv, null, { timeout: 5000, polling: 50 });
+    };
+    const klon = sel => '.kat-scen-prov-inre ' + sel;
+
+    // Energimätaren fylls till full.
+    await spela('^ENERGIMÄTARE', 'energi');
+    await page.waitForFunction(s => document.querySelector(s)?.textContent === '100%', klon('.em-varde'), { timeout: 8000, polling: 100 });
+    assert.equal(await page.textContent(klon('.em-tips')), 'Full energi!');
+    await stoppa();
+
+    // Quizet tar emot tre svar och går till rättning, med en ledare.
+    await spela('^QUIZ', 'quiz');
+    await page.waitForFunction(s => /3 svar/.test(document.querySelector(s)?.textContent || ''), klon('.qz-tips'), { timeout: 8000, polling: 100 });
+    await page.waitForFunction(s => document.querySelector(s)?.textContent === 'RÄTTNING', klon('.qz-klocka'), { timeout: 8000, polling: 100 });
+    assert.equal(await page.evaluate(s => document.querySelectorAll(s).length, klon('.qz-ratt')), 1, 'rätt svar ska vara markerat');
+    assert.match(await page.textContent(klon('.qz-ledare')), /^Leder: /);
+    await stoppa();
+
+    // Viewer Showcase spelar sitt firande med exempelnamnet.
+    await spela('^VIEWER SHOWCASE', 'showcase');
+    assert.equal(await page.evaluate(() => document.querySelector('.kat-scen-prov-inre').firstElementChild.classList.contains('vs-spelar')), true);
+    assert.equal(await page.textContent(klon('.vs-namn')), 'Alex');
+    await stoppa();
+
+    // Hjärtan & moln får en egen videonod i klonen, med familjens klipp.
+    await spela('^HJÄRTAN', 'hjartmoln');
+    const moln = await page.evaluate(() => {
+      const nod = document.querySelector('.kat-scen-prov-inre').firstElementChild, v = nod.querySelector('.hm-vard video');
+      return { pa: nod.classList.contains('hm-pa'), src: v ? v.getAttribute('src') : null };
+    });
+    assert.equal(moln.pa, true);
+    assert.match(moln.src || '', /^assets\/videos\/hjartmoln\/.+\.webm$/);
+    await stoppa();
+
+    const efter = await page.evaluate(() => ({
+      brott: window.VyraTestspel.brott().length, kvar: document.querySelector('.kat-scen-prov-inre').children.length,
+      quiz: [...window.VyraQuiz._lage.keys()].filter(k => /__prov$/.test(k)).length,
+      energi: [...window.VyraEnergimatare._lage.keys()].filter(k => /__prov$/.test(k)).length
+    }));
+    assert.deepEqual(efter, { brott: 0, kvar: 0, quiz: 0, energi: 0 }, 'testen ska städa efter sig och aldrig slå i vakterna');
+    assert.equal(await bild(), fore, 'testen ändrade layouten eller sparade ett läge');
   } finally { await page.close(); }
 });
