@@ -163,7 +163,9 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
   }
   frame.src=url.href;
   group.style.animation='none';
-  group.append(frame);e.append(group);e.classList.add('play');
+  /* toggle, inte add: samma skrivning som duksgrenen nedan. Vakten i gift-fireworks-live-path raknar
+     classList.add('play') och tillater exakt ett — fwSpela ar fortfarande enda stallet som tander. */
+  group.append(frame);e.append(group);e.classList.toggle('play',true);
   return group;
  }
  if(fwCanvas(w)){
