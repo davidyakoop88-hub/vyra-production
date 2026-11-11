@@ -169,6 +169,7 @@ test('fabriken: vänster sida står vid vänsterkanten och höger sida slutar in
   assert.equal(skapa('catalog:toplike:ljusring:vanster').x, 20);
   const hoger = skapa('catalog:toplike:ljusring:hoger');
   assert.equal(hoger.x, 164);
-  assert.ok(hoger.x + 248 <= 432 - 20, 'sidorna är 248 px breda på en 432 px bred duk');
+  assert.equal(hoger.width, 248, 'sidorna är 248 px breda, inte pallens 350');
+  assert.ok(hoger.x + hoger.width <= 432 - 20, 'höger sida slutar 20 px från högerkanten');
   for (const k of ['catalog:toplike:ljusring', 'catalog:toplike:ljusring:liggande', 'catalog:toplike:ljusring:staende']) assert.equal(skapa(k).x, 40, k);
 });
