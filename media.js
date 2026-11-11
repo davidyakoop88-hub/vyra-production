@@ -1976,6 +1976,11 @@ Promise.resolve().then(()=>{
   const s=document.createElement('script');s.src='katalog-scen.js?v=20261111-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-scen.js');document.body.append(s);
 });
 
+// Testadaptrar for galleriets scen: Quiz, Hjartan & moln, Energimatare och Viewer Showcase (katalog-testadaptrar.js, David 2026-11-11).
+Promise.resolve().then(()=>{
+  const s=document.createElement('script');s.src='katalog-testadaptrar.js?v=20261111-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-testadaptrar.js');document.body.append(s);
+});
+
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-social-alert]')){let css=document.createElement('link');css.rel='stylesheet';css.href='social-alert.css?v=20261025-1';css.dataset.socialAlert='1';document.head.append(css)}
