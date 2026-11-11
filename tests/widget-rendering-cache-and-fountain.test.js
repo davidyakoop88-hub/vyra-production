@@ -182,7 +182,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261020-2: Spotify-kommandon i kodstil (F24), större katalogbilder (F36) och färgschemats provbild (F37).
   // 20261107-12: Like Fountain i balans — fartfaktorerna borta, Ghost tonar inte ner under 60 %.
   // 20261025-1: overlayn tar bort .editor-shells lila skugga (0 0 35px) — den låg kvar som ett svagt sken i OBS.
-  assert.match(studio, /studio\.css\?v=20261107-12/);
+  assert.match(studio, /studio\.css\?v=20261111-1/);
   // Bumpad igen 2026-09-23: topgift.theme och topgift.extra pensionerades ur varianttabellen.
   // studio.css ar DENNA gang oforandrad — skinnen star kvar och premiumdesignerna anvander dem,
   // sa ingen sparad widget andrar utseende. Strangarna foljer filerna, inte varandra.
