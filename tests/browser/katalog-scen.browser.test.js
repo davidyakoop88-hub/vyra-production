@@ -143,7 +143,9 @@ test('▶ Testa widget spelar designen på scenen utan att röra layouten', { sk
       b.click();
       return new Promise(k => setTimeout(k, 400));
     }, rubrik);
-    const bild = () => page.evaluate(() => JSON.stringify(state.widgets) + '|' + JSON.stringify(Object.entries(localStorage).sort()));
+    // Layouten i minnet och den sparade layouten. Övriga nycklar i lagringen (sessionens egna
+    // tidsstämplar m.m.) skrivs av annat än testet och hör inte hit.
+    const bild = () => page.evaluate(() => JSON.stringify(state.widgets) + '|' + localStorage.getItem('vyra-state'));
 
     // En familj utan testadapter visar ingen knapp.
     await valj('^QUIZ');
@@ -153,7 +155,11 @@ test('▶ Testa widget spelar designen på scenen utan att röra layouten', { sk
     assert.equal(await page.evaluate(() => document.querySelector('[data-kat-gor="testa"]').hidden), false, 'Last-X har en testadapter');
     const fore = await bild();
     await page.click('.kat-scen [data-kat-gor="testa"]');
-    await page.waitForTimeout(600);
+    // Vänta på det som ska mätas i stället för en fast tid: entrén börjar från noll storlek.
+    await page.waitForFunction(() => {
+      const n = document.querySelector('.kat-scen-prov-inre')?.firstElementChild;
+      return window.VyraTestspel.status().aktiv && !!n && n.getBoundingClientRect().width > 20;
+    }, null, { timeout: 10000, polling: 50 });
     const m = await page.evaluate(() => {
       const st = window.VyraTestspel.status(), inre = document.querySelector('.kat-scen-prov-inre'), nod = inre.firstElementChild;
       const q = nod ? nod.getBoundingClientRect() : null, y = document.querySelector('.kat-scen-yta').getBoundingClientRect();
@@ -175,7 +181,7 @@ test('▶ Testa widget spelar designen på scenen utan att röra layouten', { sk
 
     // Byter man familj mitt i testet stoppas det, och scenen är ren.
     await valj('^GIFT JAR');
-    await page.waitForTimeout(400);
+    await page.waitForFunction(() => !window.VyraTestspel.status().aktiv, null, { timeout: 10000, polling: 50 });
     const efter = await page.evaluate(() => ({
       aktiv: window.VyraTestspel.status().aktiv, kvar: document.querySelector('.kat-scen-prov-inre').children.length,
       testar: document.querySelector('.kat-scen').classList.contains('kat-scen-testar'),
