@@ -117,6 +117,12 @@ test('fabriken: catalog:toplike:ljusring ger Neonramar med rubrik och topp 3 på
 test('studio.html laddar Neonramar efter ranking-sixpack.js', () => {
   const html = fs.readFileSync(path.join(ROT, 'studio.html'), 'utf8');
   const a = html.indexOf('ranking-sixpack.js?v='), b = html.indexOf('toplike-ljusring.js?v=');
-  assert.ok(a > 0 && b > a, 'toplike-ljusring.js ska laddas efter ranking-sixpack.js (wh-omslaget ligger ytterst)');
+  assert.ok(a > 0 && b > a, 'toplike-ljusring.js ska laddas efter ranking-sixpack.js (wh-omslaget ligger utanför)');
+  // spellayout.js har rang 3 och lindar bara in sig om den yttersta har lägre rang: laddas Neonramar (3.5)
+  // först ritas Gaming overlay inte alls (CI 2026-11-11).
+  const s = html.indexOf('spellayout.js?v=');
+  assert.ok(s > 0 && b > s, 'toplike-ljusring.js ska laddas efter spellayout.js');
+  const js = fs.readFileSync(path.join(ROT, 'toplike-ljusring.js'), 'utf8');
+  assert.match(js, /const RANG = 3\.5;/);
   assert.ok(html.includes('toplike-ljusring.css?v='));
 });

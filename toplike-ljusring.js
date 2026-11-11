@@ -14,12 +14,14 @@
   //              profile-frames-premium.css (hundratals `.vyra-toplike .toplike-row ... !important`) inte
   //              når dem. synka() kopierar datalagret hit och spelar omkörningen när ordningen ändras.
   //
-  // KEDJAN BEVARAS. Wrappern (rang 3, utanför ranking-sixpack.js) anropar kedjan och byter bara rotens
+  // KEDJAN BEVARAS. Wrappern (rang 3.5, utanför ranking-sixpack.js och spellayout.js, innanför vyra-bildrad.js) anropar kedjan och byter bara rotens
   // INNEHÅLL; öppningstaggen (data-id, position, dold/opacitet, lager, entré) kommer från kedjan.
   if (window.VyraTopLikeLjusring) return;
 
   const SKIN = 'ljusring';
-  const RANG = 3;
+  // 3.5, inte 3: spellayout.js har rang 3 och lindar bara in sig om den yttersta har lägre rang (CI 2026-11-11:
+  // med samma rang ritades Gaming overlay inte alls). Därför laddas filen också efter spellayout.js.
+  const RANG = 3.5;
   const BAS = 'assets/images/toplike-ljusring/';
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const iOverlay = () => typeof VYRA_OVERLAY !== 'undefined' ? !!VYRA_OVERLAY : new URLSearchParams(location.search).has('overlay');
@@ -205,7 +207,7 @@
     }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['src', 'style'] });
   }
 
-  // ---------- wh-omslaget (rang 3, ytterst) ----------
+  // ---------- wh-omslaget (rang 3.5) ----------
   const djup = { wh: 0 };
   function install(sent) {
     if (typeof wh !== 'function' || wh.__vyraYtter >= RANG) return;
