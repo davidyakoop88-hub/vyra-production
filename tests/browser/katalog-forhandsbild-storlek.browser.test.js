@@ -71,6 +71,9 @@ test('rankingkortens förhandsbilder täcker sin bildyta', { skip, timeout: 2400
         forra = n;
       }
     });
+    // Provet mäter LISTAN, där varje kort har sin egen ruta under varandra. I galleriet
+    // (katalog-scen.js) ligger familjens kort på en rad i sidled, och rullningen nedan når dem inte.
+    await page.evaluate(async () => { window.VyraKatalogScen?.vy('lista'); await new Promise(r => setTimeout(r, 300)); });
     // Miniatyrerna ritas lat när de närmar sig vyn: rulla rankingsektionen förbi.
     await page.evaluate(async () => {
       const sektion = [...document.querySelectorAll('.widget-catalog section')]
