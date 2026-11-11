@@ -1570,7 +1570,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='cust
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261110-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261111-2';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261111-3';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
 
 if(new URLSearchParams(location.search).get('vfxdemo')==='1'){Promise.resolve().then(()=>{let files=['pixi.min.js','vfx-types.js','vfx-performance-monitor.js','vfx-quality-manager.js','vfx-texture-registry.js','vfx-base-particle.js','vfx-particle-pool.js','vfx-flow-field.js','vfx-spawn-zone.js','vfx-renderer.js','vfx-ticker.js','vfx-particle-system.js','vfx-scene.js','vfx-engine.js','vfx-debug-overlay.js','vfx-demo.js'],loadNext=i=>{if(i>=files.length)return;let s=document.createElement('script');s.src=files[i]+'?v=1';s.async=false;s.onload=()=>loadNext(i+1);s.onerror=()=>console.error('[VFX] failed to load',files[i]);document.body.append(s)};loadNext(0)})}
@@ -1972,8 +1972,8 @@ Promise.resolve().then(()=>{
 // Galleriet i Overlay-vyn - familjelista, scen och remsa i stallet for en lang lista (katalog-scen.js, David 2026-11-11).
 // Laddas EFTER katalog-ordning.js: galleriet laser dess grupper och flikar.
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-katalog-scen]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-scen.css?v=20261111-2';css.dataset.katalogScen='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='katalog-scen.js?v=20261111-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-scen.js');document.body.append(s);
+  if(!document.querySelector('link[data-katalog-scen]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-scen.css?v=20261111-3';css.dataset.katalogScen='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='katalog-scen.js?v=20261111-3';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-scen.js');document.body.append(s);
 });
 
 // Testadaptrar for galleriets scen: Quiz, Hjartan & moln, Energimatare och Viewer Showcase (katalog-testadaptrar.js, David 2026-11-11).

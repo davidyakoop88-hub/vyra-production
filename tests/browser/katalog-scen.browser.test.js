@@ -316,3 +316,74 @@ test('Quiz, Hjärtan & moln, Energimätare och Viewer Showcase spelar på scenen
     assert.equal(await bild(), fore, 'testen ändrade layouten eller sparade ett läge');
   } finally { await page.close(); }
 });
+
+// VAL PÅ SCENEN: Neonramarnas 21 ramar och 12 fyrkantiga modeller väljs under scenen (David 2026-11-11).
+test('Neonramar: ramen väljs på scenen och följer med till layouten och testet', { skip, timeout: 180000 }, async () => {
+  const page = await oppna();
+  try {
+    await page.evaluate(() => window.VyraKatalogScen.vy('galleri'));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.kat-familjer [data-kat-familj]')].find(b => /^RANKING/.test(b.dataset.katFamilj)).click();
+      return new Promise(k => setTimeout(k, 400));
+    });
+    const las = () => page.evaluate(() => {
+      const v = document.querySelector('.kat-scen-val'), t = document.querySelector('.kat-scen-kort .owg-thumb'), rot = t && (t.shadowRoot || t);
+      return {
+        synlig: !v.hidden,
+        vaxel: [...v.querySelectorAll('.kat-scen-val-vaxel button')].map(b => b.textContent + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+        antal: v.querySelectorAll('.kat-scen-val-rad button').length,
+        namn: v.querySelector('.kat-scen-valnamn')?.textContent || null,
+        ring: rot ? (rot.querySelector('.tl-ram-ring')?.getAttribute('src') || null) : null,
+        klasser: rot ? (rot.querySelector('.tl')?.className || '') : ''
+      };
+    });
+    // En design utan val inuti visar ingen rad.
+    assert.equal((await las()).synlig, false, 'Voltage har inga val och ska inte visa raden');
+
+    await page.evaluate(() => {
+      const kort = document.querySelector('.widget-catalog [data-tln-skapa="liggande"]');
+      kort.scrollIntoView({ block: 'nearest', inline: 'center' });
+    });
+    await page.locator('.widget-catalog [data-tln-skapa="liggande"]').click();
+    await page.waitForFunction(() => !document.querySelector('.kat-scen-val').hidden, null, { timeout: 5000 });
+    const start = await las();
+    assert.deepEqual(start.vaxel, ['Rund*', 'Fyrkant']);
+    assert.equal(start.antal, 21, 'alla 21 ramarna ska gå att välja');
+    assert.equal(start.namn, 'Blå · 1 av 21');
+    assert.match(start.ring || '', /ram-1-ring\.png$/);
+
+    // Ett klick byter ram på scenen — ingenting läggs till.
+    const fore = await page.evaluate(() => state.widgets.length);
+    await page.click('.kat-scen-val [data-kat-varde="guld"]');
+    await page.waitForFunction(() => /Guld · 8 av 21/.test(document.querySelector('.kat-scen-valnamn')?.textContent || ''), null, { timeout: 5000 });
+    await page.waitForFunction(() => { const t = document.querySelector('.kat-scen-kort .owg-thumb'); return /ram-8-ring/.test((t && (t.shadowRoot || t).querySelector('.tl-ram-ring')?.getAttribute('src')) || ''); }, null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => state.widgets.length), fore, 'att välja en ram får inte lägga till något');
+    assert.deepEqual(await page.evaluate(() => window.VyraKatalogScen.val('catalog:toplike:ljusring:liggande')), { tlnRam: 'guld' });
+
+    // ▶ Testa widget spelar med den valda ramen.
+    await page.click('.kat-scen [data-kat-gor="testa"]');
+    await page.waitForFunction(() => window.VyraTestspel.status().aktiv && !!document.querySelector('.kat-scen-prov-inre .tl-ram-ring'), null, { timeout: 10000, polling: 50 });
+    assert.match(await page.evaluate(() => document.querySelector('.kat-scen-prov-inre .tl-ram-ring').getAttribute('src')), /ram-8-ring\.png$/);
+    await page.evaluate(() => window.VyraTestspel.stoppa());
+
+    // Fyrkant byter raden till de tolv modellerna.
+    await page.click('.kat-scen-val [data-kat-varde="fyrkant"]');
+    await page.waitForFunction(() => document.querySelectorAll('.kat-scen-val-rad button').length === 12, null, { timeout: 5000 });
+    await page.click('.kat-scen-val [data-kat-varde="diamant"]');
+    await page.waitForFunction(() => /form-fyrkant/.test((() => { const t = document.querySelector('.kat-scen-kort .owg-thumb'); return (t && (t.shadowRoot || t).querySelector('.tl')?.className) || ''; })()) && /Diamant · 3 av 12/.test(document.querySelector('.kat-scen-valnamn')?.textContent || ''), null, { timeout: 5000 });
+    assert.match((await las()).klasser, /fyr-diamant/);
+
+    // Lägg till i Layout tar med valet; kortet bär det bara under klicket.
+    await page.evaluate(() => { selected = null; });
+    await page.click('.kat-scen [data-kat-gor="lagg"]');
+    await page.waitForFunction(() => !!selected, null, { timeout: 5000 });
+    const lagd = await page.evaluate(() => { const w = liveWidget(selected); return { skin: w.skin, lage: w.tlnLage, ram: w.tlnRam, form: w.tlnForm, fyr: w.tlnFyr }; });
+    assert.deepEqual(lagd, { skin: 'ljusring', lage: 'liggande', ram: 'guld', form: 'fyrkant', fyr: 'diamant' });
+    assert.equal(await page.evaluate(() => '__katScenVal' in document.querySelector('.widget-catalog [data-tln-skapa="liggande"]')), false);
+
+    // Ett kodklick på kortet (utan scenens val) ger standardramen, som förut.
+    await page.evaluate(() => { selected = null; document.querySelector('.widget-catalog [data-tln-skapa="pall"]').click(); });
+    await page.waitForFunction(() => !!selected, null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => liveWidget(selected).tlnRam), 'bla');
+  } finally { await page.close(); }
+});

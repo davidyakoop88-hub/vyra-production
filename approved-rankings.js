@@ -121,8 +121,10 @@
   }
 
   // `led` = katalognyckelns andra led, för teman med flera kort (Neonramar: ett kort per läge).
-  function createApprovedLike(theme, led) {
+  // `varden` = det användaren valde på galleriets scen (t.ex. ramen i Neonramar); läggs på den nya widgeten.
+  function createApprovedLike(theme, led, varden) {
     const w = VyraWidgets.create('catalog:toplike:' + theme + (led ? ':' + led : ''));
+    if (varden && typeof varden === 'object') Object.assign(w, varden);
     window.applyVyraTopLikeStyle?.(w, theme);
     // Temats topplista (spellayout.js) är också en Top Like, men den hör till gaming overlayn och står kvar.
     state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.spelTema || item.type !== 'templateTopLike');
