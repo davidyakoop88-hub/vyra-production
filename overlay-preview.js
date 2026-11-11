@@ -136,7 +136,10 @@ function overlayPreviewWidget(btn) {
     // window, inte root: den har filen ar ett vanligt toppnivaskript utan IIFE, sa `root`
     // ar odeklarerat och kastade ReferenceError for VARJE knapp. try/catch svalde det, sa
     // resolvern gav null och ingen miniatyr ritades nagonsin.
-    try { return window.VyraWidgets.create(d.catalogKey) } catch (e) { return null }
+    // Galleriets scen (katalog-scen.js) kan visa en design med ett VAL — t.ex. en annan ram i Neonramar.
+    // Valet ligger på noden (__katScenVal) och läggs ovanpå den widget fabriken ger. Katalogens egna
+    // kort bär aldrig fältet, så deras miniatyrer är som förut.
+    try { const w = window.VyraWidgets.create(d.catalogKey); return btn.__katScenVal ? Object.assign(w, btn.__katScenVal) : w } catch (e) { return null }
   }
 
   // last-x-alerts.js:373 — samma falt som knappen sjalv satter.

@@ -229,6 +229,28 @@
   // ---------- katalogen ----------
   // Ett eget kort i rankinggruppen (ranking-sixpack.js bygger sektionen). Skapas via approved-rankings.js
   // createLike, som alla Top Like-designer.
+  // VAL PÅ GALLERIETS SCEN (David 2026-11-11: "den här modellen har massor med ramar andra design
+  // invändigt hur ska man få den sett"). De 21 ramarna och 12 fyrkantiga modellerna syntes först i
+  // panelen efter att widgeten lagts till. Här beskrivs de för katalog-scen.js, som ritar en rad med
+  // val under scenen: ett klick byter ram på den stora bilden, och Lägg till i Layout tar med valet.
+  const SCENFALT = { tlnForm: { rund: 1, fyrkant: 1 }, tlnRam: RAMAR, tlnFyr: FYRMODELLER };
+  function tillatnaVal(val) {
+    if (!val || typeof val !== 'object') return undefined;
+    const ut = {};
+    Object.keys(SCENFALT).forEach(f => { if (Object.prototype.hasOwnProperty.call(SCENFALT[f], val[f])) ut[f] = val[f]; });
+    return Object.keys(ut).length ? ut : undefined;
+  }
+  (window.VyraKatalogScenVal = window.VyraKatalogScenVal || []).push(Object.freeze({
+    id: 'neonramar',
+    passar: w => !!w && w.type === 'templateTopLike' && w.skin === SKIN,
+    grupper(w) {
+      const form = { falt: 'tlnForm', typ: 'vaxel', etikett: 'Form', alternativ: [{ varde: 'rund', namn: 'Rund' }, { varde: 'fyrkant', namn: 'Fyrkant' }] };
+      if (w.tlnForm === 'fyrkant') return [form, { falt: 'tlnFyr', typ: 'rad', etikett: 'Modell', alternativ: Object.keys(FYRMODELLER).map(k => ({ varde: k, namn: FYRMODELLER[k] })) }];
+      return [form, { falt: 'tlnRam', typ: 'rad', etikett: 'Ram', alternativ: Object.keys(RAMAR).map(k => ({ varde: k, namn: RAMAR[k].namn,
+        farg: RAMAR[k].farg, bild: RAMAR[k].kod ? null : BAS + 'ram-' + RAMAR[k].n + '-ring.png' })) }];
+    }
+  }));
+
   const nyckelFor = l => 'catalog:toplike:' + SKIN + (l === 'pall' ? '' : ':' + l);
   function katalog() {
     const sec = document.querySelector('.widget-catalog section[data-rk6-katalog]');
@@ -246,7 +268,8 @@
     sec.append(g);
     g.querySelectorAll('[data-tln-skapa]').forEach(b => {
       const l = b.dataset.tlnSkapa;
-      b.onclick = () => window.VyraApprovedRankings?.createLike?.(SKIN, l === 'pall' ? undefined : l);
+      // b.__katScenVal: valet från galleriets scen (ram, form, modell), satt av katalog-scen.js under klicket.
+      b.onclick = () => window.VyraApprovedRankings?.createLike?.(SKIN, l === 'pall' ? undefined : l, tillatnaVal(b.__katScenVal));
     });
   }
   function installBind() {
@@ -258,7 +281,7 @@
     bind = f;
   }
 
-  window.VyraTopLikeLjusring = Object.freeze({ nyckelFor, SKIN, RAMAR, LAGEN, FYRMODELLER, NAMNSTILAR, TYPSNITT, STANDARD, innehall, omslut, synka, antal });
+  window.VyraTopLikeLjusring = Object.freeze({ nyckelFor, tillatnaVal, SKIN, RAMAR, LAGEN, FYRMODELLER, NAMNSTILAR, TYPSNITT, STANDARD, innehall, omslut, synka, antal });
 
   install();
   installBind();

@@ -65,6 +65,29 @@
 .kat-scen-knappar [hidden]{display:none}
 .kat-scen-knappar [aria-pressed="true"]{color:#ffd23c}
 
+/* Val på scenen: varianter INUTI en design (Neonramarnas ramar och modeller). En rad mellan scenen och knapparna. */
+.kat-scen-val{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid #2b2438;min-width:0}
+.kat-scen-val[hidden]{display:none}
+.kat-scen-valgrupp{display:flex;align-items:center;gap:10px;min-width:0}
+.kat-scen-val-vaxel{flex:none}
+.kat-scen-val-rad{flex:1 1 auto}
+.kat-scen-valetikett{flex:none;font:700 9px/1.2 inherit;letter-spacing:.12em;text-transform:uppercase;color:#8a7a95}
+.kat-scen-valnamn{flex:none;font:600 11px/1.2 inherit;color:#d8ccea;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kat-scen-vallista{display:flex;gap:6px;min-width:0}
+.kat-scen-val-rad .kat-scen-vallista{flex:1 1 auto;overflow-x:auto;scrollbar-width:thin;padding:2px}
+.kat-scen-val-vaxel .kat-scen-vallista{gap:0;background:#170c20;border:1px solid #3a2a4f;border-radius:999px;padding:3px}
+.kat-scen-val button{appearance:none;flex:none;cursor:pointer;font:600 11px/1.2 inherit;color:#b8aac8}
+.kat-scen-val-vaxel button{border:0;background:transparent;border-radius:999px;padding:5px 12px}
+.kat-scen-val-vaxel button[aria-pressed="true"]{background:#8b3dff;color:#fff}
+.kat-scen-val-rad button{min-width:42px;height:42px;display:grid;place-items:center;padding:0 10px;border-radius:10px;background:#120a1b;border:1px solid #2b2438}
+.kat-scen-val-rad button:has(img),.kat-scen-val-rad button:has(i){width:42px;padding:0}
+.kat-scen-val-rad button:hover{border-color:#8a5cff;color:#fff}
+.kat-scen-val-rad button[aria-pressed="true"]{border-color:#b13cff;box-shadow:0 0 0 1px #b13cff;color:#fff}
+.kat-scen-val-rad button img{width:34px;height:34px;display:block;pointer-events:none}
+.kat-scen-val-rad button i{width:28px;height:28px;border-radius:50%;border:3px solid var(--farg,#b13cff);box-shadow:0 0 8px var(--farg,#b13cff);display:block}
+.kat-scen-val button:focus-visible{outline:2px solid #c9a7ff;outline-offset:2px}
+@media(max-width:900px){.kat-scen-val{flex-wrap:wrap}.kat-scen-val-rad{flex-basis:100%}}
+
 /* Remsan: vald familj på en rad. Övriga familjer finns kvar i sidan men visas inte. */
 .overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-dold{display:none!important}
 .overlay-widget-gallery.kat-scen-pa .widget-catalog>.kat-scen-vald:not(section){display:block}

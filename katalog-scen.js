@@ -139,6 +139,7 @@
           '<button type="button" class="kat-scen-pil kat-scen-bak" aria-label="Föregående design">‹</button>' +
           '<button type="button" class="kat-scen-pil kat-scen-fram" aria-label="Nästa design">›</button>' +
         '</div>' +
+        '<div class="kat-scen-val" hidden></div>' +
         '<div class="kat-scen-info">' +
           '<div class="kat-scen-namn"><b></b><small></small></div>' +
           '<div class="kat-scen-knappar">' +
@@ -153,6 +154,16 @@
       scen.addEventListener('click', e => {
         if (e.target.closest('.kat-scen-bak')) return stega(-1);
         if (e.target.closest('.kat-scen-fram')) return stega(1);
+        const valknapp = e.target.closest('[data-kat-val]');
+        if (valknapp) {
+          const g = galleri(), c = katalog(g), f = c && valdFam(c);
+          if (f) {
+            const kort = valtI(f), grupp = valgrupper(kort).find(x => x.falt === valknapp.dataset.katVal);
+            const alt = grupp && grupp.alternativ.find(a => String(a.varde) === valknapp.dataset.katVarde);
+            if (alt) valj_val(kort, grupp.falt, alt.varde);
+          }
+          return;
+        }
         const v = e.target.closest('[data-kat-variant]');
         if (v) {
           const kort = [...cat.querySelectorAll('button[data-catalog-key]')].find(k => k.dataset.catalogKey === v.dataset.katVariant);
@@ -224,9 +235,17 @@
     const f = valdFam(cat); if (!f) return;
     const kort = valtI(f);
     if (vad === 'testa') return testa(g.querySelector(':scope > .kat-scen'), kort);
-    if (vad === 'lagg') return kort.click();
+    // Valet på scenen följer med: familjens egen klickhanterare läser kort.__katScenVal under klicket.
+    if (vad === 'lagg') {
+      const val = valFor(kort);
+      if (val) kort.__katScenVal = val;
+      try { return kort.click(); } finally { delete kort.__katScenVal; }
+    }
     const mal = { anpassa: '.owg-configure', visa: '.owg-preview', lank: '.owg-copylink', stjarna: '.owg-star' }[vad];
-    kort.querySelector(mal)?.click();
+    // Anpassa, Förhandsvisa och Kopiera länk bygger också widgeten ur kortet: valet följer med dit.
+    const medVal = vad !== 'stjarna' ? valFor(kort) : null;
+    if (medVal) kort.__katScenVal = medVal;
+    try { kort.querySelector(mal)?.click(); } finally { delete kort.__katScenVal; }
     if (vad === 'stjarna') visaInfo(g.querySelector(':scope > .kat-scen'), f, kort);
   }
 
@@ -234,8 +253,71 @@
   // provyta: samma klon, vakter och tidslinje som ▶ Testa widget i Layout. Testet når aldrig
   // sändningen, servern eller layouten. Här finns bara knappen och skalningen av klonen.
   const motor = () => (window.VyraTestspel && typeof window.VyraTestspel.spelaIKatalog === 'function') ? window.VyraTestspel : null;
+  // Widgeten kortet står för, med scenens val ovanpå. Kortet självt bär aldrig valet: förhandsvisningen
+  // får en ställföreträdare med kortets data-fält.
   function provWidget(kort) {
-    try { return typeof window.overlayPreviewWidget === 'function' ? window.overlayPreviewWidget(kort) : null; } catch (_) { return null; }
+    const val = valFor(kort);
+    try { return typeof window.overlayPreviewWidget === 'function' ? window.overlayPreviewWidget(val ? { dataset: kort.dataset, __katScenVal: val } : kort) : null; } catch (_) { return null; }
+  }
+
+  // VAL PÅ SCENEN (David 2026-11-11: "den här modellen har massor med ramar andra design invändigt hur
+  // ska man få den sett"). En familj som har varianter INUTI en design — Neonramarnas 21 ramar och 12
+  // fyrkantiga modeller — beskriver dem i window.VyraKatalogScenVal: { id, passar(w), grupper(w) }, där
+  // en grupp är { falt, typ: 'vaxel'|'rad', etikett, alternativ: [{ varde, namn, bild?, farg? }] }.
+  // Scenen ritar en rad med valen. Ett klick byter fältet på den stora bilden; ingenting läggs till.
+  // Lägg till i Layout och ▶ Testa widget tar med valet. Familjens egen kod avgör vilka värden som
+  // är tillåtna — här väljs bara bland dem den själv räknat upp.
+  const valda = new Map();            // katalognyckel → { fält: värde }
+  const valFor = kort => { const v = valda.get(kort.dataset.catalogKey); return v && Object.keys(v).length ? v : null; };
+  function valkalla(w) {
+    const lista = Array.isArray(window.VyraKatalogScenVal) ? window.VyraKatalogScenVal : [];
+    return lista.find(k => { try { return k && typeof k.grupper === 'function' && k.passar(w); } catch (_) { return false; } }) || null;
+  }
+  function valgrupper(kort) {
+    const w = provWidget(kort), kalla = w && valkalla(w);
+    if (!kalla) return [];
+    let grupper = [];
+    try { grupper = kalla.grupper(w) || []; } catch (e) { console.error('[katalog-scen] val', e); }
+    return grupper.filter(g => g && g.falt && Array.isArray(g.alternativ) && g.alternativ.length > 1)
+      .map(g => ({ falt: g.falt, typ: g.typ === 'vaxel' ? 'vaxel' : 'rad', etikett: String(g.etikett || ''), alternativ: g.alternativ,
+        valt: g.alternativ.some(a => a.varde === w[g.falt]) ? w[g.falt] : g.alternativ[0].varde }));
+  }
+  function valj_val(kort, falt, varde) {
+    const g = valgrupper(kort).find(x => x.falt === falt);
+    if (!g || !g.alternativ.some(a => a.varde === varde)) return;
+    const nyckel = kort.dataset.catalogKey, v = Object.assign({}, valda.get(nyckel));
+    v[falt] = varde;
+    valda.set(nyckel, v);
+    uppdatera();
+  }
+  function ritaVal(scen, kort) {
+    const rad = scen.querySelector('.kat-scen-val'), grupper = valgrupper(kort);
+    const signatur = grupper.length ? kort.dataset.catalogKey + '|' + grupper.map(g => g.falt + '=' + g.valt + '/' + g.alternativ.length).join('|') : '';
+    rad.hidden = !grupper.length;
+    if (rad.dataset.signatur === signatur) return;
+    rad.dataset.signatur = signatur;
+    rad.replaceChildren(...grupper.map(g => {
+      const el = skapa('div', 'kat-scen-valgrupp kat-scen-val-' + g.typ);
+      el.setAttribute('role', 'group'); el.setAttribute('aria-label', g.etikett);
+      if (g.typ === 'rad') el.append(skapa('span', 'kat-scen-valetikett', g.etikett));
+      const lista = skapa('div', 'kat-scen-vallista');
+      g.alternativ.forEach(a => {
+        const b = skapa('button', '');
+        b.type = 'button'; b.dataset.katVal = g.falt; b.dataset.katVarde = String(a.varde);
+        b.title = a.namn; b.setAttribute('aria-label', a.namn); b.setAttribute('aria-pressed', String(a.varde === g.valt));
+        if (g.typ === 'rad' && a.bild) { const im = skapa('img', ''); im.src = a.bild; im.alt = ''; im.loading = 'lazy'; im.draggable = false; b.append(im); }
+        else if (g.typ === 'rad' && a.farg) { const ring = skapa('i', ''); ring.style.setProperty('--farg', a.farg); b.append(ring); }
+        else b.textContent = a.namn;
+        lista.append(b);
+      });
+      el.append(lista);
+      if (g.typ === 'rad') {
+        const i = g.alternativ.findIndex(a => a.varde === g.valt);
+        el.append(skapa('span', 'kat-scen-valnamn', g.alternativ[i].namn + ' · ' + (i + 1) + ' av ' + g.alternativ.length));
+      }
+      return el;
+    }));
+    rad.querySelector('.kat-scen-val-rad [aria-pressed="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'center' });
   }
   function kanTestas(kort) {
     const m = motor(); if (!m) return false;
@@ -281,7 +363,8 @@
 
   function ritaScen(scen, kort) {
     const vard = scen.querySelector('.kat-scen-vard');
-    const nyckel = kort.dataset.catalogKey;
+    const val = valFor(kort);
+    const nyckel = kort.dataset.catalogKey + (val ? '|' + JSON.stringify(val) : '');
     if (ritadNyckel === nyckel && vard.firstElementChild) return;
     stoppaTest();
     ritadNyckel = nyckel;
@@ -290,6 +373,7 @@
     const prov = skapa('div', 'kat-scen-kort');
     // Kortets egna data-fält följer med: några familjer läser fler fält än katalognyckeln.
     Object.keys(kort.dataset).forEach(k => { if (!/^(owg|kat|mk)/.test(k)) prov.dataset[k] = kort.dataset[k]; });
+    if (val) prov.__katScenVal = val;
     vard.append(prov);
     try { window.owgRenderCardThumb(prov); } catch (e) { console.error('[katalog-scen]', nyckel, e); }
     // Nyckeln bärs bara under anropet. Katalogkartan och proven räknar [data-catalog-key] som KORT,
@@ -405,6 +489,7 @@
       aktivtKort.scrollIntoView?.({ block: 'nearest', inline: 'center' });
     }
     ritaScen(delar.scen, aktivtKort);
+    ritaVal(delar.scen, aktivtKort);
     visaInfo(delar.scen, vald, aktivtKort);
   }
 
@@ -440,7 +525,8 @@
   window.VyraKatalogScen = {
     familjenamn, uppdatera,
     vy: v => { if (v === 'galleri' || v === 'lista') { vy = v; try { localStorage.setItem(NYCKEL, vy); } catch (_) {} uppdatera(); } return vy; },
-    designerI,
+    designerI, valgrupper,
+    val: nyckel => Object.assign({}, valda.get(nyckel)),
     vald: () => ({ familj: valdFamilj, kort: valtKort.get(valdFamilj) || null })
   };
 })();

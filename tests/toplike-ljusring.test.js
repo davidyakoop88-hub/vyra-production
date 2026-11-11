@@ -173,3 +173,25 @@ test('fabriken: vänster sida står vid vänsterkanten och höger sida slutar in
   assert.ok(hoger.x + hoger.width <= 432 - 20, 'höger sida slutar 20 px från högerkanten');
   for (const k of ['catalog:toplike:ljusring', 'catalog:toplike:ljusring:liggande', 'catalog:toplike:ljusring:staende']) assert.equal(skapa(k).x, 40, k);
 });
+
+// VAL PÅ GALLERIETS SCEN (David 2026-11-11): ramarna och modellerna beskrivs för katalog-scen.js.
+test('scenens val: 21 ramar eller 12 fyrkantiga modeller, och bara kända värden släpps igenom', () => {
+  const h = rigg();
+  const kalla = (h.window.VyraKatalogScenVal || []).find(k => k.id === 'neonramar');
+  assert.ok(kalla, 'Neonramar ska beskriva sina val för galleriets scen');
+  const w = h.window.VyraWidgets.create('catalog:toplike:ljusring:liggande');
+  assert.equal(kalla.passar(w), true);
+  assert.equal(kalla.passar(h.window.VyraWidgets.create('catalog:toplike:voltage')), false);
+  const rund = kalla.grupper(w);
+  // (JSON: listorna kommer ur jsdom-fönstret, och deepEqual jämför då även prototyperna.)
+  assert.equal(JSON.stringify(rund.map(g => [g.falt, g.typ, g.alternativ.length])), JSON.stringify([['tlnForm', 'vaxel', 2], ['tlnRam', 'rad', 21]]));
+  assert.match(rund[1].alternativ.find(a => a.varde === 'guld').bild, /ram-8-ring\.png$/);
+  assert.equal(rund[1].alternativ.find(a => a.varde === 'duo').bild, null, 'ramar ritade i kod har ingen bild, bara färg');
+  assert.equal(JSON.stringify(kalla.grupper({ ...w, tlnForm: 'fyrkant' }).map(g => [g.falt, g.alternativ.length])), JSON.stringify([['tlnForm', 2], ['tlnFyr', 12]]));
+
+  const t = h.window.VyraTopLikeLjusring.tillatnaVal;
+  assert.deepEqual({ ...t({ tlnRam: 'guld', tlnForm: 'fyrkant', tlnFyr: 'diamant' }) }, { tlnForm: 'fyrkant', tlnRam: 'guld', tlnFyr: 'diamant' });
+  assert.deepEqual({ ...t({ tlnRam: 'finns-inte', x: 9999, type: 'templateVideo', tlnForm: 'rund' }) }, { tlnForm: 'rund' }, 'okända fält och värden får aldrig nå widgeten');
+  assert.equal(t({ tlnRam: 'finns-inte' }), undefined);
+  assert.equal(t(undefined), undefined);
+});
