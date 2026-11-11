@@ -313,6 +313,14 @@ html.overlay-output .resize-handle,html.overlay-output .vyra-handle{display:none
 .overlay-widget-list article button{padding:6px 9px;border:1px solid #70408a;border-radius:6px;background:#281134;color:#f4dfff;font-size:9px;font-weight:700;cursor:pointer}
 .overlay-widget-list article button:hover{background:#3b174d;border-color:#a85bd0}
 .overlay-widget-list p{color:#9d87ac;font-size:10px;padding:10px 0}
+/* TOM RUTA PÅ EN RAD (David 2026-11-11: "gör rutan Vad som visas nu mindre när den är tom"). Det
+   vanliga tomma tillståndet är en stor ruta med 48 px luft — rätt när den ÄR vyn, men här ligger den
+   ovanför katalogen: uppmätt vid 1440 x 900 var rutan 216 px hög och sköt galleriet till 465 px, under
+   mitten av skärmen. Samma ikon, rubrik och text, lagda på en rad. */
+.overlay-widget-list .empty-state[data-tom="overlay-tom"]{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;text-align:left;gap:4px 10px;padding:10px 14px;border-radius:8px}
+.overlay-widget-list .empty-state[data-tom="overlay-tom"] svg{width:18px;height:18px;flex:none;filter:none}
+.overlay-widget-list .empty-state[data-tom="overlay-tom"] h3{font-size:12px}
+.overlay-widget-list .empty-state[data-tom="overlay-tom"] p{padding:0;font-size:11px;max-width:none}
 .overlay-live-preview{margin-top:22px;background:#110a18;border:1px solid var(--line,#2b2438);border-radius:12px;padding:18px}
 .overlay-live-preview h4{margin:0 0 14px;font-size:11px;letter-spacing:.4px;color:#b490ff}
 .overlay-live-preview-stage{position:relative;min-height:180px;padding:30px;background:#050308;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:auto}
