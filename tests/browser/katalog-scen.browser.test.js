@@ -87,7 +87,7 @@ test('en riktig gest väljer kortet; kodklick och scenens knapp lägger till', {
     await page.evaluate(() => window.VyraKatalogScen.vy('galleri'));
     const fore = await lage(page);
     // Riktig gest på andra kortet i remsan: väljs, läggs inte till.
-    const andra = page.locator('.widget-catalog > .kat-scen-vald button[data-catalog-key]').nth(1);
+    const andra = page.locator('.widget-catalog > .kat-scen-vald button[data-catalog-key]:visible').nth(1);
     const nyckel = await andra.getAttribute('data-catalog-key');
     await andra.click();
     await page.waitForTimeout(400);
@@ -111,9 +111,17 @@ test('en riktig gest väljer kortet; kodklick och scenens knapp lägger till', {
     assert.equal(efterKnapp.scenRitad, true, 'scenen ska ritas om efter render()');
 
     // Ett kodklick på ett kort gör som förut — andra skript och prov förlitar sig på det.
-    await page.evaluate(() => document.querySelector('.widget-catalog > .kat-scen-vald button[data-catalog-key]').click());
-    await page.waitForTimeout(600);
-    assert.equal((await lage(page)).widgets, fore.widgets + 2, 'kort.click() från kod ska lägga till widgeten');
+    // (En ny Top Like ersätter den som redan ligger i layouten, så antalet säger inget: provet läser
+    // vilken widget som blev vald.)
+    const klickad = await page.evaluate(() => {
+      const kort = document.querySelector('.widget-catalog > .kat-scen-vald button[data-catalog-key]');
+      selected = null; kort.click();
+      return kort.dataset.catalogKey;
+    });
+    await page.waitForFunction(() => !!selected, null, { timeout: 5000 });
+    const lagd = await page.evaluate(() => { const w = liveWidget(selected); return w ? w.type + ':' + (w.skin || w.likeTheme || '') : null; });
+    assert.equal(klickad, 'catalog:toplike:voltage');
+    assert.equal(lagd, 'templateTopLike:voltage', 'kort.click() från kod ska lägga till widgeten');
   } finally { await page.close(); }
 });
 
@@ -189,5 +197,55 @@ test('▶ Testa widget spelar designen på scenen utan att röra layouten', { sk
     }));
     assert.deepEqual(efter, { aktiv: false, kvar: 0, testar: false, knapp: '▶ Testa widget', brott: 0 });
     assert.equal(await bild(), fore, 'testet ändrade layouten eller lagringen');
+  } finally { await page.close(); }
+});
+
+test('Top Like, Top Coins och Top Points är en design med en växel', { skip, timeout: 120000 }, async () => {
+  const page = await oppna();
+  try {
+    await page.evaluate(() => window.VyraKatalogScen.vy('galleri'));
+    await page.evaluate(() => {
+      [...document.querySelectorAll('.kat-familjer [data-kat-familj]')].find(b => /^RANKING/.test(b.dataset.katFamilj)).click();
+      return new Promise(k => setTimeout(k, 400));
+    });
+    const las = () => page.evaluate(() => {
+      const sek = document.querySelector('.overlay-widget-gallery .widget-catalog > .kat-scen-vald');
+      const alla = [...sek.querySelectorAll('button[data-catalog-key]')], syn = alla.filter(b => b.getClientRects().length);
+      return {
+        alla: alla.length, synliga: syn.map(b => b.dataset.catalogKey),
+        vaxel: [...document.querySelectorAll('.kat-scen-varianter:not([hidden]) button')].map(b => b.textContent + (b.getAttribute('aria-pressed') === 'true' ? '*' : '')),
+        namn: document.querySelector('.kat-scen-namn b').textContent, vald: window.VyraKatalogScen.vald().kort,
+        raknare: document.querySelector('.kat-scen-raknare').textContent, typer: state.widgets.map(w => w.type)
+      };
+    });
+    const start = await las();
+    assert.ok(start.alla >= 15, `rankingsektionen byggdes inte (${start.alla} kort)`);
+    assert.ok(start.synliga.length < start.alla, 'varianterna ska vara ihopslagna i remsan');
+    assert.deepEqual(start.vaxel, ['Top Like*', 'Top Coins', 'Top Points']);
+    assert.equal(start.namn, 'Voltage', 'en design med varianter heter som designen');
+    assert.ok(start.synliga.every(k => !/templateTop(Coins|Points)/.test(k)), 'från start visar remsan Top Like-varianten');
+    assert.match(start.raknare, new RegExp('av ' + start.synliga.length + '$'), 'räknaren räknar designer, inte kort');
+    // Neonramarnas lägen har olika undertext och är egna designer, inte varianter.
+    assert.equal(start.synliga.filter(k => /^catalog:toplike:ljusring/.test(k)).length, 5);
+
+    await page.locator('.kat-scen-varianter button', { hasText: 'Top Coins' }).click();
+    await page.waitForFunction(() => window.VyraKatalogScen.vald().kort === 'catalog:ranking:templateTopCoins:voltage', null, { timeout: 5000 });
+    const coins = await las();
+    assert.deepEqual(coins.vaxel, ['Top Like', 'Top Coins*', 'Top Points']);
+    assert.equal(coins.synliga.length, start.synliga.length, 'växeln byter variant, inte antal designer');
+    assert.equal(coins.alla, start.alla, 'inga kort försvinner ur katalogen');
+
+    // Varianten följer med när man bläddrar, och det är den som läggs till.
+    await page.click('.kat-scen-fram');
+    await page.waitForFunction(() => /templateTopCoins/.test(window.VyraKatalogScen.vald().kort) && !/voltage/.test(window.VyraKatalogScen.vald().kort), null, { timeout: 5000 });
+    await page.evaluate(() => { selected = null; });
+    await page.click('.kat-scen [data-kat-gor="lagg"]');
+    await page.waitForFunction(() => !!selected, null, { timeout: 5000 });
+    assert.equal(await page.evaluate(() => liveWidget(selected)?.type), 'templateTopCoins');
+
+    // I Lista syns alla kort som förut.
+    await page.evaluate(() => window.VyraKatalogScen.vy('lista'));
+    const synligaILista = await page.evaluate(() => [...document.querySelectorAll('.rk6-katalog button[data-catalog-key]')].filter(b => b.getClientRects().length).length);
+    assert.equal(synligaILista, start.alla, 'Lista ska visa varje variant som ett eget kort');
   } finally { await page.close(); }
 });

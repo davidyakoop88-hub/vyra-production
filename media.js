@@ -1972,8 +1972,8 @@ Promise.resolve().then(()=>{
 // Galleriet i Overlay-vyn - familjelista, scen och remsa i stallet for en lang lista (katalog-scen.js, David 2026-11-11).
 // Laddas EFTER katalog-ordning.js: galleriet laser dess grupper och flikar.
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-katalog-scen]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-scen.css?v=20261111-1';css.dataset.katalogScen='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='katalog-scen.js?v=20261111-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-scen.js');document.body.append(s);
+  if(!document.querySelector('link[data-katalog-scen]')){let css=document.createElement('link');css.rel='stylesheet';css.href='katalog-scen.css?v=20261111-2';css.dataset.katalogScen='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='katalog-scen.js?v=20261111-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-scen.js');document.body.append(s);
 });
 
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).

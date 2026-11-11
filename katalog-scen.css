@@ -46,6 +46,12 @@
 .kat-scen-prov-inre{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%)}
 .kat-scen-prov-inre>*{position:relative!important;left:auto!important;top:auto!important}
 .kat-scen-testa[aria-pressed="true"]{border-color:#ff4da6;color:#fff}
+/* Växeln: en design, flera varianter (Top Like / Top Coins / Top Points). */
+.kat-scen-varianter{position:absolute;left:12px;top:12px;display:flex;background:rgba(19,11,28,.9);border:1px solid #3a2a4f;border-radius:999px;padding:3px;z-index:2}
+.kat-scen-varianter[hidden]{display:none}
+.kat-scen-varianter button{appearance:none;border:0;background:transparent;color:#b8aac8;border-radius:999px;padding:5px 12px;font:600 11px/1.2 inherit;cursor:pointer}
+.kat-scen-varianter button[aria-pressed="true"]{background:#8b3dff;color:#fff}
+.overlay-widget-gallery.kat-scen-pa .widget-catalog button.kat-scen-variant{display:none!important}
 .kat-scen-raknare{position:absolute;right:12px;top:12px;font-size:10px;color:#d8ccea;background:rgba(19,11,28,.85);border:1px solid #3a2a4f;border-radius:999px;padding:4px 10px;font-variant-numeric:tabular-nums}
 .kat-scen-pil{position:absolute;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;border:1px solid #3a2a4f;background:rgba(19,11,28,.85);color:#fff;font-size:18px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0}
 .kat-scen-pil:hover{border-color:#b13cff}

@@ -65,12 +65,42 @@
   };
   const kortI = el => [...el.querySelectorAll('button[data-catalog-key]')].filter(b => !b.closest('.owg-thumb') && !b.hidden);
 
+  // EN DESIGN, FLERA VARIANTER (David 2026-11-11: "slå ihop Top Like, Top Coins och Top Points till en
+  // växel"). I rankingsektionen ligger varje design i en egen grupp (.rk6-grupp) med ett kort per
+  // variant: samma undertext ("Voltage"), olika namn ("Top Like", "Top Coins", "Top Points"). I galleriet
+  // är de EN design: remsan visar ett kort, och växeln på scenen byter variant. Korten ligger kvar i
+  // katalogen med sina nycklar; i Lista syns alla som förut.
+  //
+  // Kort i samma grupp med OLIKA undertext är egna designer, inte varianter — Neonramarnas fem lägen
+  // ("Neonramar · Pall", "Neonramar · Liggande" …) har var sitt kort även här.
+  const kortNamn = k => (k.querySelector(':scope > span:not(.btn) b, :scope > b')?.textContent || '').trim();
+  const kortUnder = k => (k.querySelector(':scope > span:not(.btn) small')?.textContent || '').trim();
+  function designerI(kort) {
+    const ut = [], perGrupp = new Map();
+    kort.forEach(k => {
+      const grupp = k.closest('.rk6-grupp'), under = grupp ? kortUnder(k) : '';
+      if (!grupp || !under) { ut.push([k]); return; }
+      let iGrupp = perGrupp.get(grupp);
+      if (!iGrupp) perGrupp.set(grupp, iGrupp = new Map());
+      let d = iGrupp.get(under);
+      if (!d || d.some(x => kortNamn(x) === kortNamn(k))) { d = []; iGrupp.set(under, d); ut.push(d); }
+      d.push(k);
+    });
+    return ut;
+  }
+  // Varianten man senast valde följer med när man bläddrar: står växeln på Top Coins visas Top Coins
+  // i nästa design också, om den har den varianten.
+  let onskadVariant = null;
+  const variantI = d => d.find(k => kortNamn(k) === onskadVariant) || d[0];
+  const designFor = (f, kort) => f.designer.find(d => d.includes(kort)) || [kort];
+
   // Familjerna = katalogens toppbarn som har kort och inte är bortvalda av flikarna.
   function familjer(cat) {
     return [...cat.children]
       .filter(el => !el.classList.contains('kat-utanfor') && !el.classList.contains('kat-tom') && !el.hidden)
       .map(el => ({ el, rubrik: rubrikFor(el), kort: kortI(el), grupp: el.dataset.katGrupp || '', ordning: Number(el.style.order) || 0 }))
       .filter(f => f.rubrik && f.kort.length)
+      .map(f => Object.assign(f, { designer: designerI(f.kort) }))
       .sort((a, b) => a.ordning - b.ordning);
   }
 
@@ -104,6 +134,7 @@
           '<div class="kat-scen-bakgrund" aria-hidden="true"><i></i></div>' +
           '<div class="kat-scen-vard"></div>' +
           '<div class="kat-scen-prov"><div class="kat-scen-prov-inre"></div></div>' +
+          '<div class="kat-scen-varianter" role="group" aria-label="Variant" hidden></div>' +
           '<span class="kat-scen-raknare"></span>' +
           '<button type="button" class="kat-scen-pil kat-scen-bak" aria-label="Föregående design">‹</button>' +
           '<button type="button" class="kat-scen-pil kat-scen-fram" aria-label="Nästa design">›</button>' +
@@ -122,6 +153,12 @@
       scen.addEventListener('click', e => {
         if (e.target.closest('.kat-scen-bak')) return stega(-1);
         if (e.target.closest('.kat-scen-fram')) return stega(1);
+        const v = e.target.closest('[data-kat-variant]');
+        if (v) {
+          const kort = [...cat.querySelectorAll('button[data-catalog-key]')].find(k => k.dataset.catalogKey === v.dataset.katVariant);
+          if (kort) { onskadVariant = kortNamn(kort); valj(kort); }
+          return;
+        }
         const b = e.target.closest('[data-kat-gor]'); if (b) gor(b.dataset.katGor);
       });
       const flikar = g.querySelector(':scope > .kat-flikar');
@@ -161,7 +198,7 @@
   }
   function valtI(f) {
     const nyckel = valtKort.get(f.rubrik);
-    return f.kort.find(k => k.dataset.catalogKey === nyckel) || f.kort[0];
+    return f.kort.find(k => k.dataset.catalogKey === nyckel) || variantI(f.designer[0]);
   }
 
   function valj(kort) {
@@ -175,8 +212,8 @@
   function stega(steg, fokusera) {
     const g = galleri(), cat = katalog(g); if (!cat) return;
     const f = valdFam(cat); if (!f) return;
-    const i = f.kort.indexOf(valtI(f)), n = f.kort.length;
-    const nasta = f.kort[(i + steg + n) % n];
+    const nu = valtI(f), d = f.designer, i = d.findIndex(x => x.includes(nu)), n = d.length;
+    const nasta = variantI(d[(i + steg + n) % n]);
     valj(nasta);
     if (fokusera) nasta.focus({ preventScroll: true });
   }
@@ -267,10 +304,28 @@
   function visaInfo(scen, f, kort) {
     const b = kort.querySelector(':scope > span:not(.btn) b, :scope > b');
     const s = kort.querySelector(':scope > span:not(.btn) small');
-    scen.querySelector('.kat-scen-namn b').textContent = (b?.textContent || '').trim() || familjenamn(f.rubrik);
-    scen.querySelector('.kat-scen-namn small').textContent = [familjenamn(f.rubrik), (s?.textContent || '').trim()].filter(Boolean).join(' · ');
-    scen.querySelector('.kat-scen-raknare').textContent = 'Design ' + (f.kort.indexOf(kort) + 1) + ' av ' + f.kort.length;
-    const flera = f.kort.length > 1;
+    const design = designFor(f, kort), varianter = design.length > 1;
+    const namn = (b?.textContent || '').trim(), under = (s?.textContent || '').trim();
+    // En design med varianter heter som designen ("Voltage"); varianten står i växeln och i raden under.
+    scen.querySelector('.kat-scen-namn b').textContent = (varianter ? under : namn) || namn || familjenamn(f.rubrik);
+    scen.querySelector('.kat-scen-namn small').textContent = [familjenamn(f.rubrik), varianter ? namn : under].filter(Boolean).join(' · ');
+    scen.querySelector('.kat-scen-raknare').textContent = 'Design ' + (f.designer.indexOf(design) + 1) + ' av ' + f.designer.length;
+    const vaxel = scen.querySelector('.kat-scen-varianter');
+    const signatur = varianter ? design.map(k => k.dataset.catalogKey).join('|') : '';
+    if (vaxel.dataset.signatur !== signatur) {
+      vaxel.dataset.signatur = signatur;
+      vaxel.replaceChildren(...(varianter ? design.map(k => {
+        const v = skapa('button', '', kortNamn(k));
+        v.type = 'button'; v.dataset.katVariant = k.dataset.catalogKey;
+        return v;
+      }) : []));
+    }
+    vaxel.hidden = !varianter;
+    vaxel.querySelectorAll('[data-kat-variant]').forEach(v => {
+      const pa = v.dataset.katVariant === kort.dataset.catalogKey;
+      if (v.getAttribute('aria-pressed') !== String(pa)) v.setAttribute('aria-pressed', String(pa));
+    });
+    const flera = f.designer.length > 1;
     scen.querySelectorAll('.kat-scen-pil').forEach(p => { p.hidden = !flera; });
     const nyckel = kort.dataset.catalogKey, testknapp = scen.querySelector('[data-kat-gor="testa"]');
     if (testknapp.dataset.katNyckel !== nyckel) { testknapp.dataset.katNyckel = nyckel; testknapp.hidden = !kanTestas(kort); }
@@ -284,7 +339,7 @@
 
   function ritaFamiljer(fam, alla, vald) {
     const grupper = (window.VyraKatalogOrdning?.GRUPPER || []);
-    const signatur = alla.map(f => f.grupp + '|' + f.rubrik + '|' + f.kort.length).join('\n');
+    const signatur = alla.map(f => f.grupp + '|' + f.rubrik + '|' + f.designer.length).join('\n');
     if (fam.dataset.signatur !== signatur) {
       fam.dataset.signatur = signatur;
       fam.replaceChildren();
@@ -298,7 +353,7 @@
         const b = skapa('button', '', familjenamn(f.rubrik));
         b.type = 'button';
         b.dataset.katFamilj = f.rubrik;
-        b.append(skapa('i', '', String(f.kort.length)));
+        b.append(skapa('i', '', String(f.designer.length)));
         b.addEventListener('click', () => { valdFamilj = f.rubrik; uppdatera(); });
         fam.append(b);
       });
@@ -337,6 +392,11 @@
     });
     const aktivtKort = vald ? valtI(vald) : null;
     cat.querySelectorAll('.kat-scen-aktiv').forEach(k => { if (k !== aktivtKort) k.classList.remove('kat-scen-aktiv'); });
+    // Remsan visar ETT kort per design: den valda varianten, eller den man senast valde i växeln.
+    const dolda = new Set();
+    if (vald) vald.designer.forEach(d => { if (d.length > 1) { const syns = d.includes(aktivtKort) ? aktivtKort : variantI(d); d.forEach(k => { if (k !== syns) dolda.add(k); }); } });
+    cat.querySelectorAll('.kat-scen-variant').forEach(k => { if (!dolda.has(k)) k.classList.remove('kat-scen-variant'); });
+    dolda.forEach(k => klass(k, 'kat-scen-variant', true));
     if (!pa) { stoppaTest(); ritadNyckel = null; delar.scen.querySelector('.kat-scen-vard').replaceChildren(); return; }
     valdFamilj = vald.rubrik;
     ritaFamiljer(delar.fam, alla, vald);
@@ -380,6 +440,7 @@
   window.VyraKatalogScen = {
     familjenamn, uppdatera,
     vy: v => { if (v === 'galleri' || v === 'lista') { vy = v; try { localStorage.setItem(NYCKEL, vy); } catch (_) {} uppdatera(); } return vy; },
+    designerI,
     vald: () => ({ familj: valdFamilj, kort: valtKort.get(valdFamilj) || null })
   };
 })();
