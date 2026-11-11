@@ -161,3 +161,14 @@ test('katalogen: ett kort per läge, och miniatyren centreras i sin ruta', () =>
   const forhands = fs.readFileSync(path.join(ROT, 'overlay-preview.js'), 'utf8');
   assert.match(forhands, /preview\.skin === 'ljusring'\) \{[\s\S]{0,400}position', 'relative', 'important'/);
 });
+
+// Sidolägena läggs vid sin kant (från PR #764): höger sida ska inte börja till vänster och dras på plats.
+test('fabriken: vänster sida står vid vänsterkanten och höger sida slutar innanför högerkanten', () => {
+  const h = rigg();
+  const skapa = k => h.window.VyraWidgets.create(k);
+  assert.equal(skapa('catalog:toplike:ljusring:vanster').x, 20);
+  const hoger = skapa('catalog:toplike:ljusring:hoger');
+  assert.equal(hoger.x, 164);
+  assert.ok(hoger.x + 248 <= 432 - 20, 'sidorna är 248 px breda på en 432 px bred duk');
+  for (const k of ['catalog:toplike:ljusring', 'catalog:toplike:ljusring:liggande', 'catalog:toplike:ljusring:staende']) assert.equal(skapa(k).x, 40, k);
+});

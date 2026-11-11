@@ -23,6 +23,9 @@
   // Neonramarnas lägen (toplike-ljusring-panel.js LAGEN). Står här också, eftersom fabriken ska kunna
   // avvisa en okänd nyckel utan att panelfilen är laddad; tests/toplike-ljusring.test.js håller dem lika.
   const NEONRAM_LAGEN = new Set(['pall', 'liggande', 'staende', 'vanster', 'hoger']);
+  // Var sidolägena läggs på den 432 px breda duken. Sidorna är 248 px breda: vänster sida 20 px från
+  // vänsterkanten, höger sida 20 px från högerkanten (164 + 248 = 412). Övriga lägen behåller x 40.
+  const NEONRAM_X = Object.freeze({ vanster: 20, hoger: 164 });
   const LIKE_SKINN = new Set(['clean-bar', 'soft-stack', 'mini-podium', 'side-rank', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall', 'ljusring']);
   // PENSIONERADE RANKINGDESIGNER (2026-09-24, Davids beslut). Fabriken skapar ALDRIG en ny widget
   // med någon av dem: en gammal nyckel (catalog:toplike:clean-bar, catalog:ranking:templateTopPoints:
@@ -505,6 +508,7 @@
       // NEONRAMAR (toplike-ljusring.js): det David valde på lekplatsen 2026-11-10. Rubriken syns, topp 3 på pall.
       if (v.theme === 'ljusring') Object.assign(w, { showTitle: true, templateTitle: 'TOP LIKE', likeCount: 3, profileFrame: 'none', x: 40, width: 350,
         tlnLage: NEONRAM_LAGEN.has(v.lage) ? v.lage : 'pall', tlnRam: 'bla', tlnForm: 'rund', tlnLevande: 'ljus', tlnGlans: 'glans', tlnNamnstil: 'skugga' });
+      if (v.theme === 'ljusring' && NEONRAM_X[v.lage] !== undefined) w.x = NEONRAM_X[v.lage];
       return w;
     },
     'ranking.theme': v => {
