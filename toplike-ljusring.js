@@ -227,8 +227,17 @@
   }
 
   // ---------- katalogen ----------
-  // Ett eget kort i rankinggruppen (ranking-sixpack.js bygger sektionen). Skapas via approved-rankings.js
-  // createLike, som alla Top Like-designer.
+  // En egen grupp i rankinggruppen (ranking-sixpack.js bygger sektionen), med ETT KORT PER LÄGE (David
+  // 2026-11-11: "olika modeller ska visa vänster sidan o höger, alla de på samma flik"). Pall behåller den
+  // ursprungliga nyckeln catalog:toplike:ljusring; de andra lägena är catalog:toplike:ljusring:<läge>
+  // (widget-factory.js). Som approved-rankings.js createLike ersätter den nya widgeten en tidigare Top Like.
+  const KORT = Object.freeze([['', 'pall'], [':liggande', 'liggande'], [':staende', 'staende'], [':vanster', 'vanster'], [':hoger', 'hoger']]);
+  function skapa(nyckel, lage) {
+    const w = VyraWidgets.create(nyckel);
+    state.widgets = state.widgets.filter(item => VyraWidgets.isStandalone(item) || item.spelTema || item.type !== 'templateTopLike');
+    state.widgets.push(w); selected = w.id; save(); render();
+    if (typeof toast === 'function') toast('Neonramar · ' + LAGEN[lage] + ' skapad');
+  }
   function katalog() {
     const sec = document.querySelector('.widget-catalog section[data-rk6-katalog]');
     // ranking-sixpack.js bygger sektionen i SIN bind, som ligger utanför vår och körs efter den: finns den inte
@@ -237,10 +246,11 @@
     if (sec.querySelector('[data-rk6-grupp="' + SKIN + '"]')) return;
     const g = document.createElement('div');
     g.className = 'rk6-grupp'; g.dataset.rk6Grupp = SKIN;
-    g.innerHTML = '<h5>Neonramar</h5><button type="button" data-tln-skapa="1" data-catalog-key="catalog:toplike:' + SKIN + '">'
-      + '<i class="rk6-kort-ikon">❤</i><span><b>Top Like</b><small>Neonramar · 21 ramar, 5 lägen</small></span></button>';
+    g.innerHTML = '<h5>Neonramar</h5>' + KORT.map(([del, lage]) =>
+      `<button type="button" data-tln-skapa="${lage}" data-catalog-key="catalog:toplike:${SKIN}${del}">`
+      + `<i class="rk6-kort-ikon">❤</i><span><b>Top Like</b><small>Neonramar · ${LAGEN[lage]}</small></span></button>`).join('');
     sec.append(g);
-    g.querySelector('[data-tln-skapa]').onclick = () => window.VyraApprovedRankings?.createLike?.(SKIN);
+    g.querySelectorAll('[data-tln-skapa]').forEach(b => { b.onclick = () => skapa(b.dataset.catalogKey, b.dataset.tlnSkapa); });
   }
   function installBind() {
     if (typeof bind !== 'function' || bind.__tlnKatalog) return;

@@ -114,6 +114,39 @@ test('fabriken: catalog:toplike:ljusring ger Neonramar med rubrik och topp 3 på
   assert.equal(w.tlnLage, 'pall');
 });
 
+// David 2026-11-11: "olika modeller ska visa vänster sidan o höger, alla de på samma flik" — ett kort per läge.
+test('fabriken: catalog:toplike:ljusring:<läge> ger samma design i det läget, höger sida vid högerkanten', () => {
+  const h = rigg(), T = h.window.VyraTopLikeLjusringTabeller;
+  for (const lage of Object.keys(T.LAGEN)) {
+    const w = h.window.VyraWidgets.create('catalog:toplike:ljusring:' + lage);
+    assert.equal(w.skin, 'ljusring', lage);
+    assert.equal(w.tlnLage, lage);
+    assert.equal(w.showTitle, true, lage);
+  }
+  // Sidorna är 248 px breda på 432-duken: höger sida ska sluta innanför kanten, vänster börja vid den.
+  assert.ok(h.window.VyraWidgets.create('catalog:toplike:ljusring:hoger').x + 248 <= 432);
+  assert.equal(h.window.VyraWidgets.create('catalog:toplike:ljusring:vanster').x, 20);
+  assert.throws(() => h.window.VyraWidgets.create('catalog:toplike:ljusring:diagonal'), /lägen finns bara för ljusring/);
+  assert.throws(() => h.window.VyraWidgets.create('catalog:toplike:voltage:vanster'), /lägen finns bara för ljusring/);
+});
+
+test('katalogen: Neonramar har ett kort per läge i samma grupp, pall på den gamla nyckeln', () => {
+  const h = rigg(), T = h.window.VyraTopLikeLjusringTabeller;
+  const sec = h.document.createElement('section');
+  sec.dataset.rk6Katalog = '1';
+  const cat = h.document.createElement('div');
+  cat.className = 'widget-catalog'; cat.append(sec); h.document.body.append(cat);
+  h.window.eval("view = 'editor'"); h.window.bind();
+  const knappar = [...sec.querySelectorAll('[data-rk6-grupp="ljusring"] [data-tln-skapa]')];
+  assert.deepEqual(knappar.map(b => b.dataset.tlnSkapa), Object.keys(T.LAGEN));
+  assert.equal(knappar[0].dataset.catalogKey, 'catalog:toplike:ljusring', 'pall behåller sin nyckel (och sin referensbild)');
+  for (const b of knappar) {
+    assert.doesNotThrow(() => h.window.VyraWidgets.create(b.dataset.catalogKey), b.dataset.catalogKey);
+    assert.ok(b.textContent.includes(T.LAGEN[b.dataset.tlnSkapa]), b.textContent);
+  }
+  cat.remove();
+});
+
 test('studio.html laddar Neonramar efter ranking-sixpack.js', () => {
   const html = fs.readFileSync(path.join(ROT, 'studio.html'), 'utf8');
   const a = html.indexOf('ranking-sixpack.js?v='), b = html.indexOf('toplike-ljusring.js?v=');

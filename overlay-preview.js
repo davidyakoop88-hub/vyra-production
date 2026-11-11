@@ -458,6 +458,17 @@ function owgRenderCardThumb(btn) {
     if (fx) window.VyraHeartFireworksFx.renderPreview(fx, preview);
   }
 
+  // Top Like · Neonramar (toplike-ljusring.js): samma skuggproblem. Utan centreringen stod widgeten kvar på sitt
+  // layoutläge (x 40, y 100) inne i kortet, och tvåan till vänster och trean till höger kapades (David 2026-11-11).
+  if (preview?.type === 'templateTopLike' && preview.skin === 'ljusring') {
+    const inner = owgThumbRot(thumb).querySelector('.owg-thumb-inner'), widget = inner && inner.firstElementChild;
+    if (widget) {
+      inner.style.position = 'absolute'; inner.style.left = '50%'; inner.style.top = '50%';
+      widget.style.setProperty('position', 'relative', 'important');
+      widget.style.setProperty('left', '0', 'important'); widget.style.setProperty('top', '0', 'important');
+    }
+  }
+
   // Goal-motion-malen (#525) har samma problem som fyrverkeriet: goal-motion.css satter
   // position:absolute!important pa roten, och dokumentets centreringsregel for .owg-thumb-inner
   // nar inte in i skuggan. Utan det har hamnade Orbit halvvags under kortet och Tower utanfor det.

@@ -30,6 +30,8 @@
   const TOPLIKE_PENSION = { 'clean-bar': 'voltage', 'soft-stack': 'voltage', 'side-rank': 'voltage', 'mini-podium': 'prism-horizontal' };
   const TOPPOINTS_PENSION = { clean: 'voltage', neon: 'voltage', center: 'prism-horizontal', podium: 'prism-horizontal' };
   const RAD_DESIGNER = new Set(['prism-horizontal', 'celestial', 'royal-rose']);
+  // Neonramars fem lägen (toplike-ljusring-panel.js LAGEN) med var widgeten läggs på 432-duken.
+  const NEONRAMAR_LAGE = Object.freeze({ pall: {}, liggande: {}, staende: { x: 40 }, vanster: { x: 20 }, hoger: { x: 164 } });
   const RAD_X = 20;
   const TOPCOINS_V2 = new Set(['halo', 'signal-orbit', 'voltage', 'basic-v2', 'prism-vertical', 'prism-horizontal', 'celestial', 'royal-rose', 'metall']);
 
@@ -502,6 +504,9 @@
       // NEONRAMAR (toplike-ljusring.js): det David valde på lekplatsen 2026-11-10. Rubriken syns, topp 3 på pall.
       if (v.theme === 'ljusring') Object.assign(w, { showTitle: true, templateTitle: 'TOP LIKE', likeCount: 3, profileFrame: 'none', x: 40, width: 350,
         tlnLage: 'pall', tlnRam: 'bla', tlnForm: 'rund', tlnLevande: 'ljus', tlnGlans: 'glans', tlnNamnstil: 'skugga' });
+      // ETT KATALOGKORT PER LÄGE (David 2026-11-11): catalog:toplike:ljusring:<läge>. Samma design, bara läget
+      // och var den hamnar på duken skiljer. Sidorna är 248 px breda, så höger sida läggs 20 px från högerkanten.
+      if (v.theme === 'ljusring' && v.lage) Object.assign(w, { tlnLage: v.lage }, NEONRAMAR_LAGE[v.lage]);
       return w;
     },
     'ranking.theme': v => {
@@ -758,6 +763,13 @@
     },
     'toplike': parts => {
       if (!parts[0]) throw new Error('catalog:toplike kräver ett tema');
+      // Bara Neonramar har lägen i nyckeln; ett okänt läge kastar hellre än ger tyst pall.
+      if (parts[1] !== undefined) {
+        if (parts[0] !== 'ljusring' || !NEONRAMAR_LAGE[parts[1]]) {
+          throw new Error(`catalog:toplike:${parts[0]}:${parts[1]} finns inte — lägen finns bara för ljusring: ${Object.keys(NEONRAMAR_LAGE).join(', ')}`);
+        }
+        return ['toplike.theme', { theme: parts[0], lage: parts[1] }];
+      }
       return ['toplike.theme', { theme: parts[0] }];
     },
     'ranking': parts => {
