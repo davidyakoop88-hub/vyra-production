@@ -660,3 +660,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny katalognyckel catalog:toplike:ljusring (Top Like Neonramar) behöver referensbild
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 160 (filter: toplike:ljusring) — catalog:toplike:ljusring
+
+## 2026-11-11 — 5 referenser skrivna
+
+- **Motiv:** Neonramar har ett katalogkort per läge: fyra nya nycklar catalog:toplike:ljusring:<läge> behöver referensbild
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 5 av 164 (filter: toplike:ljusring) — catalog:toplike:ljusring, catalog:toplike:ljusring:hoger, catalog:toplike:ljusring:liggande, catalog:toplike:ljusring:staende, catalog:toplike:ljusring:vanster
