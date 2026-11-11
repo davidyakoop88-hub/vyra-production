@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 240,
+ "antal": 244,
  "senaste": {
-  "motiv": "Ny katalognyckel catalog:toplike:ljusring (Top Like Neonramar) behöver referensbild",
-  "nycklar": 1,
+  "motiv": "Neonramar har ett katalogkort per läge: fyra nya nycklar catalog:toplike:ljusring:<läge> behöver referensbild",
+  "nycklar": 5,
   "filter": "toplike:ljusring",
-  "tid": "2026-11-10T23:47:39.761Z"
+  "tid": "2026-11-11T11:21:44.754Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -972,6 +972,22 @@
   },
   "catalog:toplike:ljusring": {
    "matt": "356x222",
+   "fyllnad": 100
+  },
+  "catalog:toplike:ljusring:hoger": {
+   "matt": "248x276",
+   "fyllnad": 100
+  },
+  "catalog:toplike:ljusring:liggande": {
+   "matt": "348x185",
+   "fyllnad": 100
+  },
+  "catalog:toplike:ljusring:staende": {
+   "matt": "155x422",
+   "fyllnad": 100
+  },
+  "catalog:toplike:ljusring:vanster": {
+   "matt": "248x276",
    "fyllnad": 100
   }
  }
