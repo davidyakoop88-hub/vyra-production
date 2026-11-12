@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `5ad76017`
+Commit: `823e452f`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **174** |
+| Kort totalt | **181** |
 | Sektioner | 32 |
-| Med katalognyckel | 174 / 174 |
-| Med shadow DOM-miniatyr | 142 / 174  ⚠️ |
-| Ritar sin design | 174 / 174 |
+| Med katalognyckel | 181 / 181 |
+| Med shadow DOM-miniatyr | 149 / 181  ⚠️ |
+| Ritar sin design | 181 / 181 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -53,7 +53,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | GIFT CAMPAIGN · EN GÅVA I FOKUS | 6 | 6/6 | 6/6 | 6/6 | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · 6 DESIGNER | 6 | 6/6 | 6/6 | 6/6 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
-| BATTLE MVP · FIRANDE · 2 KOREOGRAFIER | 2 | 2/2 | 2/2 | 2/2 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| BATTLE MVP · FIRANDE · 9 KOREOGRAFIER | 9 | 9/9 | 9/9 | 9/9 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Battle-paket · VIDEO FX · 3 paket | 3 | 3/3 | 0/3 ⚠️ | 3/3 | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
@@ -225,12 +225,19 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Aurora | `catalog:battlemvp:aurora` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Samurai | `catalog:battlemvp:samurai` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 
-### BATTLE MVP · FIRANDE · 2 KOREOGRAFIER
+### BATTLE MVP · FIRANDE · 9 KOREOGRAFIER
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
 | Guldkrona | `catalog:battlemvp:celebration:gold-ribbon` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Lion Clash | `catalog:battlemvp:celebration:lion-clash` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Royal | `catalog:battlemvp:celebration:ram-royal` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Inferno | `catalog:battlemvp:celebration:ram-inferno` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Ice | `catalog:battlemvp:celebration:ram-ice` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Cyber | `catalog:battlemvp:celebration:ram-cyber` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Storm | `catalog:battlemvp:celebration:ram-storm` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Aurora | `catalog:battlemvp:celebration:ram-aurora` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
+| Samurai | `catalog:battlemvp:celebration:ram-samurai` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 
 ### Battle-paket · VIDEO FX · 3 paket
 
