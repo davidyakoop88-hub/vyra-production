@@ -59,11 +59,12 @@ test.after(async () => {
   if (server) await new Promise(r => server.close(r));
 });
 
-async function layouten(bredd, hojd, { utanMobil = false } = {}) {
+async function layouten(bredd, hojd, { utanMobil = false, utanWebbtypsnitt = false } = {}) {
   const page = await browser.newPage({ viewport: { width: bredd, height: hojd } });
   const laddade = [];
   page.on('request', r => laddade.push(r.url()));
   if (utanMobil) await page.route(/vyra-mobil\.(js|css)/, r => r.abort());
+  if (utanWebbtypsnitt) await page.route(/^https?:\/\/fonts\.(googleapis|gstatic)\.com\//, r => r.abort());
   await page.goto(`${bas}/studio.html?open=layout`, { waitUntil: 'load' });
   await page.waitForFunction(() => !!document.querySelector('.editor-shell'), null, { timeout: 30000, polling: 100 });
   await page.waitForTimeout(2500);
@@ -216,10 +217,16 @@ function geometri() {
 
 for (const [bredd, hojd] of [[1440, 900], [800, 900], [768, 900]]) {
   test(`${bredd} x ${hojd}: geometrin ar densamma med och utan vyra-mobil.js`, { skip, timeout: 180000 }, async () => {
-    const utan = await layouten(bredd, hojd, { utanMobil: true });
+    // UTAN WEBBTYPSNITT I BADA LADDNINGARNA. studio.css hamtar Inter och Manrope fran Google med
+    // display=swap, och provet vantar en fast tid, inte pa typsnitten. Hinner de fram i den ena
+    // laddningen men inte i den andra far all text olika bredd, och jamforelsen faller pa nagot
+    // som inte ar vyra-mobil.js. CI 2026-11-12 (korning 43235693470): logotypen 80.97 bred med
+    // B-hojd 21 i den ena laddningen — uppmatt lokalt ar det 80.94 med typsnitten laddade och
+    // 85.53 med B-hojd 17 utan. Med natet sparrat ritar bada laddningarna reservtypsnittet.
+    const utan = await layouten(bredd, hojd, { utanMobil: true, utanWebbtypsnitt: true });
     let fore;
     try { fore = await utan.evaluate(geometri); } finally { await utan.close(); }
-    const med = await layouten(bredd, hojd);
+    const med = await layouten(bredd, hojd, { utanWebbtypsnitt: true });
     try {
       assert.ok(med.laddade.some(u => /vyra-mobil\.js/.test(u)), 'vyra-mobil.js laddades aldrig — jamforelsen hade varit tom');
       const efter = await med.evaluate(geometri);

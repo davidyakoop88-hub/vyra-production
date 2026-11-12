@@ -19,18 +19,15 @@ const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
-const { kravNycklar } = require('../helpers/katalognycklar.js');
+const { kravNycklar, LIKFORMIG_MED } = require('../helpers/katalognycklar.js');
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.svg': 'image/svg+xml',
   '.webp': 'image/webp', '.json': 'application/json', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4',
   '.webm': 'video/webm', '.gif': 'image/gif', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 const NYCKLAR = kravNycklar();
 const EGET = new Set(['templateCustomText', 'templateCustomImage', 'templateCustomVideo', 'video']);
 const SKALOR = [1, 0.75, 0.5, 0.3, 0.2, 1];
-// Designer där David med flit valt att texten INTE krymper likformigt, med panelvalet som stänger av det.
-// Provet mäter kompositionen med valet av, så att resten av designen fortfarande måste följa skalan.
-// Neonramar (2026-11-10): "Texten krymper mindre än ramarna", så att namnen går att läsa i liten storlek.
-// Ett kort per läge sedan 2026-11-11: samma val gäller alla fem.
-const LIKFORMIG_MED = Object.fromEntries(['', ':liggande', ':staende', ':vanster', ':hoger'].map(l => ['catalog:toplike:ljusring' + l, { tlnTextVaxer: false }]));
+// Designer där texten med flit inte krymper likformigt mäts med panelvalet av: LIKFORMIG_MED i
+// tests/helpers/katalognycklar.js, delad med storlek-matning.
 // Granskningens repro och de tre container-familjerna den inte nådde.
 const REPRO = ['catalog:toplike:metall', 'catalog:toplike:voltage', 'catalog:fanlevel:layout:hero'];
 

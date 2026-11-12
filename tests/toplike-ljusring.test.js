@@ -195,3 +195,20 @@ test('scenens val: 21 ramar eller 12 fyrkantiga modeller, och bara kända värde
   assert.equal(t({ tlnRam: 'finns-inte' }), undefined);
   assert.equal(t(undefined), undefined);
 });
+
+// "Texten krymper mindre än ramarna" (tlnTextVaxer, Davids val 2026-11-10). Storleksproven i
+// tests/browser mäter med valet AV (LIKFORMIG_MED i tests/helpers/katalognycklar.js) — det här provet
+// vaktar att valet PÅ faktiskt gör något, och att AV ger en likformig skalning.
+test('texten växer med 1/sqrt(skala) under 100 %, högst 1,8 gånger, och inte alls med valet av', () => {
+  const zoom = extra => Number(/--tl-zoom:([\d.]+)/.exec(nod(W(extra)).querySelector(':scope > .tl').getAttribute('style'))[1]);
+  assert.equal(zoom({}), 1, 'full storlek: ingen extra zoom');
+  assert.equal(zoom({ widgetScale: 1.5 }), 1, 'större än 100 %: texten följer ramarna');
+  assert.equal(zoom({ widgetScale: 0.5 }), 1.414, '50 %: 1/sqrt(0,5)');
+  assert.equal(zoom({ widgetScale: 0.2 }), 1.8, '20 %: taket 1,8');
+  assert.equal(zoom({ widgetScale: 0.5, tlnTextVaxer: false }), 1, 'valet av: likformigt');
+  assert.equal(zoom({ widgetScale: 0.5, tlnTextStorlek: 120 }), 1.697, 'textstorleken multipliceras in');
+  const { LIKFORMIG_MED } = require('./helpers/katalognycklar.js');
+  const lagen = Object.keys(LIKFORMIG_MED).sort();
+  const katalog = require('./helpers/katalognycklar.js').kravNycklar().filter(k => /^catalog:toplike:ljusring(:|$)/.test(k)).sort();
+  assert.deepEqual(lagen, katalog, 'varje Neonramar-nyckel i katalogen mäts med valet av i storleksproven');
+});
