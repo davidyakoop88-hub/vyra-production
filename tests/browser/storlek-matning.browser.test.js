@@ -25,7 +25,7 @@ const path = require('path'), http = require('http'), fs = require('fs');
 
 const ROOT = path.join(__dirname, '..', '..');
 const { startaWebblasare, hoppaOver } = require('../helpers/webblasare.js');
-const { kravNycklar, ALERTS } = require('../helpers/katalognycklar.js');
+const { kravNycklar, ALERTS, LIKFORMIG_MED } = require('../helpers/katalognycklar.js');
 
 const NYCKLAR = kravNycklar().filter((_, i) => i % 6 === 3);
 
@@ -101,13 +101,9 @@ const LIB = () => {
   window.__lagg = async (k, p, vald) => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create(k);
-    // Neonramar: David har med flit valt att texten INTE krymper likformigt ("Texten krymper mindre än
-    // ramarna", tlnTextVaxer, 2026-11-10). Med valet på gav 50 % X 0,707 = 0,5 x 1/sqrt(0,5), och varje
-    // handtag ändrade formen. Provet mäter med valet av, som tests/browser/design-vid-storlek gör
-    // (LIKFORMIG_MED), så att resten av designen fortfarande måste följa skalan. Felet syntes först
-    // 2026-11-12, när nya katalognycklar flyttade urvalet (index % 6 === 3) till ett Neonramar-läge.
-    if (/^catalog:toplike:ljusring(:|$)/.test(k)) w.tlnTextVaxer = false;
-    Object.assign(w, { x: 40, y: 40 }, p || {});
+    // Designer där texten med flit inte krymper likformigt mäts med panelvalet av (LIKFORMIG_MED i
+    // tests/helpers/katalognycklar.js). Valet följer med widgeten till sändningsfliken i steg 5.
+    Object.assign(w, { x: 40, y: 40 }, p || {}, (window.__likformigMed || {})[k] || {});
     if (w.type === 'templateLastX') w.lastXPersistent = true;
     state.widgets.push(w); selected = vald ? w.id : null; render();
     await vanta(450); window.__frys(); await ramar();
@@ -286,6 +282,7 @@ async function editorn() {
   await page.waitForFunction(() => !!document.querySelector('.editor-shell') && !!window.VyraWidgets, null, { timeout: 30000, polling: 100 });
   await page.waitForTimeout(2500);
   await page.evaluate(LIB);
+  await page.evaluate(m => { window.__likformigMed = m; }, LIKFORMIG_MED);
   return page;
 }
 
