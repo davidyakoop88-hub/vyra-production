@@ -17,7 +17,13 @@ const fwAntalOf=input=>{const d=input&&typeof input==='object'?input:{combo:inpu
 const fwComboOf=input=>Math.min(100,fwAntalOf(input));
 const FW_LEVELS={single:{name:'single',lead:0,points:[],gain:1},burst:{name:'burst',lead:.9,points:[[-90,-35,0],[90,-55,.45]],gain:1.15},show:{name:'show',lead:4.2,points:[[-110,-30,0],[110,-30,.65],[-85,-100,1.3],[85,-100,2],[-125,-50,2.65],[125,-50,3.3]],gain:1.35}};
 const fwLevelOf=combo=>FW_LEVELS[combo>=100?'show':combo>=10?'burst':'single'];
-const fwNovember=w=>w?.fwNovember===true&&w.fwTheme==='supernova';
+/* NOVEMBER-FYRVERKERIET ÄR EN EGEN DESIGN (katalognyckeln catalog:giftfireworks:november), inte en variant
+   av Supernova. Första versionen satte en flagga på varje NY Supernova och bytte därmed ut den: panelen
+   visade fortfarande färgschema, typsnitt och palett, men den inbäddade sidan läser inget av dem
+   (tests/browser/fargarv-sant föll, med rätta). Temat står inte i FW_THEMES — de sex där är duksteman. */
+const fwNovember=w=>w?.fwTheme==='november';
+const FW_NOV_STILAR=[['classic','Klassisk'],['prism','Prisma'],['comet','Kometregn']];
+const fwNovStilOf=w=>FW_NOV_STILAR.some(([k])=>k===w?.fwNovStil)?w.fwNovStil:'classic';
 /* NOVEMBER-FYRVERKERIETS TIDER. Den inbaddade sidan (assets/gift-fireworks-november/app.js) har sin
    egen tidslinje, och den har rakningen maste folja den — andras talen dar ska de andras har:
      raket k skjuts vid k x 0,085 s (SPACING), flyger 1,57 s (ROCKET_TIME), och den stora gavan lever
@@ -58,7 +64,7 @@ function fwSequence(w,combo,tempo=1){const t=Math.min(2,Math.max(1,Number(tempo)
 const FW_THEMES=VyraWidgets.variants('giftfireworks.theme');
 // Entré per fyrverkeri (stilpanelens Entré / utgång); keyframes i gift-fireworks.css.
 const FW_ENTREER={zoom:'fw-en-zoom {t}s cubic-bezier(.2,1.4,.4,1) both',drop:'fw-en-drop {t}s cubic-bezier(.2,1.2,.4,1) both',bounce:'fw-en-bounce {t}s ease-out both',rise:'fw-en-rise {t}s ease-out both',glass:'fw-en-glass {t}s ease-out both',neon:'fw-en-neon {t}s steps(6) both'};
-const fwThemeOf=w=>Object.hasOwn(FW_THEMES,w.fwTheme)?w.fwTheme:({spiral:'comet',bloom:'ice'}[w.fwMotion]||'royal');
+const fwThemeOf=w=>fwNovember(w)?'november':Object.hasOwn(FW_THEMES,w.fwTheme)?w.fwTheme:({spiral:'comet',bloom:'ice'}[w.fwMotion]||'royal');
 const fwPending=[];
 function fwActive(e){return [...e.querySelectorAll(':scope > .fw-event')].filter(n=>Number(n.dataset.expires)>Date.now())}
 /* Fyrverkerier som ännu inte nått sin topp. Det är DE som tar en fil; ett fyrverkeri som passerat
@@ -100,7 +106,7 @@ const oldBind=bind;bind=function(){oldBind();if(view!=='editor'&&view!=='overlay
    (Gift Fireworks -> Heart -> Gift Bubbles) blir stabil oavsett laddningsordning. Rubriken raknar
    de faktiska knapparna. Helpern delas via window sa definitionen ar densamma i alla tre filerna. */
 const vyraBurstKatalog=window.vyraBurstKatalog||(window.vyraBurstKatalog=function(cat,grupp,sort,bygg){if(!cat)return null;let sec=cat.querySelector('[data-burst]');if(!sec){sec=document.createElement('section');sec.dataset.burst='1';sec.innerHTML='<h4></h4>';cat.prepend(sec)}if(!sec.querySelector('[data-burst-grupp="'+grupp+'"]'))(bygg()||[]).forEach(b=>{if(!b)return;b.dataset.burstGrupp=grupp;b.dataset.burstSort=String(sort);sec.append(b)});const knappar=[...sec.querySelectorAll(':scope > button')];knappar.map((b,i)=>[b,i]).sort((a,b)=>(+a[0].dataset.burstSort- +b[0].dataset.burstSort)||(a[1]-b[1])).forEach(x=>sec.append(x[0]));const h=sec.querySelector('h4');if(h)h.textContent='FIREWORKS & BUBBLES · '+knappar.length+' DESIGNER';return sec});
-let cat=document.querySelector('.widget-catalog');if(cat)vyraBurstKatalog(cat,'fw',1,()=>Object.entries(FW_THEMES).map(([key,theme])=>{const catalogKey='catalog:giftfireworks:'+key;const b=document.createElement('button');b.dataset.fwTheme=key;b.dataset.catalogKey=catalogKey;b.innerHTML=`<i class="vyra-pro-icon">${vyraCatalogIcon('bolt')}</i><span><b>${theme.label}</b><small>Personliga raketer · styrkan följer gåvans värde</small></span>`;b.onclick=()=>{const created=VyraWidgets.create(catalogKey);state.widgets.push(created);selected=created.id;save();render();toast('Gift Fireworks · '+FW_THEMES[theme].label+' skapad')};return b}));let w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks')return;let set=(id,key,bool=false)=>{let e=document.querySelector(id);if(e)e.onchange=x=>{w[key]=bool?x.target.checked:(x.target.type==='color'?x.target.value:+x.target.value);save();render()}};[['fwMin','fwMin'],['fwFinal','fwFinal'],['fwSpeed','fwSpeed'],['fwDuration','fwDuration'],['fwGiftSize','fwGiftSize'],['fwExplosion','fwExplosion'],['fwDensity','fwDensity'],['fwColor','fwColor'],['fwColor2','fwColor2']].forEach(x=>set('#'+x[0],x[1]));/* fwStreak ar borttagen. bridge.js:241 slapper bara igenom sista frame:n av en streak, sa varje
+let cat=document.querySelector('.widget-catalog');if(cat)vyraBurstKatalog(cat,'fw',1,()=>Object.entries(FW_THEMES).map(([key,theme])=>{const catalogKey='catalog:giftfireworks:'+key;const b=document.createElement('button');b.dataset.fwTheme=key;b.dataset.catalogKey=catalogKey;b.innerHTML=`<i class="vyra-pro-icon">${vyraCatalogIcon('bolt')}</i><span><b>${theme.label}</b><small>Personliga raketer · styrkan följer gåvans värde</small></span>`;b.onclick=()=>{const created=VyraWidgets.create(catalogKey);state.widgets.push(created);selected=created.id;save();render();toast('Gift Fireworks · '+FW_THEMES[theme].label+' skapad')};return b}).concat((()=>{const catalogKey='catalog:giftfireworks:november';const b=document.createElement('button');b.dataset.fwNovember='1';b.dataset.catalogKey=catalogKey;b.innerHTML=`<i class="vyra-pro-icon">${vyraCatalogIcon('bolt')}</i><span><b>November</b><small>En raket per gåva i serien · gåvan stor i mitten</small></span>`;b.onclick=()=>{const created=VyraWidgets.create(catalogKey);state.widgets.push(created);selected=created.id;save();render();toast('Gift Fireworks · November skapad')};return b})()));let w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks')return;let set=(id,key,bool=false)=>{let e=document.querySelector(id);if(e)e.onchange=x=>{w[key]=bool?x.target.checked:(x.target.type==='color'?x.target.value:+x.target.value);save();render()}};[['fwMin','fwMin'],['fwFinal','fwFinal'],['fwSpeed','fwSpeed'],['fwDuration','fwDuration'],['fwGiftSize','fwGiftSize'],['fwExplosion','fwExplosion'],['fwDensity','fwDensity'],['fwColor','fwColor'],['fwColor2','fwColor2']].forEach(x=>set('#'+x[0],x[1]));/* fwStreak ar borttagen. bridge.js:241 slapper bara igenom sista frame:n av en streak, sa varje
    gava en widget nagonsin ser AR en avslutad streak - kryssrutan lovade en skillnad som inte
    finns nedstroms. Faltet ligger kvar orort pa redan sparade widgetar och skadar inget. */
 [['fwIntro','fwIntro'],['fwOutro','fwOutro']].forEach(([id,key])=>{const e=document.querySelector('#'+id);if(!e)return;e.value=key==='fwIntro'?fwIntroOf(w):fwOutroOf(w);e.onchange=x=>{w[key]=x.target.value;save();render()}});
@@ -127,7 +133,7 @@ const fwTimers=new Map();
 /* `gavobild` ar den gava som FAKTISKT skickades, hamtad ur eventet. Utan den visade varje raket
    panelinstallningens bild — standard 0001_Rose.png — sa tva lion gav tva rosor. */
 function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
- const sequence=fwSequence(w,combo,tempo),theme=fwThemeOf(w),palette=FW_THEMES[theme];
+ const sequence=fwSequence(w,combo,tempo),theme=fwThemeOf(w),palette=FW_THEMES[theme]||FW_THEMES.supernova;
  const group=document.createElement('div');group.className='fw-event play';
  group.dataset.fwTheme=theme;group.dataset.fwLevel=sequence.level.name;
  const nu=Date.now();
@@ -149,11 +155,11 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
  e.dataset.fwTheme=theme;e.dataset.fwLevel=sequence.level.name;
  if(fwNovember(w)){
   const frame=document.createElement('iframe');
-  frame.title='Gift Fireworks · Supernova';
+  frame.title='Gift Fireworks · November';
   frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none';
   const url=new URL('assets/gift-fireworks-november/widget.html',document.baseURI);
   url.searchParams.set('combo',String(combo));
-  url.searchParams.set('style',({willow:'prism',sparkle:'comet'})[w.fwNovaStyle]||'classic');
+  url.searchParams.set('style',fwNovStilOf(w));
   for(const [key,value] of [['gift',gavobild||w.fwGiftImage],['profile',avatarbild]]){
    if(!value)continue;
    try{
@@ -203,6 +209,12 @@ function fwSpelaPa(nod,k,ev){
 // Pure catalog snapshot: build the same rocket DOM without registering a live event.
 function fwRenderPreview(e,w){
  if(!e)return;
+ /* November: en stilla bild av gåvan i en ljusring. Den inbäddade sidan startas inte i ett katalogkort —
+    en miniatyr ska inte ladda en egen sida och spela en animation. */
+ if(fwNovember(w)){const bild=document.createElement('img');e.replaceChildren();e.dataset.fwPreview='1';e.dataset.fwTheme='november';
+  e.style.cssText+=';position:relative;width:100%;height:260px;background:radial-gradient(circle at 50% 46%,rgba(255,208,107,.55) 0,rgba(167,100,255,.28) 26%,transparent 52%)';e.style.setProperty('opacity','1','important');
+  bild.src='assets/gift-fireworks-november/0001_Rose.png';bild.alt='';bild.style.cssText='position:absolute;left:50%;top:46%;width:96px;height:96px;margin:-48px;object-fit:contain';
+  e.append(bild);return}
  if(fwCanvas(w)){const palette=FW_THEMES[fwThemeOf(w)];window.VyraSupernova?.preview(e,w,{primary:bk(w,w.fwColor,'highlight',palette.primary),secondary:bk(w,w.fwColor2,'secondaryText',palette.secondary)});return}
  const theme=fwThemeOf(w),palette=FW_THEMES[theme],group=document.createElement('div');
  e.replaceChildren();e.dataset.fwPreview='1';e.style.setProperty('opacity','1','important');e.dataset.fwTheme=theme;
@@ -409,6 +421,27 @@ const comboBind=bind;bind=function(){comboBind();let w=liveWidget(selected,'temp
 const premiumFwWh=wh;wh=function(w){let html=premiumFwWh(w);if(w.type!=='templateGiftFireworks')return html;return html.replace('class="gift-fireworks-fx"',`class="gift-fireworks-fx fw-motion-${w.fwMotion||'magnetic'} fw-intro-${fwIntroOf(w)} fw-outro-${fwOutroOf(w)}"`).replace(`--gift:${w.fwGiftSize||110}px`,`--gift:${w.fwGiftSize||110}px;--return-strength:${(w.fwReturn||80)/100}`)};
 const premiumFwProps=props;props=function(){let html=premiumFwProps(),w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks')return html;let controls=`<div class="property-group fw-premium-motion"><h4>RÖRELSE</h4><div class="fw-motion-options" role="group" aria-label="Rörelsemönster">${Object.entries(FW_THEMES).map(([key,t])=>`<button type="button" data-fw-theme-choice="${key}" aria-pressed="${fwThemeOf(w)===key}"><span class="fw-motion-icon" aria-hidden="true">✦</span><span><b>${t.label}</b><small>${{royal:'Raketer i vågor med fallande guldregn.',ice:'Korsande kometer och skarpa silverstjärnor.',rose:'Mjuka solfjädrar och regn av roséguld.',comet:'Två spiraler som öppnas i en explosion.'}[key]}</small></span></button>`).join('')}</div><select id="fwMotion" hidden aria-label="Återformning"><option value="magnetic">Magnetic Return</option><option value="spiral">Spiral Recall</option><option value="bloom">Crystal Bloom</option></select><div class="fw-preview"><button type="button" id="testFw">▶ Testa fyrverkeriet</button><small>Styrkan följer gåvans värde, inte antalet tryck — se ”Stor final från” under TRIGGER. Varje raket flippar gåvan till avsändarens profil.</small></div></div><div class="property-group fw-premium-motion"><h4>ANIMATION · FINJUSTERING</h4><label class="range-label">Återdragningsstyrka <b>${w.fwReturn||80}%</b><input id="fwReturn" type="range" min="40" max="100" value="${w.fwReturn||80}"></label><p>Hur nära mitten partiklarna samlas innan gåvan visas.</p></div><div class="property-group"><h4>BILDER</h4><label>Reservbild för gåva<input id="fwGiftImage" value="${VyraSafe.text(w.fwGiftImage||'assets/gifts/events/0001_Rose.png')}"></label><small>Används vid test och när gåvan saknar bild. Vid live visas den skickade gåvan.</small></div>`;return html.replace('<div class="property-group"><h4>POSITION & STORLEK</h4>',controls+'<div class="property-group"><h4>POSITION & STORLEK</h4>')};
 const premiumFwBind=bind;bind=function(){premiumFwBind();document.querySelectorAll('[data-fw-theme-choice]').forEach(button=>button.onclick=()=>{const w=liveWidget(selected,'templateGiftFireworks');if(!w)return;w.fwTheme=button.dataset.fwThemeChoice;w.fwMotion=FW_THEMES[w.fwTheme].motion;w.fwColor=FW_THEMES[w.fwTheme].primary;w.fwColor2=FW_THEMES[w.fwTheme].secondary;save();render()});let w=liveWidget(selected,'templateGiftFireworks');if(!w)return;let motion=document.querySelector('#fwMotion'),strength=document.querySelector('#fwReturn'),gift=document.querySelector('#fwGiftImage');if(motion){motion.value=w.fwMotion||'magnetic';motion.onchange=e=>{w.fwMotion=e.target.value;save();render()}}document.querySelectorAll('[data-fw-choice]').forEach(button=>{button.onclick=()=>{if(!motion)return;motion.value=button.dataset.fwChoice;motion.dispatchEvent(new Event('change',{bubbles:true}));const next=document.querySelector('[data-fw-choice="'+button.dataset.fwChoice+'"]');if(next)next.focus()}});if(strength)strength.onchange=e=>{w.fwReturn=+e.target.value;save();render()};if(gift)gift.onchange=e=>{w.fwGiftImage=e.target.value;save();render()}};
+/* NOVEMBER-FYRVERKERIETS PANEL. Bara det som faktiskt gör något: den inbäddade sidan har egna fasta färger
+   och ritar inget namn, så här finns varken färger, palett, typsnitt, namneffekt eller färgschema-arv.
+   Lagret ligger efter filens äldre fyrverkeripaneler och svarar därför före dem; gift-supernova-panel.js
+   släpper igenom allt som inte är ett av de sex dukstemana. */
+const novemberFwProps=props;props=function(){const w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks'||!fwNovember(w))return novemberFwProps();
+ const vol=Number(w.fwVolume??60),stil=fwNovStilOf(w);
+ return `<h3>GIFT FIREWORKS</h3><div class="template-badge">GÅVOR · TRANSPARENT</div><div hidden><input id="pt" value="${VyraSafe.text(w.title||'Gift Fireworks')}"><input id="pv" value=""></div>
+ <div class="property-group"><h4>RÖRELSE</h4><button id="testFw" type="button">▶ Testa fyrverkeriet</button><label>Antal testgåvor<input id="fwCombo" type="number" min="1" max="100" value="${Number(w.fwCombo)||1}"></label><small>En gåva ger ett fyrverkeri. En serie ger en raket per gåva, högst 100.</small></div>
+ <div class="property-group"><h4>FYRVERKERI</h4><label>Stil<select id="fwNovStil">${FW_NOV_STILAR.map(([k,l])=>`<option value="${k}" ${stil===k?'selected':''}>${l}</option>`).join('')}</select></label>
+  <label>Minsta gåva (coins)<input id="fwMin" type="number" min="1" value="${Number(w.fwMin)||1}"></label>
+  <label><input id="fwExcludeAnon" type="checkbox" ${w.fwExcludeAnon?'checked':''}> Exkludera anonyma tittare</label></div>
+ <div class="property-group"><h4>LJUD</h4><label><input id="fwSound" type="checkbox" ${w.fwSound===false?'':'checked'}> Aktivera ljud</label><label class="range-label">Ljudvolym <b id="fwVolumeVal">${vol}%</b><input id="fwVolume" type="range" min="0" max="100" value="${vol}"></label></div>
+ <div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${Number(w.x)||0}"></label><label>Y<input id="propY" type="number" value="${Number(w.y)||0}"></label><label>Bredd<input id="propWidth" type="number" value="${Number(w.width)||360}"></label><label>Lager<input id="propLayer" type="number" value="${Number(w.layer)||1}"></label></div></div><button class="delete" id="del">Ta bort</button>`};
+const novemberFwBind=bind;bind=function(){novemberFwBind();const w=liveWidget(selected);if(!w||w.type!=='templateGiftFireworks'||!fwNovember(w))return;
+ const $=id=>document.getElementById(id),klar=()=>{save();render()};
+ const stil=$('fwNovStil');if(stil)stil.onchange=e=>{w.fwNovStil=FW_NOV_STILAR.some(([k])=>k===e.target.value)?e.target.value:'classic';klar()};
+ const min=$('fwMin');if(min)min.onchange=e=>{w.fwMin=Math.max(1,Math.round(Number(e.target.value)||1));klar()};
+ const anon=$('fwExcludeAnon');if(anon)anon.onchange=e=>{w.fwExcludeAnon=e.target.checked;klar()};
+ const ljud=$('fwSound');if(ljud)ljud.onchange=e=>{w.fwSound=e.target.checked;klar()};
+ const vol=$('fwVolume');if(vol){vol.oninput=e=>{const b=$('fwVolumeVal');if(b)b.textContent=e.target.value+'%'};vol.onchange=e=>{w.fwVolume=Math.min(100,Math.max(0,Number(e.target.value)||0));klar()}}
+ const combo=$('fwCombo');if(combo)combo.onchange=e=>{w.fwCombo=Math.min(100,Math.max(1,Number(e.target.value)||1));save()}};
 const followerSpotlightEditBind=bind;bind=function(){followerSpotlightEditBind();let w=liveWidget(selected,'templateFollowerAlert'),panel=document.querySelector('.properties');if(!w||!panel)return;let position=[...panel.querySelectorAll('.property-group')].find(g=>g.querySelector('h4')?.textContent.includes('POSITION'));if(position&&!document.querySelector('#followScale')){let size=document.createElement('div');size.className='property-group follower-size-editor';size.innerHTML=`<h4>SKALA</h4><label class="range-label">Hela widgeten <b>${Math.round((w.widgetScale||1)*100)}%</b><input id="followScale" type="range" min="0.35" max="2.5" step="0.05" value="${w.widgetScale||1}"></label>`;position.before(size);/* Skalan ar likformig och haller MITTEN stilla, samma vag som Storlek-reglaget (VyraTransform):
    zoom multiplicerar left/top, sa en ren box.style.zoom flyttade widgeten (0.36 -> mitten 87 px
    at vanster och 155 px uppat, verifieringen 2026-10-18). */let skalAnkare=null;const skalIn=size.querySelector('input');skalIn.oninput=e=>{let v=+e.target.value,T=window.VyraTransform,box=document.querySelector(`.editor-shell .canvas [data-id="${w.id}"]`)||document.querySelector(`[data-id="${w.id}"]`);size.querySelector('b').textContent=Math.round(v*100)+'%';if(box&&T&&T.ankareLada){if(!skalAnkare)skalAnkare=T.ankareLada(box,'mitt',true);T.tystna(box);T.satSkala(w,box,v);T.hallLada(w,box,skalAnkare,'mitt',true)}else{w.widgetScale=v;if(box)box.style.zoom=v}};skalIn.onchange=e=>{skalIn.oninput(e);let a=skalAnkare,T=window.VyraTransform;skalAnkare=null;vyraRenderKeepingPanel();let box=document.querySelector(`.editor-shell .canvas [data-id="${w.id}"]`);if(box&&a&&T&&T.hallLada)T.hallLada(w,box,a,'mitt',true);save()}}/* Live-vagen, inte render() — se kommentaren i custom-widgets.js. x/y/width behaller sina
