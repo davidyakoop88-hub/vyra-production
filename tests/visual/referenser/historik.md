@@ -666,3 +666,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Neonramar har ett katalogkort per läge: fyra nya nycklar catalog:toplike:ljusring:<läge> behöver referensbild
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 5 av 164 (filter: toplike:ljusring) — catalog:toplike:ljusring, catalog:toplike:ljusring:hoger, catalog:toplike:ljusring:liggande, catalog:toplike:ljusring:staende, catalog:toplike:ljusring:vanster
+
+## 2026-11-12 — 15 referenser skrivna
+
+- **Motiv:** Sju nya Battle MVP-modeller med rambilder (#769) saknar referensbilder
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 15 av 171 (filter: battlemvp) — catalog:battlemvp:aurora, catalog:battlemvp:celebration:gold-ribbon, catalog:battlemvp:celebration:lion-clash, catalog:battlemvp:celebration:ram-aurora, catalog:battlemvp:celebration:ram-cyber, catalog:battlemvp:celebration:ram-ice, catalog:battlemvp:celebration:ram-inferno, catalog:battlemvp:celebration:ram-royal, catalog:battlemvp:celebration:ram-samurai, catalog:battlemvp:celebration:ram-storm, catalog:battlemvp:cyber, catalog:battlemvp:inferno, catalog:battlemvp:royal, catalog:battlemvp:samurai, catalog:battlemvp:storm
