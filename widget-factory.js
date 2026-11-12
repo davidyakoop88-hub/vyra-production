@@ -368,15 +368,6 @@
       fwExplosion: 100, fwDensity: 70, fwColor: v.primary, fwColor2: v.secondary, fwSound: true,
       ...(v.theme==='supernova'?{fwNovaStyle:'classic'}:{})
     }),
-    // NOVEMBER-FYRVERKERIET (2026-11-12): en EGEN design bredvid Supernova, inte en ersättare. Den ritas av
-    // en inbäddad sida (assets/gift-fireworks-november/) med egna fasta färger och utan namn, så den ärver
-    // inget färgschema och har inga färg-, typsnitts- eller palettfält. Temat står med flit INTE i
-    // tabellen 'giftfireworks.theme': de sex där är duksteman med gemensam panel och gemensam motor.
-    // Stående ruta 360 x 640 som animationen; y 64 centrerar den i 768-duken.
-    'giftfireworks.november': () => ({
-      type: 'templateGiftFireworks', x: 36, y: 64, width: 360, title: 'Gift Fireworks · November',
-      fwTheme: 'november', fwNovaStyle: 'classic', fwMin: 1, fwSound: true
-    }),
     // Gift Bubbles - systerwidget. En design; storleken foljer combo + gbSize-valjaren.
     'giftbubbles': () => ({
       type: 'templateGiftBubbles', x: 36, y: 120, width: 320, title: 'Gift Bubbles',
@@ -920,7 +911,6 @@
     },
     'custom': parts => ['custom.kind', { kind: parts[0], type: pick('custom.kind', parts[0], 'innehållstyp') }],
     'giftfireworks': parts => {
-      if (parts[0] === 'november') return ['giftfireworks.november', {}];
       if (Object.hasOwn(TABLES['giftfireworks.theme'], parts[0]))
         return ['giftfireworks.theme', {theme:parts[0], ...pick('giftfireworks.theme', parts[0], 'fyrverkeridesign')}];
       pick('giftfireworks.motion', parts[0], 'fyrverkerirörelse');
