@@ -3,6 +3,7 @@
   // FYRVERKERIERNA I PANELRAMEN — PR 12 i panelspecifikationen (avsnitt 5.13, 5.14, 4.2, 2.3–2.5).
   //
   // Tre typer, alla gåvoeffekter som ritas på en duk (vfx):
+  //   * Gift Fireworks · November (fwTheme 'november') — egen post längre ned, en inbäddad sida i stället för duk,
   //   * Gift Fireworks (templateGiftFireworks) — sex teman på duk: festival, royal, ice, rose, comet och
   //     supernova (gift-fireworks.js + gift-supernova-panel.js + gift-festival-engine.js). En sparad widget
   //     med ett äldre CSS-tema (inget fwTheme) har ingen post och behåller sin gamla panel,
@@ -97,6 +98,35 @@
     utseendeFalt: ['fwColor', 'fwColor2', 'fwTextColor', 'fwFont', 'fwNameFx', 'fwGlow', 'fwRadius', 'fwScale', 'fwPlaySpeed', 'fwEnter', 'inheritBrandKit'],
   });
 
+  // ---- 1a-2. Gift Fireworks · November (2026-11-12) ---------------------------------------------
+  // En egen design bredvid dukstemana. Den ritas av en inbäddad sida med egna fasta färger och utan namn
+  // (assets/gift-fireworks-november/), så posten har INGET färgarv och inga färg-, palett- eller
+  // typsnittsreglage: de hade inte gjort något. Antalet raketer följer gåvans antal i serien — inte
+  // dess värde — så Final vid finns inte heller. Kön spelar ett fyrverkeri i taget.
+  R.definiera({
+    typ: 'templateGiftFireworks',
+    modell: w => w.fwTheme,
+    galler: ['november'],
+    rubrik: () => 'Gift Fireworks',
+    marke: () => 'Fyrverkeri · November',
+    katalognyckel: () => 'catalog:giftfireworks:november',
+    test: 'novemberfyr',
+    ersatter: ['#testFw', '.fw-combo-control', '#fwCombo'],
+    utanText: true,
+    kontroller: [
+      { sektion: 2, typ: 'tal', falt: 'fwMin', etikett: 'Minsta gåva', enhet: 'coins', legacyId: '#fwMin' },
+      anonyma('#fwExcludeAnon'),
+      live('Hämtas från sändningen: gåvan, avsändarens profilbild och antalet i serien. Antalet avgör hur många raketer som skjuts, högst 100.'),
+      position,
+      { sektion: 5, typ: 'val', falt: 'fwNovStil', etikett: 'Stil', legacyId: '#fwNovStil' },
+      { sektion: 6, typ: 'kryss', falt: 'fwSound', etikett: 'Ljud', legacyId: '#fwSound' },
+      { sektion: 6, typ: 'tal', falt: 'fwVolume', etikett: 'Volym', legacyId: '#fwVolume',
+        beror: { falt: 'fwSound', villkor: v => v !== false, text: 'Aktiv när Ljud är på.' } },
+      aterstall,
+    ],
+    utseendeFalt: ['fwNovStil'],
+  });
+
   // ---- 1b. Heart Fireworks (spec 5.14) -----------------------------------------------------------
   // Ingen Inträdeseffekt: widgeten har ingen (vyra-intro.js lägger ingen grupp på den). Storlek, färger,
   // mängd och ljud saknas i motorn — ny funktion, inte en del av ombyggnaden.
@@ -150,6 +180,8 @@
   const E = window.VyraExempeldata;
   if (E && typeof E.definiera === 'function') {
     if (!(E.har && E.har('fyrverkeri'))) E.definiera('fyrverkeri', (g, typ) => ({ antal: typ === '10' ? 10 : 1, final: typ === 'final' }));
+    // November: antalet gåvor i serien är antalet raketer — 1, 10 eller 50 (megakombon).
+    if (!(E.har && E.har('novemberfyr'))) E.definiera('novemberfyr', (g, typ) => ({ antal: [1, 10, 50].includes(Number(typ)) ? Number(typ) : 1 }));
     if (!(E.har && E.har('hjartfyr'))) E.definiera('hjartfyr', (g, typ) => ({ combo: [1, 15, 20].includes(Number(typ)) ? Number(typ) : 1 }));
     if (!(E.har && E.har('bubblor'))) E.definiera('bubblor', () => ({ combo: 10 }));
   }
@@ -178,10 +210,7 @@
     if (fx) fx.classList.remove('play');
   }
 
-  if (!(T.harAdapter && T.harAdapter('fyrverkeri'))) T.registrera('fyrverkeri', {
-    typer: [['1', '1'], ['10', '10'], ['final', 'Final']],
-    typEtikett: 'Antal gåvor',
-    spela(nod, k, ex, ctl) {
+  function spelaFyrverkeri(nod, k, ex, ctl) {
       const F = window.VyraFireworks;
       if (!F || typeof F.spelaPa !== 'function') throw new Error('gift-fireworks.js saknar VyraFireworks.spelaPa');
       const ev = Object.assign(gava(ex), { combo: ex.antal || 1 });
@@ -196,7 +225,20 @@
         try { const a = new Audio(FW_LJUD); a.volume = vol; const p = a.play(); if (p && p.catch) p.catch(() => {}); nod.__fwLjud = a; } catch (_) {}
       }
       return faser(t);
-    },
+  }
+
+  if (!(T.harAdapter && T.harAdapter('fyrverkeri'))) T.registrera('fyrverkeri', {
+    typer: [['1', '1'], ['10', '10'], ['final', 'Final']],
+    typEtikett: 'Antal gåvor',
+    spela: spelaFyrverkeri,
+    stoppa(nod, k) { stadaFyrverkeri(nod, k); },
+  });
+
+  // November: samma uppspelning och samma städning, men ingen Final — styrkan är antalet, inte värdet.
+  if (!(T.harAdapter && T.harAdapter('novemberfyr'))) T.registrera('novemberfyr', {
+    typer: [['1', '1'], ['10', '10'], ['50', '50']],
+    typEtikett: 'Antal gåvor',
+    spela: spelaFyrverkeri,
     stoppa(nod, k) { stadaFyrverkeri(nod, k); },
   });
 

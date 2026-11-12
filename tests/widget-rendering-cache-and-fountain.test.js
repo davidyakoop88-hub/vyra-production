@@ -203,7 +203,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // nycklarna (pgstreak/pgpodium/pggoal/likefountain.palette/followeralert.theme).
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
-  assert.match(studio, /widget-factory\.js\?v=20261111-3/);
+  // Bumpad 2026-11-12: nyckeln catalog:giftfireworks:november (november-fyrverkeriet som egen design).
+  assert.match(studio, /widget-factory\.js\?v=20261112-1/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
   // 20261021-13: en gåva till en annan värd (tillVarden:false) tar inte Top Gift.
@@ -482,7 +483,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // katalogsektionen. Bara katalog-injektionen andrades; motorerna nedan ar ororda och
   // behaller darfor natural1 (olika version i samma laddningslista ar ofarligt).
   // 20261019-1: per-nod-funktionen fwSpelaPa for ▶ Testa widget (panelspecifikationen PR 12).
-  assert.match(media, /gift-fireworks\.js\?v=20261021-7/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
+  assert.match(media, /gift-fireworks\.js\?v=20261112-1/);  // 20261011-1: testknappens profilbild -> test-profile.svg (en testavatar for alla)
   // 2026-10-18: ett fyrverkeri i taget — motorerna fick toppen(), triggern release/tempo.
   assert.match(media, /gift-natural-engine\.js\?v=20261018-1/);
   assert.match(media, /gift-supernova-engine\.js\?v=20261019-1/);  // 20261019-1: arv av färgschemat, Dölj namnet och glom (PR 12)
