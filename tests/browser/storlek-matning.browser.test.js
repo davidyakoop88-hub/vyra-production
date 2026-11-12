@@ -101,6 +101,12 @@ const LIB = () => {
   window.__lagg = async (k, p, vald) => {
     state.widgets.length = 0;
     const w = window.VyraWidgets.create(k);
+    // Neonramar: David har med flit valt att texten INTE krymper likformigt ("Texten krymper mindre än
+    // ramarna", tlnTextVaxer, 2026-11-10). Med valet på gav 50 % X 0,707 = 0,5 x 1/sqrt(0,5), och varje
+    // handtag ändrade formen. Provet mäter med valet av, som tests/browser/design-vid-storlek gör
+    // (LIKFORMIG_MED), så att resten av designen fortfarande måste följa skalan. Felet syntes först
+    // 2026-11-12, när nya katalognycklar flyttade urvalet (index % 6 === 3) till ett Neonramar-läge.
+    if (/^catalog:toplike:ljusring(:|$)/.test(k)) w.tlnTextVaxer = false;
     Object.assign(w, { x: 40, y: 40 }, p || {});
     if (w.type === 'templateLastX') w.lastXPersistent = true;
     state.widgets.push(w); selected = vald ? w.id : null; render();
