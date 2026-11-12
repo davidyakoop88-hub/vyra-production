@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Sidan finns inte · VYRA</title>
+  <link rel="icon" href="/favicon.ico">
+  <!-- Webbserverns 404-sida (Caddyfile › handle_errors). Fristående: inga skript, inga andra
+       stilmallar, så att den alltid går att visa även när resten av sajten inte svarar.
+       Designgranskning 2026-11-12, fynd 18. -->
+  <style>
+    :root{color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;
+      background:radial-gradient(circle at 50% 0,#261034 0,#08050d 42%);
+      font:16px/1.6 Inter,ui-sans-serif,system-ui,sans-serif;color:#f7f2ff}
+    main{width:min(520px,100%)}
+    .brand{display:inline-flex;align-items:center;gap:9px;margin-bottom:40px;color:#f7f2ff;
+      text-decoration:none;font-weight:900;letter-spacing:.08em}
+    .brand i{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;
+      background:linear-gradient(135deg,#8d38ee,#d83be0);font-style:normal}
+    h1{font-size:32px;line-height:1.2;margin:0 0 12px}
+    p{color:#cfc3d5;margin:0 0 24px;max-width:60ch}
+    code{color:#f7f2ff;word-break:break-all}
+    nav{display:flex;flex-wrap:wrap;gap:8px}
+    nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:12px;
+      border:1px solid rgba(173,91,255,.45);color:#f7f2ff;text-decoration:none;font-weight:600}
+    nav a.primar{background:linear-gradient(135deg,#8b3dff,#b43dff);border-color:transparent;color:#fff}
+    a:focus-visible{outline:2px solid #be5fff;outline-offset:2px}
+  </style>
+</head>
+<body>
+  <main>
+    <a class="brand" href="/index.html?stanna=1"><i>V</i>VYRA</a>
+    <h1>Sidan finns inte</h1>
+    <p>Adressen leder ingenstans. Kontrollera stavningen, eller gå vidare härifrån.</p>
+    <nav aria-label="Vidare">
+      <a class="primar" href="/studio.html">Öppna studion</a>
+      <a href="/index.html?stanna=1">Till startsidan</a>
+    </nav>
+  </main>
+</body>
+</html>

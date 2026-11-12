@@ -48,6 +48,31 @@
     }
   }
 
+  # Okända adresser ger 404 och 404.html (designgranskning 2026-11-12, fynd 18).
+  #
+  # Förut skickade `try_files {path} /index.html` framsidan med status 200 för VARJE sökväg utan
+  # fil: /finns-inte.html såg ut som en riktig sida för sökmotorer, och en inloggad användare
+  # skickades tyst vidare till studion. Inventerat 2026-11-12: inga interna länkar eller
+  # omdirigeringar pekar på en sökväg utan fil, och /api/* och /health/* tas om hand ovanför.
+  #
+  # `/` matchas inte av `file` (det är en katalog), så den undantas uttryckligen och får
+  # index.html av file_server som förut.
+  #
+  # `root` står på platsnivå med flit: `file`-matcharen läser roten NÄR den utvärderas, och en
+  # `root` inne i handle-blocket sätts först efter att matcharen redan svarat — då hade varje
+  # sökväg saknats. /api/* och /health/* påverkas inte: reverse_proxy läser ingen rot.
+  root * /app
+  @saknas {
+    not path /
+    not file
+  }
+  handle @saknas {
+    rewrite * /404.html
+    file_server {
+      status 404
+    }
+  }
+
   handle {
     root * /app
     try_files {path} /index.html

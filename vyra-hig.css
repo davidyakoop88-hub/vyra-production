@@ -1,0 +1,245 @@
+/* VYRA · HIG-lagret för studions ram
+   ------------------------------------------------------------------------------------------
+   Rättar fynden i designgranskningen 2026-11-12 (Apples Human Interface Guidelines) utan att
+   röra en enda widget. Allt här är avgränsat till studions RAM — sidomeny, topprad och sidorna
+   i #view — och gäller aldrig:
+     · overlay-utgången (html.overlay-output), som OBS och pixelvakten fotograferar
+     · widgetar på duken (.canvas, .widget) eller förhandsvisningar i katalogen (.owg-thumb,
+       .owg-configure-preview)
+   Därför bär varje regel prefixet  html:not(.overlay-output)  och, där selektorn också kan
+   träffa en widget, suffixet  :not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *).
+
+   Laddas SIST i studio.html, efter alla andra stilmallar, så att den vinner kaskaden utan
+   !important. Ta bort länken i studio.html för att stänga av hela lagret. */
+
+/* 1. Läsbar dämpad text -------------------------------------------------------------------
+   --text-muted #746982 gav 3,8:1 mot #08050d (krav 4,5:1). #9a90a8 ger 6,5:1 mot appens
+   bakgrund och 6,0:1 mot kort (#130b1c). Aliaset --muted räknas ut i :root och måste därför
+   sättas om här också. Widgetarna får tillbaka originalet, så duken ser ut som i OBS. */
+html:not(.overlay-output) body { --text-muted: #9a90a8; --muted: #9a90a8; }
+html:not(.overlay-output) :is(.canvas, .widget, .owg-thumb, .owg-configure-preview) {
+  --text-muted: #746982; --muted: #746982;
+}
+html:not(.overlay-output) .kat-familjer button i,
+html:not(.overlay-output) .ae-new-steps > i { color: #9a90a8; }
+
+/* Inbyggda kontroller (rullistor, kryssrutor, siffror) ritas mörka och i accentfärgen
+   i stället för webbläsarens ljusa standard. */
+html:not(.overlay-output) body { color-scheme: dark; accent-color: var(--accent-purple); }
+
+/* 2. Textgolv 11 px ---------------------------------------------------------------------
+   typography.md › Ensuring legibility: minimum 10 pt på dator, 11 pt på mobil. Listan är
+   uppmätt: de 68 regler som gav studions ram text under 11 px, sida för sida. */
+html:not(.overlay-output) :is(
+  .nav-section-label, .nav-badge, aside nav small, .user > i, .user small,
+  .head-actions button, .connection, .head-desktop, .head-actions .studio-sprakval button,
+  .home-welcome p, .live-status span, .eyebrow, .toppgivare-rubrik, .toppgivare-kort em,
+  .sd-badge, .sd-krav h4, .sd-krav li, .sd-not, .sd-steg .sd-nr, .sd-steg code, .sd-steg p,
+  .guide-feature-where,
+  .overlay-widget-gallery > p, .overlay-widget-list article, .overlay-widget-list article button,
+  .overlay-widget-gallery .widget-catalog button small, .widget-catalog button small,
+  .kat-familjer button i, .kat-scen-namn small, .kat-scen-raknare,
+  .ae-action-scene, .ae-eyebrow, .ae-new-steps small, .ae-scene-link, .ae-scene-max-queue,
+  .ae-section-number, .ae-sim-hint,
+  .sa-kicker, .sa-tabs b, .tts-kicker, .tts-tabs b,
+  .lc-battle header small, .lc-health small, .lc-match-state, .lc-perf-grid small,
+  .lc-performance header small, .lc-score small, .lc-table th,
+  .statistics-axis span, .statistics-bar span, .statistics-bar-value, .statistics-card-head > span,
+  .statistics-head small, .statistics-card-head small, .statistics-periods button,
+  .statistics-supporters small, .statistics-table thead th, .statistics-totals small,
+  .pw-hero small, .pw-advice > small, .pw-steps,
+  .agency-test-cover span, .agency-test-contact-link, .agency-test-contact-note,
+  .agency-test-info small, .agency-test-banner > span, .agency-test-card small,
+  .agency-test-detail small, .agency-test-form small, .agency-test-detail-head > i
+):not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+  font-size: 11px;
+}
+/* Sidomenyn har ingen pixel över (meny-yta.browser: hela menyn ska rymmas utan rullning ned till
+   1366×768). 11 px-texten får därför inte göra den högre: rubrikerna får tätare radavstånd och
+   rolltexten under namnet en rad med ellips — hela texten ligger i title (vyra-hig.js). Uppmätt
+   1440×900: menyns innehåll 676 px i en 676 px-ruta, samma som före lagret. */
+html:not(.overlay-output) .nav-section-label { line-height: 1.2; }
+html:not(.overlay-output) .user > span { min-width: 0; }
+html:not(.overlay-output) .user small {
+  display: block; line-height: 1.3; max-width: 100%;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* <small> utan egen regel ärver 0,833 em — 10,8 px i 13 px-text. */
+html:not(.overlay-output) #view :is(small, h5):not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+  font-size: max(11px, .85em);
+}
+/* Enstaka inline-stilar med 9 px (Statistik). */
+html:not(.overlay-output) #view [style*="font-size:9px"]:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *),
+html:not(.overlay-output) #view [style*="font-size: 9px"]:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+  font-size: 11px !important;
+}
+
+/* 3. Ett sidhuvud, en gång -----------------------------------------------------------------
+   Sidans namn stod tre gånger: brödsmulan (8 px), rubriken i toppraden och rubriken på sidan.
+   Brödsmulan bar ingen information som inte redan syns i sidomenyn. */
+html:not(.overlay-output) #crumb { display: none; }
+/* Rubriken får fokus vid sidbyte (vyra-sidbyte.js) så att skärmläsare börjar där. Den är inte
+   en kontroll, så ingen fokusram behövs — den syntes runt rubriken vid varje musklick. */
+html:not(.overlay-output) #title[tabindex="-1"]:focus { outline: none; }
+
+/* Sidrubriker i samma storlek överallt: 24 px. Tidigare 20, 25, 28, 29, 30 och 43 px. */
+html:not(.overlay-output) #view :is(
+  .page-header h2, .section-head h2, .tts-vyra-head h2, .ae-hero-copy h2, .lc-head h2,
+  .statistics-page > :first-child h2, .performance-wizard > :first-child h2,
+  .agency-test > :first-child h2, .spel-sida-head h2, .sd-sida-head h2
+) {
+  font-size: 24px; line-height: 1.2; letter-spacing: -.01em;
+}
+
+/* Ett sidhuvud: rubrik, en rad text, primärknapp till höger — utan kort runt. Fem sidor bar
+   sitt sidhuvud i ett kort med gradient och ram (Gaming overlay, Stream Deck, Statistik,
+   Prestandakontroll, Action & Event); resten hade en ren rubrik. Korten plattas till. Agencies
+   lämnas orörd (Davids beslut 2026-11-12). Statistik behåller sitt kort: slutgranskning C-012
+   (tests/browser/slutgranskning-c-medel) kräver inre marginal i toppkorten där, och sidhuvudet
+   bär periodväljaren. */
+/* !important bara här: design-system.css sätter ram, bakgrund och skugga på .card med
+   !important, och tre av sidhuvudena är .card. */
+html:not(.overlay-output) #view :is(.spel-sida-head, .sd-sida-head, .pw-hero, .ae-hero) {
+  background: none !important; border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; padding: 0 0 4px !important;
+}
+html:not(.overlay-output) #view :is(.spel-sida-head, .sd-sida-head, .pw-hero, .ae-hero)::before,
+html:not(.overlay-output) #view :is(.spel-sida-head, .sd-sida-head, .pw-hero, .ae-hero)::after {
+  content: none;
+}
+/* Prestandakontrolls sidhuvud är ett tre-kolumnsrutnät (ikon, text, knapp). Utan ikonen hamnade
+   knappen i den breda mittkolumnen och sträcktes ut; som flexrad står den till höger. */
+html:not(.overlay-output) #view .pw-hero {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+html:not(.overlay-output) #view .pw-hero > button { flex: 0 0 auto; }
+
+/* Etiketterna ovanför rubriken ("LIVE-AUTOMATIK", "VYRA AUTOMATIK", "LIVEHISTORIK",
+   "VYRA · KOMMANDOCENTRAL") upprepade bara menyns gruppnamn. Prestandakontrolls ikonruta likaså. */
+html:not(.overlay-output) #view :is(
+  .home-welcome .eyebrow:has(+ h2), .ae-hero-copy .ae-eyebrow, .sa-page-head .sa-kicker, .tts-vyra-head .tts-kicker,
+  .statistics-head small:has(+ h2), .pw-hero small:has(+ h2), .pw-hero .pw-spark
+) { display: none; }
+
+/* 4. En innehållsbredd ---------------------------------------------------------------------
+   Sidorna var 570, 950, 1120 och 1400 px breda och hoppade vid varje byte. Nu delar alla
+   samma maxbredd och vänsterkant. Layout-redigeraren (.editor-shell) behåller hela ytan. */
+html:not(.overlay-output) #view:not(:has(> .editor-shell)) { max-width: 1240px; }
+html:not(.overlay-output) #view :is(.statistics-page, .performance-wizard, .agency-test, .ae-workspace) {
+  max-width: none; margin-left: 0; margin-right: 0;
+}
+html:not(.overlay-output) #view .settings-page { max-width: 760px; }
+
+/* 5. Klickytor ------------------------------------------------------------------------------
+   accessibility.md › Mobility: minst 28×28 pt med mus, 44×44 pt på pekskärm. */
+html:not(.overlay-output) :is(.head-actions button, .head-actions a, .head-actions .studio-sprakval button) {
+  min-height: 28px;
+}
+html:not(.overlay-output) .head-actions .studio-sprakval button { min-width: 32px; }
+html:not(.overlay-output) #view button:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+  min-height: 28px; min-width: 28px;
+}
+@media (pointer: coarse) {
+  html:not(.overlay-output) :is(aside nav button, aside nav a, .aside-bottom button, .head-actions button, .head-actions a) {
+    min-height: 44px;
+  }
+  html:not(.overlay-output) #view :is(button, select, input:not([type=checkbox]):not([type=radio]):not([type=range])):not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+    min-height: 44px;
+  }
+}
+
+/* 6. En handling, en knapp ----------------------------------------------------------------
+   Sound Alerts: "Ny sound alert" i sidhuvudet och "Skapa första alerten" i tomt läge räcker;
+   "Ny alert" i kortets rubrik var en tredje knapp för samma sak.
+   Chatbot: "Nytt kommando" flyttade bara fokus till fältet direkt under — formuläret syns redan. */
+html:not(.overlay-output) .sa-active-head .sa-new-open,
+html:not(.overlay-output) #addCommand { display: none; }
+
+/* Action & Event: "Ny Action"/"Nytt Event" i hjälterutan gjorde samma sak som "Skapa Action"/
+   "Koppla Event" i sektionerna strax under. Sektionernas knappar behålls: de står vid listan de
+   fyller, och tomma lägets knapp (vyra-tomma-handlingar.js) klickar på dem — målet ska synas. */
+html:not(.overlay-output) .ae-hero-actions :is([data-new-ae-action], [data-new-ae-event]) { display: none; }
+
+/* Action & Event: huvudreglaget "Aktiverad" svävade mitt i verktygsraden. Både reglaget och
+   sökfältet hade margin-left:auto, så det lediga utrymmet delades mellan dem. Nu ligger
+   reglaget och sökfältet tillsammans till höger. */
+html:not(.overlay-output) .ae-actions-toolbar .ae-master-toggle + #aeActionSearch { margin-left: 0; }
+
+/* Spotify: att koppla från är ingen huvudhandling och ska inte se ut som en. */
+html:not(.overlay-output) #spotifyConnect[data-connected="1"] {
+  background: transparent; border: 1px solid var(--border-subtle); color: var(--text-primary);
+  box-shadow: none;
+}
+
+/* Översikt: kurvan i "Live-engagemang" var dekoration som såg ut som data, bredvid texten
+   "Ingen livedata ännu". Utan data visas bara texten. */
+html:not(.overlay-output) .home-grid .chart-card svg { display: none; }
+html:not(.overlay-output) .home-grid .chart-card .card-head span { font-size: 13px; color: var(--text-secondary); }
+
+/* Översikt: "sedan start" i rubriken till toppgivarlistan hade opacitet .6 — 4,2:1. */
+html:not(.overlay-output) .historikgivare h4 span { opacity: .85; }
+
+/* Linjeikonerna som ersatte emojin i toppraden (⬇, 🎨). */
+html:not(.overlay-output) .head-actions :is(button, a) > svg {
+  flex: 0 0 auto; margin-right: 6px; vertical-align: -2px;
+}
+html:not(.overlay-output) .head-actions #openBrandKit {
+  display: inline-flex; align-items: center; white-space: nowrap;
+}
+
+/* Trasig profilbild → initialen (vyra-hig.js › profilbilder). Fyller samma ruta som bilden. */
+html:not(.overlay-output) .vyra-bild-saknas {
+  display: inline-grid; place-items: center; width: 100%; height: 100%; min-width: 24px; min-height: 24px;
+  border-radius: inherit; background: var(--surface-2); color: var(--text-secondary);
+  font-weight: 700; font-size: 13px; line-height: 1;
+}
+
+html:not(.overlay-output) img[data-vyra-bild-saknas] { display: none !important; }
+
+/* LIVE-kontroll: tekniska mätvärden hopfällda (vyra-hig.js › tekniskStatus). */
+html:not(.overlay-output) details.lc-teknisk {
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md); margin: 0 0 16px;
+  background: var(--surface-1);
+}
+html:not(.overlay-output) details.lc-teknisk > summary {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; min-height: 44px;
+  padding: 12px 16px; cursor: pointer; list-style: none;
+}
+html:not(.overlay-output) details.lc-teknisk > summary::-webkit-details-marker { display: none; }
+html:not(.overlay-output) details.lc-teknisk > summary::before {
+  content: ''; width: 7px; height: 7px; border: solid var(--text-secondary); border-width: 0 2px 2px 0;
+  transform: rotate(-45deg); transition: transform var(--transition-fast); align-self: center;
+}
+html:not(.overlay-output) details.lc-teknisk[open] > summary::before { transform: rotate(45deg); }
+html:not(.overlay-output) details.lc-teknisk > summary b { font-size: 14px; color: var(--text-primary); }
+html:not(.overlay-output) details.lc-teknisk > summary small { font-size: 12px; color: var(--text-muted); }
+html:not(.overlay-output) details.lc-teknisk > summary:focus-visible { outline: 2px solid var(--border-active); outline-offset: 2px; }
+html:not(.overlay-output) details.lc-teknisk > .lc-performance { margin: 0 12px 12px; }
+
+/* 7. Mobil: toppraden lämnas som den är -----------------------------------------------------
+   Granskningen noterade att toppraden tar ~130 px i tre rader vid 390 px. En svepbar enradslösning
+   byggdes och togs bort igen: slutgranskning C-013 (tests/browser/slutgranskning-c-medel) har
+   beslutat att knappraden INTE får rulla i sidled — knappar utanför skärmen syns inte och hittas
+   inte. Radbrytningen i vyra-mobil.css, med 44 px per knapp, är alltså medveten. */
+
+/* 8. Systemets tillgänglighetsinställningar -----------------------------------------------
+   Inget av dem fanns: 0 regler för prefers-contrast och prefers-reduced-transparency, mot
+   35 regler med backdrop-filter. */
+@media (prefers-contrast: more) {
+  html:not(.overlay-output) body {
+    --text-muted: #cfc6db; --muted: #cfc6db; --text-secondary: #e6def0;
+    --border-subtle: rgba(205, 150, 255, .6);
+  }
+  html:not(.overlay-output) :is(.canvas, .widget, .owg-thumb, .owg-configure-preview) {
+    --text-muted: #746982; --muted: #746982; --text-secondary: #b8aac8;
+    --border-subtle: rgba(173, 91, 255, .20);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:not(.overlay-output) :is(aside, main > header, #view, dialog, .toast) *:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *),
+  html:not(.overlay-output) :is(aside, main > header, dialog, .toast) {
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  }
+  html:not(.overlay-output) body { --surface-glass: #18102a; }
+}
