@@ -137,14 +137,19 @@ html:not(.overlay-output) :is(.head-actions button, .head-actions a, .head-actio
   min-height: 28px;
 }
 html:not(.overlay-output) .head-actions .studio-sprakval button { min-width: 32px; }
-html:not(.overlay-output) #view button:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+/* Sidornas knappar — men INTE i Layout-redigeraren (.editor-shell). Redigeraren är ett tätt
+   verktyg med egna, provade mått: en generell 28×28-regel fick lagerradens ikoner och ▲▼ att
+   överlappa (widget-las, widget-ordning) och verktygsraden att växa 2 px efter montering
+   (verktygsrad-overlapp). Apples minimum med mus är 20×20 pt; redigerarens knappar klarar det.
+   Pekskärm i redigeraren sköts av vyra-mobil.css. */
+html:not(.overlay-output) #view:not(:has(> .editor-shell)) button:not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
   min-height: 28px; min-width: 28px;
 }
 @media (pointer: coarse) {
   html:not(.overlay-output) :is(aside nav button, aside nav a, .aside-bottom button, .head-actions button, .head-actions a) {
     min-height: 44px;
   }
-  html:not(.overlay-output) #view :is(button, select, input:not([type=checkbox]):not([type=radio]):not([type=range])):not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
+  html:not(.overlay-output) #view:not(:has(> .editor-shell)) :is(button, select, input:not([type=checkbox]):not([type=radio]):not([type=range])):not(:is(.canvas, .widget, .owg-thumb, .owg-configure-preview) *) {
     min-height: 44px;
   }
 }

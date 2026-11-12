@@ -100,9 +100,13 @@
     const t = ((namn && namn.textContent) || img.alt || '').replace(/[^\p{L}\p{N}]/gu, '');
     return t ? t[0].toUpperCase() : '?';
   }
+  // BARA profilbilder i toppgivar- och supporterlistorna. Andra bilder har egna reserver — Gift
+  // Campaigns gåvoval byter en trasig bild mot gåvoikonen (vyra-kampanj-gavoval.js), och det här
+  // lagret får aldrig gå före den (kampanj-gavoval.browser).
+  const PROFILBILD = '.toppgivare-avatar img, .historikgivare img, .statistics-supporters img';
   addEventListener('error', e => {
     const img = e.target;
-    if (!img || img.tagName !== 'IMG' || iWidget(img) || !img.closest('#view')) return;
+    if (!img || img.tagName !== 'IMG' || iWidget(img) || !img.matches(PROFILBILD)) return;
     if (img.dataset.vyraBildSaknas) return;
     img.dataset.vyraBildSaknas = '1';
     // Bilden ligger KVAR i DOM:en, dold: andra moduler och prov (command-center-alltime.browser)
