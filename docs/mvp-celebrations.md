@@ -124,3 +124,40 @@ Samtliga signaturdetaljer är osynliga vid 5 s, så vinnaren får en lugn hållf
 BASIC får inga nya dekorationslager; profilen landar något före namnet
 (1,4 respektive 1,9 s) med en liten, mjuk förflyttning. Guldkrona och Lion Clash
 lämnas oförändrade. Tider skalas proportionellt med sparad visningstid.
+
+## Rambilder: sju modeller med fyra ramar var (2026-11-11)
+
+`catalog:battlemvp:celebration:ram-{royal,inferno,ice,cyber,storm,aurora,samurai}` är sju nya
+firanden. Varje modell har **fyra målade ramar** som användaren väljer mellan i panelen (fältet
+`mvpRam`, värdena `a`–`d`; fabriken väljer `a`). Ramarnas namn står i fabrikens register
+(`ramar` på varje post i `widget-factory.js`).
+
+Ramen är en färdig bild med genomskinlig bakgrund (`assets/mvp-celebrations/ram/<modell>-<ram>.webp`,
+1024 × 1024, 90–210 kB). Koden lägger bara profilbilden i luckan och texten på listerna. Varje rams
+mått är uppmätt i bilden och står i `RAMMATT` i `battle-mvp-celebrations.js`: fotoluckans cirkel,
+namnlisten och MVP-listen, i `cqw` (andel av ramens bredd).
+
+Designen ritar egen DOM (`bespoke:'rambild'`, klassen `.mvc-rambild`), som Lion Clash. Porträttet är
+första `<img>` och namnet första `<h2>`, eftersom live-uppdateringen skriver dit. Namnet står på en
+rad och krymper efter sin längd (`--tecken`, som också uppdateras efter en live-uppdatering).
+Sparade val att dölja rubrik eller namn respekteras. Ingen partikelmotor.
+
+Rörelsen drivs av `mvp-active` över `--ram-dur` (procenten avser 10 sekunder): ett sken i modellens
+färg slår upp och ramen växer ut ur fotoluckan (0–15 %), ljusblixt och tryckvåg och fotot slår fram
+(10–20 %), namnet dras fram och MVP slår ner (20–31 %), stilla visning med svagt glitter (31–86 %),
+och till sist dras namn och MVP tillbaka och ramen sugs in i fotot (86–100 %). Minskad rörelse visar
+ramen stilla med en avslutande uttoning. Utan `mvp-active` (editor, katalog) visas den färdiga ramen.
+
+Bilderna är framtagna med bildverktyg på uppdrag av David, mot svart bakgrund, och frilagda efteråt:
+svart som hänger ihop med bildens kant är borttaget och sken tonar ut mjukt. Svart inne i ramen är kvar.
+
+### Äldre val borta ur stilväljaren
+
+De sex äldre firandena (Kröningen, Vingar, Energiportalen, Roséguld, Pärlvingar, Lavendelmåne) och de
+sex PNG-ramarna var redan borta ur katalogen (`katalog-ordning.js`) men gick att välja i stilväljaren.
+De tas nu bort där också (`hideRetiredFrameChoices`). Fabriksnycklar, bilder och renderare är kvar, så
+sparade layouter ser ut som förut och inga användarwidgetar byter utseende.
+
+**Inte gjort i den här ändringen:** referensbilder för den visuella vakten, `npm run karta`, och
+browser-sviten är inte körda. De sex klassiska stilarna med samma namn som de nya modellerna
+(Inferno, Royal, Cyber, Storm, Aurora, Samurai) finns kvar i katalogen.

@@ -2,6 +2,7 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {createDom,closeAll}=require('./helpers/dom-harness.js');
 const factory=require('../widget-factory.js');
+const fs=require('node:fs'),path=require('node:path'),root=path.join(__dirname,'..');
 test.after(closeAll);
 const designs=factory.variants('battlemvp.celebration');
 for(const key of Object.keys(designs))if(!designs[key].bespoke)test(key+' renders a real winner through the existing MVP renderer',()=>{
@@ -35,6 +36,37 @@ test('Lion Clash renders its own animated emblem through the MVP renderer',()=>{
   assert.equal(box.style.getPropertyValue('--lion-dur'),'12s');
   assert.equal(box.querySelector('.mvc-portrait'),null,'bespoke-designen anvander inte firande-mallen');
 });
+test('Rambilderna ritar egen DOM med vald ram, portrattet forst och namnet i forsta h2',()=>{
+  const ramar=Object.entries(designs).filter(([,d])=>d.bespoke==='rambild');
+  assert.equal(ramar.length,7,'sju modeller');
+  for(const [key,d] of ramar){
+    assert.deepEqual(Object.keys(d.ramar),['a','b','c','d'],key+' har fyra ramar');
+    for(const ram of ['a','b','c','d'])assert.ok(fs.existsSync(path.join(root,'assets/mvp-celebrations/ram/'+d.modell+'-'+ram+'.webp')),key+' saknar bild '+ram);
+  }
+  const w=factory.create('catalog:battlemvp:celebration:ram-samurai');
+  assert.equal(w.mvpRam,'a','fabriken valjer forsta ramen');
+  Object.assign(w,{id:'ram-w',mvpName:'A <winner>',profileImage:'https://example.com/avatar.png',mvpDuration:12,mvpRam:'c'});
+  const h=createDom({state:{widgets:[w],projectName:'test'}});h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
+  const box=h.paint([w]).querySelector('.mvc-rambild');
+  assert.ok(box,'rambild-boxen saknas');
+  assert.ok(box.classList.contains('mvp-celebration')&&box.classList.contains('mvc-ram-samurai'));
+  assert.equal(box.dataset.mvpRam,'c');
+  assert.equal(box.dataset.mvcParticles,'off','ingen partikelduk');
+  assert.equal(box.style.getPropertyValue('--ram-dur'),'12s');
+  // Live-uppdateringen i media.js skriver till forsta <img> och forsta <h2>.
+  assert.equal(box.querySelector('img').className,'ramb-foto');
+  assert.equal(box.querySelector('img').src,'https://example.com/avatar.png');
+  assert.match(box.querySelector('.ramb-bild').src,/ram\/samurai-c\.webp$/);
+  assert.equal(box.querySelector('h2').textContent,'A <winner>');
+  assert.equal(box.querySelector('.ramb').style.getPropertyValue('--tecken'),'10');
+  assert.equal(box.querySelector('.mvc-portrait'),null,'bespoke-designen anvander inte firande-mallen');
+  // Ett okant ramval faller tillbaka pa a, och dolda delar respekteras.
+  const w2=Object.assign(factory.create('catalog:battlemvp:celebration:ram-ice'),{id:'ram-w2',mvpRam:'zz',mvpShowName:false,mvpShowLabel:false});
+  const box2=h.paint([w2]).querySelector('.mvc-rambild');
+  assert.equal(box2.dataset.mvpRam,'a');
+  assert.equal(box2.querySelector('h2').style.display,'none');
+  assert.equal(box2.querySelector('.ramb-mvp').style.display,'none');
+});
 test('explicit visibility flags and unsafe portrait URL are respected',()=>{
   const w=factory.create('catalog:battlemvp:celebration:moon');Object.assign(w,{id:'safe',mvpShowName:false,mvpShowLabel:false,profileImage:'javascript:alert(1)'});
   const h=createDom({state:{widgets:[w],projectName:'test'}});h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
@@ -47,9 +79,13 @@ test('all catalog choices, selector and actual thumbnail renderers are available
   const h=createDom();h.load('overlay-sanitize.js');h.load('battle-mvp-celebrations.js');
   h.window.eval("view='editor'; render(); bind()");
   const buttons=h.document.querySelectorAll('[data-mvp-celebration]');assert.equal(buttons.length,Object.keys(designs).length);
-  const target=[...buttons].find(b=>b.dataset.mvpCelebration==='pearl');target.click();
-  assert.equal(h.document.querySelector('#mvpStyle').value,'pearl');
-  assert.equal(h.document.querySelectorAll('#mvpStyle optgroup option').length,Object.keys(designs).length);
+  // 2026-11-11: de sex aldre firandena ar borta ur stilvaljaren (men renderas fortfarande for sparade layouter).
+  // Valjaren provas darfor med en av de nya rambilderna.
+  const target=[...buttons].find(b=>b.dataset.mvpCelebration==='ram-royal');target.click();
+  assert.equal(h.document.querySelector('#mvpStyle').value,'ram-royal');
+  assert.equal(h.document.querySelectorAll('#mvpStyle optgroup option').length,Object.keys(designs).length-6);
+  for(const key of ['coronation','wings','portal','rosegold','pearl','moon'])assert.equal(h.document.querySelector('#mvpStyle option[value="'+key+'"]'),null,key+' ska inte ga att valja');
+  assert.ok(h.paintPreview(factory.create('catalog:battlemvp:celebration:ram-royal')).querySelector('.ramb-bild'));
   assert.ok(h.paintPreview(factory.create('catalog:battlemvp:celebration:pearl')).querySelector('.mvc-art'));
 
 });
@@ -159,7 +195,8 @@ test('retired Gold Crown is absent from new choices but saved layouts still rend
   picker.innerHTML='<option value="gold-crown">Gold Crown</option><option value="royal-ribbon">Royal Ribbon</option>';
   h.document.body.append(picker);h.window.eval('bind()');
   assert.equal(picker.querySelector('[value="gold-crown"]'),null);
-  assert.ok(picker.querySelector('[value="royal-ribbon"]'));
+  // 2026-11-11: de sex PNG-ramarna tas ocksa bort ur valjaren. Renderaren finns kvar, se nedan.
+  assert.equal(picker.querySelector('[value="royal-ribbon"]'),null);
   const box=h.paint([w]).querySelector('.mvp-framed');
   assert.ok(box);assert.match(box.querySelector('.mvpf-art').src,/gold-crown.png$/);
   assert.equal(factory.variants('battlemvp.frame')['gold-crown'].label,'Gold Crown');
