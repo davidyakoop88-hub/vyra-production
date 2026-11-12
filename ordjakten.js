@@ -174,13 +174,21 @@
     if (!w || w.type !== TYP) return oldProps();
     const egna = egnaOrd(w.ojOrd).length;
     return `<h3>ORDJAKTEN</h3><div class="template-badge">CHATTEN GISSAR · LIVE</div><div hidden><input id="pt" value="Ordjakten"><input id="pv" value=""></div>`
+      // SÅ FUNKAR DET (David 2026-11-12): överst i panelen, så att den som just lagt widgeten i layouten ser hur den används.
+      + `<div class="property-group oj-hjalp"><h4>SÅ FUNKAR DET</h4><ol>`
+      + `<li>Ställ widgeten där den syns i bilden. Den startar direkt med första ordet.</li>`
+      + `<li>Tittarna skriver hela ordet i chatten. Bara ordet – inga emojis eller utropstecken efter.</li>`
+      + `<li>Först med rätt svar får poängen. Vinnaren och topplistan visas i widgeten.</li>`
+      + `<li>Du och dina moderatorer skriver !nästa för nytt ord och !lösning för att visa ordet utan poäng.</li>`
+      + `<li>Poängen ligger kvar mellan sändningar. Börja om här nedanför nollställer förhandsvisningen i studion – poängen i OBS ligger kvar.</li>`
+      + `</ol></div>`
       + `<div class="property-group"><h4>ORDEN</h4><label>Egna ord (ett per rad: ORD; ledtråd)<textarea id="ojOrd" rows="5" placeholder="BANAN; En frukt">${esc(w.ojOrd || '')}</textarea></label>`
       + `<small>${egna ? egna + ' egna ord.' : 'Inga egna ord ännu.'} ${ORD.length} inbyggda svenska ord finns också.</small>`
       + `<label><input id="ojBaraEgna" type="checkbox"${w.ojBaraEgna ? ' checked' : ''}> Använd bara mina egna ord</label></div>`
       + `<div class="property-group"><h4>REGLER</h4><label>Poäng för rätt svar<input id="ojPoang" type="number" min="1" max="1000" value="${klamp(w.ojPoang, 1, 1000, 100)}"></label>`
       + `<label>Paus före nästa ord (sekunder)<input id="ojPaus" type="number" min="2" max="60" value="${klamp(w.ojPaus, 2, 60, 8)}"></label>`
       + `<label>Visa topplista (antal)<input id="ojTopp" type="number" min="0" max="5" value="${klamp(w.ojTopp, 0, 5, 3)}"></label>`
-      + `<small>Först med hela ordet i chatten vinner. Moderatorer skriver !nästa för nytt ord och !lösning för att visa ordet. Inga gåvokrav, inga priser.</small></div>`
+      + `<small>Inga gåvokrav, inga priser.</small></div>`
       + `<div class="property-group"><h4>TEXT</h4><label>Rubrik<input id="ojRubrik" maxlength="24" value="${esc(w.ojRubrik == null ? 'ORDJAKTEN' : w.ojRubrik)}"></label></div>`
       + `<div class="property-group"><h4>TESTA</h4><button type="button" id="ojTestaRatt">Låt en testtittare svara rätt</button> <button type="button" id="ojNasta">Nästa ord</button> <button type="button" id="ojLosning">Visa lösning</button> <button type="button" id="ojNoll">Börja om</button><small>Bara här i studion. OBS styrs av chatten.</small></div>`
       + `<div class="property-group"><h4>POSITION & STORLEK</h4><div class="property-grid"><label>X<input id="propX" type="number" value="${Number(w.x) || 0}"></label><label>Y<input id="propY" type="number" value="${Number(w.y) || 0}"></label><label>Bredd<input id="propWidth" type="number" value="${klamp(w.width, 160, 900, 300)}"></label><label>Lager<input id="propLayer" type="number" value="${Number(w.layer) || 1}"></label></div></div>`
@@ -202,7 +210,7 @@
       const w = window.VyraWidgets.create('catalog:vyrapaket:ordjakten');
       state.widgets.push(w); selected = w.id;
       if (typeof save === 'function') save(); ritaOm();
-      if (typeof toast === 'function') toast('Ordjakten tillagd');
+      if (typeof toast === 'function') toast('Ordjakten tillagd · se Så funkar det i panelen');
     };
     sek.append(b);
     cat.append(sek);

@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 244,
+ "antal": 251,
  "senaste": {
-  "motiv": "Neonramar har ett katalogkort per läge: fyra nya nycklar catalog:toplike:ljusring:<läge> behöver referensbild",
-  "nycklar": 5,
-  "filter": "toplike:ljusring",
-  "tid": "2026-11-11T11:21:44.754Z"
+  "motiv": "Sju nya Battle MVP-firanden (ram-*) från #769 saknar referensbild och håller main röd",
+  "nycklar": 7,
+  "filter": "battlemvp:celebration:ram-",
+  "tid": "2026-11-12T10:41:30.929Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -988,6 +988,34 @@
   },
   "catalog:toplike:ljusring:vanster": {
    "matt": "248x276",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-aurora": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-cyber": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-ice": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-inferno": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-royal": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-samurai": {
+   "matt": "400x400",
+   "fyllnad": 100
+  },
+  "catalog:battlemvp:celebration:ram-storm": {
+   "matt": "400x400",
    "fyllnad": 100
   }
  }

@@ -122,3 +122,27 @@ test('chattrader via live-strömmen: gamla rader räknas inte, dolda widgetar r�
     assert.equal(O.lage(dold).lost, null);
   } finally { dom.window.close(); }
 });
+
+test('panelen: SÅ FUNKAR DET står överst med fem steg, och reglerna sägs inte två gånger', () => {
+  const dom = sida(), w = ny();
+  try {
+    dom.window.state.widgets.push(w);
+    dom.window.eval('var liveWidget=function(id){return state.widgets.find(function(x){return x.id===id})||null};');
+    dom.window.selected = w.id;
+    const box = dom.window.document.createElement('div'); box.innerHTML = dom.window.props();
+    const grupper = [...box.querySelectorAll('.property-group')];
+    assert.ok(grupper[0].classList.contains('oj-hjalp'), 'hjälpen ska vara första gruppen, före ORDEN');
+    assert.equal(grupper[0].querySelector('h4').textContent, 'SÅ FUNKAR DET');
+    assert.equal(grupper[1].querySelector('h4').textContent, 'ORDEN');
+    const steg = [...grupper[0].querySelectorAll('ol > li')].map(li => li.textContent);
+    assert.equal(steg.length, 5);
+    assert.match(steg[0], /^Ställ widgeten där den syns i bilden\./);
+    assert.match(steg[1], /hela ordet i chatten.*inga emojis eller utropstecken efter/);
+    assert.match(steg[2], /^Först med rätt svar får poängen\./);
+    assert.match(steg[3], /moderatorer skriver !nästa för nytt ord och !lösning/);
+    assert.match(steg[4], /^Poängen ligger kvar mellan sändningar\..*Börja om/);
+    assert.equal((box.textContent.match(/!nästa/g) || []).length, 1, 'kommandona ska stå en gång i panelen');
+    assert.match(box.textContent, /Inga gåvokrav, inga priser\./);
+    assert.ok(box.querySelector('#ojNoll'), 'steg 5 pekar på Börja om-knappen');
+  } finally { dom.window.close(); }
+});

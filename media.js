@@ -1954,8 +1954,8 @@ Promise.resolve().then(()=>{
 });
 // Ordjakten - chatten gissar det blandade ordet, moderatorer styr med !nästa och !lösning (ordjakten.js).
 Promise.resolve().then(()=>{
-  if(!document.querySelector('link[data-ordjakten]')){let css=document.createElement('link');css.rel='stylesheet';css.href='ordjakten.css?v=20261108-1';css.dataset.ordjakten='1';document.head.append(css)}
-  const s=document.createElement('script');s.src='ordjakten.js?v=20261109-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda ordjakten.js');document.body.append(s);
+  if(!document.querySelector('link[data-ordjakten]')){let css=document.createElement('link');css.rel='stylesheet';css.href='ordjakten.css?v=20261112-1';css.dataset.ordjakten='1';document.head.append(css)}
+  const s=document.createElement('script');s.src='ordjakten.js?v=20261112-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda ordjakten.js');document.body.append(s);
 });
 // Quiz - chatten svarar A, B eller C, en moderator startar med !quiz (quiz.js).
 Promise.resolve().then(()=>{
