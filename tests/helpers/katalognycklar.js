@@ -440,4 +440,19 @@ REGI['catalog:vyrapaket:ordjakten'] = {
   },
 };
 
-module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI };
+// DESIGNER SOM MED FLIT INTE KRYMPER LIKFORMIGT, och panelvalet som stänger av det. Storleksproven
+// (design-vid-storlek, storlek-matning) mäter kompositionen med valet AV, så att resten av designen
+// fortfarande måste följa skalan. Att valet PÅ faktiskt växer texten vaktas i designens eget prov.
+//
+// Neonramar (2026-11-10, Davids val): "Texten krymper mindre än ramarna" — texten zoomas med
+// 1/sqrt(skala), så att namnen går att läsa i liten storlek. Vid 50 % blir bredden 0,707 i stället
+// för 0,5. Ett katalogkort per läge sedan 2026-11-11: samma val gäller alla fem.
+//
+// LISTAN BOR HÄR, INTE I PROVEN. storlek-matning tar var sjätte nyckel (index % 6), så vilka nycklar
+// den mäter flyttar sig varje gång katalogen växer. När listan bara fanns i design-vid-storlek gick
+// storlek-matning grön tills #769 och #770 sköt in Neonramars lägen i dess sjättedel — och föll då
+// på main för en ändring som inte rörde Neonramar.
+const LIKFORMIG_MED = Object.freeze(Object.fromEntries(['', ':liggande', ':staende', ':vanster', ':hoger']
+  .map(l => ['catalog:toplike:ljusring' + l, Object.freeze({ tlnTextVaxer: false })])));
+
+module.exports = { nycklar, kravNycklar, GOLV, ALERTS, KARTA, UTAN_REFERENS, utanReferens, REGI, LIKFORMIG_MED };
