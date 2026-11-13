@@ -753,6 +753,13 @@
     'Inte ansluten': 'Not connected',
     'Anslut Spotify': 'Connect Spotify',
     'Koppla från': 'Disconnect',
+    // Designgranskning 2026-11-12: blandad svenska/engelska rättad i studions egna texter.
+    'sparat · väntar på anslutning': 'saved · waiting for connection',
+    'Senaste händelser': 'Latest events',
+    'Teknisk status': 'Technical status',
+    // Rullistornas första alternativ blir deras tillgängliga namn (vyra-hig.js › etiketter).
+    'Välj gåva…': 'Choose gift…',
+    'För felsökning: kö, fördröjning och skydd mot överbelastning.': 'For troubleshooting: queue, latency and overload protection.',
     'Musikåtgärder': 'Music actions',
     'Visa aktuell låt i chatten': 'Show the current song in the chat',
     'Moderatorer kan byta låt': 'Moderators can skip songs',
@@ -1326,6 +1333,7 @@
     [/^Aktivt boostfönster ×(\d+)$/, 'Active boost window ×$1'],
     [/^PÅGÅENDE MATCH · SEDAN (.+)$/, 'MATCH IN PROGRESS · SINCE $1'],
     [/^Manuellt registrerad · utgår (.+) \(UTC\)$/, 'Manually registered · expires $1 (UTC)'],
+    [/^TikTok-kontot är sparat · (.+) — väntar på anslutning$/, 'TikTok account saved · $1 — waiting for connection'],
   ];
 
   Object.assign(bas.text, text);

@@ -188,7 +188,11 @@
     el.setAttribute('data-ladda-desktop', '');
     el.setAttribute('href', RUTT);
     el.setAttribute('aria-disabled', 'true');
-    el.textContent = '⬇ VYRA Desktop';
+    // Linjeikon i stället för emojin ⬇, så att sidhuvudets ikoner talar samma språk som
+    // sidomenyns (granskning 2026-11-12, fynd 22). Texten ligger i en egen nod så att
+    // språkbytet fortfarande hittar den.
+    el.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>';
+    el.append(document.createTextNode('VYRA Desktop'));
     // Fore Fargschema: nedrakningen fran #174 lagger sig forst i raden, sa ordningen blir
     // provperiod, nedladdning, fargschema, anslut.
     const fore = rad.querySelector('#openBrandKit');

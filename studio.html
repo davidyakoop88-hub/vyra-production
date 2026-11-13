@@ -66,7 +66,7 @@
       <div><small id="crumb">VYRA / ÖVERSIKT</small><h1 id="title" data-sprak-tillbaka>God kväll, Streamer</h1></div>
       <div class="head-actions">
         <span class="studio-sprakval" data-sprakval></span>
-        <button id="openBrandKit" type="button" title="Sätt Accentfärg/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det">🎨 Färgschema</button>
+        <button id="openBrandKit" type="button" title="Sätt Accentfärg/Text/Sekundär text/Typsnitt en gång, för widgets som ärver det"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22a10 10 0 1 1 10-10c0 2.2-1.8 3-3.5 3H16a2 2 0 0 0-1.4 3.4A1.9 1.9 0 0 1 12 22Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>Färgschema</button>
         <button class="connect connection"><i></i><span>Anslut TikTok</span></button>
         <button id="openOverlay" hidden aria-hidden="true"></button>
       </div>
@@ -268,6 +268,10 @@
   <!-- Top Like · Neonramar (skin ljusring). EFTER ranking-sixpack.js och spellayout.js: wh-omslaget har rang 3.5. -->
   <link rel="stylesheet" href="toplike-ljusring.css?v=20261111-1">
   <script src="toplike-ljusring.js?v=20261111-4"></script>
+  <!-- HIG-lagret (designgranskning 2026-11-12): sist av alla stilmallar så att det vinner
+       kaskaden utan !important. Rör bara studions ram, aldrig overlay-utgången eller widgetar. -->
+  <link rel="stylesheet" href="vyra-hig.css?v=20261112-1">
+  <script src="vyra-hig.js?v=20261112-1"></script>
   <script>
     (function () {
       const params = new URLSearchParams(location.search);
