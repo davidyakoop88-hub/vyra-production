@@ -1998,3 +1998,28 @@ body:has(.editor-shell) .editor-shell{grid-template-columns:240px minmax(0,1fr) 
    till main>header (rad 524). */
 /* C-021 (rest): Händelsers tomma läge ritar inga skelettrader längre (vyra-vyord.js); regeln ovan finns
    kvar för säkerhets skull om filen inte laddas. */
+/* GÅVOVÄLJAREN I SOUND ALERTS (David 2026-11-13). Förut ett tvåkolumnsrutnät i en ruta lika smal
+   som högerspalten: namn, pris och beskrivning bröts över tre rader. Nu ett bildrutnät som TikToks
+   gåvopanel — gåvor känns igen på bilden, inte på namnet: fyra per rad, bild 44 px, namnet på en rad
+   under och priset under det. Grupprubrikerna (Fått i dina LIVE, Nya gåvor, prisgrupper) står kvar
+   när man rullar. Rutan är bredare än spalten och växer åt vänster ut över formuläret. Selektorerna
+   bär .sa-gift-picker så att de vinner över de äldre reglerna ovan, även dem i mediafrågor. */
+.sa-gift-picker .sa-gift-popover{left:auto;right:0;width:min(440px,calc(100vw - 48px));padding:10px;border:1px solid rgba(190,95,255,.35);border-radius:14px;background:#140b1d;box-shadow:0 18px 48px rgba(0,0,0,.6)}
+.sa-gift-picker .sa-gift-search{width:100%;min-height:40px;padding:9px 12px!important;border-radius:10px;font-size:13px!important}
+.sa-gift-picker .sa-gift-results{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;max-height:min(360px,48vh);overflow:auto;overscroll-behavior:contain;margin-top:8px;padding-right:2px}
+.sa-gift-picker .sa-gift-choice{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;min-width:0;min-height:96px;padding:8px 4px 6px;border:1px solid transparent;border-radius:10px;background:transparent;color:#f1e9f7;text-align:center;cursor:pointer}
+.sa-gift-picker .sa-gift-choice:hover,.sa-gift-picker .sa-gift-choice:focus-visible{background:rgba(190,95,255,.10);outline:none}
+.sa-gift-picker .sa-gift-choice:focus-visible{border-color:rgba(190,95,255,.6)}
+.sa-gift-picker .sa-gift-choice[aria-selected="true"]{background:rgba(177,60,255,.16);border-color:rgba(190,95,255,.45)}
+.sa-gift-picker .sa-gift-choice img{width:44px;height:44px;flex:none;object-fit:contain}
+.sa-gift-picker .sa-gift-choice b{display:block;width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11.5px;font-weight:600;line-height:1.25}
+.sa-gift-picker .sa-gift-choice small{display:block;color:#9a90a8;font-size:11px;font-variant-numeric:tabular-nums;line-height:1.2}
+/* "Alla gåvor": en hel rad överst, inte en ruta bland gåvorna. */
+.sa-gift-picker .sa-gift-alla{grid-column:1/-1;display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;column-gap:10px;min-height:44px;padding:6px 10px;text-align:left}
+.sa-gift-picker .sa-gift-alla b{font-size:13px}
+.sa-gift-picker .sa-gift-alla small{font-size:12px;text-align:right}
+.sa-gift-picker .sa-gift-fallback{display:grid;place-items:center;width:28px;height:28px;border-radius:8px;background:rgba(190,95,255,.16);color:#e7b5ff;font-size:13px}
+.sa-gift-picker .sa-gift-grupp{grid-column:1/-1;position:sticky;top:0;z-index:1;margin:0;padding:10px 6px 6px;border-top:1px solid rgba(190,95,255,.16);background:#140b1d;color:#9a90a8;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.sa-gift-picker .sa-gift-alla+.sa-gift-grupp,.sa-gift-picker .sa-gift-results>.sa-gift-grupp:first-child{border-top-color:transparent}
+.sa-gift-picker .sa-gift-none{grid-column:1/-1;padding:12px 10px;color:#9a90a8;font-size:13px}
+@media(max-width:480px){.sa-gift-picker .sa-gift-results{grid-template-columns:repeat(3,minmax(0,1fr))}}

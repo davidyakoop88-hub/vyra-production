@@ -243,7 +243,7 @@ const SA_IKON={
 function saSetPlaying(button,playing){if(!button)return;button.dataset.saPlaying=playing?'1':'0';if(button.classList.contains('sa-ik'))button.innerHTML=playing?SA_IKON.paus:SA_IKON.spela}
 function saActiveRow(item){const sound=saSound(item.event.soundAlertId),action=item.action;return `<article class="sa-alert-row" data-alert="${saEsc(item.event.id)}"><button class="sa-row-play sa-ik sa-ik--spela" type="button" data-sa-playing="0" title="Testa ljudet" aria-label="Testa ${saEsc(sound?.name||action.name)}">${SA_IKON.spela}</button><div class="sa-alert-copy"><b>${saEsc(sound?.name||action.name||'Ljudalert')}</b><small>${saEsc(saEventLabel(item))}</small></div><span class="sa-alert-meta">${Number(action.volume??80)}% · ${Number(action.cooldown||0)} s väntetid</span><label class="sa-switch"><input type="checkbox" class="sa-toggle"${item.event.enabled?' checked':''}><span></span></label><button class="sa-remove sa-ik sa-ik--radera" type="button" title="Ta bort" aria-label="Ta bort">${SA_IKON.radera}</button></article>`}
 function soundAlertCard(sound){const linked=saConnection(sound.id);return `<article class="media-card sound-card" data-sound="${saEsc(sound.id)}"><div class="sound-icon"><i>♪</i><button class="media-play sa-ik sa-ik--spela" type="button" data-sa-playing="0" title="Spela" aria-label="Spela ${saEsc(sound.name)}">${SA_IKON.spela}</button></div><div class="media-info"><b>${saEsc(sound.name)}</b><small>${linked?`Används i ${saEsc(saEventLabel(linked))}`:'Tillgängligt i biblioteket'}</small></div></article>`}
-function saGiftPickerHtml(){return `<div class="sa-gift-picker"><label>Gåva <button type="button" class="sa-gift-open"><span>Alla gåvor</span><b>Välj ur ${saGavor().length} gåvor</b></button></label><div class="sa-gift-popover" hidden><input class="sa-gift-search" type="search" placeholder="Sök gåva, t.ex. Lion"><div class="sa-gift-results"></div></div></div>`}
+function saGiftPickerHtml(){return `<div class="sa-gift-picker"><label>Gåva <button type="button" class="sa-gift-open" aria-haspopup="listbox" aria-expanded="false"><span>Alla gåvor</span><b>Välj ur ${saGavor().length} gåvor</b></button></label><div class="sa-gift-popover" hidden><input class="sa-gift-search" type="search" placeholder="Sök namn eller pris, t.ex. Lion eller 100" aria-label="Sök gåva"><div class="sa-gift-results" role="listbox" aria-label="Gåvor"></div></div></div>`}
 function saNewAlertHtml(){return `<section class="sa-create-card"><div><span class="sa-kicker">NY SOUND ALERT</span><h3>Välj vad som ska höras i din LIVE</h3><p>Koppla ett ljud till en gåva, följare eller ett annat event. Du kan alltid testa innan du sparar.</p></div><form class="sa-form" id="saNewAlert"><label>När detta händer<select name="trigger">${saTriggerOptions()}</select></label><div class="sa-condition-wrap">${saGiftPickerHtml()}</div><label>Ljud från biblioteket<select name="sound">${saSounds().map(sound=>`<option value="${saEsc(sound.id)}">${saEsc(sound.name)}</option>`).join('')}</select></label><label>Volym <output>80%</output><input name="volume" type="range" min="0" max="100" value="80"></label><label>Väntetid (sekunder)<input name="cooldown" type="number" min="0" max="300" value="0"></label><div class="sa-form-actions"><button type="button" class="sa-test-new">▶ Testa ljud</button><button type="submit" class="primary">Spara alert</button></div></form></section>`}
 function saLibraryCards(sounds){return sounds.slice(0,48).map(soundAlertCard).join('')||'<p class="sa-gift-none">Inget ljud hittades.</p>'}
 function saLibraryHtml(){const sounds=saSounds();return `<div class="sa-library-head"><div><h3>Ditt ljudbibliotek</h3><p>${sounds.length} ljud · välj ett ljud när du skapar en alert</p></div><label class="sa-upload">＋ Lägg till eget ljud<input type="file" accept="audio/*,.mp3,.wav,.ogg" hidden></label></div><input class="sa-library-search" type="search" placeholder="Sök bland dina ljud"><div class="media-grid sa-library-grid">${saLibraryCards(sounds)}</div>`}
@@ -267,20 +267,60 @@ function saGavor(){
   try{const l=window.VyraGavokatalog?.lista?.();if(Array.isArray(l)&&l.length)return l.filter(g=>g&&g.name&&g.image)}catch{}
   return (Array.isArray(window.VYRA_GIFTS)?window.VYRA_GIFTS:[]).map(g=>({name:g.name,image:g.file,coins:0,giftId:''}));
 }
-function saGiftResults(popover,query=''){
+/* GÅVOVÄLJAREN (David 2026-11-13). Två beslut samma dag:
+   1. "jag gillar inte hur alla gåvor syns där" — listan var ett tvåkolumnsrutnät i en smal ruta,
+      i katalogens ordning: namn, pris och beskrivning bröts över tre rader, och 100, 899, 10, 299,
+      1 coins stod om vartannat.
+   2. "tänk om man inte kan namn på gift, hur hittar man den" — en gåva känns igen på BILDEN.
+   Därför ett bildrutnät som TikToks egen gåvopanel: stor bild, namnet under, priset under det.
+   Grupperna i den ordning man oftast letar: gåvor man FÅTT i sina LIVE (katalogens `lard` — sedd i
+   en sändning), NYA gåvor från TikTok (`ny`), och sedan alla gåvor efter pris. Prisgrupperna är
+   kompletta: en gåva som står under "Fått" står också under sitt pris, så den som letar på pris
+   hittar allt. Sökningen tar både namn och pris — "100" visar varje gåva som kostar 100 coins. */
+function saGiftResults(popover,query='',selected=''){
+  /* Självständig med flit: sound-alerts-katalog.test.js plockar ut funktionen och kör den ensam. */
+  const PRISGRUPPER=[[1,9,'1–9 coins'],[10,99,'10–99 coins'],[100,999,'100–999 coins'],[1000,Infinity,'1 000+ coins']];
+  const coins=n=>Number(n).toLocaleString('sv-SE');
   const all=saGavor();
   const needle=query.trim().toLocaleLowerCase('sv');
+  const prisSok=/^\d[\d\s]*$/.test(needle)?Number(needle.replace(/\s/g,'')):null;
   /* ALLA GÅVOR (David 2026-11-01): listan var kapad vid 40, så resten av katalogen gick bara att nå genom att söka. Bilderna laddas lat. */
-  const gifts=needle?all.filter(gift=>String(gift.name).toLocaleLowerCase('sv').includes(needle)):all;
-  popover.querySelector('.sa-gift-results').innerHTML=`<button type="button" class="sa-gift-choice" data-gift=""><span class="sa-gift-fallback">★</span><b>Alla gåvor</b><small>Spela ljudet vid varje gåva</small></button>${gifts.map(gift=>`<button type="button" class="sa-gift-choice" data-gift="${saEsc(gift.name)}" data-gift-id="${saEsc(gift.giftId||'')}"><img src="${saEsc(gift.image)}" alt="" loading="lazy" data-fallback-applied="1"><b>${saEsc(gift.name)}</b>${Number(gift.coins)>0?`<small>${saEsc(String(gift.coins))} coins</small>`:''}</button>`).join('')||'<p class="sa-gift-none">Ingen gåva hittades.</p>'}`;
+  const pris=g=>Number(g.coins)>0?Number(g.coins):Infinity;
+  const traff=gift=>String(gift.name).toLocaleLowerCase('sv').includes(needle)||(prisSok!==null&&Number(gift.coins)===prisSok);
+  const gifts=(needle?all.filter(traff):all.slice())
+    .sort((a,b)=>pris(a)-pris(b)||String(a.name).localeCompare(String(b.name),'sv'));
+  const ruta=gift=>{
+    const harPris=Number(gift.coins)>0;
+    const etikett=gift.name+(harPris?`, ${coins(gift.coins)} coins`:'');
+    return `<button type="button" role="option" aria-selected="${gift.name===selected}" class="sa-gift-choice" data-gift="${saEsc(gift.name)}" data-gift-id="${saEsc(gift.giftId||'')}" title="${saEsc(etikett)}" aria-label="${saEsc(etikett)}"><img src="${saEsc(gift.image)}" alt="" loading="lazy" data-fallback-applied="1"><b>${saEsc(gift.name)}</b><small>${harPris?coins(gift.coins):'–'}</small></button>`;
+  };
+  const grupper=[];
+  if(!needle){
+    grupper.push(['Fått i dina LIVE',gifts.filter(g=>g.lard)]);
+    grupper.push(['Nya gåvor',gifts.filter(g=>g.ny&&!g.lard)]);
+  }
+  PRISGRUPPER.forEach(([fran,till,namn])=>grupper.push([namn,gifts.filter(g=>Number(g.coins)>=fran&&Number(g.coins)<=till)]));
+  grupper.push(['Okänt pris',gifts.filter(g=>!(Number(g.coins)>0))]);
+  /* "Alla gåvor" är ingen gåva bland andra: egen rad överst, och bara utan sökning. */
+  const alla=needle?'':`<button type="button" role="option" aria-selected="${!selected}" class="sa-gift-choice sa-gift-alla" data-gift=""><span class="sa-gift-fallback" aria-hidden="true">★</span><b>Alla gåvor</b><small>Spela ljudet vid varje gåva</small></button>`;
+  const lista=grupper.filter(([,g])=>g.length).map(([namn,g])=>`<p class="sa-gift-grupp" role="presentation">${saEsc(namn)}</p>${g.map(ruta).join('')}`).join('');
+  popover.querySelector('.sa-gift-results').innerHTML=alla+(lista||'<p class="sa-gift-none">Ingen gåva hittades. Sök på namn eller pris, t.ex. 100.</p>');
 }
 function saBindGiftPicker(form){
   const picker=form.querySelector('.sa-gift-picker');if(!picker)return;
   const opener=picker.querySelector('.sa-gift-open'),popover=picker.querySelector('.sa-gift-popover'),search=picker.querySelector('.sa-gift-search');
   let selected='';saGiftResults(popover);
-  opener.onclick=()=>{popover.hidden=!popover.hidden;if(!popover.hidden)search.focus()};
-  search.oninput=()=>saGiftResults(popover,search.value);
-  popover.onclick=event=>{const choice=event.target.closest('.sa-gift-choice');if(!choice)return;selected=choice.dataset.gift||'';opener.dataset.gift=selected;opener.dataset.giftId=choice.dataset.giftId||'';opener.querySelector('span').textContent=selected||'Alla gåvor';opener.querySelector('b').textContent=selected?'Specifik gåva':'Spela ljudet vid varje gåva';popover.hidden=true};
+  /* Öppna/stäng på ett ställe, så att aria-expanded och fokus alltid följer med. */
+  const visa=oppen=>{popover.hidden=!oppen;opener.setAttribute('aria-expanded',String(oppen));if(oppen){saGiftResults(popover,search.value,selected);search.focus({preventScroll:true});/* På en låg skärm hamnade väljaren nedanför dialogrutans kant. */popover.scrollIntoView({block:'nearest'})}};
+  opener.onclick=()=>visa(popover.hidden);
+  search.oninput=()=>saGiftResults(popover,search.value,selected);
+  /* Enter i sökfältet väljer första träffen; Esc stänger och lämnar fokus på knappen. */
+  search.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();popover.querySelector('.sa-gift-choice')?.click()}};
+  popover.onkeydown=event=>{if(event.key==='Escape'){event.preventDefault();visa(false);opener.focus()}};
+  /* Klick utanför stänger. Lyssnaren tar bort sig själv när formuläret har ritats om. */
+  const utanfor=event=>{if(!picker.isConnected){document.removeEventListener('pointerdown',utanfor,true);return}if(!popover.hidden&&!picker.contains(event.target))visa(false)};
+  document.addEventListener('pointerdown',utanfor,true);
+  popover.onclick=event=>{const choice=event.target.closest('.sa-gift-choice');if(!choice)return;selected=choice.dataset.gift||'';opener.dataset.gift=selected;opener.dataset.giftId=choice.dataset.giftId||'';opener.querySelector('span').textContent=selected||'Alla gåvor';opener.querySelector('b').textContent=selected?'Specifik gåva':'Spela ljudet vid varje gåva';visa(false);opener.focus()};
 }
 function saCreateAlert(form){
   return async event=>{event.preventDefault();const data=new FormData(form),sound=saSound(data.get('sound'));try{if(!sound||!await saGetMediaMeta(sound))throw Error('Ljud saknas');const gift=form.querySelector('.sa-gift-open')?.dataset.gift||'',giftId=form.querySelector('.sa-gift-open')?.dataset.giftId||'',trigger=data.get('trigger');const alert={id:`sa${Date.now()}-${sound.id}`,trigger,condition:trigger==='gift'?gift:'',...(trigger==='gift'&&gift&&giftId?{giftId}:{}),soundId:sound.id,volume:Math.max(0,Math.min(100,Number(data.get('volume'))||80)),cooldown:Math.max(0,Number(data.get('cooldown'))||0),enabled:true};if(!await saWriteAlerts([...saAlerts(),alert]))throw Error('Skrivning nekades');toast(`${sound.name} är kopplad till ${SA_TRIGGERS[trigger]||trigger}`);renderSoundAlerts()}catch{toast('Kunde inte spara sound alerten. Öppna VYRA i ett aktivt projekt och försök igen.')}}
