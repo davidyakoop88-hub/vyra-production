@@ -759,6 +759,13 @@
     'Teknisk status': 'Technical status',
     // Rullistornas första alternativ blir deras tillgängliga namn (vyra-hig.js › etiketter).
     'Välj gåva…': 'Choose gift…',
+    // Gåvoväljaren i Sound Alerts: prisgruppen för gåvor utan känt pris (sound-alerts.js).
+    'Okänt pris': 'Unknown price',
+    'Sök gåva': 'Search gift',
+    'Fått i dina LIVE': 'Received in your LIVE',
+    'Nya gåvor': 'New gifts',
+    'Sök namn eller pris, t.ex. Lion eller 100': 'Search name or price, e.g. Lion or 100',
+    'Ingen gåva hittades. Sök på namn eller pris, t.ex. 100.': 'No gift found. Search by name or price, e.g. 100.',
     'För felsökning: kö, fördröjning och skydd mot överbelastning.': 'For troubleshooting: queue, latency and overload protection.',
     'Musikåtgärder': 'Music actions',
     'Visa aktuell låt i chatten': 'Show the current song in the chat',
