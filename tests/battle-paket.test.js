@@ -186,3 +186,38 @@ test('egenskapspanelen har testknappar för varje klipp i paketet', () => {
   const html2 = w.props();
   assert.deepEqual([...html2.matchAll(/data-paket-test="([^"]+)"/g)].map(m => m[1]), ['boost-x2', 'boost-x3', 'tap', 'glove']);
 });
+
+// HELBILDSPAKET (Neon Miami, 2026-11-14). Klippen är stående 9:16 med effekter både i övre och
+// nedre bandet och genomskinlig mitt, så streamerns ansikte syns. Widgeten ska därför täcka hela
+// duken (432x768 från y 0) och ritas i 9:16 — inte som ett 16:9-band i nederkant.
+test('helbildspaketet täcker hela duken i 9:16', () => {
+  const { h, w, st } = boot([]);
+  const p = w.VyraWidgets.create('catalog:glovesnipe:neonMiami:pack:2');
+  assert.equal(p.battleEventKind, 'pack');
+  assert.equal(p.boostPack, 'neonMiami');
+  assert.equal(p.x, 0);
+  assert.equal(p.y, 0, 'helbildspaketet börjar i dukens överkant');
+  assert.equal(p.width, 432);
+  assert.ok(p.title.includes('Neon Miami'), p.title);
+  st.widgets.push(p);
+  const nod = h.paint(st.widgets).querySelector(`.battle-pack-full[data-id="${p.id}"]`);
+  assert.ok(nod.classList.contains('battle-pack-helbild'), 'helbildsklassen saknas');
+  assert.match(nod.querySelector('video.pack-fx-video').getAttribute('src'), /assets\/videos\/battle\/neon-miami\/x2\.webm$/);
+  // Ett 16:9-paket får inte klassen.
+  const vanlig = w.VyraWidgets.create('catalog:glovesnipe:cloudFox:pack:2');
+  st.widgets.push(vanlig);
+  const nod2 = h.paint(st.widgets).querySelector(`.battle-pack-full[data-id="${vanlig.id}"]`);
+  assert.equal(nod2.classList.contains('battle-pack-helbild'), false);
+  assert.equal(vanlig.y, 480);
+});
+
+test('helbildspaketet har alla fem klippen, glove är X5', () => {
+  const { w } = boot([]);
+  const p = w.VyraWidgets.create('catalog:glovesnipe:neonMiami:pack:2');
+  for (const [nyckel, fil] of [['boost-x2', 'x2'], ['boost-x3', 'x3'], ['tap', 'tap'], ['glove', 'glove'], ['snipe', 'snipe']]) {
+    const sok = w.VyraBattlePaket.fil(p, nyckel);
+    assert.equal(sok, `assets/videos/battle/neon-miami/${fil}.webm`, nyckel);
+    for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
+  }
+  assert.match(fs.readFileSync(path.join(ROOT, 'battle-pack-images.css'), 'utf8'), /\.battle-pack-full\.battle-pack-helbild\{aspect-ratio:9\/16\}/);
+});

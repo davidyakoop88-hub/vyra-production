@@ -214,8 +214,8 @@
 'ram-aurora':{label:'Aurora',accent:'#6ff0d0',asset:'ram/aurora-a.webp',width:400,duration:10,bespoke:'rambild',modell:'aurora',ramar:{a:'Fenix',b:'Hjort',c:'Måne',d:'Kristallvinge'}},
 'ram-samurai':{label:'Samurai',accent:'#ff6a4d',asset:'ram/samurai-a.webp',width:400,duration:10,bespoke:'rambild',modell:'samurai',ramar:{a:'Hjälm',b:'Drake',c:'Svärd',d:'Katana'}},coronation:{photo:{left:24.085,top:28.305,width:51.83,height:47.05},label:'Kröningen',accent:'#f5ce70'},wings:{photo:{left:21.93,top:20.815,width:56.14,height:54.23},label:'Vingar',accent:'#cbb4ff'},portal:{photo:{left:24.32,top:20.5,width:51.36,height:49.6},label:'Energiportalen',accent:'#67eff0'},rosegold:{photo:{left:12.44,top:10.29,width:74.16,height:67.94},label:'Roséguld',accent:'#efb6ae'},pearl:{photo:{left:17.705,top:14.75,width:64.59,height:61.4},label:'Pärlvingar',accent:'#f2dcdb'},moon:{photo:{left:16.905,top:13.395,width:72.57,height:65.39},label:'Lavendelmåne',accent:'#c4b4ff'}},
     'battlemvp.style': {inferno:'#ff8b16',royal:'#ff8b16',ice:'#52d9ff',cyber:'#cb46ff',storm:'#6d7bff',aurora:'#4fd8c4',samurai:'#ff3355','royal-purple':'#f5cf6b','neon-cyber':'#3ff5ff','diamond-elite':'#e8edf3'},
-    'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade'],pinkPrincess:['Tjej','#ff4fd8','#ffd1f3','neon','luxury'],royalRuby:['Tjej','#c1122f','#f5c96b','fire','luxury'],cloudFox:['Tjej','#f5b942','#7fd8ff','impact','luxury']},
-    'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE'],pinkPrincess:['Pink Princess','💎','PRINCESS STRIKE'],royalRuby:['Royal Ruby','👑','ROYAL STRIKE'],cloudFox:['Cloud Fox','🦊','FOX STRIKE']},
+    'glovesnipe.pack': {koiPearl:['Tjej','#3ecdd6','#e8c37a','ice','koi'],masquerade:['Tjej','#7a1128','#d4af37','fire','masquerade'],pinkPrincess:['Tjej','#ff4fd8','#ffd1f3','neon','luxury'],royalRuby:['Tjej','#c1122f','#f5c96b','fire','luxury'],cloudFox:['Tjej','#f5b942','#7fd8ff','impact','luxury'],neonMiami:['Tjej','#ff3fb4','#3ff4ff','neon','luxury','helbild']},
+    'glovesnipe.detail': {koiPearl:['Koi Pearl Lagoon','🐟','KOI STRIKE'],masquerade:['Masquerade Ball','🎭','MASKED STRIKE'],pinkPrincess:['Pink Princess','💎','PRINCESS STRIKE'],royalRuby:['Royal Ruby','👑','ROYAL STRIKE'],cloudFox:['Cloud Fox','🦊','FOX STRIKE'],neonMiami:['Neon Miami','🌴','MIAMI STRIKE']},
     // Gift Jar. Till skillnad fran temaregistren ovan bar varje modell bade farg OCH symbol:
     // burken ritas ur dem — accent ar glaset, light ar innehallet, symbol ar markningen.
     'giftjar.model': {
@@ -644,7 +644,7 @@
     // av eventet i media.js/battle-fx-auto.js, så varken multiplikator eller etikett är ett val.
     // gloveDuration är här TAKET för en uppspelning (klippen är 10 s och stänger sig själva).
     'glovesnipe.pack': v => v.kind === 'pack' ? ({
-      type: 'templateGloveSnipe', x: 0, y: 480, width: 432, title: v.title, boostPack: v.pack,
+      type: 'templateGloveSnipe', x: 0, y: v.helbild ? 0 : 480, width: 432, title: v.title, boostPack: v.pack,
       battleEventKind: 'pack', gloveIcon: v.icon, gloveMultiplier: 2,
       gloveLabel: v.label, gloveName: v.name, gloveStyle: v.style, gloveColor: v.color,
       gloveColor2: v.color2, gloveDuration: 20, layer: 20, battleVideoMode: true
@@ -893,7 +893,7 @@
         title: kind === 'pack' ? d[0] + ' · Video FX' : d[0] + ' ' + labels[kind], pack, kind, icon: icons[kind], multiplier,
         label: labels[kind],
         name: kind === 'tap' ? 'KEEP TAPPING' : kind === 'snipe' ? 'FINAL SNIPE' : kind === 'glove' ? 'POWER GLOVE' : d[2],
-        style: p[3], color: p[1], color2: p[2]
+        style: p[3], color: p[1], color2: p[2], helbild: p[5] === 'helbild'
       }];
     },
     'battlemvp': parts => {
