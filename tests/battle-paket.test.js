@@ -221,3 +221,21 @@ test('helbildspaketet har alla fem klippen, glove är X5', () => {
   }
   assert.match(fs.readFileSync(path.join(ROOT, 'battle-pack-images.css'), 'utf8'), /\.battle-pack-full\.battle-pack-helbild\{aspect-ratio:9\/16\}/);
 });
+
+
+// SAMURAI STORM (2026-11-15): andra helbildspaketet, byggt som Neon Miami.
+test('Samurai Storm är ett helbildspaket med alla fem klippen', () => {
+  const { h, w, st } = boot([]);
+  const p = w.VyraWidgets.create('catalog:glovesnipe:samuraiStorm:pack:2');
+  assert.equal(p.boostPack, 'samuraiStorm');
+  assert.equal(p.y, 0, 'helbildspaketet börjar i dukens överkant');
+  assert.ok(p.title.includes('Samurai Storm'), p.title);
+  st.widgets.push(p);
+  const nod = h.paint(st.widgets).querySelector(`.battle-pack-full[data-id="${p.id}"]`);
+  assert.ok(nod.classList.contains('battle-pack-helbild'), 'helbildsklassen saknas');
+  for (const [nyckel, fil] of [['boost-x2', 'x2'], ['boost-x3', 'x3'], ['tap', 'tap'], ['glove', 'glove'], ['snipe', 'snipe']]) {
+    const sok = w.VyraBattlePaket.fil(p, nyckel);
+    assert.equal(sok, `assets/videos/battle/samurai-storm/${fil}.webm`, nyckel);
+    for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
+  }
+});
