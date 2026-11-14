@@ -55,6 +55,7 @@
    300px!important fran battle-packs.css maste slas med samma vikt. Slackt i vila; synlig nar den
    ar vald i editorn (affischen) och medan ett klipp spelar (.pack-active). */
 .battle-pack-video.battle-pack-full{height:auto!important;aspect-ratio:16/9;line-height:0;animation:none!important;isolation:auto}
+.battle-pack-video.battle-pack-full.battle-pack-helbild{aspect-ratio:9/16}
 .battle-pack-video.battle-pack-full.selected,.battle-pack-video.battle-pack-full.pack-active{opacity:1;visibility:visible;animation:none!important}
 .battle-pack-video.battle-pack-full .pack-fx-video{width:100%;height:100%;object-fit:contain;mix-blend-mode:normal;clip-path:none;display:block;background:transparent}
 /* Affischen (klippets .jpg) ligger ovanpa videon och visas BARA nar videon star stilla (pack-stilla,

@@ -672,3 +672,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Sju nya Battle MVP-firanden (ram-*) från #769 saknar referensbild och håller main röd
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 7 av 171 (filter: battlemvp:celebration:ram-) — catalog:battlemvp:celebration:ram-aurora, catalog:battlemvp:celebration:ram-cyber, catalog:battlemvp:celebration:ram-ice, catalog:battlemvp:celebration:ram-inferno, catalog:battlemvp:celebration:ram-royal, catalog:battlemvp:celebration:ram-samurai, catalog:battlemvp:celebration:ram-storm
+
+## 2026-11-14 — 1 referenser skrivna
+
+- **Motiv:** Nytt battle-paket Neon Miami (helbild 9:16) - ny katalognyckel
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 172 (filter: neonMiami) — catalog:glovesnipe:neonMiami:pack:2

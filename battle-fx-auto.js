@@ -199,7 +199,9 @@
     var klipp = klippSokvag(pack, nyckel);
     if (!klipp) return 'paketet saknar ' + nyckel;
     if (!root.VyraActionRuntime || !root.VyraActionRuntime.execute) return 'ingen runtime';
-    var plats = placering(root.innerWidth || 1080, root.innerHeight || 1920, inst.storlek, inst.botten);
+    // Helbildspaket (9:16, effekter uppe och nere) fyller hela kallan i stallet for ett 16:9-band.
+    var pkg = (root.VYRA_OVERLAY_PACKAGES || {})[pack];
+    var plats = pkg && pkg.helbild ? { x: 0, y: 0, width: 1080, layer: 40 } : placering(root.innerWidth || 1080, root.innerHeight || 1920, inst.storlek, inst.botten);
     var action = {
       id: 'battle-fx-' + nyckel, name: 'Battle-FX: ' + klipp.name, types: ['video'],
       duration: KLIPP_SEK, cooldown: 0, volume: 0, fade: false,

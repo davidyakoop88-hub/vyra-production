@@ -301,3 +301,18 @@ test('utan paketwidget är allt som förut: runtime, scen 1, panelvalet', () => 
   assert.equal(m.fonster.VyraBattleFx.hantera({ type: 'tap' }), 'spelas');
   assert.deepEqual(m.spelat(), ['tap']);
 });
+
+// HELBILDSPAKET (Neon Miami, 2026-11-14): klippen är stående 9:16 med effekter uppe och nere, så de
+// spelas över hela källan (1080 bred från y 0) — inte i ett 16:9-band i nederkant som de andra.
+test('helbildspaket spelas över hela källan, vanliga paket i nederkant', () => {
+  const { fonster, korda } = miljo('neonMiami');
+  fonster.VYRA_OVERLAY_PACKAGES.neonMiami = { name: 'Neon Miami', icon: '🌴', helbild: true, files: [
+    { key: 'boost-x2', label: 'X2 Boost', path: 'a/x2.webm' }, { key: 'glove', label: 'Glove Power (X5)', path: 'a/glove.webm' }] };
+  const f = ladda(fonster).VyraBattleFx;
+  f.spela({ id: 'battle-fx-test-hel', type: 'glove', multiplier: 2 }, { test: true });
+  assert.equal(korda.length, 1);
+  assert.deepEqual({ ...korda[0].action.scene }, { number: 1, x: 0, y: 0, width: 1080, layer: 40 });
+  const vanlig = miljo('pinkPrincess');
+  ladda(vanlig.fonster).VyraBattleFx.spela({ id: 'battle-fx-test-vanlig', type: 'glove', multiplier: 2 }, { test: true });
+  assert.notEqual(vanlig.korda[0].action.scene.y, 0, 'ett 16:9-paket ska fortfarande ligga i nederkant');
+});
