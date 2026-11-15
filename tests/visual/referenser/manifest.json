@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 256,
+ "antal": 257,
  "senaste": {
-  "motiv": "Nytt battle-paket Jungle Spirit (helbild 9:16)",
+  "motiv": "Nytt battle-paket Golden Holiday (helbild 9:16)",
   "nycklar": 1,
-  "filter": "jungleSpirit",
-  "tid": "2026-11-15T17:04:26.929Z"
+  "filter": "goldenHoliday",
+  "tid": "2026-11-15T19:18:05.969Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -1035,6 +1035,10 @@
    "fyllnad": 100
   },
   "catalog:glovesnipe:jungleSpirit:pack:2": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:goldenHoliday:pack:2": {
    "matt": "432x768",
    "fyllnad": 100
   }

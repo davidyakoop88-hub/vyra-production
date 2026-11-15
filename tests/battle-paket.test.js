@@ -292,3 +292,20 @@ test('Jungle Spirit är ett helbildspaket med alla fem klippen', () => {
     for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
   }
 });
+
+// GOLDEN HOLIDAY (2026-11-15): sjätte helbildspaketet, julklappar som packas upp, girlang upptill.
+test('Golden Holiday är ett helbildspaket med alla fem klippen', () => {
+  const { h, w, st } = boot([]);
+  const p = w.VyraWidgets.create('catalog:glovesnipe:goldenHoliday:pack:2');
+  assert.equal(p.boostPack, 'goldenHoliday');
+  assert.equal(p.y, 0, 'helbildspaketet börjar i dukens överkant');
+  assert.ok(p.title.includes('Golden Holiday'), p.title);
+  st.widgets.push(p);
+  const nod = h.paint(st.widgets).querySelector(`.battle-pack-full[data-id="${p.id}"]`);
+  assert.ok(nod.classList.contains('battle-pack-helbild'), 'helbildsklassen saknas');
+  for (const [nyckel, fil] of [['boost-x2', 'x2'], ['boost-x3', 'x3'], ['tap', 'tap'], ['glove', 'glove'], ['snipe', 'snipe']]) {
+    const sok = w.VyraBattlePaket.fil(p, nyckel);
+    assert.equal(sok, `assets/videos/battle/golden-holiday/${fil}.webm`, nyckel);
+    for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
+  }
+});
