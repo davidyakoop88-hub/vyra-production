@@ -678,3 +678,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Nytt battle-paket Neon Miami (helbild 9:16) - ny katalognyckel
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 172 (filter: neonMiami) — catalog:glovesnipe:neonMiami:pack:2
+
+## 2026-11-14 — 1 referenser skrivna
+
+- **Motiv:** Nytt helbildspaket Samurai Storm: referens för katalogkortet
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 173 (filter: samuraiStorm) — catalog:glovesnipe:samuraiStorm:pack:2
