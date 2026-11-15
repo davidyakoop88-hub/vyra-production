@@ -35,7 +35,7 @@
   const R = window.VyraPanelregister;
   if (!R || typeof R.definiera !== 'function') return;
 
-  const DETALJ = { koiPearl: 'Koi Pearl Lagoon', masquerade: 'Masquerade Ball', pinkPrincess: 'Pink Princess', royalRuby: 'Royal Ruby', cloudFox: 'Cloud Fox', neonMiami: 'Neon Miami', samuraiStorm: 'Samurai Storm' };
+  const DETALJ = { koiPearl: 'Koi Pearl Lagoon', masquerade: 'Masquerade Ball', pinkPrincess: 'Pink Princess', royalRuby: 'Royal Ruby', cloudFox: 'Cloud Fox', neonMiami: 'Neon Miami', samuraiStorm: 'Samurai Storm', streetArt: 'Street Art' };
   const modell = w => (w && w.battleEventKind === 'pack' ? String(w.boostPack || '') : 'klassisk');
   const LIVE_WEBM = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar, Glove när 30 s återstår av boosten och Snipe när 30 s återstår av matchen.';
   const LIVE_MP4 = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar och Glove när 30 s återstår av boosten. Paketet har inget Snipe-klipp.';
@@ -56,7 +56,7 @@
       { sektion: 7, typ: 'std-aterstall' },
     ],
   });
-  post(['pinkPrincess', 'royalRuby', 'cloudFox', 'neonMiami', 'samuraiStorm'], 'glove', LIVE_WEBM);
+  post(['pinkPrincess', 'royalRuby', 'cloudFox', 'neonMiami', 'samuraiStorm', 'streetArt'], 'glove', LIVE_WEBM);
   post(['koiPearl', 'masquerade'], 'glove-mp4', LIVE_MP4);
 
   // Koi Pearl Lagoon och Masquerade Ball var avvecklade 2026-10-20–23 (slutgranskning B-001/B-002: svarta MP4-rutor
