@@ -204,7 +204,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Bumpad 2026-10-15: familjen 'spellayout' (spelteman). BARA widget-factory.js andrades av de
   // befintliga filerna; spellayout.js/.css är nya och laddas med egna strängar.
   // Bumpad 2026-11-12: nyckeln catalog:giftfireworks:november (november-fyrverkeriet som egen design).
-  assert.match(studio, /widget-factory\.js\?v=20261115-2/);
+  assert.match(studio, /widget-factory\.js\?v=20261115-3/);
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
   // 20261021-13: en gåva till en annan värd (tillVarden:false) tar inte Top Gift.
