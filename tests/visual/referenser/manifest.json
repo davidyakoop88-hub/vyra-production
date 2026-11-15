@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 252,
+ "antal": 253,
  "senaste": {
-  "motiv": "Nytt battle-paket Neon Miami (helbild 9:16) - ny katalognyckel",
+  "motiv": "Nytt helbildspaket Samurai Storm: referens för katalogkortet",
   "nycklar": 1,
-  "filter": "neonMiami",
-  "tid": "2026-11-14T16:46:59.259Z"
+  "filter": "samuraiStorm",
+  "tid": "2026-11-14T23:58:30.582Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -1019,6 +1019,10 @@
    "fyllnad": 100
   },
   "catalog:glovesnipe:neonMiami:pack:2": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:samuraiStorm:pack:2": {
    "matt": "432x768",
    "fyllnad": 100
   }
