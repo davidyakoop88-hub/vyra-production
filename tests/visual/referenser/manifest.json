@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 254,
+ "antal": 255,
  "senaste": {
-  "motiv": "Nytt battle-paket Street Art (helbild 9:16)",
+  "motiv": "Nytt battle-paket Ice Frost (helbild 9:16)",
   "nycklar": 1,
-  "filter": "streetArt",
-  "tid": "2026-11-15T14:31:04.929Z"
+  "filter": "iceFrost",
+  "tid": "2026-11-15T16:10:57.327Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -1027,6 +1027,10 @@
    "fyllnad": 100
   },
   "catalog:glovesnipe:streetArt:pack:2": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:iceFrost:pack:2": {
    "matt": "432x768",
    "fyllnad": 100
   }
