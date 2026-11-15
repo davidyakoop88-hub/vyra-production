@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `ee6c0678`
+Commit: `293405c3`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -25,11 +25,11 @@ proveniensen saknas: datumet bredvid ar anda matt.
 
 | | |
 |---|---|
-| Kort totalt | **184** |
+| Kort totalt | **185** |
 | Sektioner | 32 |
-| Med katalognyckel | 184 / 184 |
-| Med shadow DOM-miniatyr | 150 / 184  ⚠️ |
-| Ritar sin design | 184 / 184 |
+| Med katalognyckel | 185 / 185 |
+| Med shadow DOM-miniatyr | 150 / 185  ⚠️ |
+| Ritar sin design | 185 / 185 |
 | Tandningsregel i dokumentet | 0  (ska vara 0) |
 | Layout rord av katalogen | 0 i minnet, 0 pa disk  (ska vara 0/0) |
 
@@ -54,7 +54,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | LIKE FOUNTAIN | 1 | 1/1 | 1/1 | 1/1 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · 6 DESIGNER | 6 | 6/6 | 6/6 | 6/6 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | BATTLE MVP · FIRANDE · 9 KOREOGRAFIER | 9 | 9/9 | 9/9 | 9/9 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
-| Battle-paket · VIDEO FX · 5 paket | 5 | 5/5 | 0/5 ⚠️ | 5/5 | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
+| Battle-paket · VIDEO FX · 6 paket | 6 | 6/6 | 0/6 ⚠️ | 6/6 | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
 | FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
@@ -240,7 +240,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Aurora | `catalog:battlemvp:celebration:ram-aurora` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Samurai | `catalog:battlemvp:celebration:ram-samurai` | ✓ | ✓ | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 
-### Battle-paket · VIDEO FX · 5 paket
+### Battle-paket · VIDEO FX · 6 paket
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
@@ -249,6 +249,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | Cloud Fox · hela paketet | `catalog:glovesnipe:cloudFox:pack:2` | — ⚠️ | ✓ | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | Neon Miami · hela paketet | `catalog:glovesnipe:neonMiami:pack:2` | — ⚠️ | ✓ | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | Samurai Storm · hela paketet | `catalog:glovesnipe:samuraiStorm:pack:2` | — ⚠️ | ✓ | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
+| Street Art · hela paketet | `catalog:glovesnipe:streetArt:pack:2` | — ⚠️ | ✓ | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 
 ### NEW FOLLOWER ALERT · 3 TEMAN
 
