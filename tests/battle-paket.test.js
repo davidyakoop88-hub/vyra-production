@@ -257,3 +257,21 @@ test('Street Art är ett helbildspaket med alla fem klippen', () => {
     for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
   }
 });
+
+
+// ICE FROST (2026-11-15): fjärde helbildspaketet, iskristaller och Ice Wolf bakom X2/X3.
+test('Ice Frost är ett helbildspaket med alla fem klippen', () => {
+  const { h, w, st } = boot([]);
+  const p = w.VyraWidgets.create('catalog:glovesnipe:iceFrost:pack:2');
+  assert.equal(p.boostPack, 'iceFrost');
+  assert.equal(p.y, 0, 'helbildspaketet börjar i dukens överkant');
+  assert.ok(p.title.includes('Ice Frost'), p.title);
+  st.widgets.push(p);
+  const nod = h.paint(st.widgets).querySelector(`.battle-pack-full[data-id="${p.id}"]`);
+  assert.ok(nod.classList.contains('battle-pack-helbild'), 'helbildsklassen saknas');
+  for (const [nyckel, fil] of [['boost-x2', 'x2'], ['boost-x3', 'x3'], ['tap', 'tap'], ['glove', 'glove'], ['snipe', 'snipe']]) {
+    const sok = w.VyraBattlePaket.fil(p, nyckel);
+    assert.equal(sok, `assets/videos/battle/ice-frost/${fil}.webm`, nyckel);
+    for (const ext of ['.webm', '.webp', '.jpg']) assert.ok(fs.existsSync(path.join(ROOT, sok.replace(/\.webm$/, ext))), sok + ' ' + ext);
+  }
+});
