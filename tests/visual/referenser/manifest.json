@@ -6,12 +6,12 @@
   "revision": "1234"
  },
  "rastrering": "3e0f58bc",
- "antal": 253,
+ "antal": 254,
  "senaste": {
-  "motiv": "Nytt helbildspaket Samurai Storm: referens för katalogkortet",
+  "motiv": "Nytt battle-paket Street Art (helbild 9:16)",
   "nycklar": 1,
-  "filter": "samuraiStorm",
-  "tid": "2026-11-14T23:58:30.582Z"
+  "filter": "streetArt",
+  "tid": "2026-11-15T14:31:04.929Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
@@ -1023,6 +1023,10 @@
    "fyllnad": 100
   },
   "catalog:glovesnipe:samuraiStorm:pack:2": {
+   "matt": "432x768",
+   "fyllnad": 100
+  },
+  "catalog:glovesnipe:streetArt:pack:2": {
    "matt": "432x768",
    "fyllnad": 100
   }
