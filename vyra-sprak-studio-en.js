@@ -1232,7 +1232,11 @@
     'Layouten uppdaterades från en annan enhet': 'The layout was updated from another device',
     '1 ändring': '1 change',
     // Guiden · nya delar i Action & Event och VYRA-röster (2026-11-16)
-    'Hur fungerar battle-paketens video-effekter?': 'How do the battle packs\' video effects work?',
+    'Hur fungerar battle-paketens video-effekter?': 'How do the battle packs\' video effects work?',
+    'Var ser jag vad som gick fel under sändningen?': 'Where can I see what went wrong during the stream?',
+    'Var spelas TTS-rösten — i studion eller i OBS?': 'Where does the TTS voice play — in the studio or in OBS?',
+    'Öppna LIVE-kontroll. Rutan Problem i sändningen säger till när något inte blir som det ska — och varför: när avataren ignorerar ett kommando (till exempel "!s" utan text, eller en avsändare som TikTok inte räknar som moderator), när ett battle-klipp väntar eller hoppas över, hur många sekunder efter matchslut MVP visades, och när TTS eller Sound Alerts inte kunde spela. Spara som fil ger en fil du kan skicka till oss efter sändningen.': 'Open LIVE control. The Problems during the stream box tells you when something does not go as it should — and why: when the avatar ignores a command (for example "!s" without text, or a sender TikTok does not count as a moderator), when a battle clip waits or is skipped, how many seconds after the match ended the MVP was shown, and when TTS or Sound Alerts could not play. Save as file gives you a file you can send us after the stream.',
+    'Du väljer under TTS Chat → Rösten läses i. Studion / VYRA Desktop (förvalt): datorn läser och OBS fångar datorljudet, så håll studion öppen under sändningen. OBS-overlayn: ljudet följer med overlay-länken. Bara ett av ställena läser, så rösten hörs aldrig två gånger.': 'You choose under TTS Chat → Voice plays in. The studio / VYRA Desktop (default): the computer reads and OBS captures desktop audio, so keep the studio open during the stream. The OBS overlay: the sound follows the overlay link. Only one of them reads, so the voice is never heard twice.',
     'Lägg ett battle-paket på din overlay, så väljer VYRA klippen själv under matchen: Tap Tap när matchen börjar. Den första bonustiden är tyst. När en dubbel- eller trippelboost öppnar spelas X2 eller X3, och handsken (Glove) när 30 sekunder återstår av boosten. När 30 sekunder återstår av matchen spelas Snipe, och när 20 sekunder återstår spelas handsken igen.': 'Add a battle pack to your overlay and VYRA picks the clips itself during the match: Tap Tap when the match starts. The first bonus window is silent. When a double or triple boost opens, X2 or X3 plays, and the glove (Glove) when 30 seconds of the boost remain. When 30 seconds of the match remain Snipe plays, and when 20 seconds remain the glove plays again.',
     'Live väljer VYRA klippet själv: Tap Tap när matchen börjar, X2/X3 när en boost startar, Glove när 30 s återstår av boosten (inte första bonustiden), Snipe när 30 s återstår av matchen och Glove igen när 20 s återstår.': 'Live, VYRA picks the clip itself: Tap Tap when the match starts, X2/X3 when a boost starts, Glove when 30 s of the boost remain (not the first bonus window), Snipe when 30 s of the match remain and Glove again when 20 s remain.',
     'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar, Glove när 30 s återstår av boosten (inte första bonustiden), Snipe när 30 s återstår av matchen och Glove igen när 20 s återstår.': 'The battle picks the clip: Tap Tap when the match starts, X2 or X3 when a boost starts, Glove when 30 s of the boost remain (not the first bonus window), Snipe when 30 s of the match remain and Glove again when 20 s remain.',
@@ -1476,6 +1480,48 @@
     [/^Inget event väntade på (.+?)(?: — eventen väntar på (.+))?$/, (m, vad, vantar) =>
       'No event was waiting for ' + (vad === 'det här' ? 'this' : vad) + (vantar ? ' — the events are waiting for ' + vantar : '')],
   ];
+
+  // ---- Felrapporten "Problem i sändningen" och var rösten läses (2026-11-17) ---------------------
+  Object.assign(text, {
+    'Problem i sändningen': 'Problems during the stream',
+    'Spara som fil': 'Save as file',
+    'Inga problem rapporterade': 'No problems reported',
+    'Battle-klipp': 'Battle clips',
+    'Här säger avataren, battle-klippen, MVP, TTS och Sound Alerts till när något inte blir som det ska — och varför.':
+      'Here the avatar, battle clips, MVP, TTS and Sound Alerts tell you when something does not go as it should — and why.',
+    'Studion räknar ut samma beslut som OBS-overlayn. Om OBS själv inte kunde spela en fil syns det inte här. "Spara som fil" tar med LIVE-kontrollens händelser.':
+      'The studio makes the same decisions as the OBS overlay. If OBS itself could not play a file, it does not show here. "Save as file" includes the LIVE control events.',
+    'Rösten läses i': 'Voice plays in',
+    'Studion / VYRA Desktop': 'The studio / VYRA Desktop',
+    'OBS-overlayn': 'The OBS overlay',
+    'Studion: datorn läser och OBS fångar datorljudet — håll studion öppen. OBS-overlayn: ljudet följer med overlay-länken.':
+      'The studio: the computer reads and OBS captures desktop audio — keep the studio open. The OBS overlay: the sound follows the overlay link.',
+    'Valet kunde inte sparas — logga in först': 'The choice could not be saved — sign in first',
+    'Rösten läses nu i OBS-overlayn': 'The voice now plays in the OBS overlay',
+    'Rösten läses nu i studion / VYRA Desktop': 'The voice now plays in the studio / VYRA Desktop',
+    'Händelser kom mer än 30 s för sent och gav inget ljud — anslutningen till TikTok släpar':
+      'Events arrived more than 30 s late and played no sound — the connection to TikTok is lagging',
+    'Ingen MVP visades 45 s efter matchslut — kom det några gåvor under matchen?':
+      'No MVP was shown 45 s after the match ended — were any gifts sent during the match?',
+    'En boost kom men Automatisk battle-FX är avstängd (välj paket under Paket)':
+      'A boost arrived but Automatic battle FX is off (choose a pack under Packs)',
+  });
+  monster.push(
+    [/^(\d+) fel · (\d+) varningar · (\d+) info$/, '$1 errors · $2 warnings · $3 info'],
+    [/^MVP visades ([\d,]+) s efter matchslut$/, 'MVP was shown $1 s after the match ended'],
+    [/^Avataren ignorerade "(.*)" från @(\S+): (.+)$/, 'The avatar ignored "$1" from @$2: $3'],
+    [/^Battle-FX(.*) väntar (\d+) s — förra klippet spelas fortfarande$/, 'Battle FX$1 waits $2 s — the previous clip is still playing'],
+    [/^Battle-FX(.*) hoppades över: matchens sista 40 s är reserverade för Snipe och Glove$/, 'Battle FX$1 was skipped: the last 40 s of the match are reserved for Snipe and Glove'],
+    [/^Battle-FX(.*) hoppades över: händelsen kom för sent fram$/, 'Battle FX$1 was skipped: the event arrived too late'],
+    [/^Battle-FX: (paketet|widgeten) saknar klippet (.+)$/, (m, vem, k) => 'Battle FX: the ' + (vem === 'paketet' ? 'pack' : 'widget') + ' is missing the clip ' + k],
+    [/^Ljudet till "(.+)" finns inte längre — välj ett nytt ljud$/, 'The sound for "$1" no longer exists — choose a new sound'],
+    [/^Ljudfilen till "(.+)" finns inte i den här webbläsaren — egna filer sparas per dator, ladda upp den igen här$/, 'The sound file for "$1" is not in this browser — your own files are stored per computer, upload it again here'],
+    [/^Ljudet till "(.+)" kunde inte spelas — filen gick inte att läsa$/, 'The sound for "$1" could not be played — the file could not be read'],
+    [/^Webbläsaren blockerade ljudet till "(.+)" — klicka en gång i VYRA så att ljud tillåts$/, 'The browser blocked the sound for "$1" — click once in VYRA so sound is allowed'],
+    [/^Kön för "(.+)" var full — (\d+) ljud spelades inte \(max (\d+) i kö\)$/, 'The queue for "$1" was full — $2 sounds were not played (max $3 queued)'],
+    [/^TTS-kön var full \(max (\d+)\) — en kommentar lästes inte upp$/, 'The TTS queue was full (max $1) — a comment was not read aloud'],
+    [/^(.+) svarade inte — datorns röst läste i stället$/, '$1 did not respond — the computer voice read instead'],
+  );
 
   Object.assign(bas.text, text);
   bas.monster = monster.concat(bas.monster || []);

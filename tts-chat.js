@@ -147,7 +147,12 @@
       // datorns egen röst upp samma rad i stället.
       return speakCloud(text, opts, forhamtat).catch(err => {
         console.warn('[VYRA TTS Chat] molnröst misslyckades — lokal röst läser upp i stället', err);
-        if (!window.speechSynthesis) return;
+        const rost = String(opts.voice || '').replace(/^cloud:/, '');
+        if (!window.speechSynthesis) {
+          window.VyraProblem?.rapportera?.('tts', 'fel', `Ingen röst kunde läsa: ${rost || 'molnrösten'} svarade inte, och datorn har ingen egen röst`, { fel: err && err.message });
+          return;
+        }
+        window.VyraProblem?.rapportera?.('tts', 'varning', `${rost || 'Molnrösten'} svarade inte — datorns röst läste i stället`, { fel: err && err.message });
         return new Promise(klar => speakLocal(text, Object.assign({}, opts, { voice: '' }), klar));
       });
     }
@@ -219,7 +224,10 @@
     if (!text) return false;
     opts = valjRost(opts);
     if (!isCloudVoice(opts.voice) && !window.speechSynthesis) return false;
-    if (!hasQueueRoom(maxQueueLength)) return false;
+    if (!hasQueueRoom(maxQueueLength)) {
+      window.VyraProblem?.rapportera?.('tts', 'varning', `TTS-kön var full (max ${Math.max(1, Number(maxQueueLength) || 5)}) — en kommentar lästes inte upp`);
+      return false;
+    }
     let forhamtat = null;
     if (isCloudVoice(opts.voice)) {
       forhamtat = hamtaMolnljud(text, opts);
@@ -537,7 +545,7 @@
     <div class="tts-status" data-tts-status></div>
     <div class="tts-tabs" role="tablist"><button class="active" type="button" data-tts-tab="settings">Inställningar</button><button type="button" data-tts-tab="viewers">Tittarregler <b>${(s.specialUsers || []).length}</b></button></div>
     <section class="tts-pane active" data-tts-pane="settings"><div class="tts-vyra-grid">
-      <section class="card tts-general"><header><h3>Röst</h3><p>Välj röst och testa hur den låter innan din LIVE.</p></header><div class="tts-fields"><label>Språk<input id="ttsLanguage" placeholder="t.ex. sv-SE" value="${s.language}"></label><label>Röst<select id="ttsVoice"></select></label><label class="tts-inline-check"><input type="checkbox" id="ttsRandomVoice" ${s.randomVoice ? 'checked' : ''}> Slumpad röst</label><label>Volym<input id="ttsVolume" type="range" min="0" max="100" value="${s.volume}"></label><label>Hastighet<input id="ttsSpeed" type="number" min="0.5" max="2" step="0.1" value="${s.speed}"></label><label>Tonhöjd<input id="ttsPitch" type="number" min="0" max="2" step="0.1" value="${s.pitch}"></label></div><div class="tts-tester-row"><input id="ttsTesterText" placeholder="Skriv en text att testa..." value="Hej och välkommen till livet!"><button type="button" id="ttsTesterPlay" class="primary">▶ Testa röst</button></div></section>
+      <section class="card tts-general"><header><h3>Röst</h3><p>Välj röst och testa hur den låter innan din LIVE.</p></header><div class="tts-fields"><label>Språk<input id="ttsLanguage" placeholder="t.ex. sv-SE" value="${s.language}"></label><label>Röst<select id="ttsVoice"></select></label><label>Rösten läses i<select id="ttsLjudPlats"><option value="studio">Studion / VYRA Desktop</option><option value="overlay">OBS-overlayn</option></select><small class="tts-hjalp">Studion: datorn läser och OBS fångar datorljudet — håll studion öppen. OBS-overlayn: ljudet följer med overlay-länken.</small></label><label class="tts-inline-check"><input type="checkbox" id="ttsRandomVoice" ${s.randomVoice ? 'checked' : ''}> Slumpad röst</label><label>Volym<input id="ttsVolume" type="range" min="0" max="100" value="${s.volume}"></label><label>Hastighet<input id="ttsSpeed" type="number" min="0.5" max="2" step="0.1" value="${s.speed}"></label><label>Tonhöjd<input id="ttsPitch" type="number" min="0" max="2" step="0.1" value="${s.pitch}"></label></div><div class="tts-tester-row"><input id="ttsTesterText" placeholder="Skriv en text att testa..." value="Hej och välkommen till livet!"><button type="button" id="ttsTesterPlay" class="primary">▶ Testa röst</button></div></section>
       <section class="card tts-audience"><header><h3>Vem får höras?</h3><p>Välj exakt vilka kommentarer som läses upp.</p></header><div class="tts-audience-list"><label class="tts-inline-check"><input type="checkbox" id="ttsAudAll" ${s.audience.all ? 'checked' : ''}> Alla användare</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudFollower" ${s.audience.follower ? 'checked' : ''}> Följare</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudSubscriber" ${s.audience.subscriber ? 'checked' : ''}> Prenumeranter</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudModerator" ${s.audience.moderator ? 'checked' : ''}> Moderatorer</label><label class="tts-inline-check"><input type="checkbox" id="ttsAudTeam" ${s.audience.team ? 'checked' : ''}> Team · min. nivå <input id="ttsAudTeamLevel" type="number" min="1" value="${s.audience.teamMinLevel}"></label><label class="tts-inline-check"><input type="checkbox" id="ttsAudTopGifter" ${s.audience.topGifter ? 'checked' : ''}> Top givare · topp <input id="ttsAudTopGifterCount" type="number" min="1" value="${s.audience.topGifterCount}"></label><label class="tts-inline-check"><input type="checkbox" id="ttsAudList" ${s.audience.list ? 'checked' : ''}> Egen lista</label></div><label class="tts-list-field">Lista (ett användarnamn per rad)<textarea id="ttsAllowedList" rows="2" placeholder="@användare1&#10;@användare2">${(s.allowedUsernames || []).join('\n')}</textarea></label></section>
       <section class="card tts-format"><header><h3>Hur läses det?</h3><p>Håll TTS ren och enkel för tittarna.</p></header><label>Namnformat<select id="ttsNameFormat"><option value="none" ${named === 'none' ? 'selected' : ''}>Inget namn</option><option value="display" ${named === 'display' ? 'selected' : ''}>Visningsnamn</option><option value="username" ${named === 'username' ? 'selected' : ''}>@Användarnamn</option></select></label><div class="tts-filter-pair"><label class="tts-inline-check"><input type="checkbox" id="ttsFilterEmojis" ${s.filterEmojis ? 'checked' : ''}> Ta bort emojis</label><label class="tts-inline-check"><input type="checkbox" id="ttsFilterMentions" ${s.filterMentions ? 'checked' : ''}> Dölj @-omnämnanden</label></div><div class="tts-trigger-compact"><label><input type="radio" name="ttsCommentType" value="any" ${s.commentType === 'any' ? 'checked' : ''}> Alla</label><label><input type="radio" name="ttsCommentType" value="dot" ${s.commentType === 'dot' ? 'checked' : ''}> Punkt</label><label><input type="radio" name="ttsCommentType" value="slash" ${s.commentType === 'slash' ? 'checked' : ''}> Snedstreck</label><label><input type="radio" name="ttsCommentType" value="command" ${s.commentType === 'command' ? 'checked' : ''}> Kommando</label></div><label>Kommando<input id="ttsCommand" value="${s.command}" ${s.commentType === 'command' ? '' : 'disabled'}></label></section>
       <section class="card tts-spam"><header><h3>Skydd & kö</h3><p>Stoppar spam utan att tysta vanlig chatt.</p></header><div class="tts-fields"><label>Väntetid (sekunder)<input id="ttsCooldown" type="number" min="0" value="${s.cooldownSeconds}"></label><label>Max i kö<input id="ttsMaxQueue" type="number" min="1" value="${s.maxQueueLength}"></label><label>Max längd<input id="ttsMaxLength" type="number" min="1" value="${s.maxCommentLength}"></label></div><label class="tts-inline-check"><input type="checkbox" id="ttsFilterSpam" ${s.filterLetterSpam ? 'checked' : ''}> Filtrera bokstavsspam</label><label class="tts-inline-check"><input type="checkbox" id="ttsFilterCommands" ${s.filterCommands ? 'checked' : ''}> Filtrera !kommandon</label><label class="tts-inline-check"><input type="radio" name="ttsCharge" value="no" ${s.chargePoints ? '' : 'checked'}> Gratis TTS</label><label class="tts-inline-check"><input type="radio" name="ttsCharge" value="yes" ${s.chargePoints ? 'checked' : ''}> Kosta poäng <input id="ttsCost" type="number" min="1" value="${s.costPerMessage}" ${s.chargePoints ? '' : 'disabled'}></label></section>
@@ -689,6 +697,21 @@
 
     root.querySelector('#ttsClearLog').onclick = () => { setSettings(readFormSettings()); clearLog(); rerender() };
 
+    // LJUDPLATSEN (2026-11-17, vyra-tal.js). Sparas direkt i vyra-extras, som battle-paketsvalet,
+    // så att OBS-overlayn får veta det via molnet. Gäller TTS Chat; Sound Alerts spelar i studion.
+    const ljudPlatsVal = root.querySelector('#ttsLjudPlats');
+    if (ljudPlatsVal) {
+      ljudPlatsVal.value = window.VyraRostMaster?.ljudPlats?.() || 'studio';
+      ljudPlatsVal.onchange = () => {
+        const ex = window.VyraExtras;
+        if (!ex || !ex.data) { window.toast?.('Valet kunde inte sparas — logga in först'); return; }
+        ex.data.ljudPlats = ljudPlatsVal.value === 'overlay' ? 'overlay' : 'studio';
+        Promise.resolve(window.VyraSessionState?.writeActive?.('vyra-extras', JSON.stringify(ex.data)))
+          .then(r => window.toast?.(r && r.ok === false ? 'Valet kunde inte sparas — logga in först'
+            : ex.data.ljudPlats === 'overlay' ? 'Rösten läses nu i OBS-overlayn' : 'Rösten läses nu i studion / VYRA Desktop'))
+          .catch(() => window.toast?.('Valet kunde inte sparas'));
+      };
+    }
     root.querySelector('#ttsSaveSettings').onclick = () => {
       setSettings(readFormSettings());
       // Mala om DIREKT. Utan detta stod raden kvar pa "inte sparad" anda tills nasta event kom in

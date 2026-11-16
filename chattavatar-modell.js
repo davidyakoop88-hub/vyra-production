@@ -213,7 +213,31 @@
     return ut;
   }
 
-  const api = Object.freeze({ tolka, bubbeltext, arFarsk, skapaRouter, skapaKo, sidor, tvatta, KOMMANDON, PUBLIKA,
+  // VARFÖR ETT KOMMANDO INTE TOGS EMOT (2026-11-17, felrapporten i LIVE-kontroll). Samma regler som
+  // routerns ta(), men utan dess tillstånd (väntetider, dubbletter): svaret är det som gäller för
+  // ALLA kopior av avataren, så studion kan säga det fast avataren spelar i OBS. null = kommandot är
+  // inget avatarkommando, eller det tas emot.
+  //   { key, orsak }  orsak i klartext, för LIVE-kontroll
+  function forklara(e, o) {
+    if (!e || typeof e !== 'object') return null;
+    const typ = String(e.type || e.event || '').toLowerCase().replace(/[\s_-]/g, '');
+    if (typ !== 'chat' && typ !== 'chatcommand' && typ !== 'comment') return null;
+    const t = tvatta(e.comment != null ? e.comment : e.message, 400);
+    if (t[0] !== '!') return null;
+    const delar = t.split(' '), forsta = delar.shift().toLowerCase(), key = ALIAS[forsta] || forsta;
+    const k = KOMMANDON[key];
+    if (!k || k.auto) return null;                                  // inte avatarens (t.ex. chatbotens)
+    if (!tolka(t)) return { key, orsak: key === '!säg' ? `"${forsta}" behöver en text efter, t.ex. "${forsta} hej"` : `"${forsta}" ska skrivas utan något efter` };
+    const jag = typeof (o && o.streamer) === 'function' ? handtag(o.streamer()) : '';
+    const vem = handtag(e.username || e.uniqueId);
+    if (e.isModerator === true || (!!jag && vem === jag)) return null;
+    if (!(o && typeof o.publik === 'function' && o.publik() === 'alla'))
+      return { key, orsak: 'avsändaren räknas inte som moderator enligt TikTok, och avataren tar bara emot från moderatorer' };
+    if (!PUBLIKA.has(key)) return { key, orsak: 'tittare får bara använda !d1 !d2 !d3 !t — de andra kommandona är för moderatorer' };
+    return null;
+  }
+
+  const api = Object.freeze({ tolka, forklara, bubbeltext, arFarsk, skapaRouter, skapaKo, sidor, tvatta, KOMMANDON, PUBLIKA,
     vilaNasta, vilaLage, vilaSek, VILA_LAGEN, VILA_SEK, VILA_STANDARD_SEK, VILA_MAX_TEXT,
     MAX_TEXT, MAX_KO, MAX_AUTO_I_KO, FARSKT_MS, TITTARE_MS, PUBLIK_MS, FOLJARE_MS, HALSAD_MS, DUBBLETT_MS, SIDA_MS: 4000 });
   root.VyraChattavatarModell = api;

@@ -49,3 +49,21 @@
 .lc-battle-preview b{color:#fff;font-size:13px}
 .lc-battle-preview small{color:#8f8199;font-size:11px;line-height:1.4}
 .lc-battle-preview button{border:1px solid #513164;background:#190d22;color:#eee;border-radius:8px;padding:7px 10px}
+/* Problem i sändningen (vyra-problem.js) — tunna linjer, dämpad palett */
+.lc-problem{margin:0 0 22px;padding:16px 18px;overflow:visible}
+.lc-problem .lc-panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.lc-problem .lc-panel-head h3{margin:0;font-size:15px}
+.lc-problem .lc-panel-head span{font-size:12px;color:#9f92ac}
+.lc-problem-knappar{display:flex;gap:8px;margin:10px 0}
+.lc-problem-knappar button{font-size:12px;padding:6px 10px}
+.lc-problem-lista{list-style:none;margin:0;padding:0;max-height:280px;overflow:auto;border-top:1px solid #241830}
+.lc-problem-rad{display:grid;grid-template-columns:64px 92px 1fr;gap:10px;padding:8px 2px;border-bottom:1px solid #1d1226;font-size:12px;line-height:1.45}
+.lc-problem-rad time{color:#8f809a;font-variant-numeric:tabular-nums}
+.lc-problem-kalla{color:#b8a9c6;letter-spacing:.04em}
+.lc-problem-text{color:#ddd3e6}
+.lc-problem-varning .lc-problem-kalla{color:#e7bc64}
+.lc-problem-fel .lc-problem-kalla{color:#ef8b8b}
+.lc-problem-antal{font-weight:600;color:#9f92ac}
+.lc-problem-tom{margin:6px 0;color:#887993;font-size:12px}
+.lc-problem-not{display:block;margin-top:10px;color:#7d6f88;font-size:11px}
+@media(max-width:700px){.lc-problem-rad{grid-template-columns:56px 1fr}.lc-problem-text{grid-column:1/-1}}
