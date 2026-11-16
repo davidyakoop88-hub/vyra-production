@@ -451,8 +451,9 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till
   // 20261025-1 nar eventpanelen fick den lila designen (valkort och kryssrutor i stallet for Ctrl-flerval),
   // och till 20261116-1 nar handleEvent borjade skriva korloggen (action-logg.js) och respektera
-  // huvudbrytaren "Aktiverad", och till 20261116-2 nar slumpvalet slutade upprepa sig (valjSlump).
-  assert.match(media, /action-event-advanced\.js\?v=20261116-2/, 'action-event-advanced.js cachebustades inte for slumpvalet');
+  // huvudbrytaren "Aktiverad", och till 20261116-2 nar slumpvalet slutade upprepa sig (valjSlump),
+  // och till 20261116-3 nar eventpanelen fick triggern "Handelse i en battle" (action-battle.js).
+  assert.match(media, /action-event-advanced\.js\?v=20261116-3/, 'action-event-advanced.js cachebustades inte for battle-triggern');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
@@ -466,7 +467,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261025-1: Ny Action och Nytt Event i den lila designen (numrerade sektioner, effektkort).
   // 20261116-1: Avancerat-rubriken nämner backupen (action-backup.js).
   // 20261116-2: rutan "Hög prioritet" i Ny Action och märket i listan.
-  assert.match(media, /action-event\.js\?v=20261116-2/, 'action-event.js cachebustades inte');
+  // 20261116-3: Events-listan skriver battle-händelsen som en mening ("Battle: Vi vinner").
+  assert.match(media, /action-event\.js\?v=20261116-3/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).

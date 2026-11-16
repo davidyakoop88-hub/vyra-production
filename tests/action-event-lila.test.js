@@ -55,7 +55,9 @@ test('event: radiogrupperna har kvar namn och alla värden, som valkort med rubr
   const { modal } = eventPanel({});
   const varden = namn => [...modal.querySelectorAll(`input[type=radio][name=${namn}]`)].map(r => r.value);
   assert.deepEqual(varden('aeAudience'), ['everyone', 'follower', 'subscriber', 'moderator', 'topGifter', 'specificUser']);
-  assert.equal(varden('aeAdvancedTrigger').length, 15, 'alla 15 triggertyper ska finnas kvar');
+  // 16 sedan 2026-11-16: "Händelse i en battle" (action-battle.js) kom till.
+  assert.equal(varden('aeAdvancedTrigger').length, 16, 'alla 16 triggertyper ska finnas kvar');
+  assert.ok(varden('aeAdvancedTrigger').includes('battle'), 'battle-triggern saknas');
   for (const grupp of modal.querySelectorAll('[role=radiogroup]')) {
     assert.ok(modal.querySelector('#' + grupp.getAttribute('aria-labelledby')), 'radiogruppen saknar namngivande rubrik');
   }

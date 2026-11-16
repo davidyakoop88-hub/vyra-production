@@ -619,6 +619,30 @@ kreatörsrank. Den enda kandidaten är `RANK_TEXT`, som bryggan inte prenumerera
 
 Vid avbrott ska widgeten visa "Rank tillfälligt otillgänglig", aldrig gamla siffror som aktuella.
 
+## 18. Fyrar battle-triggrarna i Action & Event rätt? (`action-battle.js`, 2026-11-16)
+
+**Byggt på uppmätta fält, men aldrig kört mot en riktig match.** Ett Event kan starta en Action på
+*Matchen börjar*, *Ett boost-fönster öppnar*, *Vi tar ledningen*, *Motståndaren tar ledningen*,
+*Matchen slutar*, *Vi vinner*, *Vi förlorar* och *Oavgjort*. Start och slut bygger på
+`battle_started`/`battle_finished` (punkt 2), boost på `glove` (punkt 1). Ledning och resultat
+bygger på `scoreUs`/`scoreThem`, som bara är rätt när bryggan vet vilket konto som är ditt
+(`mittAnkarId`, se punkt 4) — vid 0–0 fyrar de med flit **inte**.
+
+**Förbered:** skapa fyra Events med varsin alert-Action: *Matchen börjar*, *Vi tar ledningen*,
+*Matchen slutar* och *Vi vinner*. Kör en battle.
+
+1. **Startar den en gång?** Alerten för *Matchen börjar* ska komma en gång när matchen börjar — inte
+   igen för varje `battle_started` TikTok skickar under matchen.
+2. **Stämmer ledningen med appen?** *Vi tar ledningen* ska komma när TikToks poängrad tippar över
+   till din sida, inte före och inte flera gånger utan att motståndaren varit före emellan.
+3. **Kommer slutet och resultatet?** *Matchen slutar* ska komma när matchen tar slut (inte först
+   efter strafffasen, `LINK_MIC_BATTLE_PUNISH_FINISH`, punkt 3). *Vi vinner* ska komma bara vid vinst.
+4. **Läs körloggen** (Action & Event → 03 Körlogg). Varje battle-rad heter *TikTok · Händelse i en
+   battle: vinst* osv. Saknas ledning och resultat helt men start och slut finns: poängen kom som
+   0–0, alltså saknades ankar-id i bryggan — samma orsak som en battle-widget som visar 0–0.
+
+Konsolen i Studion: `VyraActionBattle.lage()` visar matchen som pågår och de senaste poängen.
+
 ## Efteråt
 
 Skriv in det ni såg i den punkt det gäller, och stäng den. Ett antagande som visat sig stämma är

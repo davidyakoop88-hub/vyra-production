@@ -132,6 +132,7 @@
       typ==='subscriberEmote'?(v?`Emote ${v}`:'Valfri subscriber-emote'):
       typ==='fanSticker'?(v?`Sticker ${v}`:'Valfri Fan Club-sticker'):
       typ==='shopPurchase'?(v?`Produkt med "${v}"`:'Valfri produkt'):
+      typ==='battle'?`Battle: ${((window.VyraActionBattle?.HANDELSER||[]).find(h=>h[0]===v)||[,v||'valfri händelse'])[1]}`:
       triggerNames[typ]||typ||'Okänd trigger';
     return `${triggerIkon[typ]||'◇'} ${text}`;
   }
