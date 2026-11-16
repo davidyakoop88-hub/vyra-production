@@ -1246,6 +1246,23 @@
     'Matchade inte villkoret': "Didn't match the condition",
     'Tittaren hade inte tillräckligt med poäng': "The viewer didn't have enough points",
     'Kunde inte spela upp igen — se den nya raden': "Couldn't play it again — see the new row",
+    // Action & Event · Startpaket (action-snabbstart.js, 2026-11-16)
+    'Startpaket': 'Starter packs',
+    'Börja med ett startpaket': 'Start with a starter pack',
+    'Färdiga Actions och Events som redan är kopplade. Allt hamnar på Scen 1 och går att ändra efteråt.':
+      'Ready-made Actions and Events that are already linked. Everything goes to Scene 1 and can be changed afterwards.',
+    'Tacka för gåvor': 'Thank your gifters',
+    'En tack-alert för varje gåva, och TikToks egen animation när någon skickar 500 coins eller mer.':
+      "A thank-you alert for every gift, and TikTok's own animation when someone sends 500 coins or more.",
+    'Välkomna nya tittare': 'Welcome new viewers',
+    'Hälsar nya följare och tackar den som delar liven. Samma tittare tackas för delning högst var femte minut.':
+      'Greets new followers and thanks whoever shares the live. The same viewer is thanked for sharing at most every five minutes.',
+    'Chattkommandon': 'Chat commands',
+    '!hype och !hej i chatten visar en alert. Väntetider hindrar att en tittare spammar dem.':
+      '!hype and !hi in the chat show an alert. Cooldowns stop a viewer from spamming them.',
+    'Tillagt': 'Added',
+    'Lägger till…': 'Adding…',
+    'Startpaketet kunde inte sparas': "The starter pack couldn't be saved",
   };
 
   for (const [sv, en] of Object.entries(NAV)) {
