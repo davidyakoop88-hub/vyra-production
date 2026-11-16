@@ -1232,7 +1232,7 @@
     'Layouten uppdaterades från en annan enhet': 'The layout was updated from another device',
     '1 ändring': '1 change',
     // Guiden · nya delar i Action & Event och VYRA-röster (2026-11-16)
-    'Hur fungerar battle-paketens video-effekter?': 'How do the battle packs\' video effects work?',
+    'Hur fungerar battle-paketens video-effekter?': 'How do the battle packs\' video effects work?',
     'Var ser jag vad som gick fel under sändningen?': 'Where can I see what went wrong during the stream?',
     'Var spelas TTS-rösten — i studion eller i OBS?': 'Where does the TTS voice play — in the studio or in OBS?',
     'Öppna LIVE-kontroll. Rutan Problem i sändningen säger till när något inte blir som det ska — och varför: när avataren ignorerar ett kommando (till exempel "!s" utan text, eller en avsändare som TikTok inte räknar som moderator), när ett battle-klipp väntar eller hoppas över, hur många sekunder efter matchslut MVP visades, och när TTS eller Sound Alerts inte kunde spela. Spara som fil ger en fil du kan skicka till oss efter sändningen.': 'Open LIVE control. The Problems during the stream box tells you when something does not go as it should — and why: when the avatar ignores a command (for example "!s" without text, or a sender TikTok does not count as a moderator), when a battle clip waits or is skipped, how many seconds after the match ended the MVP was shown, and when TTS or Sound Alerts could not play. Save as file gives you a file you can send us after the stream.',
@@ -1509,7 +1509,14 @@
   monster.push(
     [/^(\d+) fel · (\d+) varningar · (\d+) info$/, '$1 errors · $2 warnings · $3 info'],
     [/^MVP visades ([\d,]+) s efter matchslut$/, 'MVP was shown $1 s after the match ended'],
-    [/^Avataren ignorerade "(.*)" från @(\S+): (.+)$/, 'The avatar ignored "$1" from @$2: $3'],
+    [/^Avataren ignorerade "(.*)" från @(\S+): (.+)$/, (m, vad, vem, orsak) => {
+      const o = orsak
+        .replace(/^"(\S+)" behöver en text efter, t\.ex\. "(.+)"$/, '"$1" needs text after it, e.g. "$2"')
+        .replace(/^"(\S+)" ska skrivas utan något efter$/, '"$1" must be written with nothing after it')
+        .replace(/^avsändaren räknas inte som moderator enligt TikTok, och avataren tar bara emot från moderatorer$/, 'TikTok does not count the sender as a moderator, and the avatar only accepts moderators')
+        .replace(/^tittare får bara använda (.+) — de andra kommandona är för moderatorer$/, 'viewers may only use $1 — the other commands are for moderators');
+      return 'The avatar ignored "' + vad + '" from @' + vem + ': ' + o;
+    }],
     [/^Battle-FX(.*) väntar (\d+) s — förra klippet spelas fortfarande$/, 'Battle FX$1 waits $2 s — the previous clip is still playing'],
     [/^Battle-FX(.*) hoppades över: matchens sista 40 s är reserverade för Snipe och Glove$/, 'Battle FX$1 was skipped: the last 40 s of the match are reserved for Snipe and Glove'],
     [/^Battle-FX(.*) hoppades över: händelsen kom för sent fram$/, 'Battle FX$1 was skipped: the event arrived too late'],
