@@ -141,19 +141,41 @@
   // ---- NAR KLIPPEN SPELAS — Davids regler 2026-10-07 -------------------------------------------
   //   1. Tap Tap  nar matchen borjar (forsta battle_started per match)
   //   2. X2 / X3  nar ett boost-fonster oppnar — men INTE matchens forsta boost
-  //   3. Glove    nar 30 s aterstar av varje boost-fonster
+  //   3. Glove    nar 30 s aterstar av varje boost-fonster — men INTE matchens forsta boost
   //   4. Snipe    nar 30 s aterstar av matchen
+  //   5. Glove    nar 20 s aterstar av matchen
+  // Davids regler 2026-11-16: "forsta bonustiden lamnar vi" — den forsta boosten ar helt tyst,
+  // aven handsken. Snipe pa 30 och handske pa 20: handsken tar over efter Snipe (widgeten byter
+  // klipp, se battlePaketPaNod i media.js), sa slutet far bada.
   // TIDERNA: bryggan skickar remainingSec pa `battle` (matchens aterstod, raknad i TikToks klocka)
   // och durationSec pa `glove` (fonstrets langd). Saknas de galler reserverna nedan: en TikTok-match
   // ar uppmatt 300 s. Testknapparna (id battle-fx-test-...) spelar sitt klipp direkt som forut.
-  var MATCH_SEK = 300, BOOST_SEK = 60, SLUT_SEK = 30;
+  var MATCH_SEK = 300, BOOST_SEK = 60, SLUT_SEK = 30, SLUT_GLOVE_SEK = 20;
+  // SLUTFASEN (2026-11-16, David: "se till att de inte glappar när som helst"). De sista 35 s av
+  // matchen tillhör Snipe (30 s) och sluthandsken (20 s). Widgeten byter klipp direkt, så en
+  // boost-handske eller ett X2/X3 i samma sekunder hade klippt av Snipe efter ett ögonblick — det
+  // ser ut som ett glapp. I slutfasen hoppas därför boost-handsken och X2/X3 över (TikTok visar
+  // multiplikatorn själv).
+  //  - X2/X3 spelas inte de sista 40 s (ett klipp hinner spela klart före Snipe, se AVSTAND_SEK).
+  //  - Boost-handsken spelas inte de sista 45 s, av samma skäl.
+  //  - Inga två klipp startar inom AVSTAND_SEK: ett X2/X3 som kommer för tätt efter Tap Tap eller en
+  //    handske väntar in sin tur; en boost-handske som kommer för tätt hoppas över. Snipe och
+  //    sluthandsken spelas alltid på sina tider — de är matchens slut, och de ligger 10 s isär.
+  // AVSTAND_SEK = LÄNGSTA KLIPPET. Uppmätt 2026-11-17 (ffprobe över alla paket i
+  // assets/videos/battle/): 8 s för Golden Holiday, Ice Frost, Jungle Spirit, Neon Miami, Samurai
+  // Storm och Street Art, 10 s för Pink Princess, Royal Ruby och Cloud Fox. Med 8 s klippte X2 av de
+  // sista 2 s av handsken i 10-sekunderspaketen — det David såg i sändningen 2026-11-16 som "X5 kom
+  // och bytte till X2" (handskklippet i de sex första paketen ÄR X5-videon, "Glove Power (X5)").
+  var SLUTFAS_SEK = 40, HANDSK_SPARR_SEK = 45, AVSTAND_SEK = 10;
   var SLUT = /(end|finish|over|settle|result|punish|complete|close)/;
   var START = /(start|active|begin|ongoing|progress)/;
   var match = null;      // { id, boostar, timers, snipe, snipeSpelad }
   var avslutade = {};    // battleId -> ms, sa ett sent battle_started inte startar om en slutspelad match
   var sedda = {};
 
-  function nu() { return Date.now(); }
+  // root.Date, inte bara Date: proven kör filen med en fejkad klocka, och avståndet mellan klipp
+  // ska mätas i samma tid som timrarna planeras i. I webbläsaren är root.Date === Date.
+  function nu() { return ((root && root.Date) || Date).now(); }
   function planera(fn, ms) { return (root.setTimeout || setTimeout)(fn, Math.max(0, ms)); }
   function avbryt(t) { try { (root.clearTimeout || clearTimeout)(t); } catch (e) {} }
   function rensa(karta, ms) { var t = nu(); Object.keys(karta).forEach(function (k) { if (t - karta[k] > ms) delete karta[k]; }); }
@@ -161,14 +183,36 @@
     if (id) avslutade[id] = nu();
     if (!match) return;
     if (match.id) avslutade[match.id] = nu();
-    match.timers.forEach(avbryt); if (match.snipe) avbryt(match.snipe);
+    match.timers.forEach(avbryt); if (match.snipe) avbryt(match.snipe); if (match.slutGlove) avbryt(match.slutGlove);
+    if (match.slutfasTimer) avbryt(match.slutfasTimer); if (match.handskTimer) avbryt(match.handskTimer);
     match = null;
   }
   function nyMatch(id) {
     avslutaMatch();
     rensa(avslutade, 3600000);
-    match = { id: id || '', boostar: 0, timers: [], snipe: null, snipeSpelad: false };
+    match = { id: id || '', boostar: 0, timers: [], snipe: null, snipeSpelad: false, slutGlove: null, slutGloveSpelad: false,
+      slutfas: false, slutfasTimer: null, handskSparr: false, handskTimer: null, senastStart: 0 };
     return match;
+  }
+  // Spelar ett klipp i matchen och minns när, för avståndsregeln.
+  function spelaIMatch(m, nyckel, event) {
+    m.senastStart = nu();
+    return spelaKlipp(nyckel, event);
+  }
+  function forTatt(m) { return m.senastStart && nu() - m.senastStart < AVSTAND_SEK * 1000; }
+  // Slutfasen följer samma klocka som Snipe: varje ny återstod från TikTok rättar när den börjar.
+  // En timer, inte en tidsjämförelse — då håller den med Snipe- och handsktimrarna även om
+  // datorns klocka går fel mot TikToks.
+  function planeraSlutfas(kvarSek) {
+    var m = match;
+    if (!m) return;
+    if (m.slutfasTimer) avbryt(m.slutfasTimer);
+    if (m.handskTimer) avbryt(m.handskTimer);
+    m.slutfasTimer = m.handskTimer = null;
+    m.slutfas = kvarSek <= SLUTFAS_SEK;
+    m.handskSparr = kvarSek <= HANDSK_SPARR_SEK;
+    if (!m.slutfas) m.slutfasTimer = planera(function () { if (match === m) m.slutfas = true; }, (kvarSek - SLUTFAS_SEK) * 1000);
+    if (!m.handskSparr) m.handskTimer = planera(function () { if (match === m) m.handskSparr = true; }, (kvarSek - HANDSK_SPARR_SEK) * 1000);
   }
   function arTest(e, opts) {
     return !!(opts && opts.test) || e.source === 'battle-fx-test' ||
@@ -205,6 +249,9 @@
     var action = {
       id: 'battle-fx-' + nyckel, name: 'Battle-FX: ' + klipp.name, types: ['video'],
       duration: KLIPP_SEK, cooldown: 0, volume: 0, fade: false,
+      // Ett nytt battle-klipp ersätter det förra direkt, och går före gåvoalerter i kön —
+      // samma beteende som battle-widgeten (action-runtime.js ersatt, prioritet).
+      ersatt: 'battle-fx', prioritet: 'hog',
       videoMedia: { packagePath: klipp.path, name: klipp.name },
       scene: { number: 1, x: plats.x, y: plats.y, width: plats.width, layer: plats.layer }
     };
@@ -215,13 +262,31 @@
 
   function planeraSnipe(kvarSek) {
     var m = match;
-    if (!m || m.snipeSpelad) return;
+    if (!m) return;
+    planeraSlutfas(kvarSek);
+    if (m.snipeSpelad) return;
     if (m.snipe) avbryt(m.snipe);
     m.snipe = planera(function () {
       if (match !== m || m.snipeSpelad) return;
       m.snipeSpelad = true;
-      spelaKlipp('snipe', { id: 'snipe-' + (m.id || nu()) });
+      spelaIMatch(m, 'snipe', { id: 'snipe-' + (m.id || nu()) });
     }, (kvarSek - SLUT_SEK) * 1000);
+    planeraSlutGlove(kvarSek);
+  }
+  // Handsken nar 20 s aterstar av matchen. Samma omplanering som Snipe: varje ny aterstod fran
+  // TikTok rattar tiden, och den spelas en gang per match. Ar det redan under 20 s kvar spelas den
+  // inte i efterhand.
+  function planeraSlutGlove(kvarSek) {
+    var m = match;
+    if (!m || m.slutGloveSpelad) return;
+    if (m.slutGlove) avbryt(m.slutGlove);
+    m.slutGlove = null;
+    if (kvarSek <= SLUT_GLOVE_SEK) return;
+    m.slutGlove = planera(function () {
+      if (match !== m || m.slutGloveSpelad) return;
+      m.slutGloveSpelad = true;
+      spelaIMatch(m, 'glove', { id: 'slutglove-' + (m.id || nu()) });
+    }, (kvarSek - SLUT_GLOVE_SEK) * 1000);
   }
 
   function battleHandelse(e) {
@@ -245,7 +310,7 @@
     planeraSnipe(kvar > 0 ? kvar : MATCH_SEK);
     // Laddades overlayn mitt i en match ar starten redan forbi — ingen Tap Tap i efterhand.
     if (kvar > 0 && kvar < MATCH_SEK - SLUT_SEK) return 'mitt i matchen';
-    return spelaKlipp('tap', e);
+    return spelaIMatch(match, 'tap', e);
   }
 
   function boostHandelse(e) {
@@ -254,14 +319,23 @@
     else if (!match.id && id) match.id = id;
     var m = match;
     m.boostar++;
+    // Forsta boosten ar helt tyst — varken X2/X3 eller handske (Davids regel 2026-11-16).
+    if (m.boostar === 1) return 'forsta boosten';
     var langd = Number(e.durationSec) > 0 ? Number(e.durationSec) : BOOST_SEK;
     var gid = 'glove-' + (e.id || nu());
-    m.timers.push(planera(function () { if (match === m) spelaKlipp('glove', { id: gid }); }, (langd - SLUT_SEK) * 1000));
-    if (m.boostar === 1) return 'forsta boosten';
+    // Handsken kontrollerar slutfasen NÄR den ska spelas, inte när den planeras: boosten kan ha
+    // öppnat långt före slutfasen men handsken landa i den.
+    m.timers.push(planera(function () { if (match === m && !m.handskSparr && !forTatt(m)) spelaIMatch(m, 'glove', { id: gid }); }, (langd - SLUT_SEK) * 1000));
+    if (m.slutfas) return 'slutfasen';
     var mult = Number(e.multiplier || e.x || e.combo || 0) || 0;
-    if (mult >= 3) return spelaKlipp('boost-x3', e);
-    if (mult === 2) return spelaKlipp('boost-x2', e);
-    return 'ingen multiplikator';
+    var nyckel = mult >= 3 ? 'boost-x3' : mult === 2 ? 'boost-x2' : null;
+    if (!nyckel) return 'ingen multiplikator';
+    if (!forTatt(m)) return spelaIMatch(m, nyckel, e);
+    // För tätt efter förra klippet: vänta in avståndet. Har slutfasen hunnit börja då, eller har
+    // något annat klipp startat under väntan, hoppas X2/X3 över i stället för att avbryta det.
+    var vanta = AVSTAND_SEK * 1000 - (nu() - m.senastStart), fore = m.senastStart;
+    m.timers.push(planera(function () { if (match === m && !m.slutfas && m.senastStart === fore) spelaIMatch(m, nyckel, e); }, vanta));
+    return 'vantar ' + Math.ceil(vanta / 1000) + ' s';
   }
 
   // Ett event in, ett beslut ut. Returvardet ar for proven och konsolen.
@@ -306,7 +380,7 @@
     var pct = Math.round(inst.storlek * 100);
     return '<section class="battle-fx-auto" data-battle-fx-auto style="margin:0 0 28px;padding:16px 18px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:14px">' +
       '<span class="section-header-eyebrow">⚔ Automatisk battle-FX</span>' +
-      '<p style="color:var(--text-muted);font-size:11px;margin:6px 0 12px">Spelar paketets klipp i OBS under en battle: Tap Tap när matchen börjar, X2/X3 när en dubbel- eller trippelboost startar (inte matchens första), Glove när 30 s återstår av boosten och Snipe när 30 s återstår av matchen. Testknapparna spelar direkt. Spelas i scen 1. Utan inloggning: lägg <code>&amp;scene=1&amp;battlefx=pinkPrincess</code> på overlay-länken i OBS.</p>' +
+      '<p style="color:var(--text-muted);font-size:11px;margin:6px 0 12px">Spelar paketets klipp i OBS under en battle: Tap Tap när matchen börjar, X2/X3 när en dubbel- eller trippelboost startar (inte matchens första), Glove när 30 s återstår av boosten (inte första bonustiden), Snipe när 30 s återstår av matchen och Glove igen när 20 s återstår. Testknapparna spelar direkt. Spelas i scen 1. Utan inloggning: lägg <code>&amp;scene=1&amp;battlefx=pinkPrincess</code> på overlay-länken i OBS.</p>' +
       '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">' +
       '<label>Paket <select id="battleFxPack">' + val + '</select></label>' +
       '<label>Storlek <b id="battleFxStorlekVarde">' + pct + ' %</b> <input id="battleFxStorlek" type="range" min="40" max="100" step="5" value="' + pct + '"></label>' +

@@ -525,6 +525,9 @@ men ingen har sett den följa en riktig sändning.
    mycket hjärtan: ta en skärmbild — det är just det glapp som setts tidigare.
 5. **Matchövervakning** under en battle: **Ditt lag** och **Motståndare** ska följa poängen i TikTok,
    **MVP** ska visa rätt person, och X2/X3, Tap Tap, Glove och Snipe ska märkas när de händer.
+   Battle-paketens regler sedan 2026-11-16: Tap Tap vid start, **första bonustiden helt tyst**,
+   X2/X3 när en senare boost öppnar och Glove vid 30 s kvar av den, Snipe vid 30 s kvar av matchen
+   och **Glove igen vid 20 s kvar** (tar över efter Snipe). Notera om något kom för tidigt/sent.
 6. Om en widget inte reagerade på något: leta upp händelsen i loggen. Finns den där men inget
    hände, är felet i widgeten. Finns den inte, kom den aldrig fram från TikTok.
 

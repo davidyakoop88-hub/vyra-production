@@ -445,7 +445,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // till 20261031-gavovideo nar Action-funktionen "Spela gavans animation" kom (Top Gift, PR 719).
   // action-runtime.js gick vidare till 20261116-1 nar kon fick prioritet (prioritet:'hog').
   assert.match(media, /action-options\.js\?v=20261018-1/, 'action-options.js cachebustades inte for F01');
-  assert.match(media, /action-runtime\.js\?v=20261116-1/, 'action-runtime.js cachebustades inte for prioriteten');
+  // ... och till 20261116-2 nar battle-paketens klipp fick ersatt-gruppen (ett nytt klipp byter ut det forra).
+  assert.match(media, /action-runtime\.js\?v=20261116-2/, 'action-runtime.js cachebustades inte for ersatt-gruppen');
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till

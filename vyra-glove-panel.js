@@ -5,7 +5,7 @@
   //
   // De fem modellerna är Video FX-paketen, "hela paketet" (templateGloveSnipe med battleEventKind 'pack'): ett
   // paket = en widget som spelar paketets klipp när battlen säger till — Tap Tap när matchen börjar, X2/X3 när en
-  // boost startar, Glove när 30 s återstår av boosten och Snipe när 30 s återstår av matchen. Två poster:
+  // boost startar, Glove när 30 s återstår av boosten (inte första bonustiden), Snipe när 30 s återstår av matchen och Glove igen när 20 s återstår. Två poster:
   //   * WebM med Snipe (Pink Princess, Royal Ruby, Cloud Fox), adaptern 'glove', fem klipp,
   //   * utan Snipe (Koi Pearl Lagoon, Masquerade Ball), adaptern 'glove-mp4', fyra klipp. Namnet är från när de
   //     var MP4; sedan 2026-10-23 är de också WebM med alfa (boost-x2/boost-x3.webm, 7 s).
@@ -37,8 +37,8 @@
 
   const DETALJ = { koiPearl: 'Koi Pearl Lagoon', masquerade: 'Masquerade Ball', pinkPrincess: 'Pink Princess', royalRuby: 'Royal Ruby', cloudFox: 'Cloud Fox', neonMiami: 'Neon Miami', samuraiStorm: 'Samurai Storm', streetArt: 'Street Art', iceFrost: 'Ice Frost', jungleSpirit: 'Jungle Spirit', goldenHoliday: 'Golden Holiday' };
   const modell = w => (w && w.battleEventKind === 'pack' ? String(w.boostPack || '') : 'klassisk');
-  const LIVE_WEBM = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar, Glove när 30 s återstår av boosten och Snipe när 30 s återstår av matchen.';
-  const LIVE_MP4 = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar och Glove när 30 s återstår av boosten. Paketet har inget Snipe-klipp.';
+  const LIVE_WEBM = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar, Glove när 30 s återstår av boosten (inte första bonustiden), Snipe när 30 s återstår av matchen och Glove igen när 20 s återstår.';
+  const LIVE_MP4 = 'Klippet väljs av battlen: Tap Tap när matchen börjar, X2 eller X3 när en boost startar (inte första bonustiden), Glove när 30 s återstår av boosten och när 20 s återstår av matchen. Paketet har inget Snipe-klipp.';
 
   const post = (galler, test, live) => R.definiera({
     typ: 'templateGloveSnipe',
