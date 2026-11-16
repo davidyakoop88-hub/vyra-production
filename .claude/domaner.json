@@ -488,6 +488,7 @@
         "action-event.js",
         "action-event.css",
         "action-event-advanced.js",
+        "action-logg.js",
         "action-options.js",
         "action-runtime.js",
         "action-scenes.js",
@@ -503,6 +504,7 @@
       "tester": [
         "tests/action-widget-routing.test.js",
         "tests/action-event-kedjan.test.js",
+        "tests/action-korlogg.test.js",
         "tests/huvudlank-scen1.test.js",
         "tests/action-event-poang.test.js",
         "tests/action-event-flikar.test.js",

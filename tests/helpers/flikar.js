@@ -35,7 +35,7 @@ const EXTRA_KEYS = ['vyra-extras', 'vyra-action-event-v2', 'vyra-favorite-widget
 
 // Filerna en flik behöver för att ta emot ett live-event och spela en action.
 const FILER = ['session-state.js', 'vyra-masterval.js', 'action-master.js', 'vyra-tal.js',
-               'action-runtime.js', 'action-event.js', 'action-event-advanced.js'];
+               'action-runtime.js', 'action-event.js', 'action-logg.js', 'action-event-advanced.js'];
 
 // Ett delat lager OCH en delad låshanterare — båda hör till maskinen, inte till fliken.
 // navigator.locks är per origin i en webbläsare, så en låshanterare per fönster hade gjort varje
