@@ -174,12 +174,43 @@
   //
   // Avdraget hör INTE hit: kostnaden är en ekonomifråga och dras av automationsmastern, exakt en
   // gång, oavsett var det låter. Se tts-chat.js.
+  //
+  // ÄNDRAT 2026-11-17 (David: TTS och Sound Alerts spelas "i studion / VYRA Desktop"). Som
+  // BetterTok och TikFinity: ljudet spelas på ETT ställe, datorn, och OBS fångar datorljudet. Förut
+  // var overlayn nivå 1 och valet gick via servern mellan webbläsarna, så rösten hamnade i OBS —
+  // och med OBS som egen webbläsare kunde båda sidor tro att de skulle läsa (sändningen 2026-11-16).
+  // Nu deltar en overlay INTE i valet och läser aldrig chatten; studioflikarna väljer en av sig.
+  // Sound Alerts spelade redan bara i studion (sound-alerts.js saIOverlay).
+  //
+  // En TTS-ACTION (Action & Event) läser fortfarande där dess Action körs — i overlayn — eftersom
+  // den anropar VyraTtsChat.tala direkt och inte går via röstmastern. Den hör till sin Action.
+  //
+  // LJUDPLATSEN ÄR ETT VAL: vyra-extras `ljudPlats` = 'studio' (förval) | 'overlay' (det gamla).
+  // I studioläget har studion nivå 1 och overlayn nivå 2, och en overlay som ändå råkar bli vald
+  // talar inte — så en sändning med OBS men utan öppen studio blir tyst, vilket är vad valet betyder.
+  // I overlayläget gäller precis det gamla: overlayn nivå 1, studion nivå 2.
+  const OVERLAY = !!window.VYRA_OVERLAY_SCENE
+    || /[?&]overlay=1/.test(String((typeof location !== 'undefined' && location && location.search) || ''));
+  function ljudPlats() {
+    try {
+      const d = window.VyraExtras && window.VyraExtras.data;
+      if (d && d.ljudPlats) return d.ljudPlats === 'overlay' ? 'overlay' : 'studio';
+      const raw = window.VyraSessionState?.readExtra?.('vyra-extras') ?? localStorage.getItem('vyra-extras');
+      const x = JSON.parse(raw || '{}') || {};
+      return (x.ljudPlats || (x.data && x.data.ljudPlats)) === 'overlay' ? 'overlay' : 'studio';
+    } catch { return 'studio'; }
+  }
   const val = window.VyraMasterval?.skapa?.({
     nyckel: 'vyra-rost-master',
-    minNiva: () => (window.VYRA_OVERLAY_SCENE ? 1 : 2),
+    minNiva: () => (ljudPlats() === 'overlay' ? (OVERLAY ? 1 : 2) : (OVERLAY ? 2 : 1)),
   });
-  window.VyraRostMaster = val || {
-    arMaster: () => true, farKora: () => true, pulsa: () => Promise.resolve(),
-    tabId: 'utan-masterval', nyckel: 'vyra-rost-master', TTL: 6000,
+  const tystOverlay = () => OVERLAY && ljudPlats() !== 'overlay';
+  window.VyraRostMaster = val ? Object.assign(Object.create(val), {
+    arMaster: () => !tystOverlay() && val.arMaster(),
+    farKora: () => !tystOverlay() && val.farKora(),
+    ljudPlats,
+  }) : {
+    arMaster: () => !tystOverlay(), farKora: () => !tystOverlay(), pulsa: () => Promise.resolve(),
+    tabId: 'utan-masterval', nyckel: 'vyra-rost-master', TTL: 6000, ljudPlats,
   };
 })();

@@ -272,6 +272,21 @@
     });
   }
   window.addEventListener('vyra-live-event', ev => { try { hantera(ev && ev.detail); } catch (err) { console.warn('[VYRA] Chattavatar', err); } });
+  // FELRAPPORTEN (2026-11-17). Avataren spelar bara i OBS, men studion får samma chatt och har samma
+  // regler — så här, i studion, sägs det till när ett avatarkommando inte togs emot, och varför.
+  // Sändningen 2026-11-16: en moderators `!s …` ignorerades tyst; nu syns det i LIVE-kontroll.
+  if (!OVERLAY) window.addEventListener('vyra-live-event', ev => {
+    try {
+      const e = ev && ev.detail, w = widgetar().find(x => !x.hidden);
+      if (!e || !w || typeof M.forklara !== 'function') return;
+      const svar = M.forklara(e, { streamer, publik: () => publik(w) });
+      if (!svar) return;
+      const text = M.tvatta(e.comment != null ? e.comment : e.message, 60);
+      const vem = String(e.username || e.uniqueId || e.name || 'någon').replace(/^@/, '');
+      window.VyraProblem?.rapportera?.('avatar', 'varning', `Avataren ignorerade "${text}" från @${vem}: ${svar.orsak}`,
+        { kommando: svar.key, moderator: e.isModerator === true });
+    } catch (err) { console.warn('[VYRA] Chattavatar felrapport', err); }
+  });
   // Ny sändning eller utloggning: kön och väntetiderna hör till den gamla.
   const nollstall = () => LIVE.forEach(t => { t.router.nollstall(); stoppa(t, true); });
   window.addEventListener('vyra-live-session', ev => { if (ev && ev.detail && ev.detail.event === 'live:start') nollstall(); });

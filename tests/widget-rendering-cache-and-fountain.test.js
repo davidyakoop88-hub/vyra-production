@@ -408,7 +408,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // samtidigt en strang som bara sager NAR — `20260817-duckning` namngav sitt innehall, vilket
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   // 20261012-1: vakten mot konfig-omhamtningen efter live:start (#271 avsnitt 4).
-  assert.match(media, /battle-mvp-session\.js\?v=20261021-2/,
+  // 20261117-1: felrapporten mäter tiden från matchslut till MVP.
+  assert.match(media, /battle-mvp-session\.js\?v=20261117-1/,
     'battle-mvp-session.js cachebustades inte for #271');
   // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
   // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
@@ -417,10 +418,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // Upptackt i sammanslagningen hit och fixat har for att gallringen ska kunna ga in gron. Felet
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
   // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
-  assert.match(media, /sound-alerts\.js\?v=20261110-1/, 'sound-alerts.js cachebustades inte');
-  for (const fil of ['vyra-tal']) {
-    assert.match(media, new RegExp(`${fil}\\.js\\?v=20260817-duckning`), `${fil}.js cachebustades inte`);
-  }
+  // 20261117-1: färskheten mäts mot serverklockan och felrapporten får veta om ljud som uteblir.
+  assert.match(media, /sound-alerts\.js\?v=20261117-1/, 'sound-alerts.js cachebustades inte');
+  // vyra-tal.js LÄMNADE listan 2026-11-17: röstmästaren följer numera valet "Rösten läses i".
+  assert.match(media, /vyra-tal\.js\?v=20261117-1/, 'vyra-tal.js cachebustades inte');
   // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
   // (docs/referens/tikfinity-actions-facit.md) och filen ar alltsa inte langre "oforandrad sedan
   // duckningen". De fyra filerna i samma ombyggnad delar strang, for de ar EN andring — halls de

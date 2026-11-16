@@ -1487,7 +1487,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261116-4'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20260817-duckning','action-event.js?v=20261116-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-logg.js?v=20261116-1','action-snabbstart.js?v=20261116-3','action-backup.js?v=20261116-1','action-battle.js?v=20261116-2','action-event-advanced.js?v=20261116-3','gavovideo.js?v=20261031-1','topgift-video.js?v=20261109-2','action-runtime.js?v=20261116-2'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261116-4'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20261117-1','action-event.js?v=20261116-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-logg.js?v=20261116-1','action-snabbstart.js?v=20261116-3','action-backup.js?v=20261116-1','action-battle.js?v=20261116-2','action-event-advanced.js?v=20261116-3','gavovideo.js?v=20261031-1','topgift-video.js?v=20261109-2','action-runtime.js?v=20261116-2'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261020-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-7';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1514,8 +1514,8 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='acti
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='action-simulator.js?v=20260916-facit';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='points-system.js?v=20261012-diamonds';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='obs-client.js?v=20260731-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261116-1';document.body.append(js)});
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=20261020-6';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261116-2';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='tts-chat.css?v=20260923-readable';document.head.append(css);let js=document.createElement('script');js.src='tts-chat.js?v=20261117-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='guide.css?v=20261020-6';document.head.append(css);let js=document.createElement('script');js.src='guide.js?v=20261117-1';document.body.append(js)});
 /* Stilmallen laddas har, inte bara skriptet. Den har raden saknade sin css-halva: state-backup.css
    ligger i repot, deployas, och stylar precis de klasser skriptet bygger (.vb-modal, .vb-settings,
    .vb-actions, .vb-versions) - men ingen laddade den, sa sakerhetskopiedialogen renderades ostylad.
@@ -1546,7 +1546,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261023-1';document.head.append(css);let js=document.createElement('script');js.src='live-control.js?v=20261023-1';document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261117-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
@@ -1564,16 +1564,16 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guar
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261021-2';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261117-1';document.body.append(js)});
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='latency-probe.js?v=20261018-klocka';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261116-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-packages.js?v=20261117-1';document.body.append(js)});
 
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='custom-widgets.js?v=20261107-11';document.body.append(js)});
 
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261110-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='sound-alerts.js?v=20261117-1';document.body.append(js)});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='chatbot-overlay.css?v=1';document.head.append(css);let js=document.createElement('script');js.src='chatbot-overlay.js?v=1';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-preview.js?v=20261111-3';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-textkontur.js?v=20261015-1';document.body.append(js)});
@@ -1945,7 +1945,7 @@ Promise.resolve().then(()=>{
 // väntetider, kö, pratbubblans delar) laddas först.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261110-2';css.dataset.chattavatar='1';document.head.append(css)}
-  for(const f of ['chattavatar-modell.js?v=20261110-2','chattavatar.js?v=20261110-2']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+  for(const f of ['chattavatar-modell.js?v=20261117-1','chattavatar.js?v=20261117-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 // Viewer Showcase - streamern eller en moderator lyfter fram en tittare i 8 sekunder (viewer-showcase.js).
 Promise.resolve().then(()=>{

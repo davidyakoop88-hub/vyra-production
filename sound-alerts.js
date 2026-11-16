@@ -379,18 +379,22 @@ function saTraffar(alert,trigger,info){
   if(alert.giftId&&String(alert.giftId)===info.giftId)return true;
   try{return!!window.VyraGavokatalog?.idn?.(namn)?.has?.(info.giftId)}catch{return false}
 }
+/* FELRAPPORTEN (vyra-problem.js, 2026-11-17). Ett ljud som inte hörs ska säga varför — förut var
+   varje nej här en tyst return. Alertens namn är det streamern känner igen. */
+const saRapport=(niva,text,alert)=>{try{window.VyraProblem?.rapportera?.('ljud',niva,text,{alert:String(alert?.name||alert?.condition||alert?.trigger||'')})}catch{}};
+const saNamn=alert=>String(alert?.name||alert?.condition||alert?.trigger||'en alert');
 async function saSpelaAlert(alert){
-  const sound=saSound(alert.soundId);if(!sound)return;
+  const sound=saSound(alert.soundId);if(!sound){saRapport('fel',`Ljudet till "${saNamn(alert)}" finns inte längre — välj ett nytt ljud`,alert);return}
   const meta=await saGetMediaMeta(sound),blob=meta?.packagePath?null:await saReadFile(meta);
-  if(!meta?.packagePath&&!blob)return;
+  if(!meta?.packagePath&&!blob){saRapport('fel',`Ljudfilen till "${saNamn(alert)}" finns inte i den här webbläsaren — egna filer sparas per dator, ladda upp den igen här`,alert);return}
   const url=meta.packagePath||URL.createObjectURL(blob),audio=new Audio(url),bas=Math.max(0,Math.min(100,Number(alert.volume??80)))/100;
   if(!meta.packagePath)audio.onended=audio.onerror=()=>URL.revokeObjectURL(url);
   if(window.VyraTal?.duckaLjud)window.VyraTal.duckaLjud(audio,bas);else audio.volume=bas;
   // Löftet löser när ljudet SLUTAT (eller inte kunde spelas) — kön i saKoa väntar på det. Taket på
   // 20 s gör att ett ljud som aldrig rapporterar slut inte låser kön resten av sändningen.
   await new Promise(klar=>{let gjort=false;const slut=()=>{if(!gjort){gjort=true;klar()}};
-    audio.addEventListener('ended',slut);audio.addEventListener('error',slut);setTimeout(slut,20000);
-    Promise.resolve(audio.play()).catch(()=>{if(!saSparrSagd){saSparrSagd=true;toast('Klicka en gång i VYRA så att webbläsaren tillåter ljud')}slut()})});
+    audio.addEventListener('ended',slut);audio.addEventListener('error',()=>{saRapport('fel',`Ljudet till "${saNamn(alert)}" kunde inte spelas — filen gick inte att läsa`,alert);slut()});setTimeout(slut,20000);
+    Promise.resolve(audio.play()).catch(()=>{saRapport('fel',`Webbläsaren blockerade ljudet till "${saNamn(alert)}" — klicka en gång i VYRA så att ljud tillåts`,alert);if(!saSparrSagd){saSparrSagd=true;toast('Klicka en gång i VYRA så att webbläsaren tillåter ljud')}slut()})});
 }
 /* ETT LJUD PER GÅVA, I KÖ (David 2026-11-10: "vid flera gift kommer endast ett ljud"; valt: "Ett ljud per
    gåva, i kö"). En streak är EN gift-händelse med repeatCount N (tiktok-bridge/bridge.js: streakens
@@ -401,7 +405,9 @@ async function saSpelaAlert(alert){
 const SA_TAK=10,SA_KO_MAX=30,saKoer={};
 function saKoa(alert,antal){
   const k=saKoer[alert.id]||(saKoer[alert.id]={n:0,spelar:false});
-  k.n=Math.min(SA_KO_MAX,k.n+Math.max(1,antal|0));
+  const onskat=k.n+Math.max(1,antal|0);
+  if(onskat>SA_KO_MAX)saRapport('varning',`Kön för "${saNamn(alert)}" var full — ${onskat-SA_KO_MAX} ljud spelades inte (max ${SA_KO_MAX} i kö)`,alert);
+  k.n=Math.min(SA_KO_MAX,onskat);
   if(!k.spelar)saNasta(alert);
 }
 async function saNasta(alert){
@@ -414,7 +420,16 @@ async function saNasta(alert){
 function saTaEmot(e){
   if(!e||saIOverlay())return;
   const id=String(e.id||e.eventKey||'');if(id){if(saSedda.has(id))return;saSedda.add(id);if(saSedda.size>500)saSedda.delete(saSedda.values().next().value)}
-  const at=Number(e.at)||Number(e.timestamp)||0;if(at&&Date.now()-at>SA_HISTORIK_MS)return;
+  /* SERVERNS KLOCKA, inte datorns (2026-11-17). `at` sätts av servern; mot Date.now() såg varje
+     händelse gammal ut på en dator vars klocka gick fel — uppmätt +20 s i LIVE Studios logg
+     2026-10-17, live-client.js — och Sound Alerts kastade den tyst. Samma klocka som like-fontänen
+     och avataren använder. Utan klockan (gammal cachad live-client) gäller datorns som förut. */
+  let saNu=Date.now();try{const n=Number(window.VyraLive?.serverNu?.());if(n>0)saNu=n}catch{}
+  const at=Number(e.at)||Number(e.timestamp)||0;
+  /* Rapporteras bara efter sidans första 20 s: vid laddning spelas kvällens historik upp
+     (live-leaderboard.js), och den ska inte se ut som sena händelser. Samma text varje gång, så att
+     en skur blir EN rad med ×N. */
+  if(at&&saNu-at>SA_HISTORIK_MS){if(saNu-at<10*60000&&(typeof performance==='undefined'||performance.now()>20000))saRapport('varning','Händelser kom mer än 30 s för sent och gav inget ljud — anslutningen till TikTok släpar',null);return}
   const alerts=saAlerts();if(!alerts.length)return;
   if(!saMaster&&window.VyraMasterval?.skapa)saMaster=window.VyraMasterval.skapa({nyckel:'vyra-ljudlarm-master',minNiva:()=>2});
   if(saMaster&&!saMaster.farKora())return;

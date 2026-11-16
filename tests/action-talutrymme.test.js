@@ -39,9 +39,13 @@ const handelse = (o = {}) => ({ id: 'e1', trigger: 'gift', triggerValue: 'Rose',
   enabled: true, ...o });
 const gava = (o = {}) => ({ username: 'kim', gift: 'Rose', value: 'Rose', ...o });
 
+// LJUDPLATSEN (2026-11-17): förvalet är studion. Proven för delat talutrymme och duckning mäter
+// overlayläget, där chatten och actionerna delar flik — därför ljudPlats 'overlay' som standard här.
+// Prov 2 och 2b mäter båda lägena.
 async function uppsattning({ scener = [1], studio = true, ttsInstallningar = {},
-                             actions = [], events = [], saldo = 1000 } = {}) {
+                             actions = [], events = [], saldo = 1000, ljudPlats = 'overlay' } = {}) {
   const lager = F.delatLager();
+  if (ljudPlats) lager.setItem('vyra-extras', JSON.stringify({ ljudPlats }));
   lager.setItem(TTS_KEY, JSON.stringify({ enabled: true, cooldownSeconds: 0, ...ttsInstallningar }));
   if (actions.length) lager.setItem(F.KEY, JSON.stringify({ actions, events }));
   for (const n of scener) lager.setItem(`vyra-scene-heartbeat-${n}`, String(Date.now()));
@@ -83,8 +87,8 @@ test('1: tre flikar och en chattrad ger EN röst och ETT avdrag', async () => {
   assert.equal(fore - flikar[0].VyraPoints.get('lisa'), 10, 'kostnaden drogs en gång per flik');
 });
 
-test('2: rösten hörs i overlayn när en sådan finns, annars i studion', async () => {
-  const med = await uppsattning({ scener: [1] });
+test('2: overlayläget — rösten hörs i overlayn när en sådan finns, annars i studion', async () => {
+  const med = await uppsattning({ scener: [1], ljudPlats: 'overlay' });
   chatta(med.flikar);
   await vanta(150);
   const talade = allaTal(med.flikar);
@@ -92,12 +96,50 @@ test('2: rösten hörs i overlayn när en sådan finns, annars i studion', async
   assert.equal(talade[0].flik, 'overlay 1',
     'studion tog rösten — då försvinner chatten ur sändningen, för OBS fångar overlayn');
 
-  const utan = await uppsattning({ scener: [], studio: true });
+  const utan = await uppsattning({ scener: [], studio: true, ljudPlats: 'overlay' });
   chatta(utan.flikar);
   await vanta(150);
   const soloTal = allaTal(utan.flikar);
   assert.equal(soloTal.length, 1, 'en ensam studioflik blev tyst — nivå 2 höll inte');
   assert.equal(soloTal[0].flik, 'studio');
+});
+
+test('2b: studioläget (förval) — rösten hörs i studion, aldrig i overlayn', async () => {
+  const med = await uppsattning({ scener: [1], ljudPlats: 'studio' });
+  chatta(med.flikar);
+  await vanta(150);
+  const talade = allaTal(med.flikar);
+  assert.equal(talade.length, 1, `${talade.length} röster — chatten lästes inte, eller lästes två gånger`);
+  assert.equal(talade[0].flik, 'studio', 'overlayn läste fast ljudet ska spelas i studion');
+
+  const ensam = await uppsattning({ scener: [1], studio: false, ljudPlats: 'studio' });
+  chatta(ensam.flikar);
+  await vanta(150);
+  assert.equal(allaTal(ensam.flikar).length, 0, 'en ensam overlay läste — i studioläget ska OBS vara tyst');
+
+  const utanVal = await uppsattning({ scener: [1], ljudPlats: null });
+  chatta(utanVal.flikar);
+  await vanta(150);
+  assert.deepEqual(allaTal(utanVal.flikar).map(t => t.flik), ['studio'], 'utan sparat val ska studion vara förval');
+});
+
+test('2b: studioläget (förval) — rösten hörs i studion, aldrig i overlayn', async () => {
+  const med = await uppsattning({ scener: [1], ljudPlats: 'studio' });
+  chatta(med.flikar);
+  await vanta(150);
+  const talade = allaTal(med.flikar);
+  assert.equal(talade.length, 1, `${talade.length} röster — chatten lästes inte, eller lästes två gånger`);
+  assert.equal(talade[0].flik, 'studio', 'overlayn läste fast ljudet ska spelas i studion');
+
+  const ensam = await uppsattning({ scener: [1], studio: false, ljudPlats: 'studio' });
+  chatta(ensam.flikar);
+  await vanta(150);
+  assert.equal(allaTal(ensam.flikar).length, 0, 'en ensam overlay läste — i studioläget ska OBS vara tyst');
+
+  const utanVal = await uppsattning({ scener: [1], ljudPlats: null });
+  chatta(utanVal.flikar);
+  await vanta(150);
+  assert.deepEqual(allaTal(utanVal.flikar).map(t => t.flik), ['studio'], 'utan sparat val ska studion vara förval');
 });
 
 // ---- 3-4. actions delar utrymmet, och når molnrösterna -----------------------------------------

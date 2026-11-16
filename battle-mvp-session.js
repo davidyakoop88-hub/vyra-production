@@ -222,11 +222,37 @@
     session.bidrag.set(username, post);
   }
 
+  // FELRAPPORTEN (2026-11-17): hur lang tid fran matchslut till att MVP tands. Sandningen
+  // 2026-11-16 upplevdes som att MVP kom sent, men det fanns inget matt. Nu skrivs det till
+  // LIVE-kontroll: info vid varje tandning, varning over 10 s, och varning om ingen MVP alls kom.
+  const slutVid = new Map();
+  const MVP_SAKNAS_MS = 45000;
+  function slutMatt(bid) {
+    bid = bid ? String(bid) : '';
+    if (!bid || slutVid.has(bid) || annonserade.has(bid)) return;   // facit kan komma fore slutet
+    const post = { at: Date.now(), timer: null };
+    slutVid.set(bid, post);
+    post.timer = setTimeout(() => {
+      if (slutVid.get(bid) !== post) return;
+      slutVid.delete(bid);
+      root.VyraProblem?.rapportera?.('mvp', 'varning', 'Ingen MVP visades 45 s efter matchslut — kom det några gåvor under matchen?', { battleId: bid });
+    }, MVP_SAKNAS_MS);
+  }
+  function mvpTand(bid) {
+    bid = bid ? String(bid) : '';
+    const post = bid && slutVid.get(bid);
+    if (!post) return;
+    clearTimeout(post.timer); slutVid.delete(bid);
+    const sek = Math.max(0, (Date.now() - post.at) / 1000);
+    const text = 'MVP visades ' + sek.toFixed(1).replace('.', ',') + ' s efter matchslut';
+    root.VyraProblem?.rapportera?.('mvp', sek > 10 ? 'varning' : 'info', text, { battleId: bid, sek: Math.round(sek * 10) / 10 });
+  }
+
   function hanteraBattle(e) {
     const rå = e.battleStatus == null ? '' : String(e.battleStatus);
     anteckna(rå);
     const läge = klassa(rå);
-    if (läge === 'slut') { stang(); return }
+    if (läge === 'slut') { slutMatt(e.battleId || (session && session.battleId)); stang(); return }
     if (läge === 'aktiv') {
       // En ny match kan inte börja medan en gammal är öppen. Säkerhetsnätet: den föregående stängs
       // och tänder sin MVP nu, i stället för att tyst tappas.
@@ -276,6 +302,7 @@
     const tand = (self, args) => {
       // En ny vinnare ar korad: namnet i layouten ar fran och med nu den har sandningens.
       vaktaOmhamtning = false;
+      try { mvpTand(args && args[0] && args[0].battleId); } catch (_) {}
       if (typeof original === 'function') return original.apply(self, args);
     };
     root.triggerBattleMvp = function (event = {}) {

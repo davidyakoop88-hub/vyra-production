@@ -356,6 +356,18 @@
   function spela(event, opts) { return hantera(event, opts); }
   function lage() { return match ? { id: match.id, boostar: match.boostar, snipeSpelad: match.snipeSpelad } : null; }
 
+  // FELRAPPORTEN: beslut som forklarar varfor ett klipp INTE syntes skrivs till LIVE-kontroll.
+  // 'inte scen 1' och 'ingen runtime' ar normala i studion (klippen spelas i OBS) och rapporteras inte.
+  function rapportera(event, svar) {
+    var P = root.VyraProblem; if (!P || !P.rapportera || typeof svar !== 'string') return;
+    var klipp = klippFor(event), namn = klipp ? ' (' + klipp + ')' : '';
+    if (/^(paketet|widgeten) saknar/.test(svar)) P.rapportera('battle', 'varning', 'Battle-FX: ' + svar.replace('paketet saknar', 'paketet saknar klippet').replace('widgeten saknar', 'widgeten saknar klippet'));
+    else if (/^vantar/.test(svar)) P.rapportera('battle', 'info', 'Battle-FX' + namn + ' väntar ' + svar.replace(/\D+/g, '') + ' s — förra klippet spelas fortfarande');
+    else if (svar === 'slutfasen') P.rapportera('battle', 'info', 'Battle-FX' + namn + ' hoppades över: matchens sista 40 s är reserverade för Snipe och Glove');
+    else if (svar === 'for gammal') P.rapportera('battle', 'varning', 'Battle-FX' + namn + ' hoppades över: händelsen kom för sent fram');
+    else if (svar === 'av' && klipp) P.rapportera('battle', 'info', 'En boost kom men Automatisk battle-FX är avstängd (välj paket under Paket)');
+  }
+
   // Lank i routeLiveBattleEvent-kedjan. Felet i var lank far aldrig stoppa de andra.
   function koppla() {
     var tidigare = root.routeLiveBattleEvent;
@@ -363,7 +375,7 @@
     var lank = function (event) {
       var svar;
       try { svar = tidigare.apply(this, arguments); } finally {
-        try { hantera(event || {}); } catch (err) { console.error('[VYRA battle-fx]', err); }
+        try { rapportera(event || {}, hantera(event || {})); } catch (err) { console.error('[VYRA battle-fx]', err); }
       }
       return svar;
     };
