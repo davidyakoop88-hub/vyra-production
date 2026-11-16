@@ -22,16 +22,17 @@ async function flik(o = {}) {
   return w;
 }
 
-test('1: en hel match — start en gång, ledningsbyten, boost, slut och vinst', async () => {
+// Ledningen fyrar inte ur tolka() utan senare, när den hållit sig (se dämpningsproven nedan).
+// Här mäts det som fyrar direkt: start, boost, slut och resultat.
+test('1: en hel match — start en gång, boost, slut och vinst', async () => {
   const w = await flik();
   const t = e => [...w.VyraActionBattle.tolka(e)].map(h => h.handelse);
   assert.deepEqual(t(battle('battle_started', { remainingSec: 300, scoreUs: 0, scoreThem: 0 })), ['start']);
   assert.deepEqual(t(battle('battle_started', { remainingSec: 290, scoreUs: 0, scoreThem: 0 })), [], 'starten fyrade igen');
-  assert.deepEqual(t(battle('battle_started', { scoreUs: 10, scoreThem: 0 })), ['leder']);
-  assert.deepEqual(t(battle('battle_started', { scoreUs: 20, scoreThem: 5 })), [], 'samma ledare ska inte fyra igen');
+  assert.deepEqual(t(battle('battle_started', { scoreUs: 10, scoreThem: 0 })), [], 'ledningen ska inte fyra direkt');
   assert.deepEqual(t(glove()), ['boost']);
-  assert.deepEqual(t(battle('battle_started', { scoreUs: 20, scoreThem: 40 })), ['efter']);
-  assert.deepEqual(t(battle('battle_started', { scoreUs: 90, scoreThem: 40 })), ['leder']);
+  assert.deepEqual(t(battle('battle_started', { scoreUs: 20, scoreThem: 40 })), []);
+  assert.deepEqual(t(battle('battle_started', { scoreUs: 90, scoreThem: 40 })), []);
   assert.deepEqual(t(battle('battle_finished', { scoreUs: 120, scoreThem: 40 })), ['slut', 'vinst']);
   assert.deepEqual(t(battle('battle_finished', { scoreUs: 120, scoreThem: 40 })), [], 'slutet fyrade två gånger');
   assert.deepEqual(t(battle('battle_started', { remainingSec: 300 })), [], 'en avslutad match startade om');
@@ -100,8 +101,69 @@ test('6: länken i routeLiveBattleEvent-kedjan kör vidare även om en tidigare 
   w.VyraActionEvent = { handleEvent: (trig, p) => sedda.push(trig + ':' + p.value) };
   assert.throws(() => w.routeLiveBattleEvent(glove({ id: 'kedja' })), /trasig widget/);
   assert.equal(anrop, 1);
+  await vanta(20);
   assert.deepEqual(sedda, ['battle:boost']);
   assert.equal(w.VyraActionBattle.koppla(), false, 'länken lades på två gånger');
+});
+
+// ── Dämpningen. Korta tider i proven; i sändning gäller 3 s, 15 s och 20 per minut. ──
+async function dampad(granser = { HALL_MS: 80, MELLAN_MS: 400, TAK_PER_MIN: 20 }) {
+  const w = await flik();
+  w.VyraActionBattle.stall(granser);
+  const fyrade = [];
+  w.VyraActionEvent = { handleEvent: (trig, p) => fyrade.push(p.value) };
+  return { w, B: w.VyraActionBattle, fyrade };
+}
+
+test('8: ledningen fyrar först när den hållit sig, inte på ett snabbt fram och tillbaka', async () => {
+  const { B, fyrade } = await dampad();
+  B.hantera(battle('battle_started', { battleId: 'd1', remainingSec: 300 }));
+  B.hantera(battle('battle_started', { battleId: 'd1', scoreUs: 10, scoreThem: 0 }));
+  B.hantera(battle('battle_started', { battleId: 'd1', scoreUs: 10, scoreThem: 20 }));
+  B.hantera(battle('battle_started', { battleId: 'd1', scoreUs: 30, scoreThem: 20 }));
+  await vanta(40);
+  assert.deepEqual(fyrade, ['start'], 'ett ledningsbyte fyrade innan det hållit sig');
+  await vanta(120);
+  assert.deepEqual(fyrade, ['start', 'leder'], 'bara den ledning som höll ska fyra, en gång');
+});
+
+test('9: samma ledningshändelse fyrar högst en gång per period', async () => {
+  const { B, fyrade } = await dampad({ HALL_MS: 80, MELLAN_MS: 1000, TAK_PER_MIN: 20 });
+  B.hantera(battle('battle_started', { battleId: 'd2', remainingSec: 300 }));
+  const steg = [[10, 0], [10, 20], [30, 20], [30, 40], [50, 40]];
+  for (const [us, them] of steg) { B.hantera(battle('battle_started', { battleId: 'd2', scoreUs: us, scoreThem: them })); await vanta(110) }
+  // leder (håller) → efter (håller) → leder igen inom perioden: dämpas → efter igen: dämpas → leder: dämpas
+  assert.deepEqual(fyrade, ['start', 'leder', 'efter']);
+  await vanta(1000);
+  B.hantera(battle('battle_started', { battleId: 'd2', scoreUs: 50, scoreThem: 60 }));
+  await vanta(110);
+  B.hantera(battle('battle_started', { battleId: 'd2', scoreUs: 70, scoreThem: 60 }));
+  await vanta(110);
+  assert.deepEqual(fyrade, ['start', 'leder', 'efter', 'efter', 'leder'], 'efter perioden ska ledningen få fyra igen');
+});
+
+test('10: matchens slut stoppar en väntande ledning, och taket per minut håller', async () => {
+  const { B, fyrade } = await dampad({ HALL_MS: 80, MELLAN_MS: 0, TAK_PER_MIN: 3 });
+  B.hantera(battle('battle_started', { battleId: 'd3', remainingSec: 300 }));
+  B.hantera(battle('battle_started', { battleId: 'd3', scoreUs: 10, scoreThem: 0 }));
+  B.hantera(battle('battle_finished', { battleId: 'd3' }));
+  await vanta(150);
+  assert.deepEqual(fyrade, ['start', 'slut', 'vinst'], 'en ledning fyrade efter att matchen var slut');
+  for (let i = 0; i < 5; i++) B.hantera(glove());
+  await vanta(30);
+  assert.equal(fyrade.length, 3, 'taket på 3 per minut släppte igenom fler');
+});
+
+test('11: battle-widgetarna i kedjan körs färdigt innan Action & Event ens anropas', async () => {
+  const w = await flik();
+  const ordning = [];
+  w.routeLiveBattleEvent = () => { ordning.push('widgetar') };
+  w.VyraActionBattle.koppla();
+  w.VyraActionEvent = { handleEvent: () => { ordning.push('action-event'); throw new Error('trasig action') } };
+  w.routeLiveBattleEvent(glove({ id: 'ordning' }));
+  ordning.push('kedjan klar');
+  await vanta(20);
+  assert.deepEqual(ordning, ['widgetar', 'kedjan klar', 'action-event'], 'Action & Event kördes inne i widgetkedjan');
 });
 
 test('7: eventpanelens lista är samma som filens, och panelen sparar en battle-händelse neutralt', async () => {

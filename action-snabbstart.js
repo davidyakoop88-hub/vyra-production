@@ -52,6 +52,23 @@
         {namn:{sv:'!hej',en:'!hi'},...alert('Hej {username}!','Hi {username}!'),duration:4,userCooldown:300,
           trigger:'chatCommand',varde:{sv:'!hej',en:'!hi'}}
       ]
+    },
+    // BATTLE (2026-11-16). Bygger på battle-triggrarna i action-battle.js. Medvetet utanför:
+    // boost-fönster (battle-paketen spelar redan X2/X3), "motståndaren tar ledningen" (negativt mitt
+    // i matchen) och oavgjort (ovanligt). Vinsten är prioriterad så att den inte väntar bakom gåvor.
+    {
+      id:'battle',ikon:'⚔️',namn:'Battle',
+      om:'En peppande alert när matchen börjar och när ni tar ledningen, ett firande när ni vinner och ett lugnt tack när ni förlorar.',
+      delar:[
+        {namn:{sv:'Battle: matchen börjar',en:'Battle: match starts'},...alert('Battle! Skicka gåvor och hjälp oss vinna','Battle! Send gifts and help us win'),duration:5,
+          trigger:'battle',varde:'start'},
+        {namn:{sv:'Battle: vi leder',en:'Battle: we lead'},...alert('Vi leder! Fortsätt så','We are in the lead! Keep it up'),duration:4,
+          trigger:'battle',varde:'leder'},
+        {namn:{sv:'Battle: vi vann',en:'Battle: we won'},...alert('Vi vann! Tack alla som hjälpte till','We won! Thank you everyone who helped'),duration:8,prioritet:'hog',
+          trigger:'battle',varde:'vinst'},
+        {namn:{sv:'Battle: vi förlorade',en:'Battle: we lost'},...alert('Tack för att ni kämpade med oss','Thank you for fighting with us'),duration:6,
+          trigger:'battle',varde:'forlust'}
+      ]
     }
   ];
 

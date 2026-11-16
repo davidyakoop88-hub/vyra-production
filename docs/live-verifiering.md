@@ -633,8 +633,11 @@ bygger på `scoreUs`/`scoreThem`, som bara är rätt när bryggan vet vilket kon
 
 1. **Startar den en gång?** Alerten för *Matchen börjar* ska komma en gång när matchen börjar — inte
    igen för varje `battle_started` TikTok skickar under matchen.
-2. **Stämmer ledningen med appen?** *Vi tar ledningen* ska komma när TikToks poängrad tippar över
-   till din sida, inte före och inte flera gånger utan att motståndaren varit före emellan.
+2. **Stämmer ledningen med appen?** *Vi tar ledningen* ska komma ungefär **3 sekunder** efter att
+   TikToks poängrad tippat över till din sida — så länge måste ledningen hålla innan den räknas
+   (dämpningen, `VyraActionBattle.GRANSER`). Samma ledningshändelse kommer högst en gång per 15 s,
+   och högst 20 battle-händelser per minut når Action & Event. Kändes 3 s för sent eller 15 s för
+   tätt: skriv ner vad som hade varit rätt.
 3. **Kommer slutet och resultatet?** *Matchen slutar* ska komma när matchen tar slut (inte först
    efter strafffasen, `LINK_MIC_BATTLE_PUNISH_FINISH`, punkt 3). *Vi vinner* ska komma bara vid vinst.
 4. **Läs körloggen** (Action & Event → 03 Körlogg). Varje battle-rad heter *TikTok · Händelse i en
