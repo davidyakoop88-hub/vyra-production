@@ -369,7 +369,7 @@
     'Inga Events ännu. Koppla ett event till en Action.': 'No Events yet. Link an event to an Action.',
     'Koppla ditt första Event': 'Link your first Event',
     'Avancerat': 'Advanced',
-    'OBS-länkar, testläge, timer och poängsystem': 'OBS links, test mode, timer and points system',
+    'OBS-länkar, testläge, timer, poängsystem och backup': 'OBS links, test mode, timer, points system and backup',
     'OBS-SKÄRMAR': 'OBS SCREENS',
     'Endast skärmar som används av dina Actions': 'Only screens used by your Actions',
     'Varje Action har en egen knapp för sin OBS-länk. Skapa länken här första gången och lägg den sedan i OBS eller Live Studio.': 'Each Action has its own button for its OBS link. Create the link here the first time and then add it to OBS or Live Studio.',
@@ -1263,6 +1263,28 @@
     'Tillagt': 'Added',
     'Lägger till…': 'Adding…',
     'Startpaketet kunde inte sparas': "The starter pack couldn't be saved",
+    // Action & Event · Backup (action-backup.js, 2026-11-16)
+    'Backup': 'Backup',
+    'Spara alla Actions, Events och timers — med dina egna ljud, bilder och videor — i en fil. Läs in den igen på en annan dator eller efter ett misstag.':
+      'Save all Actions, Events and timers — with your own sounds, images and videos — in one file. Load it again on another computer or after a mistake.',
+    'Exportera': 'Export',
+    'Importera': 'Import',
+    'Ångra senaste import': 'Undo last import',
+    'Importera automatik': 'Import automation',
+    'Det här är en layoutfil från Inställningar. Bara automatiken läses in; egna ljud, bilder och videor finns inte i den filen.':
+      'This is a layout file from Settings. Only the automation is loaded; your own sounds, images and videos are not in that file.',
+    'Läggs till bredvid det du redan har. Inget befintligt ändras.': 'Added next to what you already have. Nothing existing is changed.',
+    'Ersätt allt': 'Replace everything',
+    'Läser in…': 'Loading…',
+    'Filen är inte en VYRA-backup': 'The file is not a VYRA backup',
+    'Backupen är gjord i en nyare version av VYRA': 'The backup was made in a newer version of VYRA',
+    'Automatiken i layoutfilen är skadad': 'The automation in the layout file is damaged',
+    'Layoutfilen innehåller ingen automatik': 'The layout file contains no automation',
+    'Backupen kunde inte läsas in': "The backup couldn't be loaded",
+    'Backupen kunde inte sparas': "The backup couldn't be saved",
+    'Filen kunde inte läsas': "The file couldn't be read",
+    'Importen är ångrad': 'The import was undone',
+    'Importen kunde inte ångras': "The import couldn't be undone",
   };
 
   for (const [sv, en] of Object.entries(NAV)) {
@@ -1385,6 +1407,17 @@
       .replace(/^actionen finns inte längre$/, 'the action no longer exists')
       .replace(/^stoppades innan den nådde overlayn$/, 'it never reached the overlay')],
     [/^Matchade inte villkoret "(.+)"$/, 'Didn\'t match the condition "$1"'],
+    // Action & Event · Backup. Delarna räknas upp med komma: "5 actions, 7 events, 3 egna filer".
+    [/^Filen innehåller (.+?)\.(?: Sparad (\d{4}-\d{2}-\d{2})\.)?$/, (m, delar, datum) =>
+      'The file contains ' + delar.replace(/(\d+) timers/, '$1 timers').replace(/(\d+) egna filer/, '$1 own files').replace(/\b1 egen fil\b/, '1 own file')
+        + '.' + (datum ? ' Saved ' + datum + '.' : '')],
+    [/^Dina nuvarande (\d+) actions och (\d+) events tas bort\. Du kan ångra tills du laddar om sidan\.$/,
+      'Your current $1 actions and $2 events are removed. You can undo until you reload the page.'],
+    [/^Backup sparad: (\d+) actions, (\d+) events(?: och (\d+) (?:egna filer|egen fil))?(?: — (\d+) filer var för stora och följde inte med)?$/,
+      (m, a, e, f, u) => 'Backup saved: ' + a + ' actions, ' + e + ' events' + (f ? ' and ' + f + (f === '1' ? ' own file' : ' own files') : '')
+        + (u ? ' — ' + u + ' files were too large and were left out' : '')],
+    [/^Automatiken ersattes: (\d+) actions och (\d+) events$/, 'Automation replaced: $1 actions and $2 events'],
+    [/^(\d+) actions och (\d+) events lades till$/, '$1 actions and $2 events were added'],
     [/^Inget event väntade på (.+?)(?: — eventen väntar på (.+))?$/, (m, vad, vantar) =>
       'No event was waiting for ' + (vad === 'det här' ? 'this' : vad) + (vantar ? ' — the events are waiting for ' + vantar : '')],
   ];

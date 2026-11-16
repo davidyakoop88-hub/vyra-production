@@ -73,6 +73,29 @@
 .ae-actions-toolbar .ae-paket-knapp:hover{border-color:#7a4f88;background:#1d1424}
 @media (max-width:520px){.ae-paket{grid-template-columns:30px minmax(0,1fr)}.ae-paket button{grid-column:2;justify-self:start}}
 
+/* Backup (action-backup.js): panelen i Avancerat och importdialogen. Samma tunna linjer. */
+.ae-backup{padding:16px 18px}
+.ae-backup header h3{margin:0;color:#f2eaf4;font-size:14px}
+.ae-backup-text{margin:6px 0 12px;color:#a99eac;font-size:12px;line-height:1.55;max-width:620px}
+.ae-backup-knappar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ae-backup-knappar button,.ae-backup-import{display:inline-flex;align-items:center;padding:8px 13px;border:1px solid #3d2f4c;border-radius:9px;background:transparent;color:#e9e1ec;font-size:12px;font-weight:650;cursor:pointer}
+.ae-backup-knappar button:hover:not(:disabled),.ae-backup-import:hover{border-color:#7a4f88;background:#1d1424}
+.ae-backup-import input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.ae-backup-import:focus-within{outline:2px solid #7a4f88;outline-offset:2px}
+.ae-backup-knappar [data-backup-angra]{border-color:#4a3a22;color:#f0b45a}
+.ae-backup-knappar [hidden]{display:none}
+.ae-modal-backup>div{width:min(560px,92vw)}
+.ae-backup-sammanfattning{margin:0 0 10px;color:#e9e1ec;font-size:13px;line-height:1.55}
+.ae-backup-not{margin:0 0 10px;color:#a99eac;font-size:11.5px;line-height:1.5}
+.ae-backup-val{list-style:none;margin:0;padding:0}
+.ae-backup-val li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;padding:13px 2px;border-top:1px solid #2a2030}
+.ae-backup-val b{color:#f2eaf4;font-size:13px;font-weight:650}
+.ae-backup-val p{margin:3px 0 0;color:#a99eac;font-size:11.5px;line-height:1.5}
+.ae-modal .ae-backup-val button{padding:7px 12px;border:1px solid #3d2f4c;background:transparent;color:#e9e1ec;font-size:12px;cursor:pointer}
+.ae-modal .ae-backup-val button:hover:not(:disabled){border-color:#7a4f88;background:#1d1424}
+.ae-modal .ae-backup-val [data-backup-lage="ersatt"]{border-color:#4a3a22;color:#f0b45a}
+@media (max-width:520px){.ae-backup-val li{grid-template-columns:1fr}.ae-backup-val button{justify-self:start}}
+
 /* Enkel arbetsyta: Action och Event är huvudflödet. OBS-länkar, tester, timer och poäng finns
    kvar men visas först när streamern behöver dem. */
 .ae-simple-flow{grid-template-columns:1fr}.ae-scene-link{display:inline-flex;margin:6px 0 0;padding:4px 7px;border:1px solid #5a3b63;border-radius:6px;background:#1b1021;color:#e8c5f0;font-size:10px;cursor:pointer}.ae-scene-link:hover{border-color:#db62ee;color:#fff}.ae-advanced{margin-top:14px;border:1px solid #36293c;border-radius:12px;background:#120e17}.ae-advanced>summary{display:flex;align-items:center;gap:10px;padding:14px 17px;cursor:pointer;color:#f3eaf5;list-style:none}.ae-advanced>summary::-webkit-details-marker{display:none}.ae-advanced>summary::before{content:'+';display:grid;place-items:center;width:20px;height:20px;border:1px solid #553060;border-radius:6px;color:#e482f5;font-weight:800}.ae-advanced[open]>summary::before{content:'–'}.ae-advanced>summary span{font-size:13px;font-weight:800}.ae-advanced>summary small{color:#998ca0;font-size:11px}.ae-advanced-body{padding:0 14px 14px}.ae-advanced-body>.ae-scenes-overview,.ae-advanced-body>.ae-timers-overview,.ae-advanced-body>.ae-simulator,.ae-advanced-body>.ae-points-settings,.ae-advanced-body>.ae-obs-settings{margin:0 0 12px}.ae-advanced-body>.ae-scenes-overview:last-child,.ae-advanced-body>.ae-timers-overview:last-child,.ae-advanced-body>.ae-simulator:last-child,.ae-advanced-body>.ae-points-settings:last-child,.ae-advanced-body>.ae-obs-settings:last-child{margin-bottom:0}

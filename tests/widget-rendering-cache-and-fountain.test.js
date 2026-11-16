@@ -465,7 +465,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.
   // 20261020-2: Ny Action fäller de avancerade valen (granskning 2026-10-17 F35).
   // 20261025-1: Ny Action och Nytt Event i den lila designen (numrerade sektioner, effektkort).
-  assert.match(media, /action-event\.js\?v=20261031-gavovideo/, 'action-event.js cachebustades inte');
+  // 20261116-1: Avancerat-rubriken nämner backupen (action-backup.js).
+  assert.match(media, /action-event\.js\?v=20261116-1/, 'action-event.js cachebustades inte');
   // action-event.css fick NY-etiketten 2026-10-14 och foljer sin fil.
   // ... och 2026-10-18 `.scenplacerad` for alerten (F01).
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
@@ -473,7 +474,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ... och 2026-10-25 det lila komponentlagret `.ae-modal.ae-lila` för båda formulären.
   // ... och 2026-11-16 körloggens kort `.ae-logg` (action-logg.js).
   // ... och 2026-11-16 startpaketens dialog `.ae-modal-paket` (action-snabbstart.js).
-  assert.match(media, /action-event\.css\?v=20261116-2/, 'action-event.css cachebustades inte');
+  // ... och 2026-11-16 backupens panel och dialog `.ae-backup` (action-backup.js).
+  assert.match(media, /action-event\.css\?v=20261116-3/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
