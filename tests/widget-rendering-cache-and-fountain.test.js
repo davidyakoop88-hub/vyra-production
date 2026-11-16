@@ -472,7 +472,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ... och 2026-10-20 `.ae-modal input[hidden]` så poängrutorna i Ny Action döljs (granskning).
   // ... och 2026-10-25 det lila komponentlagret `.ae-modal.ae-lila` för båda formulären.
   // ... och 2026-11-16 körloggens kort `.ae-logg` (action-logg.js).
-  assert.match(media, /action-event\.css\?v=20261116-1/, 'action-event.css cachebustades inte');
+  // ... och 2026-11-16 startpaketens dialog `.ae-modal-paket` (action-snabbstart.js).
+  assert.match(media, /action-event\.css\?v=20261116-2/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
