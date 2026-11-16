@@ -1231,6 +1231,21 @@
     'Kunde inte återställa din layout — försöker igen': "Couldn't restore your layout — trying again",
     'Layouten uppdaterades från en annan enhet': 'The layout was updated from another device',
     '1 ändring': '1 change',
+    // Action & Event · Körlogg (action-logg.js, 2026-11-16)
+    'Körlogg': 'Run log',
+    'Vad som hände, och varför något inte hände.': "What happened, and why something didn't.",
+    'Töm loggen': 'Clear the log',
+    'Spela igen': 'Play again',
+    'omspelning': 'replay',
+    'Okänd': 'Unknown',
+    'Inget har hänt ännu. Skicka ett test i Event Simulator under Avancerat, eller vänta på första gåvan.':
+      'Nothing has happened yet. Send a test in Event Simulator under Advanced, or wait for the first gift.',
+    'Eventet är avstängt': 'The event is turned off',
+    'Automatiken är pausad': 'Automation is paused',
+    'Tittaren hade inte behörighet för eventet': "The viewer didn't have permission for the event",
+    'Matchade inte villkoret': "Didn't match the condition",
+    'Tittaren hade inte tillräckligt med poäng': "The viewer didn't have enough points",
+    'Kunde inte spela upp igen — se den nya raden': "Couldn't play it again — see the new row",
   };
 
   for (const [sv, en] of Object.entries(NAV)) {
@@ -1341,6 +1356,20 @@
     [/^PÅGÅENDE MATCH · SEDAN (.+)$/, 'MATCH IN PROGRESS · SINCE $1'],
     [/^Manuellt registrerad · utgår (.+) \(UTC\)$/, 'Manually registered · expires $1 (UTC)'],
     [/^TikTok-kontot är sparat · (.+) — väntar på anslutning$/, 'TikTok account saved · $1 — waiting for connection'],
+    // Action & Event · Körlogg. Actionnamnet står i ett eget <b>, så raden börjar på verbet.
+    [/^Visar de senaste (\d+) händelserna som ett event lyssnar på\.$/, 'Shows the latest $1 triggers that an event listens for.'],
+    [/^kördes på Scen (\d+)$/, 'ran in Scene $1'],
+    [/^stoppades: (.+)$/, (m, skal) => 'was stopped: ' + skal
+      .replace(/^väntetid för alla/, 'cooldown for everyone')
+      .replace(/^väntetid för den här tittaren/, 'cooldown for this viewer')
+      .replace(/, (\d+) s kvar$/, ', $1 s left')
+      .replace(/^Scen (\d+) är offline — öppna scenlänken i OBS$/, 'Scene $1 is offline — open the scene link in OBS')
+      .replace(/^kön var full på Scen (\d+)$/, 'the queue was full in Scene $1')
+      .replace(/^actionen finns inte längre$/, 'the action no longer exists')
+      .replace(/^stoppades innan den nådde overlayn$/, 'it never reached the overlay')],
+    [/^Matchade inte villkoret "(.+)"$/, 'Didn\'t match the condition "$1"'],
+    [/^Inget event väntade på (.+?)(?: — eventen väntar på (.+))?$/, (m, vad, vantar) =>
+      'No event was waiting for ' + (vad === 'det här' ? 'this' : vad) + (vantar ? ' — the events are waiting for ' + vantar : '')],
   ];
 
   Object.assign(bas.text, text);

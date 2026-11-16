@@ -53,7 +53,7 @@
   // synkades till molnet som om de vore layout, och en flik utan skrivratt kunde inte spara dem
   // alls — sa cooldownen var verkningslos i varje overlay. Nyckeln skrivs med ra localStorage och
   // ar darfor inte en PROTECTED_KEY; det ar hela poangen med den.
-  const EPHEMERAL_KEYS = ['vyra-action-cooldowns'];
+  const EPHEMERAL_KEYS = ['vyra-action-cooldowns', 'vyra-action-logg'];
   const PROTECTED_KEYS = [STATE_KEY, MARKER_KEY, ...EXTRA_KEYS];
 
   const BRAND_KIT = { background: '#1c1028', highlight: '#ff58d6', text: '#f7f2ff',

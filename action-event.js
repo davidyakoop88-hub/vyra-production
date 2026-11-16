@@ -767,9 +767,11 @@
     // befintlig `if (runAction(...))` beter sig precis som forr.
     return detail.runId}
   function actionsForEvent(state,event){if(event.allActionIds?.length)return event.allActionIds;if(event.randomActionIds?.length)return[event.randomActionIds[Math.floor(Math.random()*event.randomActionIds.length)]];return[event.actionId]}
-  // Huvudbrytaren sitter HÄR, inte i handleEvent. action-event-advanced.js har en egen handleEvent
-  // som tar över när den är laddad, men båda vägarna passerar runEvent — en grind i handleEvent
-  // hade alltså varit verkningslös så fort den avancerade filen fanns.
+  // Huvudbrytaren sitter här för RESERVVÄGEN. action-event-advanced.js har en egen handleEvent som
+  // tar över när den är laddad, och den anropar runAction direkt utan att passera runEvent — så
+  // den har en egen kontroll av samma brytare (2026-11-16). Kommentaren här sa förr att båda
+  // vägarna passerade runEvent; det stämde aldrig, och en pausad automatik spelade därför vidare
+  // i studion. Se tests/action-korlogg.test.js prov 5.
   function runEvent(event,payload={}){const state=read();if(payload.__test!==true&&!actionsEnabled(state))return false;if(!event?.enabled&&payload.__test!==true)return false;actionsForEvent(state,event).forEach(id=>runAction(state.actions.find(a=>a.id===id),payload));return true}
   // Reservvagen nar action-event-advanced.js inte ar laddad. Master-graden star EFTER delegeringen,
   // annars skulle farKora() anropas tva ganger for samma event (ofarligt men vilseledande i prov).

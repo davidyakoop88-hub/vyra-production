@@ -467,6 +467,52 @@
   // pa. __test slipper igenom: replay-knappen i live-control.js och Testa-knapparna ar uttryckliga
   // handgrepp i studion, inte live-trafik. Saknas modulen kor vi som forr (fail-open) - hellre ett
   // dubbelavdrag an en svart overlay.
-  function handleEvent(trigger,payload={}){if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');s.events.filter(e=>e.enabled&&(e.advancedTrigger||e.trigger)===trigger&&allowed(e,payload)).forEach(e=>{const expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();if(expected){if((e.advancedTrigger||e.trigger)==='giftCoins'&&Number(payload.coins??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='likes'&&Number(payload.likecount??payload.value??0)<Number(expected))return;if((e.advancedTrigger||e.trigger)==='gift'&&!gavanTraffar(e,payload,expected,actual))return;if((e.advancedTrigger||e.trigger)==='chatCommand'&&actual.toLowerCase()!==expected.toLowerCase())return;if(!['giftCoins','likes','gift','chatCommand'].includes(e.advancedTrigger||e.trigger)&&!actual.toLowerCase().includes(expected.toLowerCase()))return}const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];const kanKora=id=>{const a=(s.actions||[]).find(x=>x.id===id);return window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload).ok:!!a};const korbara=ids.filter(kanKora);if(!korbara.length)return;if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return;const runIds=korbara.map(id=>window.VyraActionEvent?.runAction((s.actions||[]).find(a=>a.id===id),payload)).filter(r=>typeof r==='string');if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)})}
-  window.VyraAdvancedEvents={handleEvent};
+  //
+  // KORLOGGEN (action-logg.js) far ett svar for VARJE event som lyssnar pa triggern, aven de som
+  // inte korde. Det ar hela poangen: "varfor hande ingenting?" besvaras av grenen som sa nej, och
+  // darfor ar filtret nedan uppdelat i en gren per skal i stallet for en enda filter()-kedja.
+  // Ordningen och villkoren ar exakt de gamla; bara utfallet antecknas pa vagen.
+  //
+  // HUVUDBRYTAREN ("Aktiverad" i Actions-kortet) kontrolleras HAR. Kommentaren vid runEvent i
+  // action-event.js sager att bada vagarna passerar runEvent, men den har vagen anropar runAction
+  // direkt och gjorde det aldrig - en pausad automatik fortsatte darfor spela varje gava sa fort
+  // den har filen var laddad, alltsa alltid i studion. Testa-knappen (__test) gar forbi, som forr.
+  function villkoretTraffar(e,payload){
+    const trig=e.advancedTrigger||e.trigger,expected=String(e.triggerValue||e.condition||'').trim(),actual=String(payload.value??payload.gift??payload.command??'').trim();
+    if(!expected)return true;
+    if(trig==='giftCoins')return!(Number(payload.coins??payload.value??0)<Number(expected));
+    if(trig==='likes')return!(Number(payload.likecount??payload.value??0)<Number(expected));
+    if(trig==='gift')return!!gavanTraffar(e,payload,expected,actual);
+    if(trig==='chatCommand')return actual.toLowerCase()===expected.toLowerCase();
+    return actual.toLowerCase().includes(expected.toLowerCase());
+  }
+  const TRIGGERNAMN=Object.fromEntries(triggers);
+  function handleEvent(trigger,payload={}){
+    if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;
+    const s=JSON.parse(readExtra(KEY)||'{"actions":[],"events":[]}');
+    const lyssnare=(s.events||[]).filter(e=>(e.advancedTrigger||e.trigger)===trigger);
+    const logg=lyssnare.length?window.VyraActionLogg?.borja(trigger,TRIGGERNAMN[trigger]||trigger,payload):null;
+    const pausad=payload.__test!==true&&s.actionsEnabled===false;
+    lyssnare.forEach(e=>{
+      const rad=logg?.event(e)||null;
+      if(!e.enabled)return rad?.utfall('avstangt');
+      if(pausad)return rad?.utfall('pausad');
+      // Villkoret provas fore behorigheten. Bada maste ga igenom, sa ordningen andrar inget
+      // beteende - men loggen ska saga "fel gava" om ett event for en ANNAN gava, inte
+      // "ingen behorighet".
+      if(!villkoretTraffar(e,payload))return rad?.utfall('villkor');
+      if(!allowed(e,payload))return rad?.utfall('behorighet');
+      const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];
+      const hitta=id=>(s.actions||[]).find(x=>x.id===id);
+      const domar=ids.map(id=>{const a=hitta(id);return{id,a,dom:window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload):{ok:!!a,skal:a?'':'saknas',scen:Number(a?.scene?.number)||1,kvar:0}}});
+      const korbara=domar.filter(d=>d.dom.ok);
+      domar.filter(d=>!d.dom.ok).forEach(d=>rad?.action(d.a,d.id,d.dom.skal,d.dom.scen,d.dom.kvar,''));
+      if(!korbara.length)return rad?.utfall('stoppad');
+      if(e.pointsCost&&window.VyraPoints&&!window.VyraPoints.spend(payload.username||payload.user,e.pointsCost))return rad?.utfall('poang');
+      const runIds=korbara.map(d=>{const runId=window.VyraActionEvent?.runAction(d.a,payload);rad?.action(d.a,d.id,typeof runId==='string'?'':'stoppad',d.dom.scen,0,typeof runId==='string'?runId:'');return runId}).filter(r=>typeof r==='string');
+      rad?.utfall(runIds.length?'kordes':'stoppad');
+      if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)});
+    logg?.klar();
+  }
+  window.VyraAdvancedEvents={handleEvent,villkoretTraffar};
 })();

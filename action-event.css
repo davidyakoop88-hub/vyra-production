@@ -36,6 +36,24 @@
 .ae-timers-overview,.ae-simulator,.ae-points-settings,.ae-obs-settings{margin:0 0 14px;padding:14px}.ae-timers-overview header,.ae-simulator header,.ae-points-settings header,.ae-obs-settings header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #39203e;padding-bottom:10px;margin-bottom:10px}.ae-timers-overview header h3,.ae-simulator header h3,.ae-points-settings header h3,.ae-obs-settings header h3{margin:0}.ae-timers-overview header span,.ae-simulator header span,.ae-points-settings header span,.ae-obs-settings header span{color:#ab8bb3;font-size:11px}.ae-timer-hint{margin:0 0 10px;font-size:11px;color:#a58ea9;line-height:1.5}.ae-points-settings .ae-grid{margin-bottom:10px}.ae-points-settings h4{margin:14px 0 4px;font-size:11px;color:#c7a6e0}.ae-obs-settings .ae-grid{margin-bottom:10px}.ae-obs-status{font-weight:800}.ae-obs-status.online{color:#54efa3}
 .ae-simulator-buttons{display:flex;flex-wrap:wrap;gap:8px}.ae-simulator-buttons button{border:1px solid #553060;background:#1b1021;color:#eee;padding:9px 12px;border-radius:7px;font-size:12px}.ae-simulator-buttons button:hover{border-color:#ff5dc8}
 
+/* Körlogg (action-logg.js). Lugn lista: en tunn statusprick per rad, orsaken i klartext under. */
+.ae-logg .ae-actions-toolbar small{margin-left:auto;color:#998ca0;font-size:11px}
+.ae-logg-lista{list-style:none;margin:0;padding:0;max-height:420px;overflow-y:auto}
+.ae-logg-post{padding:10px 2px;border-top:1px solid #2a2030}.ae-logg-post:first-child{border-top:0}
+.ae-logg-huvud{display:flex;align-items:center;gap:10px;min-width:0;font-size:12px;color:#e9e1ec}
+.ae-logg-huvud>i{flex:none;width:7px;height:7px;border-radius:50%;background:#6d6470}
+.ae-logg-post--ok .ae-logg-huvud>i{background:#43eb98;box-shadow:0 0 0 3px #43eb9822}
+.ae-logg-post--nej .ae-logg-huvud>i{background:#f0b45a;box-shadow:0 0 0 3px #f0b45a22}
+.ae-logg-huvud time{flex:none;color:#8e8492;font-variant-numeric:tabular-nums}
+.ae-logg-vad{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ae-logg-tagg{flex:none;padding:1px 7px;border:1px solid #3d2f4c;border-radius:999px;color:#a99eac;font-size:10px}
+.ae-logg [data-logg-rensa]{padding:7px 12px;border:1px solid #3d2f4c;border-radius:7px;background:transparent;color:#d8c8e0;font-size:12px;cursor:pointer}.ae-logg [data-logg-rensa]:hover{border-color:#a13bfa;color:#fff}
+.ae-logg-igen{flex:none;padding:4px 10px;border:1px solid #3d2f4c;border-radius:6px;background:transparent;color:#d8c8e0;font-size:11px;cursor:pointer}.ae-logg-igen:hover{border-color:#a13bfa;color:#fff}
+.ae-logg-rader{list-style:none;margin:5px 0 0 17px;padding:0;font-size:12px;line-height:1.55;color:#a99eac}
+.ae-logg-rader b{font-weight:600;color:#e9e1ec}.ae-logg-rader .ae-logg-ok{color:#9fe3c2}.ae-logg-rader .ae-logg-nej{color:#e8c48f}
+.ae-logg-tom{padding:14px 2px;color:#998ca0;font-size:12px}
+@media (max-width:640px){.ae-logg-huvud{flex-wrap:wrap}.ae-logg-vad{white-space:normal}}
+
 /* Enkel arbetsyta: Action och Event är huvudflödet. OBS-länkar, tester, timer och poäng finns
    kvar men visas först när streamern behöver dem. */
 .ae-simple-flow{grid-template-columns:1fr}.ae-scene-link{display:inline-flex;margin:6px 0 0;padding:4px 7px;border:1px solid #5a3b63;border-radius:6px;background:#1b1021;color:#e8c5f0;font-size:10px;cursor:pointer}.ae-scene-link:hover{border-color:#db62ee;color:#fff}.ae-advanced{margin-top:14px;border:1px solid #36293c;border-radius:12px;background:#120e17}.ae-advanced>summary{display:flex;align-items:center;gap:10px;padding:14px 17px;cursor:pointer;color:#f3eaf5;list-style:none}.ae-advanced>summary::-webkit-details-marker{display:none}.ae-advanced>summary::before{content:'+';display:grid;place-items:center;width:20px;height:20px;border:1px solid #553060;border-radius:6px;color:#e482f5;font-weight:800}.ae-advanced[open]>summary::before{content:'–'}.ae-advanced>summary span{font-size:13px;font-weight:800}.ae-advanced>summary small{color:#998ca0;font-size:11px}.ae-advanced-body{padding:0 14px 14px}.ae-advanced-body>.ae-scenes-overview,.ae-advanced-body>.ae-timers-overview,.ae-advanced-body>.ae-simulator,.ae-advanced-body>.ae-points-settings,.ae-advanced-body>.ae-obs-settings{margin:0 0 12px}.ae-advanced-body>.ae-scenes-overview:last-child,.ae-advanced-body>.ae-timers-overview:last-child,.ae-advanced-body>.ae-simulator:last-child,.ae-advanced-body>.ae-points-settings:last-child,.ae-advanced-body>.ae-obs-settings:last-child{margin-bottom:0}
