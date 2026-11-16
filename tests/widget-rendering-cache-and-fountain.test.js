@@ -451,8 +451,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till
   // 20261025-1 nar eventpanelen fick den lila designen (valkort och kryssrutor i stallet for Ctrl-flerval),
   // och till 20261116-1 nar handleEvent borjade skriva korloggen (action-logg.js) och respektera
-  // huvudbrytaren "Aktiverad".
-  assert.match(media, /action-event-advanced\.js\?v=20261116-1/, 'action-event-advanced.js cachebustades inte for korloggen');
+  // huvudbrytaren "Aktiverad", och till 20261116-2 nar slumpvalet slutade upprepa sig (valjSlump).
+  assert.match(media, /action-event-advanced\.js\?v=20261116-2/, 'action-event-advanced.js cachebustades inte for slumpvalet');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
