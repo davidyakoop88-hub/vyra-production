@@ -23,9 +23,21 @@ function profileImageOf(data){
 // userIdentity (isModeratorOfAnchor/isSubscriberOfAnchor/isFollowerOfAnchor) only exists on chat,
 // gift and emote messages in TikTok's protocol — join/like/follow/share/member messages don't carry
 // it, so those event types always report false here regardless of the viewer's real status.
+//
+// MODERATORN BÄRS OCKSÅ AV EN BADGE (2026-11-17). I sändningen 2026-11-16 skrev en moderator
+// `!s …` till Chattavataren (inställd på "bara moderatorer") och ingenting hände: chatt-
+// meddelandet bar inget userIdentity.isModeratorOfAnchor, så moderatorn räknades som tittare.
+// TikTok märker moderatorn i rummet med en badge i user.badgeList, sceneType 1 — uppmätt i skarp
+// sändning 2026-09-01: 123 förekomster, se BADGE_-tabellen nedan. tiktok-live-connector härleder
+// sin egen isModerator på samma sätt (badgeSceneType === 1). Båda källorna räknas nu.
+const BADGE_MODERATOR = 1;
+function harModeratorBadge(user){
+  for(const b of user?.badgeList||[]) if(Number(b?.sceneType)===BADGE_MODERATOR) return true;
+  return false;
+}
 function identityOf(data){
   const id=data?.userIdentity;
-  return{isModerator:!!id?.isModeratorOfAnchor,isFollower:!!id?.isFollowerOfAnchor,isSubscriber:!!id?.isSubscriberOfAnchor};
+  return{isModerator:!!id?.isModeratorOfAnchor||harModeratorBadge(data?.user),isFollower:!!id?.isFollowerOfAnchor,isSubscriber:!!id?.isSubscriberOfAnchor};
 }
 
 // NIVAERNA BOR I badgeList — uppmatt i skarp sandning 2026-09-01, inte gissat.

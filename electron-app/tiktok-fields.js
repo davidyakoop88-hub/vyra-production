@@ -39,9 +39,18 @@ function avatarOf(data) {
 // gift and emote messages in TikTok's protocol — join/like/follow/share/member messages don't carry
 // it, so those event types always report false here regardless of the viewer's real status. Mirrors
 // tiktok-bridge/normalizer.js's identityOf.
+//
+// Moderatorn bärs OCKSÅ av en badge i user.badgeList, sceneType 1 (2026-11-17, samma rättelse som
+// tiktok-bridge/normalizer.js harModeratorBadge — se kommentaren där). Utan den räknades en
+// moderator vars chattmeddelande saknade userIdentity som tittare.
+const BADGE_MODERATOR = 1;
+function harModeratorBadge(user) {
+  for (const b of user?.badgeList || []) if (Number(b?.sceneType) === BADGE_MODERATOR) return true;
+  return false;
+}
 function identityOf(data) {
   const id = data?.userIdentity;
-  return { isModerator: !!id?.isModeratorOfAnchor, isFollower: !!id?.isFollowerOfAnchor, isSubscriber: !!id?.isSubscriberOfAnchor };
+  return { isModerator: !!id?.isModeratorOfAnchor || harModeratorBadge(data?.user), isFollower: !!id?.isFollowerOfAnchor, isSubscriber: !!id?.isSubscriberOfAnchor };
 }
 
 // NIVAERNA BOR I badgeList, atskilda av sceneType. Speglar tiktok-bridge/normalizer.js exakt —
