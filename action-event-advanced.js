@@ -316,7 +316,7 @@
       + '<label class="ae-inline">Poängkostnad<input id="aePointsCost" type="number" min="0" value="'+(Number(e.pointsCost)||0)+'"></label>'
       + '<small class="ae-hjalp">Dras från användarens poäng när eventet triggas. 0 = gratis.</small>'
       + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeAllActionsRubrik">Kör alla dessa Actions</span><select id="aeAllActions" multiple size="'+storlek+'">'+actionOpts(allaValda)+'</select><small>Kryssa i en eller flera. Alla körs när eventet triggas.</small></div>'
-      + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeRandomActionsRubrik">Kör en av dessa Actions slumpmässigt</span><select id="aeRandomActions" multiple size="'+storlek+'">'+actionOpts(e.randomActionIds)+'</select><small>Kryssa i en eller flera. En av dem väljs slumpmässigt.</small></div></section>';
+      + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeRandomActionsRubrik">Kör en av dessa Actions slumpmässigt</span><select id="aeRandomActions" multiple size="'+storlek+'">'+actionOpts(e.randomActionIds)+'</select><small>Kryssa i en eller flera. En av dem väljs slumpmässigt, och alla spelas innan någon upprepas.</small></div></section>';
     vard.append(p);
     flervalsSpegel(p.querySelector('#aeAllActions'),'aeAllActionsRubrik');
     flervalsSpegel(p.querySelector('#aeRandomActions'),'aeRandomActionsRubrik');
@@ -486,6 +486,44 @@
     if(trig==='chatCommand')return actual.toLowerCase()===expected.toLowerCase();
     return actual.toLowerCase().includes(expected.toLowerCase());
   }
+  // SLUMP UTAN UPPREPNING (2026-11-16). "Kör en av dessa slumpmässigt" drog förr ett rent
+  // slumptal per gåva: med tre actions kom samma två gånger i rad var tredje gång, och en action
+  // kunde utebli i tio gåvor. Nu dras de ur en blandad påse: varje action spelas en gång innan
+  // någon upprepas, och en ny påse börjar aldrig med den som just spelades.
+  //
+  // Har den som står på tur väntetid kvar (kanKora säger nej) tas nästa i påsen som KAN spela —
+  // en tittare som skickar en gåva ska få en effekt, inte "stoppades" för att slumpen valde den
+  // enda som vilade. Kan ingen spela väljs den som stod på tur, så att körloggen visar varför.
+  //
+  // Påsen bor i minnet per event och nollställs när listan ändras. Bara masterfliken drar.
+  const slumpPasar=new Map();
+  function blanda(lista){for(let i=lista.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[lista[i],lista[j]]=[lista[j],lista[i]]}return lista}
+  function valjSlump(e,kanSpela=()=>true){
+    const ids=[...new Set((e.randomActionIds||[]).filter(Boolean))];
+    if(ids.length<2)return ids[0];
+    const nyckel=ids.join('|');
+    let pase=slumpPasar.get(e.id);
+    if(!pase||pase.nyckel!==nyckel)pase={nyckel,kvar:[],senast:null};
+    if(!pase.kvar.length){
+      pase.kvar=blanda([...ids]);
+      if(pase.kvar[0]===pase.senast)pase.kvar.push(pase.kvar.shift());
+    }
+    let i=pase.kvar.findIndex(kanSpela);
+    // Påsens rest vilar, men någon annan kan spela: nästa påse läggs på bakom resten (som får
+    // vänta på sin tur) och den första spelbara tas — dock inte samma som nyss, om det går.
+    if(i<0&&ids.some(kanSpela)){
+      // Taket: en action som aldrig kan spela (scen offline hela kvällen) får inte låta påsen växa.
+      if(pase.kvar.length>ids.length*2)pase.kvar=[];
+      pase.kvar.push(...blanda([...ids]));
+      i=pase.kvar.findIndex(id=>id!==pase.senast&&kanSpela(id));
+      if(i<0)i=pase.kvar.findIndex(kanSpela);
+    }
+    if(i<0)i=0;
+    const [valt]=pase.kvar.splice(i,1);
+    pase.senast=valt;
+    slumpPasar.set(e.id,pase);
+    return valt;
+  }
   const TRIGGERNAMN=Object.fromEntries(triggers);
   function handleEvent(trigger,payload={}){
     if(payload.__test!==true&&window.VyraAutomationMaster&&!window.VyraAutomationMaster.farKora())return;
@@ -502,8 +540,8 @@
       // "ingen behorighet".
       if(!villkoretTraffar(e,payload))return rad?.utfall('villkor');
       if(!allowed(e,payload))return rad?.utfall('behorighet');
-      const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[e.randomActionIds[Math.floor(Math.random()*e.randomActionIds.length)]]:[e.actionId];
       const hitta=id=>(s.actions||[]).find(x=>x.id===id);
+      const ids=e.allActionIds?.length?e.allActionIds:e.randomActionIds?.length?[valjSlump(e,id=>{const a=hitta(id);return!!a&&(!window.VyraActionEvent?.kanKora||window.VyraActionEvent.kanKora(a,payload).ok)})]:[e.actionId];
       const domar=ids.map(id=>{const a=hitta(id);return{id,a,dom:window.VyraActionEvent?.kanKora?window.VyraActionEvent.kanKora(a,payload):{ok:!!a,skal:a?'':'saknas',scen:Number(a?.scene?.number)||1,kvar:0}}});
       const korbara=domar.filter(d=>d.dom.ok);
       domar.filter(d=>!d.dom.ok).forEach(d=>rad?.action(d.a,d.id,d.dom.skal,d.dom.scen,d.dom.kvar,''));
@@ -514,5 +552,5 @@
       if(e.pointsCost)registreraKop(runIds,payload.username||payload.user,Number(e.pointsCost)||0)});
     logg?.klar();
   }
-  window.VyraAdvancedEvents={handleEvent,villkoretTraffar};
+  window.VyraAdvancedEvents={handleEvent,villkoretTraffar,valjSlump};
 })();

@@ -450,7 +450,7 @@
     'Kör alla dessa Actions': 'Run all of these Actions',
     'Kör en av dessa Actions slumpmässigt': 'Run one of these Actions at random',
     'Kryssa i en eller flera. Alla körs när eventet triggas.': 'Tick one or more. All of them run when the event triggers.',
-    'Kryssa i en eller flera. En av dem väljs slumpmässigt.': 'Tick one or more. One of them is picked at random.',
+    'Kryssa i en eller flera. En av dem väljs slumpmässigt, och alla spelas innan någon upprepas.': 'Tick one or more. One of them is picked at random, and all of them play before any repeats.',
     'Inga Actions ännu.': 'No Actions yet.',
     'Ingen vald': 'None selected',
     '1 vald': '1 selected',

@@ -510,6 +510,7 @@
         "tests/action-startpaket.test.js",
         "tests/action-backup.test.js",
         "tests/action-prioritet.test.js",
+        "tests/action-slump.test.js",
         "tests/huvudlank-scen1.test.js",
         "tests/action-event-poang.test.js",
         "tests/action-event-flikar.test.js",
