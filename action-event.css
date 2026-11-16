@@ -73,6 +73,9 @@
 .ae-actions-toolbar .ae-paket-knapp:hover{border-color:#7a4f88;background:#1d1424}
 @media (max-width:520px){.ae-paket{grid-template-columns:30px minmax(0,1fr)}.ae-paket button{grid-column:2;justify-self:start}}
 
+/* Prioritet: ett lågmält märke bredvid namnet, inte en signalfärg. */
+.ae-prio{margin-left:6px;padding:1px 7px;border:1px solid #4a3a22;border-radius:999px;background:transparent;color:#f0b45a;font-size:10px;font-weight:650;letter-spacing:.02em;vertical-align:1px}
+
 /* Backup (action-backup.js): panelen i Avancerat och importdialogen. Samma tunna linjer. */
 .ae-backup{padding:16px 18px}
 .ae-backup header h3{margin:0;color:#f2eaf4;font-size:14px}

@@ -1285,6 +1285,10 @@
     'Filen kunde inte läsas': "The file couldn't be read",
     'Importen är ångrad': 'The import was undone',
     'Importen kunde inte ångras': "The import couldn't be undone",
+    // Action & Event · Prioritet (2026-11-16)
+    'Hög prioritet — spelas före vanliga actions i kön': 'High priority — plays before regular actions in the queue',
+    'Prioritet': 'Priority',
+    'Spelas före vanliga actions i kön': 'Plays before regular actions in the queue',
   };
 
   for (const [sv, en] of Object.entries(NAV)) {

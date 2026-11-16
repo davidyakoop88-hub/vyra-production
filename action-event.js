@@ -447,7 +447,7 @@
         <button type="button" class="ae-ik ae-ik--duplicera" data-copy-action="${a.id}" title="Duplicera" aria-label="Duplicera">${IKON.duplicera}</button>
         <button type="button" class="ae-ik ae-ik--radera" data-delete-action="${a.id}" title="Radera" aria-label="Radera">${IKON.radera}</button>
       </td>
-      <td class="ae-col-name"><b>${namn}</b></td>
+      <td class="ae-col-name"><b>${namn}</b>${a.prioritet==='hog'?' <mark class="ae-prio" title="Spelas före vanliga actions i kön">Prioritet</mark>':''}</td>
       <td class="ae-col-screen"><span>Scen ${n}</span> <mark class="ae-action-scene ${on?'online':'offline'}">${on?'Online':'Offline'}</mark><button type="button" class="ae-scene-link" data-open-action-screen="${n}">OBS-länk</button></td>
       <td class="ae-col-duration">${timing.className==='persistent'?'Fast':Math.max(1,a.duration||10)}</td>
       <td class="ae-col-points">${actionPointsLabel(a)}</td>
@@ -504,7 +504,7 @@
     // som är stängd för en ny action. Vid redigering öppnas den så fort något avancerat val avviker
     // från standard — en satt cooldown får aldrig gömmas för den som redigerar. Fälten har kvar sina
     // id:n, så saveAction läser dem som förut (tests/action-avancerade-val.test.js).
-    const avanceradOppen=!!editing&&(vald('addPoints')||vald('removePoints')||volume!==100||Number(editing.cooldown)>0||Number(editing.userCooldown)>0||!editing.fade||!!editing.repeatCombo||!!editing.skipOnNext);
+    const avanceradOppen=!!editing&&(vald('addPoints')||vald('removePoints')||volume!==100||Number(editing.cooldown)>0||Number(editing.userCooldown)>0||!editing.fade||!!editing.repeatCombo||!!editing.skipOnNext||editing.prioritet==='hog');
     // Varje funktion är ett kort: kryssrutan är kvar som riktig <input> (samma data-fn-check och
     // värde som förut), men ritas som en rund Lägg till-knapp. Ett valt kort breddas över hela
     // raden och visar sin lucka under sig — luckorna fylls av leverantörerna som tidigare.
@@ -532,6 +532,7 @@
         <label class="ae-check"><input id="aeFade" type="checkbox"${editing?(editing.fade?' checked':''):' checked'}> Aktivera fade in/ut</label>
         <label class="ae-check"><input id="aeRepeatCombo" type="checkbox"${editing?.repeatCombo?' checked':''}> Upprepa med gift-combo</label>
         <label class="ae-check"><input id="aeSkipOnNext" type="checkbox"${editing?.skipOnNext?' checked':''}> Hoppa över vid nästa action</label>
+        <label class="ae-check"><input id="aeHogPrioritet" type="checkbox"${editing?.prioritet==='hog'?' checked':''}> Hög prioritet — spelas före vanliga actions i kön</label>
       </div></section></details>
       <footer><button type="button" class="ae-avbryt" data-close-ae>Avbryt</button><button type="button" id="saveAeAction" class="primary">Spara Action</button></footer>
     </div></div>`;
@@ -596,6 +597,9 @@
         fade:modal.querySelector('#aeFade').checked,
         repeatCombo:modal.querySelector('#aeRepeatCombo').checked,
         skipOnNext:modal.querySelector('#aeSkipOnNext').checked,
+        // Läses av kön i action-runtime.js. Tom sträng, inte false: ett okänt värde ska betyda
+        // "vanlig", så att en äldre action utan fältet beter sig som förut.
+        prioritet:modal.querySelector('#aeHogPrioritet')?.checked?'hog':'',
         ...delar
       };
       const aktuell=read();

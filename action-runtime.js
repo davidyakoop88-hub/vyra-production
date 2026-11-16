@@ -191,6 +191,14 @@
     document.dispatchEvent(new CustomEvent('vyra:action-dropped',{detail:bud}));
     try{localStorage.setItem('vyra-action-refund',JSON.stringify(bud))}catch{}
   }
-  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över och poängen betalas tillbaka`);rapporteraStrypt(detail.runId);return false}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);queue.push(detail);next();return true}
+  // PRIORITET (2026-11-16). En action med `prioritet:'hog'` ställer sig före alla vanliga i kön,
+  // men efter andra prioriterade (först in, först ut bland dem). Den som spelar just nu avbryts
+  // aldrig — den ligger inte i `queue` utan i `busy`. Är kön full knuffar en prioriterad action
+  // ut den SENAST köade vanliga: den har väntat kortast, och den rapporteras som strypt så att
+  // poängen går tillbaka och körloggen säger varför. Är kön full av bara prioriterade gäller den
+  // gamla regeln: den nya hoppas över.
+  const arHog=d=>d?.action?.prioritet==='hog';
+  function sistaVanliga(){for(let i=queue.length-1;i>=0;i--)if(!arHog(queue[i]))return i;return-1}
+  function execute(detail){if(!detail?.action||seen.has(detail.runId)||!allowed(detail.action))return false;const hog=arHog(detail),maxQueue=sceneMaxQueue();if(maxQueue&&queue.length>=maxQueue){const plats=hog?sistaVanliga():-1;if(plats<0){window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} (max ${maxQueue}) — action hoppades över och poängen betalas tillbaka`);rapporteraStrypt(detail.runId);return false}const[utknuffad]=queue.splice(plats,1);window.toast?.(`Kön är full för Scen ${window.VYRA_OVERLAY_SCENE} — ${utknuffad.action.name||'en action'} gav plats åt en prioriterad action och poängen betalas tillbaka`);rapporteraStrypt(utknuffad.runId)}seen.add(detail.runId);setTimeout(()=>seen.delete(detail.runId),15000);if(hog){const forsta=queue.findIndex(d=>!arHog(d));if(forsta<0)queue.push(detail);else queue.splice(forsta,0,detail)}else queue.push(detail);next();return true}
   document.addEventListener('vyra:action',e=>execute(e.detail));addEventListener('storage',e=>{if(e.key==='vyra-action-run'&&e.newValue)try{execute(JSON.parse(e.newValue))}catch{}});window.VyraActionRuntime={execute,queueSize:()=>queue.length+(busy?1:0),clearQueue:()=>queue.splice(0)};
 })();
