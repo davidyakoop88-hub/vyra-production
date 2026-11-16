@@ -34,7 +34,7 @@ async function overlay(fran, scen = 1) {
 
 test('1: varje paket bygger events som pekar på sina egna actions, med kända triggers', async () => {
   const { w } = await studio();
-  const kanda = new Set(['gift', 'giftCoins', 'follow', 'share', 'chatCommand', 'likes', 'join']);
+  const kanda = new Set(['gift', 'giftCoins', 'follow', 'share', 'chatCommand', 'likes', 'join', 'battle']);
   for (const paket of w.VyraStartpaket.PAKET) {
     const { actions, events } = w.VyraStartpaket.bygg(paket, 'sv', 123);
     assert.equal(actions.length, events.length, paket.id);
@@ -51,7 +51,10 @@ test('1: varje paket bygger events som pekar på sina egna actions, med kända t
     for (const a of actions) {
       assert.equal(a.startpaket, paket.id);
       assert.equal(a.scene.number, 1);
-      if (a.types.includes('alert')) assert.match(a.config.alertText, /\{username\}/);
+      // En battle-händelse har ingen tittare (avsändaren är "TikTok"), så bara tittarhändelserna
+      // ska tilltala någon vid namn.
+      if (a.types.includes('alert') && paket.id !== 'battle') assert.match(a.config.alertText, /\{username\}/);
+      if (paket.id === 'battle') assert.doesNotMatch(a.config.alertText, /\{username\}/, 'en battle-alert skulle skriva "TikTok"');
     }
   }
 });
@@ -117,7 +120,7 @@ test('6: knapparna ritas, dialogen visar paketen och ett tillagt paket går inte
   assert.equal(d.querySelectorAll('[data-oppna-paket]').length, 2, 'knapparna dubblerades vid omritning');
   d.querySelector('.ae-actions-toolbar [data-oppna-paket]').click();
   const knappar = [...d.querySelectorAll('#aeModal [data-paket]')];
-  assert.deepEqual(knappar.map(b => b.dataset.paket), ['gavor', 'valkommen', 'chatt']);
+  assert.deepEqual(knappar.map(b => b.dataset.paket), ['gavor', 'valkommen', 'chatt', 'battle']);
   knappar[1].click();
   await vanta(150);
   assert.equal(state(lager).actions.filter(a => a.startpaket === 'valkommen').length, 2);
@@ -128,4 +131,25 @@ test('6: knapparna ritas, dialogen visar paketen och ett tillagt paket går inte
   assert.ok(w.__toaster.some(t => /Startpaketet är tillagt/.test(t)));
   d.querySelector('#aeModal [data-stang-paket]').click();
   assert.equal(d.querySelector('#aeModal').innerHTML, '');
+});
+
+test('7: Battle-paketet spelar start och vinst i den riktiga kedjan, och vinsten är prioriterad', async () => {
+  const { lager, w } = await studio();
+  const svar = await w.VyraStartpaket.laggTill('battle');
+  assert.equal(svar.ok, true);
+  const s = state(lager);
+  assert.deepEqual(s.events.map(e => e.triggerValue), ['start', 'leder', 'vinst', 'forlust']);
+  assert.ok(s.events.every(e => e.trigger === 'battle' && e.audience === 'everyone'));
+  assert.equal(s.actions.find(a => a.name === 'Battle: vi vann').prioritet, 'hog');
+  const o = F.delatLager();
+  o.setItem(F.KEY, JSON.stringify(s));
+  o.setItem('vyra-scene-heartbeat-1', String(Date.now()));
+  const ov = await F.fonster({ namn: 'overlay', scen: 1, lager: o, actions: s.actions, events: s.events, extraFiler: ['action-battle.js'] });
+  living.push(ov);
+  ov.VyraActionBattle.nollstall();
+  await vanta(30);
+  ov.VyraActionBattle.hantera({ id: 'p1', type: 'battle', battleStatus: 'battle_started', battleId: 'pk', remainingSec: 300 });
+  ov.VyraActionBattle.hantera({ id: 'p2', type: 'battle', battleStatus: 'battle_finished', battleId: 'pk', scoreUs: 40, scoreThem: 10 });
+  await vanta(250);
+  assert.equal(ov.__utskick, 2, 'start och vinst ska spela, inte förlust');
 });
