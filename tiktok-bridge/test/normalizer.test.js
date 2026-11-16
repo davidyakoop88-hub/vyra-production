@@ -51,6 +51,19 @@ test('identity flags default to false when userIdentity is absent (join/like/fol
   const out=N.baseUser({user:{uniqueId:'alex'}});
   assert.equal(out.isModerator,false);assert.equal(out.isFollower,false);assert.equal(out.isSubscriber,false);
 });
+// Sändningen 2026-11-16: en moderator skrev `!s …` till Chattavataren och ingenting hände, för
+// chattmeddelandet saknade userIdentity. Moderatorbadgen (sceneType 1, uppmätt 2026-09-01) räcker.
+test('moderatorn känns igen på badgen sceneType 1 när userIdentity saknas',()=>{
+  const badge={sceneType:1,privilegeLogExtra:{level:'0'}};
+  assert.equal(N.baseUser({user:{uniqueId:'mod',badgeList:[badge]}}).isModerator,true);
+  // userIdentity som säger nej vinner inte över badgen — båda källorna räknas.
+  assert.equal(N.baseUser({user:{uniqueId:'mod',badgeList:[badge]},userIdentity:{isModeratorOfAnchor:false}}).isModerator,true);
+  // Andra badgar (fanklubb 10, nivå 8, top gifter 6, guardian 16) gör ingen till moderator.
+  const andra=[10,8,6,16].map(s=>({sceneType:s,privilegeLogExtra:{level:'5'}}));
+  assert.equal(N.baseUser({user:{uniqueId:'tittare',badgeList:andra}}).isModerator,false);
+  // sceneType som sträng (protobuf-avkodning kan ge det) räknas också.
+  assert.equal(N.baseUser({user:{uniqueId:'mod',badgeList:[{sceneType:'1'}]}}).isModerator,true);
+});
 test('fan club level reads user.fansClub.data.level and defaults to 0',()=>{
   const withClub=N.baseUser({user:{uniqueId:'alex',fansClub:{data:{level:12}}}});
   assert.equal(withClub.fanClubLevel,12);
