@@ -450,8 +450,10 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till
-  // 20261025-1 nar eventpanelen fick den lila designen (valkort och kryssrutor i stallet for Ctrl-flerval).
-  assert.match(media, /action-event-advanced\.js\?v=20261025-1/, 'action-event-advanced.js cachebustades inte for den lila eventpanelen');
+  // 20261025-1 nar eventpanelen fick den lila designen (valkort och kryssrutor i stallet for Ctrl-flerval),
+  // och till 20261116-1 nar handleEvent borjade skriva korloggen (action-logg.js) och respektera
+  // huvudbrytaren "Aktiverad".
+  assert.match(media, /action-event-advanced\.js\?v=20261116-1/, 'action-event-advanced.js cachebustades inte for korloggen');
   for (const fil of ['action-media', 'action-scenes', 'action-simulator']) {
     assert.match(media, new RegExp(`${fil}\\.js\\?v=20260916-facit`), `${fil}.js cachebustades inte for facit-ombyggnaden`);
   }
@@ -469,7 +471,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ... och 2026-10-20 fast rubrik/fotrad och fällbara avancerade val i Ny Action (F35).
   // ... och 2026-10-20 `.ae-modal input[hidden]` så poängrutorna i Ny Action döljs (granskning).
   // ... och 2026-10-25 det lila komponentlagret `.ae-modal.ae-lila` för båda formulären.
-  assert.match(media, /action-event\.css\?v=20261031-gavovideo/, 'action-event.css cachebustades inte');
+  // ... och 2026-11-16 körloggens kort `.ae-logg` (action-logg.js).
+  assert.match(media, /action-event\.css\?v=20261116-1/, 'action-event.css cachebustades inte');
   // goal-client.js fick ett tyst nollställningsläge för actionen "Styr ett mål"; den laddas
   // från studio.html, inte från media.js.
   assert.match(read('studio.html'), /goal-client\.js\?v=20260916-facit/, 'goal-client.js cachebustades inte');
