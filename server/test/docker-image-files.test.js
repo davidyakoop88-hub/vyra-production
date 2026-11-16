@@ -144,3 +144,24 @@ test('imagen byggs och kan starta node med alla moduler', { timeout: 300000,
     '-e', "require('./goal-runtime');console.log('MODULER_OK')"], { stdio: 'pipe' });
   assert.match(String(out), /MODULER_OK/);
 });
+
+// VYRA:S EGNA RÖSTER (server/piper.js). Talmotorn är Python i samma image och kan inte provas utan
+// Docker — så här, i CI, läser varje röst faktiskt upp en mening. En saknad delad biblioteksfil, en
+// röst med fel kontrollsumma eller ett ändrat Piper-API fäller provet innan något når Railway.
+test('alla sju gratisrösterna läser upp en mening i imagen', { timeout: 600000,
+  skip: hasDocker ? false : 'Docker saknas — rösterna provas i CI' }, () => {
+  const tag = 'vyra-server-copy-check:test';
+  execFileSync('docker', ['build', '-t', tag, '.'], { cwd: SERVER, stdio: 'pipe' });
+  const skript = [
+    "const P=require('./piper');",
+    "(async()=>{const r=P.tillgangliga();if(r.length!==7)throw new Error('röster: '+r.length);",
+    "for(const v of r){const t=v.sprak==='sv-SE'?'Tack för gåvan, välkommen in!':'Thank you for the gift!';",
+    "const s=await P.synthesize({text:t,voiceName:P.PREFIX+v.id});const b=Buffer.from(s.audioContent,'base64');",
+    "if(b.slice(0,4).toString()!=='RIFF'||b.length<8000)throw new Error(v.id+' gav inget ljud');",
+    "console.log('ROST_OK',v.id,b.length)}P._nollstall();console.log('ALLA_ROSTER_OK')})()",
+    ".catch(e=>{console.error(e);process.exit(1)})"
+  ].join('');
+  const out = String(execFileSync('docker', ['run', '--rm', '--read-only', '--tmpfs', '/tmp', '--entrypoint', 'node', tag, '-e', skript],
+    { stdio: 'pipe', timeout: 300000 }));
+  assert.match(out, /ALLA_ROSTER_OK/, out);
+});

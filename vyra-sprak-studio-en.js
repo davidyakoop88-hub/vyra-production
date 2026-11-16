@@ -1429,6 +1429,10 @@
       'Ett boost-fönster öppnar': 'A boost window opens', 'Vi tar ledningen': 'We take the lead',
       'Motståndaren tar ledningen': 'The opponent takes the lead', 'Matchen slutar': 'The match ends',
       'Vi vinner': 'We win', 'Vi förlorar': 'We lose', 'Oavgjort': 'Draw', 'valfri händelse': 'any event' }[h] || h)],
+    // TTS-röstlistan: "☁ Alma · VYRA-röst", "☁ Sofie · Kvinna", "☁ Ava · Kvinna · flerspråkig".
+    [/^☁ (.+?)((?: · (?:Kvinna|Man|flerspråkig|VYRA-röst))+)$/, (m, namn, delar) => '☁ ' + namn + delar
+      .replace(/ · Kvinna/, ' · Female').replace(/ · Man\b/, ' · Male')
+      .replace(/ · flerspråkig/, ' · multilingual').replace(/ · VYRA-röst/, ' · VYRA voice')],
     // Action & Event · Backup. Delarna räknas upp med komma: "5 actions, 7 events, 3 egna filer".
     [/^Filen innehåller (.+?)\.(?: Sparad (\d{4}-\d{2}-\d{2})\.)?$/, (m, delar, datum) =>
       'The file contains ' + delar.replace(/(\d+) timers/, '$1 timers').replace(/(\d+) egna filer/, '$1 own files').replace(/\b1 egen fil\b/, '1 own file')

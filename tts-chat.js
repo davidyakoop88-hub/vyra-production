@@ -194,11 +194,14 @@
     return Promise.resolve(window.VyraAuth.api(`/api/workspaces/${workspaceId}/tts/synthesize`, {
       method: 'POST',
       body: JSON.stringify({ text, languageCode: opts.language || undefined, voiceName: cloudVoiceName(opts.voice), speed: opts.speed, pitch: opts.pitch })
-    })).then(result => result.audioContent);
+    })).then(result => ({ b64: result.audioContent, mime: result.mimeType || 'audio/mpeg' }));
   }
   async function speakCloud(text, opts, forhamtat) {
-    const audioContent = await (forhamtat || hamtaMolnljud(text, opts));
-    const audio = new Audio('data:audio/mpeg;base64,' + audioContent);
+    // Molnrösterna ger mp3, VYRA:s egna röster (Piper, server/piper.js) ger wav. Typen följer med
+    // svaret; en äldre server utan `mimeType` ger mp3 som förut.
+    const svar = await (forhamtat || hamtaMolnljud(text, opts));
+    const { b64, mime } = typeof svar === 'string' ? { b64: svar, mime: 'audio/mpeg' } : svar;
+    const audio = new Audio('data:' + mime + ';base64,' + b64);
     audio.volume = Math.max(0, Math.min(1, talEller(opts.volume, 80) / 100));
     pagaendeLjud = audio;
     try {
@@ -501,8 +504,12 @@
       const genderLabel = v.gender === 'FEMALE' ? 'Kvinna' : v.gender === 'MALE' ? 'Man' : '';
       // "sv-SE-SofieNeural" -> "Sofie", "en-US-AvaMultilingualNeural" -> "Ava". Tjänstens eget
       // namn ("Microsoft AvaMultilingual Online (Natural) - English (US)") sa mest "engelska".
-      const kort = (String(v.name).split('-')[2] || '').replace(/(Multilingual)?Neural$/, '') || v.friendlyName || v.name;
-      const label = `☁ ${kort}${genderLabel ? ' · ' + genderLabel : ''}${v.multilingual ? ' · flerspråkig' : ''}`;
+      // VYRA:s egna röster (Piper) bär sitt namn i friendlyName och märks "VYRA-röst": de körs på
+      // VYRA:s server och fungerar även när Microsofts röster inte svarar.
+      const egen = v.provider === 'piper';
+      const kort = egen ? (v.friendlyName || v.name)
+        : (String(v.name).split('-')[2] || '').replace(/(Multilingual)?Neural$/, '') || v.friendlyName || v.name;
+      const label = `☁ ${kort}${genderLabel ? ' · ' + genderLabel : ''}${v.multilingual ? ' · flerspråkig' : ''}${egen ? ' · VYRA-röst' : ''}`;
       return `<option value="${value}"${value === selected ? ' selected' : ''}>${label}</option>`;
     }).join('');
     return '<option value="">Standardröst (☁ molnröst, annars datorns röst)</option>'

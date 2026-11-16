@@ -11,6 +11,7 @@
 // voices will need a real paid provider (Google/Azure/Amazon) swapped in behind this same module
 // interface instead.
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts');
+const Piper = require('./piper');
 const { Readable } = require('stream');
 
 const MAX_TEXT_LENGTH = 300;
@@ -76,11 +77,16 @@ async function allVoices() {
   return voices;
 }
 
+// VYRA:s egna gratisröster (server/piper.js) står efter språkets molnröster och före de
+// flerspråkiga. Svarar inte Microsoft alls är de hela listan — hellre färre röster än ingen.
 async function listVoices(languageCode = '') {
-  const alla = await allVoices();
+  const egnaPiper = Piper.listVoices(languageCode);
+  let alla;
+  try { alla = await allVoices(); }
+  catch (error) { if (egnaPiper.length) return egnaPiper; throw error; }
   const egna = filterByLanguage(alla, languageCode);
-  if (!languageCode) return egna;
-  return egna.concat(alla.filter(v => v.multilingual && !egna.includes(v)));
+  if (!languageCode) return egna.concat(egnaPiper);
+  return egna.concat(egnaPiper, alla.filter(v => v.multilingual && !egna.includes(v)));
 }
 
 async function defaultVoiceFor(languageCode) {
@@ -111,4 +117,24 @@ async function synthesize({ text, languageCode = 'sv-SE', voiceName, speed = 1, 
   }
 }
 
-module.exports = { listVoices, synthesize, MAX_TEXT_LENGTH };
+// Det API-rutten använder: ljudet OCH dess typ. Molnrösterna ger mp3, Piper ger wav.
+//
+// RESERVEN. Faller en molnröst (Microsoft svarar inte) läser VYRA:s egen röst på samma språk upp
+// i stället, så att en sändning inte blir tyst. Finns ingen egen röst på servern kastas felet som
+// förut, och klienten läser med datorns röst (tts-chat.js spelaUpp).
+async function synthesizeMedTyp(opts = {}) {
+  const safeText = String(opts.text || '').trim().slice(0, MAX_TEXT_LENGTH);
+  if (!safeText) throw Object.assign(new Error('Ingen text att läsa upp'), { status: 400 });
+  if (Piper.arPiper(opts.voiceName)) return Piper.synthesize({ ...opts, text: safeText });
+  try {
+    return { audioContent: await synthesize(opts), mimeType: 'audio/mpeg' };
+  } catch (error) {
+    const sprak = SPRAKKOD.test(opts.languageCode || '') ? opts.languageCode : (VOICE_LOCALE.exec(opts.voiceName || '') || ['sv-SE'])[0];
+    const reserv = Piper.reservFor(sprak);
+    if (!reserv) throw error;
+    try { return await Piper.synthesize({ text: safeText, voiceName: Piper.PREFIX + reserv.id, speed: opts.speed }); }
+    catch { throw error; }
+  }
+}
+
+module.exports = { listVoices, synthesize, synthesizeMedTyp, MAX_TEXT_LENGTH };
