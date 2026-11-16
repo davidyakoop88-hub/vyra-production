@@ -55,6 +55,8 @@ function miljo(pack) {
   let klocka = 0;
   const fonster = {
     innerWidth: 1920, innerHeight: 1080,
+    // Samma fejkade klocka för Date.now() som för timrarna (avståndsregeln mäter tid mellan klipp).
+    Date: { now: () => klocka + 1e9 },
     VyraExtras: { data: { battleFx: pack ? { pack, storlek: 1 } : undefined } },
     VYRA_OVERLAY_PACKAGES: { pinkPrincess: { name: 'Pink Princess', icon: '💎', files: [
       { key: 'boost-x2', label: 'X2 Boost', path: 'a/boost-x2.webm' }, { key: 'glove', label: 'Glove Power', path: 'a/glove.webm' },
@@ -74,7 +76,7 @@ function miljo(pack) {
     klocka = mal;
   };
   const spelat = () => korda.map(d => d.action.videoMedia.packagePath.replace(/^a\/|\.webm$/g, ''));
-  return { fonster, korda, glove, spolaFram, spelat };
+  return { fonster, korda, glove, spolaFram, spelat, tid: () => klocka };
 }
 // Kör filen mot ett eget fönsterobjekt i stället för globalThis, utan DOM.
 function ladda(fonster) {
@@ -106,7 +108,12 @@ test('regel 2: X2/X3 hoppar över matchens första boost', () => {
   m.fonster.routeLiveBattleEvent(boost('m2', 2, 90, 1));
   assert.deepEqual(m.spelat(), ['tap'], 'första boosten spelar ingen X2');
   m.fonster.routeLiveBattleEvent(boost('m2', 2, 90, 2));
-  assert.deepEqual(m.spelat(), ['tap', 'boost-x2'], 'andra boosten spelar X2 direkt');
+  // Avståndsregeln (2026-11-16): samma sekund som Tap Tap väntar X2 in 10 s (längsta klippet) i stället för att klippa av den.
+  assert.deepEqual(m.spelat(), ['tap'], 'X2 ska inte avbryta Tap Tap');
+  m.spolaFram(9);
+  assert.deepEqual(m.spelat(), ['tap'], 'X2 får inte klippa av Tap Tap, som är upp till 10 s långt');
+  m.spolaFram(1);
+  assert.deepEqual(m.spelat(), ['tap', 'boost-x2'], 'andra boosten spelar X2 när avståndet hållits');
   // Ny match: räkningen börjar om.
   m.fonster.routeLiveBattleEvent(slut('m2'));
   m.fonster.routeLiveBattleEvent(start('m3', { remainingSec: 300 }));
@@ -114,19 +121,26 @@ test('regel 2: X2/X3 hoppar över matchens första boost', () => {
   assert.deepEqual(m.spelat(), ['tap', 'boost-x2', 'tap']);
 });
 
-test('regel 3: Glove när 30 s återstår av varje boost — även den första', () => {
+// Davids regel 2026-11-16: "första bonustiden lämnar vi" — den första boosten är helt tyst, även
+// handsken. Från andra boosten: X2/X3 direkt, Glove när 30 s återstår av fönstret.
+test('regel 3: Glove när 30 s återstår av varje boost — men inte den första', () => {
   const m = miljo('pinkPrincess'); ladda(m.fonster);
   m.fonster.routeLiveBattleEvent(start('m4', { remainingSec: 300 }));
   m.fonster.routeLiveBattleEvent(boost('m4', 3, 90, 1));
+  m.spolaFram(90);
+  assert.deepEqual(m.spelat(), ['tap'], 'första boosten ska varken ge X3 eller handske');
+  m.fonster.routeLiveBattleEvent(boost('m4', 2, 90, 2));
   m.spolaFram(59);
-  assert.deepEqual(m.spelat(), ['tap']);
+  assert.deepEqual(m.spelat(), ['tap', 'boost-x2']);
   m.spolaFram(1);
-  assert.deepEqual(m.spelat(), ['tap', 'glove'], '90 s fönster: Glove efter 60 s');
-  // Okänd längd: reserven är 60 s, alltså Glove efter 30 s.
-  m.fonster.routeLiveBattleEvent(boost('m4', 2, 0, 2));
-  assert.deepEqual(m.spelat(), ['tap', 'glove', 'boost-x2']);
+  assert.deepEqual(m.spelat(), ['tap', 'boost-x2', 'glove'], '90 s fönster: Glove efter 60 s');
+  // Okänd längd: reserven är 60 s, alltså Glove efter 30 s. (10 s efter handsken, så att
+  // avståndsregeln inte skjuter upp X2.)
+  m.spolaFram(10);
+  m.fonster.routeLiveBattleEvent(boost('m4', 2, 0, 3));
+  assert.deepEqual(m.spelat(), ['tap', 'boost-x2', 'glove', 'boost-x2']);
   m.spolaFram(30);
-  assert.deepEqual(m.spelat(), ['tap', 'glove', 'boost-x2', 'glove']);
+  assert.deepEqual(m.spelat(), ['tap', 'boost-x2', 'glove', 'boost-x2', 'glove']);
 });
 
 test('regel 4: Snipe när 30 s återstår av matchen — tiden rättas av senare meddelanden', () => {
@@ -138,9 +152,35 @@ test('regel 4: Snipe när 30 s återstår av matchen — tiden rättas av senare
   assert.deepEqual(m.spelat(), ['tap']);
   m.spolaFram(1);
   assert.deepEqual(m.spelat(), ['tap', 'snipe']);
+  m.spolaFram(9);
+  assert.deepEqual(m.spelat(), ['tap', 'snipe'], 'handsken ska inte komma före 20 s kvar');
+  m.spolaFram(1);
+  assert.deepEqual(m.spelat(), ['tap', 'snipe', 'glove'], 'handsken när 20 s återstår');
   m.fonster.routeLiveBattleEvent(start('m5', { remainingSec: 20 }));
   m.spolaFram(60);
-  assert.deepEqual(m.spelat(), ['tap', 'snipe'], 'Snipe spelas en gång');
+  assert.deepEqual(m.spelat(), ['tap', 'snipe', 'glove'], 'Snipe och sluthandsken spelas en gång var');
+});
+
+test('regel 5: handsken vid 20 s kvar — även när overlayn laddats sent, men aldrig i efterhand', () => {
+  const m = miljo('pinkPrincess'); ladda(m.fonster);
+  // Laddad mitt i matchen med 25 s kvar: Snipe spelas direkt (som förut — den har inte hunnit
+  // spelas), och handsken kommer när 20 s återstår, alltså om 5 s.
+  m.fonster.routeLiveBattleEvent(start('m5b', { remainingSec: 25 }));
+  m.spolaFram(4);
+  assert.deepEqual(m.spelat(), ['snipe']);
+  m.spolaFram(1);
+  assert.deepEqual(m.spelat(), ['snipe', 'glove']);
+  // Laddad med 15 s kvar: ingen handske i efterhand.
+  const n = miljo('pinkPrincess'); ladda(n.fonster);
+  n.fonster.routeLiveBattleEvent(start('m5c', { remainingSec: 15 }));
+  n.spolaFram(60);
+  assert.ok(!n.spelat().includes('glove'), `en sen handske spelades: ${n.spelat()}`);
+  // Slutar matchen tidigt avbryts den väntande handsken.
+  const o = miljo('pinkPrincess'); ladda(o.fonster);
+  o.fonster.routeLiveBattleEvent(start('m5d', { remainingSec: 300 }));
+  o.fonster.routeLiveBattleEvent(slut('m5d'));
+  o.spolaFram(400);
+  assert.deepEqual(o.spelat(), ['tap']);
 });
 
 test('utan remainingSec räknas matchen som 300 s', () => {
@@ -283,7 +323,8 @@ test('paketwidgeten tar över uppspelningen från action-runtimen', () => {
   m.fonster.routeLiveBattleEvent(boost('p1', 2, 90, 1));
   m.fonster.routeLiveBattleEvent(boost('p1', 3, 90, 2));
   m.spolaFram(300);
-  assert.deepEqual(spelade, ['tap', 'boost-x3', 'glove', 'glove', 'snipe'], 'samma regler, men i widgeten');
+  // Första boosten tyst; andra: X3 och Glove efter 60 s; Snipe vid 30 s kvar; handske vid 20 s kvar.
+  assert.deepEqual(spelade, ['tap', 'boost-x3', 'glove', 'snipe', 'glove'], 'samma regler, men i widgeten');
   assert.deepEqual(m.korda, [], 'action-runtimen ska inte få klippet också — då spelas det dubbelt');
 });
 
@@ -315,4 +356,68 @@ test('helbildspaket spelas över hela källan, vanliga paket i nederkant', () =>
   const vanlig = miljo('pinkPrincess');
   ladda(vanlig.fonster).VyraBattleFx.spela({ id: 'battle-fx-test-vanlig', type: 'glove', multiplier: 2 }, { test: true });
   assert.notEqual(vanlig.korda[0].action.scene.y, 0, 'ett 16:9-paket ska fortfarande ligga i nederkant');
+});
+
+// ── SLUTFASEN: inga krockar (2026-11-16). De sista 35 s tillhör Snipe (30 s) och sluthandsken
+// (20 s). Proven spelar hela matcher med fejkad klocka och mäter NÄR varje klipp startar.
+function tidsatt(m) {
+  const logg = [];
+  m.fonster.VyraBattlePaket = { finns: () => true, paket: () => 'pinkPrincess', spela: k => { logg.push({ k, t: m.tid() / 1000 }); return true; } };
+  return logg;
+}
+
+test('slutfasen: en sen boost-handske hoppas över, Snipe och sluthandsken får spela klart', () => {
+  const m = miljo('pinkPrincess'); const logg = tidsatt(m); ladda(m.fonster);
+  m.fonster.routeLiveBattleEvent(start('s1', { remainingSec: 300 }));
+  m.fonster.routeLiveBattleEvent(boost('s1', 2, 60, 1));          // första: tyst
+  m.spolaFram(200);                                               // 100 s kvar
+  m.fonster.routeLiveBattleEvent(boost('s1', 2, 90, 2));          // handsken skulle landa vid 270 s = 30 s kvar
+  m.spolaFram(200);
+  assert.deepEqual(logg.map(x => `${x.k}@${x.t}`), ['tap@0', 'boost-x2@200', 'snipe@270', 'glove@280'],
+    'boost-handsken vid 270 s hade krockat med Snipe');
+});
+
+test('slutfasen: X2/X3 som öppnar de sista 40 s spelas inte — men gör det strax före', () => {
+  const m = miljo('pinkPrincess'); const logg = tidsatt(m); ladda(m.fonster);
+  m.fonster.routeLiveBattleEvent(start('s2', { remainingSec: 300 }));
+  m.fonster.routeLiveBattleEvent(boost('s2', 2, 60, 1));
+  m.spolaFram(258);                                               // 42 s kvar: före slutfasen
+  m.fonster.routeLiveBattleEvent(boost('s2', 3, 20, 2));
+  m.spolaFram(12);                                                // 30 s kvar: i slutfasen
+  m.fonster.routeLiveBattleEvent(boost('s2', 2, 20, 3));
+  m.spolaFram(100);
+  const k = logg.map(x => `${x.k}@${x.t}`);
+  assert.ok(!k.some(x => /^boost-x2@27/.test(x)), `X2 i slutfasen spelades: ${k}`);
+  assert.deepEqual(k.filter(x => /^(snipe|glove)/.test(x)).slice(-2), ['snipe@270', 'glove@280']);
+});
+
+test('slutfasen flyttar med när TikTok rättar återstoden', () => {
+  const m = miljo('pinkPrincess'); const logg = tidsatt(m); ladda(m.fonster);
+  m.fonster.routeLiveBattleEvent(start('s3', { remainingSec: 300 }));
+  m.fonster.routeLiveBattleEvent(boost('s3', 2, 60, 1));
+  m.spolaFram(100);
+  m.fonster.routeLiveBattleEvent(start('s3', { remainingSec: 230 })); // TikTok förlängde matchen 30 s
+  m.spolaFram(160);                                                   // 70 s kvar
+  m.fonster.routeLiveBattleEvent(boost('s3', 2, 20, 2));              // X2 vid 70 s kvar ska spela
+  m.spolaFram(200);
+  const k = logg.map(x => `${x.k}@${x.t}`);
+  assert.ok(k.includes('boost-x2@260'), `X2 före den flyttade slutfasen spelades inte: ${k}`);
+  assert.deepEqual(k.filter(x => /^(snipe|glove)/.test(x)).slice(-2), ['snipe@300', 'glove@310']);
+});
+
+test('hela matcher: inga två klipp startar inom 10 s från varandra — längsta klippet hinner spela klart', () => {
+  // Många boostlägen över en hel match — ett glapp är två klipp som avbryter varandra direkt.
+  for (const forskjutning of [0, 15, 40, 75, 110, 150, 190, 220, 245, 255, 262, 268]) {
+    const m = miljo('pinkPrincess'); const logg = tidsatt(m); ladda(m.fonster);
+    m.fonster.routeLiveBattleEvent(start('h' + forskjutning, { remainingSec: 300 }));
+    m.fonster.routeLiveBattleEvent(boost('h' + forskjutning, 2, 60, 1));
+    m.spolaFram(forskjutning + 1);
+    m.fonster.routeLiveBattleEvent(boost('h' + forskjutning, 3, 60, 2));
+    m.spolaFram(400);
+    const t = logg.map(x => x.t).sort((a, b) => a - b);
+    for (let i = 1; i < t.length; i++) {
+      assert.ok(t[i] - t[i - 1] >= 10, `boost vid ${forskjutning + 1} s: ${logg.map(x => `${x.k}@${x.t}`)} — två klipp ${t[i] - t[i - 1]} s isär`);
+    }
+    assert.deepEqual(logg.filter(x => x.k === 'snipe').length, 1);
+  }
 });

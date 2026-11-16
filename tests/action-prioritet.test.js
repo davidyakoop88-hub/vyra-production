@@ -22,6 +22,8 @@ async function overlay({ maxQueue = 0 } = {}) {
   lager.setItem('vyra-scene-heartbeat-1', String(Date.now()));
   const w = await F.fonster({ namn: 'overlay', scen: 1, lager });
   living.push(w);
+  // jsdom utan pretendToBeVisual saknar requestAnimationFrame, som stage() använder för bild/video.
+  if (!w.requestAnimationFrame) w.requestAnimationFrame = f => w.setTimeout(f, 0);
   w.__spelat = [];
   w.__strypta = [];
   w.document.addEventListener('vyra:runtime-alert', e => w.__spelat.push(e.detail.action.name));
@@ -98,4 +100,46 @@ test('5: rutan i Ny Action sparar prioriteten, och listan visar märket', async 
   d.querySelector('[data-edit-action]').click();
   assert.equal(d.querySelector('#aeHogPrioritet').checked, true, 'rutan var inte ikryssad vid redigering');
   assert.equal(d.querySelector('[data-ae-avancerat]').open, true, 'Avancerade val ska vara öppet när prioriteten är på');
+});
+
+// ── ERSÄTT (2026-11-16): battle-paketens klipp i reservvägen (ingen battle-widget på duken). ──
+const fx = (namn, o = {}) => A(namn, { types: ['alert', 'video'], videoMedia: { packagePath: `assets/${namn}.webm`, name: namn },
+  duration: 20, skipOnNext: false, ersatt: 'battle-fx', prioritet: 'hog', ...o });
+
+test('6: ett nytt battle-klipp ersätter det som spelar direkt, i stället för att vänta 20 s', async () => {
+  const w = await overlay();
+  const k = w.VyraActionRuntime;
+  k.execute(bud(fx('tap')));
+  await vanta(50);
+  assert.equal(w.document.querySelectorAll('#vyraActionRuntime [data-ersatt="battle-fx"]').length, 1);
+  k.execute(bud(fx('x3')));
+  await vanta(50);
+  assert.deepEqual(w.__spelat, ['tap', 'x3'], 'X3 väntade bakom Tap Tap');
+  const kvar = [...w.document.querySelectorAll('#vyraActionRuntime [data-ersatt="battle-fx"] video')].map(v => v.getAttribute('src'));
+  assert.deepEqual(kvar, ['assets/x3.webm'], 'det gamla klippet ligger kvar på skärmen');
+});
+
+test('7: en gåvoalert i kön påverkas inte, och spelar efter battle-klippet', async () => {
+  const w = await overlay();
+  const k = w.VyraActionRuntime;
+  k.execute(bud(fx('tap', { duration: 1 })));
+  const gava = bud(A('Gåva', { skipOnNext: false, duration: 1 }));
+  k.execute(gava);
+  k.execute(bud(fx('snipe', { duration: 1 })));
+  await vanta(50);
+  assert.deepEqual(w.__spelat, ['tap', 'snipe'], 'Snipe ska ersätta Tap Tap direkt');
+  assert.deepEqual(w.__strypta, [], 'gåvan ska inte strypas av ett battle-klipp');
+  await vanta(1200);
+  assert.deepEqual(w.__spelat, ['tap', 'snipe', 'Gåva'], 'gåvoalerten ska spela efter battle-klippet');
+});
+
+test('8: väntande battle-klipp ur samma grupp städas bort, andra grupper rörs inte', async () => {
+  const w = await overlay();
+  const k = w.VyraActionRuntime;
+  k.execute(bud(A('Gåva1', { skipOnNext: false, duration: 1 })));
+  k.execute(bud(fx('tap', { duration: 1 })));
+  k.execute(bud(fx('x2', { duration: 1 })));
+  k.execute(bud(A('Gåva2', { skipOnNext: false, duration: 1 })));
+  await vanta(2600);
+  assert.deepEqual(w.__spelat, ['Gåva1', 'x2', 'Gåva2'], 'Tap Tap ska ha ersatts medan den väntade, gåvorna spelas båda');
 });
