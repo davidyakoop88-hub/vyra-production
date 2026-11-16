@@ -14,7 +14,7 @@ test('arbetsytan har ett hopfällbart avancerat område', () => {
   const source = read('action-event.js');
   assert.match(source, /class="ae-advanced"/);
   assert.match(source, /data-ae-advanced-body/);
-  assert.match(source, /OBS-länkar, testläge, timer och poängsystem/);
+  assert.match(source, /OBS-länkar, testläge, timer, poängsystem och backup/);
   assert.match(source, /Välj skärm i din Action/,
     'tomt konto får inte visa den förvirrande statusen 0\/0 skärmar');
 });
