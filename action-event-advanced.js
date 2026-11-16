@@ -3,7 +3,7 @@
   // Se action-event.js: i tokenlaget lever actionlistan bara i minnet.
   const readExtra=key=>{try{return window.VyraSessionState?.readExtra?.(key)??localStorage.getItem(key)}catch{return null}};
   const audiences=[['everyone','Alla'],['follower','Alla följare'],['subscriber','Alla prenumeranter'],['moderator','Alla moderatorer'],['topGifter','Top Gifter'],['specificUser','En specifik användare']];
-  const triggers=[['join','Går med i liven'],['superfan','Super Fan går med i liven'],['firstActivity','Första aktiviteten'],['share','Delar liven'],['follow','Börjar följa'],['member','Prenumererar'],['likes','Skickar likes (taps)'],['chat','Skriver en kommentar'],['chatCommand','Skriver ett kommando'],['giftCoins','Skickar gåva med minsta coin-värde'],['gift','Skickar en specifik gåva'],['subscriberEmote','Skickar subscriber-emote'],['fanSticker','Skickar Fan Club-sticker'],['shopPurchase','Köper en produkt från TikTok Shop'],['knapp','Manuell knapp (Stream Deck)']];
+  const triggers=[['join','Går med i liven'],['superfan','Super Fan går med i liven'],['firstActivity','Första aktiviteten'],['share','Delar liven'],['follow','Börjar följa'],['member','Prenumererar'],['likes','Skickar likes (taps)'],['chat','Skriver en kommentar'],['chatCommand','Skriver ett kommando'],['giftCoins','Skickar gåva med minsta coin-värde'],['gift','Skickar en specifik gåva'],['subscriberEmote','Skickar subscriber-emote'],['fanSticker','Skickar Fan Club-sticker'],['shopPurchase','Köper en produkt från TikTok Shop'],['battle','Händelse i en battle'],['knapp','Manuell knapp (Stream Deck)']];
   const opts=a=>a.map(x=>`<option value="${x.id}">${x.name}</option>`).join('');
   // GAVOVALJAREN (facit §3.2): bild + namn + coin-varde per rad.
   //
@@ -214,6 +214,15 @@
   // TVA LISTOR, INTE EN. Stickervaljaren visade forr subscriber-emotes — bada las ur samma nyckel.
   // Facit har dem som tva skilda val med varsin bildlista, och emoteScene 2 (FANS_CLUB) ar det enda
   // som skiljer dem at i TikToks data. Se live-client.js recordSeenEmote().
+  // Battle-händelsen väljs ur en fast lista (action-battle.js HANDELSER). Ledning och resultat
+  // bygger på poängen, som bara är rätt när bryggan vet vilket konto som är ditt — texten säger det.
+  const BATTLE_REFERENS=[['start','Matchen börjar'],['boost','Ett boost-fönster öppnar'],['leder','Vi tar ledningen'],['efter','Motståndaren tar ledningen'],['slut','Matchen slutar'],['vinst','Vi vinner'],['forlust','Vi förlorar'],['oavgjort','Oavgjort']];
+  function battleValjare(valt){
+    const lista=window.VyraActionBattle?.HANDELSER||BATTLE_REFERENS;
+    const vald=lista.some(h=>h[0]===valt)?valt:'start';
+    return '<label>Vad i matchen?<select id="aeAdvancedValue">'+lista.map(h=>'<option value="'+h[0]+'"'+(h[0]===vald?' selected':'')+'>'+h[1]+'</option>').join('')+'</select></label>'
+      +'<small class="ae-hjalp">Gäller hela matchen, inte en tittare. Ledning, vinst och förlust bygger på poängen TikTok skickar — visar din battle-widget 0–0 under matchen fyrar bara start, boost och slut.</small>';
+  }
   function renderBildvaljare(typ,valt){
     const seen=typ==='fanSticker'?seenStickers():seenEmotes();
     const etikett=typ==='fanSticker'?'Fan Club-sticker':'Subscriber-emote';
@@ -313,8 +322,8 @@
       + '<small class="ae-hjalp" id="aeTeamLevelHjalp">Ange 0 för att tillåta personer som inte är med i teamet.</small>'
       + '<label class="ae-inline" id="aePointsLevelRad">Nödvändig poängnivå<input id="aeMinPointsLevel" type="number" min="0" value="'+(Number(e.minPointsLevel)||0)+'"></label>'
       + '<small class="ae-hjalp" id="aePointsLevelHjalp">Ange 0 för att tillåta vilken poängnivå som helst.</small>'
-      + '<label class="ae-inline">Poängkostnad<input id="aePointsCost" type="number" min="0" value="'+(Number(e.pointsCost)||0)+'"></label>'
-      + '<small class="ae-hjalp">Dras från användarens poäng när eventet triggas. 0 = gratis.</small>'
+      + '<label class="ae-inline" id="aePointsCostRad">Poängkostnad<input id="aePointsCost" type="number" min="0" value="'+(Number(e.pointsCost)||0)+'"></label>'
+      + '<small class="ae-hjalp" id="aePointsCostHjalp">Dras från användarens poäng när eventet triggas. 0 = gratis.</small>'
       + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeAllActionsRubrik">Kör alla dessa Actions</span><select id="aeAllActions" multiple size="'+storlek+'">'+actionOpts(allaValda)+'</select><small>Kryssa i en eller flera. Alla körs när eventet triggas.</small></div>'
       + '<div class="ae-flerval-falt"><span class="ae-falt-etikett" id="aeRandomActionsRubrik">Kör en av dessa Actions slumpmässigt</span><select id="aeRandomActions" multiple size="'+storlek+'">'+actionOpts(e.randomActionIds)+'</select><small>Kryssa i en eller flera. En av dem väljs slumpmässigt, och alla spelas innan någon upprepas.</small></div></section>';
     vard.append(p);
@@ -332,12 +341,17 @@
         v==='gift'?'<label>Välj gåva<div class="ae-picker-row"><input id="aeAdvancedValue" placeholder="Exempel: Rose" value="'+attr(sparatVarde)+'"><button type="button" id="aeChooseGift">🎁 Välj gåva</button></div></label>':
         v==='chat'?'<label>Textfilter (valfritt)<input id="aeAdvancedValue" placeholder="Lämna tomt för alla kommentarer" value="'+attr(sparatVarde)+'"></label>':
         v==='shopPurchase'?'<label>Produktnamnet innehåller (valfritt)<input id="aeAdvancedValue" placeholder="Produktnamn" value="'+attr(sparatVarde)+'"></label><small class="ae-hjalp">Ange en del av produktnamnet för att bara trigga på den produkten. Lämnas fältet tomt triggar eventet på alla produkter.</small>':
-        (v==='subscriberEmote'||v==='fanSticker')?renderBildvaljare(v,sparatVarde):'';
+        (v==='subscriberEmote'||v==='fanSticker')?renderBildvaljare(v,sparatVarde):
+        v==='battle'?battleValjare(sparatVarde):'';
       if(v==='gift'){const b=d.querySelector('#aeChooseGift');if(b)b.onclick=()=>openTriggerGiftPicker(d.querySelector('#aeAdvancedValue'))}
       if(v==='subscriberEmote'||v==='fanSticker')wireBildvaljare(d);
       const visa=(id,pa)=>{const el=p.querySelector(id);if(el)el.hidden=!pa};
       visa('#aeTeamLevelRad',VISAR_TEAMNIVA.has(v));visa('#aeTeamLevelHjalp',VISAR_TEAMNIVA.has(v));
       visa('#aePointsLevelRad',VISAR_POANGNIVA.has(v));visa('#aePointsLevelHjalp',VISAR_POANGNIVA.has(v));
+      // En battle-händelse gäller matchen, inte en tittare: ingen att välja under "Vem", och
+      // ingen vars poäng kan dras. Sektionerna döljs, och collect() skriver de neutrala värdena.
+      const vem=p.querySelector('#aeAudienceRubrik')?.closest('.ae-sek');if(vem)vem.hidden=v==='battle';
+      visa('#aePointsCostRad',v!=='battle');visa('#aePointsCostHjalp',v!=='battle');
     };
     p.querySelectorAll('[name=aeAdvancedTrigger]').forEach(x=>x.onchange=sync);
     p.querySelectorAll('[name=aeAudience]').forEach(x=>x.onchange=()=>{p.querySelector('#aeSpecificUserWrap').hidden=p.querySelector('[name=aeAudience]:checked').value!=='specificUser'});
@@ -365,7 +379,8 @@
       const valda=q=>[...p.querySelector(q).selectedOptions].map(o=>o.value);
       const varde=(p.querySelector('#aeAdvancedValue')||{}).value;
       const rent=String(varde==null?'':varde).trim();
-      return {
+      const arBattle=p.querySelector('[name=aeAdvancedTrigger]:checked').value==='battle';
+      const ut={
         audience:p.querySelector('[name=aeAudience]:checked').value,
         specificUser:p.querySelector('#aeSpecificUser').value.trim().replace(/^@/,''),
         excludeAnonymous:p.querySelector('#aeExcludeAnonymous').checked,
@@ -381,6 +396,10 @@
         allActionIds:valda('#aeAllActions'),
         randomActionIds:valda('#aeRandomActions')
       };
+      // Battle-händelsen har ingen tittare: ett "Bara följare" eller en poängkostnad hade gjort
+      // eventet omöjligt att trigga, utan att något i panelen sa varför.
+      if(arBattle)Object.assign(ut,{audience:'everyone',specificUser:'',excludeAnonymous:false,teamLevel:0,pointsCost:0,minPointsLevel:0});
+      return ut;
     }
   });
 
@@ -484,6 +503,9 @@
     if(trig==='likes')return!(Number(payload.likecount??payload.value??0)<Number(expected));
     if(trig==='gift')return!!gavanTraffar(e,payload,expected,actual);
     if(trig==='chatCommand')return actual.toLowerCase()===expected.toLowerCase();
+    // Exakt, inte "innehåller": 'slut' får inte träffa ett annat ord, och ett event för 'vinst'
+    // ska aldrig fyra på 'slut'.
+    if(trig==='battle')return actual.toLowerCase()===expected.toLowerCase();
     return actual.toLowerCase().includes(expected.toLowerCase());
   }
   // SLUMP UTAN UPPREPNING (2026-11-16). "Kör en av dessa slumpmässigt" drog förr ett rent
