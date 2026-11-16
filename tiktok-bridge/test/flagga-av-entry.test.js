@@ -70,9 +70,15 @@ test('entrypoint: flaggan osatt — inga live-anrop, byteidentiskt moln-event, u
     assert.equal(ev.headers['authorization'], `Bearer ${TOKEN}`);
     const skickad = JSON.parse(ev.body);
     assert.equal(skickad.type, 'follow');
-    // Byte för byte mot dagens N.cloudEvent-form, med samma id/at som processen valde.
+    // Byte för byte mot dagens N.cloudEvent-form, med samma id/at som processen valde. bryggaAt
+    // (2026-11-17, fördröjningens första sträcka) är mottagningstiden — den sätts av processen precis
+    // som at, och ligger alltså strax före den. Fejkens follow har ingen common.createTime, så
+    // tiktokAt ska inte finnas alls.
+    assert.ok(skickad.bryggaAt > 0 && skickad.bryggaAt <= skickad.at && skickad.at - skickad.bryggaAt < 5000,
+      `bryggaAt saknas eller är orimlig: ${skickad.bryggaAt} mot at ${skickad.at}`);
+    assert.equal('tiktokAt' in skickad, false);
     assert.equal(ev.body, JSON.stringify(N.cloudEvent(skickad.id, 'follow',
-      N.baseUser({ userId: '42', uniqueId: 'givare', nickname: 'Givaren' }), skickad.at)),
+      { ...N.baseUser({ userId: '42', uniqueId: 'givare', nickname: 'Givaren' }), bryggaAt: skickad.bryggaAt }, skickad.at)),
       'moln-eventets body är inte byteidentisk med dagens form');
 
     // 3. randomUUID anropades aldrig i hela processen.
