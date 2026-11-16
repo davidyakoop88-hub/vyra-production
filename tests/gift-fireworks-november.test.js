@@ -187,3 +187,16 @@ test('katalogen har ett eget kort for november, bredvid dukstemana', () => {
   run("state.widgets.length=0;document.querySelector('[data-catalog-key=\"catalog:giftfireworks:november\"]').click();window.__ny=state.widgets[state.widgets.length-1];");
   assert.equal(h.window.__ny.fwTheme, 'november');
 });
+
+// Vit platta i studion (2026-11-16): studion har color-scheme:dark på body, sidan i ramen har inget.
+// Skiljer sig schemana ritar Chrome en ogenomskinlig vit bakgrund bakom ramen i stället för genomskinligt.
+test('November-ramen har samma färgschema som sidan i den, så den förblir genomskinlig i studion', () => {
+  const fs = require('node:fs'), path = require('node:path'), rot = path.join(__dirname, '..');
+  const js = fs.readFileSync(path.join(rot, 'gift-fireworks.js'), 'utf8');
+  const ram = js.match(/frame\.style\.cssText='([^']*)'/);
+  require('node:assert/strict').ok(ram && /color-scheme:normal/.test(ram[1]) && /background:transparent/.test(ram[1]), 'ramen saknar color-scheme:normal');
+  const sida = fs.readFileSync(path.join(rot, 'assets/gift-fireworks-november/widget.html'), 'utf8');
+  require('node:assert/strict').doesNotMatch(sida, /color-scheme\s*:\s*dark/, 'sidan i ramen ska inte byta till mörkt schema — då måste ramen följa med');
+  const hig = fs.readFileSync(path.join(rot, 'vyra-hig.css'), 'utf8');
+  require('node:assert/strict').match(hig, /\.widget iframe \{ color-scheme: normal; \}/);
+});
