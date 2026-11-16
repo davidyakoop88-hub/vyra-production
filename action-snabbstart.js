@@ -29,7 +29,7 @@
       delar:[
         {namn:{sv:'Tack för gåvan',en:'Thanks for the gift'},...alert('Tack {username} för {giftname}!','Thank you {username} for the {giftname}!'),duration:5,
           trigger:'giftCoins',varde:'1'},
-        {namn:{sv:'Gåvans animation (500+ coins)',en:'Gift animation (500+ coins)'},types:['giftVideo'],duration:10,
+        {namn:{sv:'Gåvans animation (500+ coins)',en:'Gift animation (500+ coins)'},types:['giftVideo'],duration:10,prioritet:'hog',
           trigger:'giftCoins',varde:'500'}
       ]
     },
@@ -69,7 +69,7 @@
       const config={addPointsAmount:10,removePointsAmount:10};
       if(d.types.includes('alert'))Object.assign(config,{alertText:d.text[lang],alertColor:'#ffffff',alertStyle:'premium',inheritBrandKit:true});
       actions.push({id:aid,name:d.namn[lang],types:[...d.types],config,duration:d.duration||5,cooldown:d.cooldown||0,userCooldown:d.userCooldown||0,
-        volume:100,fade:true,repeatCombo:false,skipOnNext:false,scene:{...SCEN},startpaket:paket.id});
+        volume:100,fade:true,repeatCombo:false,skipOnNext:false,prioritet:d.prioritet||'',scene:{...SCEN},startpaket:paket.id});
       // Samma form som eventdialogen sparar (action-event-advanced.js collect + action-event.js
       // saveEvent): `trigger` speglar `advancedTrigger` och `condition` speglar `triggerValue`.
       events.push({id:eid,enabled:true,audience:'everyone',specificUser:'',excludeAnonymous:false,
