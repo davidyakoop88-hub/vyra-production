@@ -1,3 +1,7 @@
+/*! VYRA — Copyright © 2026 VYRA. Alla rättigheter förbehållna / All rights reserved.
+ * Proprietär kod, inte öppen källkod — se LICENSE. Proprietary code, not open source — see LICENSE.
+ * Kopiering, återskapande eller AI-träning på koden, även med hjälp av AI-verktyg, är inte tillåten utan skriftligt tillstånd.
+ * Copying, recreating or training AI models on this code, including with AI tools, is not permitted without written permission. */
 'use strict';
 if(process.env.NODE_ENV==='production')require('./production-config').validateProductionEnv();
 const http=require('http'),crypto=require('crypto'),{URL}=require('url'),{pool,tx}=require('./db'),S=require('./security');

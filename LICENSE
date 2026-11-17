@@ -1,0 +1,52 @@
+VYRA — Proprietär licens / Proprietary license
+Copyright © 2026 VYRA. Alla rättigheter förbehållna. All rights reserved.
+
+SVENSKA
+
+All källkod, design, grafik, ljud, mallar, widgets, battle-paket och övrigt material i det här
+repot och på vyralive.app ("Programvaran") tillhör VYRA eller dess licensgivare. Programvaran är
+inte öppen källkod.
+
+Utan skriftligt tillstånd från VYRA är det inte tillåtet att:
+
+  1. kopiera, ändra, distribuera, sälja eller underlicensiera Programvaran eller delar av den;
+  2. återskapa, efterbilda eller härleda en konkurrerande produkt ur Programvarans kod, struktur,
+     layout eller design;
+  3. använda AI-verktyg, kodassistenter eller automatiserade system för att läsa av, sammanfatta,
+     återskapa eller översätta Programvaran i syfte att bygga en liknande produkt;
+  4. använda Programvaran eller dess innehåll för att träna, finjustera eller utvärdera
+     maskininlärnings- eller AI-modeller;
+  5. dekompilera, avminifiera eller på annat sätt bakåtkompilera Programvaran, utom i den mån
+     tvingande lag uttryckligen tillåter det.
+
+Att koden laddas i en webbläsare ger ingen rätt att använda den på annat sätt än som kund till
+tjänsten enligt användarvillkoren på https://vyralive.app/terms.html.
+
+Tredjepartsbibliotek (t.ex. gsap.min.js och pixi.min.js) omfattas av sina egna licenser, som
+anges i respektive fil.
+
+ENGLISH
+
+All source code, design, graphics, sounds, templates, widgets, battle packs and other material in
+this repository and on vyralive.app (the "Software") is owned by VYRA or its licensors. The
+Software is not open source.
+
+Without prior written permission from VYRA you may not:
+
+  1. copy, modify, distribute, sell or sublicense the Software or any part of it;
+  2. recreate, imitate or derive a competing product from the Software's code, structure, layout
+     or design;
+  3. use AI tools, coding assistants or automated systems to read, summarize, recreate or
+     translate the Software for the purpose of building a similar product;
+  4. use the Software or its content to train, fine-tune or evaluate machine-learning or AI
+     models;
+  5. decompile, de-minify or otherwise reverse engineer the Software, except to the extent
+     mandatory law expressly permits it.
+
+Loading the code in a web browser grants no right to use it other than as a customer of the
+service under the terms of use at https://vyralive.app/terms.html.
+
+Third-party libraries (e.g. gsap.min.js and pixi.min.js) are covered by their own licenses, as
+stated in each file.
+
+Kontakt / Contact: support@vyralive.app
