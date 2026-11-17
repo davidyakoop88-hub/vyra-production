@@ -269,6 +269,13 @@ if (require.main === module) {
     inspelare.raa(type, data, 'vidarebefordrad');
     inspelare.utgaende(type, fields);
     reportToParent('event', { eventType: type, at: now });
+    // FÖRDRÖJNINGENS FÖRSTA STRÄCKA (2026-11-17). tiktokAt är TikToks egen common.createTime (ms),
+    // bryggaAt när meddelandet nådde bryggan. Utan dem syntes aldrig hur långt efter TikTok bryggan
+    // ligger — event.at stämplas först vid utskicket. Efter inspelarens rader, så att inspelningarna
+    // förblir byte för byte de TikTok faktiskt skickade. Ett event som redan bär bryggaAt (en glove som
+    // medvetet hölls tillbaka till boost-fönstret) behåller sin mottagningstid.
+    const tiktokAt = Number(data && data.common && data.common.createTime) || 0;
+    fields = { ...fields, tiktokAt: fields.tiktokAt || tiktokAt, bryggaAt: fields.bryggaAt || now };
     const local = { type, eventKey: key, source: 'tiktok-bridge', ...fields };
     const jobs = [postJson('/api/events', local)];
     // N.tillMolnet: vitlista, se normalizer.js. Gäller BARA molnpostningen — den lokala raden ovan

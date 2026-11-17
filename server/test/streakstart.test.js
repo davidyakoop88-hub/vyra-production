@@ -25,7 +25,8 @@ test('streakstart publiceras rakt till overlayn — förbi mål, poäng, nivåer
   const start = kod.indexOf('async function ingestTikTokEvent');
   const gren = kod.slice(start, kod.indexOf("if(String(payload?.type||'').toLowerCase()==='chatcommand')", start));
   assert.match(gren, /==='streakstart'/, 'ingestTikTokEvent har ingen egen gren för streakstart');
-  assert.match(gren, /eventBus\.publish\(workspaceId,payload\)/, 'streakstart ska publiceras direkt');
+  // {...payload,serverAt:…}: samma payload, bara med molnets mätpunkt (latency-probe.js, 2026-11-17).
+  assert.match(gren, /eventBus\.publish\(workspaceId,\{\.\.\.payload,serverAt:Date\.now\(\)\}\)/, 'streakstart ska publiceras direkt');
   assert.match(gren, /return raw;/, 'grenen ska returnera innan den vanliga vägen');
   for (const raknare of ['ingestEvent(', 'streamStats', 'Gavoidentitet', 'Gavokatalog', 'HeartMeGoal', 'metrics.event'])
     assert.ok(!gren.includes(raknare), `streakstart-grenen rör ${raknare} — då räknas streaken två gånger`);

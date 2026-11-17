@@ -103,6 +103,12 @@ const event={
     // (live-client.js recordSeenEmote laser e.emote och e.giftImage).
     emote:String(input?.emote||'').slice(0,160),
     at:Number(input?.at)||Date.now(),
+    // FÖRDRÖJNINGENS TRE STRÄCKOR (2026-11-17). tiktokAt: TikToks egen common.createTime. bryggaAt:
+    // när bryggan tog emot meddelandet. serverAt: när molnet hade räknat klart och skickade ut det
+    // (goal-ingest.js). Bara mätvärden — ingen widget fattar beslut på dem. 0 = okänt.
+    tiktokAt:Math.max(0,Math.round(Number(input?.tiktokAt)||0)),
+    bryggaAt:Math.max(0,Math.round(Number(input?.bryggaAt)||0)),
+    serverAt:Math.max(0,Math.round(Number(input?.serverAt)||0)),
     // Avsandarens fan-klubbsniva. Utan den var Fan Level Up dod pa molnvagen: bryggan raknar
     // fram den och klienten laser den, men cleanEvent strok faltet daremellan. Bada namnen tas
     // emot (bryggan: fanClubLevel, klienten: teamLevel). Klamps 0-50; 0 = ingen niva rapporterad.

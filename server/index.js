@@ -187,7 +187,8 @@ async function ingestTikTokEvent(workspaceId,payload){
     if(await rateLimiter.exceeded(`tiktok-ingest-streak:${workspaceId}`,TIKTOK_STREAK_RATE_LIMIT,TIKTOK_INGEST_RATE_WINDOW_SECONDS))
       throw Object.assign(new Error(`För många gåvostreaks för denna workspace (max ${TIKTOK_STREAK_RATE_LIMIT}/sekund)`),{status:429});
     validateTikTokIngestPayload(payload);
-    const raw=await eventBus.publish(workspaceId,payload);
+    // serverAt: samma mätpunkt som goal-ingest.js sätter på de räknade eventen (latency-probe.js).
+    const raw=await eventBus.publish(workspaceId,{...payload,serverAt:Date.now()});
     if(!raw.duplicate)lastTikTokEventAt=Date.now();
     return raw;
   }

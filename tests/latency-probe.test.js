@@ -79,3 +79,34 @@ test('mätningen rivs vid sessionsslut', () => {
   assert.equal(env.rapport().nat.antal, 0,
     'förra sessionens mätvärden låg kvar och blandades med nästa sändnings');
 });
+
+// ---- fördröjningens tre sträckor (2026-11-17) ------------------------------------------------------
+// Bryggan bär tiktokAt (TikToks common.createTime) och bryggaAt, molnet serverAt. Sonden delar nätet
+// i TikTok -> bryggan, bryggan -> molnet ut och molnet -> den här sidan.
+test('nätet delas i tre sträckor: tiktok, moln och ut', () => {
+  const env = boot();
+  const nu = env.h.window.Date.now();
+  env.h.window.routeLiveBattleEvent({ type: 'gift', at: nu - 300, tiktokAt: nu - 900, bryggaAt: nu - 600, serverAt: nu - 200 });
+  const s = env.rapport().strackor;
+  assert.equal(s.tiktok.antal, 1);
+  assert.equal(s.tiktok.snitt, 300, 'TikTok -> bryggan');
+  assert.equal(s.moln.snitt, 400, 'bryggan -> molnet ut');
+  assert.ok(s.ut.snitt >= 200 && s.ut.snitt < 2000, `molnet -> sidan blev ${s.ut.snitt}`);
+});
+
+test('en glove som bryggan medvetet höll tillbaka räknas inte som TikTok-fördröjning', () => {
+  const env = boot();
+  const nu = env.h.window.Date.now();
+  env.h.window.routeLiveBattleEvent({ type: 'glove', at: nu, tiktokAt: nu - 120000, bryggaAt: nu - 50, serverAt: nu - 20 });
+  const s = env.rapport().strackor;
+  assert.equal(s.tiktok.antal, 0, 'boost-fönstrets avsiktliga väntan mättes som fördröjning');
+  assert.equal(s.moln.antal, 1);
+});
+
+test('ett event utan de nya fälten (VYRA Desktop, äldre brygga) mäts som förut utan sträckor', () => {
+  const env = boot();
+  env.h.window.routeLiveBattleEvent({ type: 'gift', at: env.h.window.Date.now() - 100 });
+  const r = env.rapport();
+  assert.equal(r.nat.antal, 1);
+  assert.deepEqual([r.strackor.tiktok.antal, r.strackor.moln.antal, r.strackor.ut.antal], [0, 0, 0]);
+});

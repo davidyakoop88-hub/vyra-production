@@ -78,23 +78,36 @@ function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
 
   return async function ingestEvent(workspaceId, payload) {
     const event = cleanEvent(payload);
-    // FÖRE publish, för det är det publicerade eventet widgeten läser. Klienten avgör ingenting
-    // längre: den renderar den höjning servern redan konstaterat, precis som konkurrentens widget
-    // gör — skillnaden är att vårt minne ligger i molnet och inte i en app på en dator.
-    const nivaer = await viewerLevels.applyEvent(workspaceId, event);
-    if (nivaer.fanLevelUp) event.fanLevelUp = nivaer.fanLevelUp;
-    if (nivaer.gifterLevelUp) event.gifterLevelUp = nivaer.gifterLevelUp;
-    const applied = await goalRuntime.applyEvent(pool, workspaceId, event);
-    // Efter målets claim (Postgres-ordningen ovan gäller fortfarande målet), men FÖRE det rå eventet
-    // publiceras — av samma skäl som nivåminnet ovan: en poängbrist får inte hindra gåvan från att
-    // gå ut, men den ska inte heller kunna hända EFTER att widgeten redan fått besked om eventet.
-    let points = null;
-    try {
-      points = await pointsRuntime.applyEvent(pool, workspaceId, event);
-    } catch (error) {
-      log(JSON.stringify({ level: 'error', event: 'points_apply_failed',
-        message: error.message, at: new Date(now()).toISOString() }));
-    }
+    // DE TRE POSTGRES-STEGEN KÖRS SAMTIDIGT (2026-11-17, "förseningar mellan live och tiktok").
+    // De gick förut efter varandra: nivåer, sedan målet, sedan poängen — tre till fyra rundresor till
+    // databasen innan gåvan alls skickades ut. De är oberoende av varandra: viewerLevels kastar aldrig
+    // och läser bara nivåfälten, goalRuntime och pointsRuntime läser count/value/id/tillVarden och
+    // aldrig fanLevelUp/gifterLevelUp, och var och en har sin egen idempotenta rad i sin egen
+    // transaktion. Ordningen i filhuvudet gäller oförändrad: ALLT är räknat innan något publiceras.
+    // Bara väntan mellan stegen är borta. tests (server/test/goal-ingest-samtidigt.test.js) vaktar båda.
+    //
+    // Nivåhöjningen skrivs på eventet FÖRE publish, för det är det publicerade eventet widgeten läser.
+    // Klienten avgör ingenting längre: den renderar den höjning servern redan konstaterat.
+    //
+    // Poängen: en poängbrist får inte hindra gåvan från att gå ut, men den ska inte heller kunna hända
+    // EFTER att widgeten redan fått besked om eventet. Därför sväljs felet här, inne i Promise.all.
+    const poangSteg = Promise.resolve()
+      .then(() => pointsRuntime.applyEvent(pool, workspaceId, event))
+      .catch(error => {
+        log(JSON.stringify({ level: 'error', event: 'points_apply_failed',
+          message: error.message, at: new Date(now()).toISOString() }));
+        return null;
+      });
+    const [nivaer, applied, points] = await Promise.all([
+      viewerLevels.applyEvent(workspaceId, event),
+      goalRuntime.applyEvent(pool, workspaceId, event),
+      poangSteg
+    ]);
+    if (nivaer && nivaer.fanLevelUp) event.fanLevelUp = nivaer.fanLevelUp;
+    if (nivaer && nivaer.gifterLevelUp) event.gifterLevelUp = nivaer.gifterLevelUp;
+    // Servertiden när eventet var räknat och gick ut. Med bryggans bryggaAt och TikToks tiktokAt
+    // delar latency-probe.js fördröjningen i sina tre sträckor.
+    event.serverAt = now();
     const raw = await eventBus.publish(workspaceId, event);
     const frames = applied.applied && applied.rows.length
       ? await publishFrames(workspaceId, applied.rows, event.at)

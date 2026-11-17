@@ -28,6 +28,13 @@
 
   const tomt = () => ({ n: 0, summa: 0, max: 0 });
   let nat = tomt(), ko = tomt(), senasteRad = '';
+  // NÄTETS TRE STRÄCKOR (2026-11-17, David: "förseningar mellan live och tiktok"). `nat` ovan började
+  // vid bryggans utskick och såg aldrig TikTok-sidan. Bryggan bär nu tiktokAt (TikToks common.createTime)
+  // och bryggaAt (mottaget), molnet serverAt (räknat och utskickat). Då syns VAR tiden går:
+  //   tiktok  TikTok -> bryggan       nätet till TikTok, eller TikTok som levererar sent
+  //   moln    bryggan -> molnet ut    internet till Railway + databasstegen i goal-ingest.js
+  //   ut      molnet -> den här sidan Redis, SSE, Caddy och din uppkoppling
+  let strackor = { tiktok: tomt(), moln: tomt(), ut: tomt() };
 
   function mat(m, ms) {
     if (!Number.isFinite(ms) || ms < 0 || ms > RIMLIGT_MS) return;
@@ -42,7 +49,13 @@
     const at = Number(event && event.at);
     // Serverns tid, inte PC-klockans: en klocka som går 20 s fel mäter annars 20 s "nät" (2026-10-18).
     const nu = root.VyraLive && typeof root.VyraLive.serverNu === 'function' ? Number(root.VyraLive.serverNu()) : NaN;
-    if (Number.isFinite(at) && at > 0) mat(nat, (nu > 0 ? nu : Date.now()) - at);
+    const tid = nu > 0 ? nu : Date.now();
+    if (Number.isFinite(at) && at > 0) mat(nat, tid - at);
+    const tiktokAt = Number(event && event.tiktokAt), bryggaAt = Number(event && event.bryggaAt), serverAt = Number(event && event.serverAt);
+    // glove hålls medvetet tillbaka till boost-fönstret i bryggan (100+ s) — det är design, inte fördröjning.
+    if (tiktokAt > 0 && bryggaAt > 0 && String(event.type) !== 'glove') mat(strackor.tiktok, bryggaAt - tiktokAt);
+    if (bryggaAt > 0 && serverAt > 0) mat(strackor.moln, serverAt - bryggaAt);
+    if (serverAt > 0) mat(strackor.ut, tid - serverAt);
     if (typeof tidigareRoute === 'function') return tidigareRoute(event);
   };
 
@@ -70,7 +83,9 @@
 
   const timer = root.setInterval(() => {
     if (!nat.n && !ko.n) return;
-    const rad = `nat=${snitt(nat)}ms (max ${nat.max}) ko=${snitt(ko)}ms (max ${ko.max}) n=${nat.n}`;
+    const st = strackor, del = st.tiktok.n || st.moln.n || st.ut.n
+      ? ` [tiktok=${snitt(st.tiktok)}ms moln=${snitt(st.moln)}ms ut=${snitt(st.ut)}ms]` : '';
+    const rad = `nat=${snitt(nat)}ms (max ${nat.max}) ko=${snitt(ko)}ms (max ${ko.max}) n=${nat.n}` + del;
     if (rad === senasteRad) return;                 // oförändrat sedan förra minuten: ingen rad
     senasteRad = rad;
     try { root.console && root.console.log('[VYRA fördröjning] ' + rad) } catch (_) {}
@@ -79,7 +94,7 @@
   // Teardown enligt kontraktet: ingen setInterval får överleva en utloggning eller ett kontobyte.
   function riv() {
     try { root.clearInterval(timer) } catch (_) {}
-    nat = tomt(); ko = tomt(); senasteRad = '';
+    nat = tomt(); ko = tomt(); senasteRad = ''; strackor = { tiktok: tomt(), moln: tomt(), ut: tomt() };
   }
   try { root.VyraSessionState && root.VyraSessionState.registerTeardown &&
         root.VyraSessionState.registerTeardown('latency-probe', riv) } catch (_) {}
@@ -88,8 +103,9 @@
   root.VyraFordrojning = {
     rapport: () => ({
       nat: { antal: nat.n, snitt: snitt(nat), max: nat.max },
-      ko: { antal: ko.n, snitt: snitt(ko), max: ko.max }
+      ko: { antal: ko.n, snitt: snitt(ko), max: ko.max },
+      strackor: Object.fromEntries(Object.entries(strackor).map(([k, m]) => [k, { antal: m.n, snitt: snitt(m), max: m.max }]))
     }),
-    glom: () => { nat = tomt(); ko = tomt(); senasteRad = '' }
+    glom: () => { nat = tomt(); ko = tomt(); senasteRad = ''; strackor = { tiktok: tomt(), moln: tomt(), ut: tomt() } }
   };
 })(window);

@@ -530,6 +530,16 @@ men ingen har sett den följa en riktig sändning.
    och **Glove igen vid 20 s kvar** (tar över efter Snipe). Notera om något kom för tidigt/sent.
 6. Om en widget inte reagerade på något: leta upp händelsen i loggen. Finns den där men inget
    hände, är felet i widgeten. Finns den inte, kom den aldrig fram från TikTok.
+7. **Var fördröjningen sitter (sedan 2026-11-17).** Skriv `VyraFordrojning.rapport().strackor` i
+   konsolen på överlägget (eller läs raden `[VYRA fördröjning] … [tiktok=… moln=… ut=…]` som skrivs
+   en gång i minuten). Tre sträckor, i millisekunder:
+   - **tiktok** — från TikToks egen tidsstämpel till att bryggan tog emot. Högt här = TikTok levererar
+     sent eller vägen till TikTok är lång; inget i VYRA kan korta det.
+   - **moln** — bryggan till att molnet räknat klart och skickat ut. Här ligger databasstegen, som
+     sedan 2026-11-17 körs samtidigt i stället för efter varandra.
+   - **ut** — molnet till överlägget: Redis, SSE och din uppkoppling.
+   Glove räknas inte i **tiktok** — bryggan håller den medvetet till boost-fönstret. Skriv in alla tre
+   snitten och max efter sändningen; det är baslinjen nästa förbättring mäts mot.
 
 Skriv in: syntes händelserna i loggen och i rätt tid? stämde kön och fördröjningen? följde
 matchövervakningen poängen? Ta skärmbilder av allt som ser fel ut. Koden: `live-control.js`,
