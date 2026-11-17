@@ -77,7 +77,10 @@ test('livehändelser fyller mätaren; gamla händelser och dolda widgetar räkna
     skicka({ type: 'follow', at: Date.now() - 60000 });
     assert.ok(Math.abs(E.lage(w).niva - 55) < 0.1, 'en gammal händelse fyllde på');
     for (let i = 0; i < 20; i++) skicka({ type: 'gift', diamonds: 1000, at: Date.now() });
-    assert.equal(E.lage(w).niva, 100);
+    // Taket: aldrig över 100. Mätaren töms medan provet kör, så en millisekund mellan sista gåvan och
+    // avläsningen kan ge 99,9999 (CI 2026-11-17, PR 796) — samma marginal som raderna ovan.
+    const full = E.lage(w).niva;
+    assert.ok(full <= 100 && full > 99.9, 'taket är 100, fick ' + full);
     assert.ok(Math.abs(E.lage(dold).niva - 50) < 0.1, 'en dold widget räknade');
   } finally { dom.window.close(); }
 });
