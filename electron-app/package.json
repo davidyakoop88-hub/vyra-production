@@ -4,6 +4,7 @@
   "description": "VYRA — TikTok LIVE overlay studio, desktop app",
   "main": "main.js",
   "private": true,
+  "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder",

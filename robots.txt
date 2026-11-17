@@ -10,4 +10,21 @@ Disallow: /operations.html
 Disallow: /_cf_preview.html
 Disallow: /_proc.html
 
+# Robotar som samlar träningsdata till AI-modeller får inte läsa sajten (se LICENSE).
+# AI-SÖKrobotar (OAI-SearchBot, Claude-SearchBot, PerplexityBot m.fl.) spärras INTE här:
+# de följer reglerna ovan, så att VYRA fortfarande kan hittas när någon frågar en AI-assistent.
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: CCBot
+User-agent: Google-Extended
+User-agent: Applebot-Extended
+User-agent: Bytespider
+User-agent: meta-externalagent
+User-agent: cohere-training-data-crawler
+User-agent: Diffbot
+User-agent: Omgilibot
+User-agent: Timpibot
+Disallow: /
+
 Sitemap: https://vyralive.app/sitemap.xml

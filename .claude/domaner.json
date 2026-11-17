@@ -458,10 +458,12 @@
         "privacy.html",
         "favicon.ico",
         "robots.txt",
+        "LICENSE",
         "sitemap.xml"
       ],
       "tester": [
         "tests/css-struktur.test.js",
+        "tests/kodskydd.test.js",
         "tests/stylesheet-pairs.test.js",
         "tests/sprak-vakt.test.js",
         "tests/browser/finstilt-lasbarhet.browser.test.js",

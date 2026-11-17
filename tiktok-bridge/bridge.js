@@ -1,3 +1,7 @@
+/*! VYRA — Copyright © 2026 VYRA. Alla rättigheter förbehållna / All rights reserved.
+ * Proprietär kod, inte öppen källkod — se LICENSE. Proprietary code, not open source — see LICENSE.
+ * Kopiering, återskapande eller AI-träning på koden, även med hjälp av AI-verktyg, är inte tillåten utan skriftligt tillstånd.
+ * Copying, recreating or training AI models on this code, including with AI tools, is not permitted without written permission. */
 // Connects to a real TikTok LIVE room (via the unofficial tiktok-live-connector library — TikTok has
 // no public API for this) and forwards events into VYRA's existing local server (server.ps1) using the
 // exact same /api/connect and /api/events endpoints the "Testa gåva" demo button already uses. That

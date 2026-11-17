@@ -1,3 +1,7 @@
+/*! VYRA — Copyright © 2026 VYRA. Alla rättigheter förbehållna / All rights reserved.
+ * Proprietär kod, inte öppen källkod — se LICENSE. Proprietary code, not open source — see LICENSE.
+ * Kopiering, återskapande eller AI-träning på koden, även med hjälp av AI-verktyg, är inte tillåten utan skriftligt tillstånd.
+ * Copying, recreating or training AI models on this code, including with AI tools, is not permitted without written permission. */
 const { app, BrowserWindow, Menu, session, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
