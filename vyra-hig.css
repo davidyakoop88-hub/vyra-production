@@ -26,6 +26,9 @@ html:not(.overlay-output) .ae-new-steps > i { color: #9a90a8; }
 /* Inbyggda kontroller (rullistor, kryssrutor, siffror) ritas mörka och i accentfärgen
    i stället för webbläsarens ljusa standard. */
 html:not(.overlay-output) body { color-scheme: dark; accent-color: var(--accent-purple); }
+/* Inbäddade widgetsidor (iframe) har inget eget färgschema. Ärver ramen "dark" medan sidan i den är
+   ljus ritar Chrome en vit platta bakom den i stället för genomskinligt (Gift Fireworks · November, 2026-11-16). */
+html:not(.overlay-output) .widget iframe { color-scheme: normal; }
 
 /* 2. Textgolv 11 px ---------------------------------------------------------------------
    typography.md › Ensuring legibility: minimum 10 pt på dator, 11 pt på mobil. Listan är

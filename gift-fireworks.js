@@ -156,7 +156,10 @@ function fwSpela(w,e,combo,gavobild,avatarbild,namn,tempo=1){
  if(fwNovember(w)){
   const frame=document.createElement('iframe');
   frame.title='Gift Fireworks · November';
-  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none';
+  /* color-scheme:normal (2026-11-16): studion satter color-scheme:dark pa body (vyra-hig.css) och sidan i
+     ramen har inget farschema. Nar de skiljer sig ritar Chrome en ogenomskinlig vit platta bakom ramen —
+     Davids "varfor har den giften vit bakgrund". Samma schema pa ramen som i sidan ger genomskinlighet. */
+  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;background:transparent;color-scheme:normal';
   const url=new URL('assets/gift-fireworks-november/widget.html',document.baseURI);
   url.searchParams.set('combo',String(combo));
   url.searchParams.set('style',fwNovStilOf(w));
