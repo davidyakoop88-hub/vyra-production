@@ -7,8 +7,41 @@
   // liveMetric, and so viewer-triggered Events (action-event-advanced.js) can gate on cost/level.
   const POINTS_KEY='vyra-points-v1';
   const POINTS_SETTINGS_KEY='vyra-points-settings-v1'; // written by points-system.js's settings UI
-  function loadPoints(){try{return JSON.parse(localStorage.getItem(POINTS_KEY)||'{}')}catch{return{}}}
-  function savePoints(p){try{localStorage.setItem(POINTS_KEY,JSON.stringify(p))}catch{}}
+  /* POANGEN HALLS I MINNET, OCH SKRIVS NER HOGST FYRA GANGER I SEKUNDEN (2026-11-18).
+     Forr laste varje poangandring in HELA reskontran ur localStorage, andrade en rad och skrev tillbaka
+     allt. Kostnaden vaxte med varje ny tittare, och reskontran sparas mellan sandningar. Uppmatt i
+     overlay-laget: 1,4 ms per handelse med tom reskontra, 11,6 ms efter 6 000 tittare. I sandningen
+     2026-11-18 syntes det som att allt som gar pa tid kom efter: pratbubblan lag 6-12 s i borjan och
+     over 200 s mot slutet, Fan Level Up 30 s och sedan 108 s, och TTS laste sent.
+     Se POINTS_REV nedan for hur andra flikar ser andringen. */
+  // ANDRA FLIKAR. Varje nedskrivning hojer en liten raknare (POINTS_REV). En lasning jamfor den mot
+  // sin egen — ett enda kort varde, inte hela reskontran — och laser om forst nar en annan flik skrivit.
+  // Sa ser en flik en annan fliks poang utan att nagon av dem laser allt vid varje handelse.
+  const POINTS_REV='vyra-points-rev';
+  let poangMinne=null,poangRev=null,poangSmuts=false,poangTimer=null;
+  const POANG_SKRIV_MS=250;
+  const lagradRev=()=>{try{return localStorage.getItem(POINTS_REV)||''}catch{return ''}};
+  function loadPoints(){
+    if(poangMinne&&!poangSmuts&&lagradRev()!==poangRev)poangMinne=null;
+    if(!poangMinne){
+      try{poangMinne=JSON.parse(localStorage.getItem(POINTS_KEY)||'{}')}catch{poangMinne=null}
+      if(!poangMinne||typeof poangMinne!=='object'||Array.isArray(poangMinne))poangMinne={};
+      poangRev=lagradRev();
+    }
+    return poangMinne;
+  }
+  function skrivPoang(){
+    if(poangTimer!==null){clearTimeout(poangTimer);poangTimer=null}
+    if(!poangSmuts)return;
+    poangSmuts=false;
+    try{
+      localStorage.setItem(POINTS_KEY,JSON.stringify(poangMinne));
+      poangRev=String((Number(lagradRev())||0)+1);
+      localStorage.setItem(POINTS_REV,poangRev);
+    }catch{}
+  }
+  function savePoints(p){poangMinne=p;poangSmuts=true;if(poangTimer===null)poangTimer=setTimeout(skrivPoang,POANG_SKRIV_MS)}
+  addEventListener('pagehide',skrivPoang);addEventListener('beforeunload',skrivPoang);
   function pointsKeyFor(username){return String(username||'').replace(/^@/,'').toLowerCase()}
   // 'earned' is a lifetime running total of every positive add() — used for levels, never
   // decreases when points are spent/removed, same as XP vs. spendable currency in most games.
@@ -40,6 +73,8 @@
   window.VyraPoints={
     get:username=>loadPoints()[pointsKeyFor(username)]?.points||0,
     getTop:(count=10)=>Object.values(loadPoints()).sort((a,b)=>b.points-a.points).slice(0,count),
+    // Skriver ner det som vantar direkt (prov, och infor ett sidbyte).
+    flush:()=>skrivPoang(),
     add:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0)),
     remove:(username,amount)=>adjustPoints(username,-Math.abs(Number(amount)||0)),
     getLevel:username=>computeLevel(loadPoints()[pointsKeyFor(username)]?.earned||0),
@@ -49,13 +84,13 @@
       if(!amount)return true;
       const key=pointsKeyFor(username);
       if(!key||(loadPoints()[key]?.points||0)<amount)return false;
-      adjustPoints(username,-amount);
+      adjustPoints(username,-amount);skrivPoang();   // ett kop skrivs ner direkt: en annan flik far inte dra samma poang igen
       return true;
     },
     // Motsatsen till spend, och INTE detsamma som add: saldot atervands utan att 'earned' rors.
     // Anvands nar en betald uppspelning strops av en full ko (§15c) — tittaren ska fa tillbaka
     // sin valuta, inte sin XP.
-    refund:(username,amount)=>adjustPoints(username,Math.abs(Number(amount)||0),false)
+    refund:(username,amount)=>{adjustPoints(username,Math.abs(Number(amount)||0),false);skrivPoang()}
   };
   const fill=(text='',p={})=>text.replace(/\{(\w+)\}/g,(_,k)=>({username:p.username||p.user||'TestUser',giftname:p.giftname||p.gift||'Rose',repeatcount:p.repeatcount||p.combo||1,coins:p.diamonds||p.coins||0,likecount:p.likecount||p.likes||0,totallikecount:p.totallikecount||p.totalLikes||0,comment:p.comment||'',submonth:p.submonth||1,points:window.VyraPoints?.get(p.username||p.user)||0}[k]??''));
   function openDb(){return new Promise((ok,no)=>{const r=indexedDB.open('vyra-action-media',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('files'))r.result.createObjectStore('files')};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}

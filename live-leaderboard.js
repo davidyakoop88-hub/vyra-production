@@ -14,6 +14,11 @@
   const VYRA_OVERLAY = new URLSearchParams(location.search).has('overlay');
 
   const totals = {}; // username -> {name, profileImage, likes, diamonds, lastLikeAt, present}
+  // Versionsraknare for topplistans minne — se sortedTop(). Star har uppe for att aterstallStream()
+  // nedan kor redan vid inlasning.
+  const toppVer = { likes: 0, diamonds: 0 };
+  const toppMinne = {};
+  function rord(likes, diamonds) { if (likes) toppVer.likes++; if (diamonds) toppVer.diamonds++; }
   // Rummets like-total mot det VYRA fått — underlaget för like-uppskattningen, se likeFaktor().
   const rum = { start: null, senast: 0, mottaget: 0 };
   const LIKE_FAKTOR_MIN_MOTTAGET = 100, LIKE_FAKTOR_MAX = 20;
@@ -121,6 +126,7 @@
           lastLikeAt: Number(t.lastLikeAt) || 0, present: t.present !== false
         };
       });
+      rord(true, true);
     } catch (e) {}
   }
   function saveStreamIfDirty() {
@@ -244,7 +250,7 @@
     streamDirty = true;   // ogonblicksbilden skrivs ner av tickern nedan, inte per handelse
     if (namn) t.name = namn;
     if (e.profileImage) t.profileImage = e.profileImage;
-    if (type === 'join' || type.includes('enter')) t.present = true;
+    if (type === 'join' || type.includes('enter')) { if (t.present === false) rord(true, true); t.present = true; }
     // ATT LÄMNA SÄNDNINGEN TAR INTE BORT NÅGON. Här satte en rad `present = false` på leave/exit,
     // och filtret i sortedTop() släpper bara igenom `present !== false` — så den som gick ur rummet
     // FÖRSVANN ur toppen i samma sekund, mitt i sina egna likes.
@@ -269,6 +275,7 @@
       t.likes += count;
       noteraRum(e, count);
       t.lastLikeAt = Date.now();
+      rord(true, t.present === false);
       t.present = true;
       recordDaily(username, t.name, t.profileImage, count, 0);
     }
@@ -284,6 +291,7 @@
       // `diamonds` forst; `coins` ar reserven for en aldre .exe som bara skickar det namnet (#133).
       const diamonds = Number(e.diamonds || e.coins || e.diamondCount || e.value) || 0;
       t.diamonds += diamonds;
+      rord(t.present === false, true);
       t.present = true;
       updateTopGift(e, t);
       recordDaily(username, t.name, t.profileImage, 0, diamonds);
@@ -310,11 +318,26 @@
   // av VyraLeaderboard.remove(), alltså ett uttryckligt beslut — och då ska det gälla överallt. Att
   // en borttagen person försvann ur Top Likes men låg kvar i Top Coins var svårt att förstå som en
   // regel.
+  /* TOPPLISTAN RAKNAS OM NAR NAGOT ANDRATS, INTE VID VARJE FRAGA (2026-11-18).
+   *
+   * live-client.js fragar efter toppgivaren for VARJE handelse (normalizeUserFlags -> getTop), och
+   * svaret raknades fram genom att ga igenom och sortera alla tittare som setts under sandningen.
+   * Kostnaden per handelse vaxte darfor med sandningens langd. Uppmatt i overlay-laget, samma 600
+   * handelser: 297 ms med tom lista, 1 375 ms efter 5 400 tittare — och i sandningen 2026-11-18 lag
+   * pratbubblan 6-12 s i borjan och over 200 s mot slutet, Fan Level Up 30 s och sedan 108 s.
+   *
+   * Listan minns nu per matt, och kastas bara nar underlaget for just det mattet andrats: en like ror
+   * inte diamantlistan. Raderna ar samma objekt som i `totals`, sa namn och bild ar alltid farska.
+   * Anroparna far aldrig andra pa listan — bada tar en .slice(). */
   function sortedTop(metric) {
     metric = matt(metric);
-    return Object.values(totals)
+    const minne = toppMinne[metric];
+    if (minne && minne.ver === toppVer[metric]) return minne.lista;
+    const lista = Object.values(totals)
       .filter(t => t.present !== false && t[metric] > 0)
       .sort((a, b) => b[metric] - a[metric]);
+    if (metric in toppVer) toppMinne[metric] = { ver: toppVer[metric], lista };
+    return lista;
   }
 
   // TIKTOK SKICKAR INTE VARJE LIKE (David 2026-10-23, skärmbild från sändningen: Top Likes visade
@@ -633,6 +656,7 @@
     try {
       saveDailyIfDirty();                       // historiken skrivs ner INNAN raknaren nollas
       for (const key of Object.keys(totals)) delete totals[key];
+      rord(true, true);
       senasteTopGift = null;
       rum.start = null; rum.senast = 0; rum.mottaget = 0;
       // Ogonblicksbilden skrivs om DIREKT, inte vid nasta tick: ett OBS som river kallan i
@@ -645,7 +669,7 @@
 
   window.VyraLeaderboard = {
     getTop: (metric = 'likes', count = 10) => sortedTop(metric).slice(0, count),
-    remove: username => { if (totals[username]) totals[username].present = false; },
+    remove: username => { if (totals[username]) { totals[username].present = false; rord(true, true); } },
     // Hur mycket TikTok inte skickade: faktorn topplistan skalar likes med, och underlaget för den.
     likeTackning: () => ({ faktor: likeFaktor(), mottaget: rum.mottaget, rummetSteg: rum.start === null ? 0 : rum.senast - rum.start })
   };

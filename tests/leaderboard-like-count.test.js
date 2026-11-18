@@ -134,3 +134,64 @@ test('rumsräkningen finns kvar som diagnos', { timeout: 5000 }, () => {
   assert.equal(t.mottaget, 120);
   assert.equal(t.rummetSteg, 360);
 });
+
+// ---- topplistan räknas om när något ändrats, inte vid varje fråga (2026-11-18) -----------------
+// live-client.js frågar efter toppgivaren för VARJE händelse. Förr gick varje fråga igenom och
+// sorterade alla tittare som setts under sändningen, så kostnaden per händelse växte med sändningens
+// längd (uppmätt: 297 ms → 1 375 ms för samma 600 händelser efter 5 400 tittare). Provet räknar
+// genomgångarna i stället för att ta tid, så det faller inte på en långsam maskin.
+function raknandeTavla() {
+  const listeners = {};
+  const noop = () => {};
+  const el = () => ({ querySelector: () => null, querySelectorAll: () => [], closest: () => null,
+    dataset: {}, style: {}, classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
+    textContent: '', innerHTML: '', children: [], append: noop, remove: noop });
+  const store = new Map();
+  let genomgangar = 0;
+  const RaknandeObject = new Proxy(Object, { get: (mal, namn) => (namn === 'values' ? o => { genomgangar += 1; return Object.values(o); } : mal[namn]) });
+  const sandbox = {
+    console, JSON, Math, Number, String, Object: RaknandeObject, Array, Date, Set, Map, Boolean, Error,
+    setInterval: () => 0, clearInterval: noop, setTimeout: () => 0, clearTimeout: noop,
+    addEventListener: (name, fn) => { (listeners[name] = listeners[name] || []).push(fn) },
+    removeEventListener: noop,
+    dispatchEvent: event => { (listeners[event.type] || []).forEach(fn => fn(event)); return true },
+    CustomEvent: class { constructor(type, init) { this.type = type; this.detail = init && init.detail } },
+    localStorage: { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) },
+    location: { search: '' }, URLSearchParams,
+    document: { querySelector: () => null, querySelectorAll: () => [], createElement: el, body: el() },
+    fetch: () => Promise.reject(new Error('ingen nätverkstrafik i testet'))
+  };
+  sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  vm.runInNewContext(SOURCE, sandbox, { filename: 'live-leaderboard.js' });
+  const skicka = detail => sandbox.dispatchEvent(new sandbox.CustomEvent('vyra-live-event', { detail }));
+  return { skicka, L: sandbox.window.VyraLeaderboard, genomgangar: () => genomgangar, nolla: () => { genomgangar = 0; } };
+}
+
+test('toppgivaren: tusen frågor utan nya gåvor går inte igenom alla tittare tusen gånger', { timeout: 5000 }, () => {
+  const t = raknandeTavla();
+  t.skicka({ type: 'gift', username: 'bo', name: 'Bo', diamonds: 900 });
+  for (let i = 0; i < 300; i++) t.skicka({ type: 'like', username: 'tittare' + i, name: 'T' + i, count: 5 });
+  t.nolla();
+  for (let i = 0; i < 1000; i++) {
+    t.skicka({ type: 'like', username: 'tittare' + (i % 300), count: 1 });   // en like rör inte diamantlistan
+    assert.equal(t.L.getTop('diamonds', 1)[0].username, 'bo');
+  }
+  assert.ok(t.genomgangar() <= 2, `diamantlistan räknades om ${t.genomgangar()} gånger på 1 000 frågor utan en enda ny gåva`);
+});
+
+test('toppgivaren: listan följer med när något faktiskt ändras', { timeout: 5000 }, () => {
+  const t = raknandeTavla();
+  t.skicka({ type: 'gift', username: 'bo', name: 'Bo', diamonds: 900 });
+  assert.equal(t.L.getTop('diamonds', 1)[0].username, 'bo');
+  t.skicka({ type: 'gift', username: 'anna', name: 'Anna', diamonds: 1500 });
+  assert.equal(t.L.getTop('diamonds', 1)[0].username, 'anna', 'en ny större gåva syntes inte');
+  t.L.remove('anna');
+  assert.equal(t.L.getTop('diamonds', 1)[0].username, 'bo', 'en borttagen tittare låg kvar i listan');
+  t.skicka({ type: 'join', username: 'anna' });
+  assert.equal(t.L.getTop('diamonds', 1)[0].username, 'anna', 'en tittare som kom tillbaka syntes inte');
+  t.skicka({ type: 'like', username: 'cia', name: 'Cia', count: 7 });
+  assert.equal(t.L.getTop('likes', 1)[0].username, 'cia');
+  // Anroparen får en egen kopia: att ändra den får inte skada minnet.
+  t.L.getTop('diamonds', 5).length = 0;
+  assert.equal(t.L.getTop('diamonds', 5).length, 2);
+});

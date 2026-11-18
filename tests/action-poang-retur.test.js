@@ -228,6 +228,7 @@ test('7: återbetalningen rör inte earned — nivån får inte stiga på strypt
   await vanta(150);
 
   assert.equal(netto(w, 1000), 200, 'provet strypte inget — då säger earned ingenting');
+  w.VyraPoints.flush();   // reskontran skrivs ner fyra ganger i sekunden, inte per andring
   const earned = JSON.parse(w.localStorage.getItem('vyra-points-v1')).lisa.earned;
   assert.equal(earned, 1000,
     'earned växte av en återbetalning — spend sänker den inte, så refund får inte höja den');
