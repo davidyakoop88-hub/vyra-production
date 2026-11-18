@@ -11,6 +11,7 @@ const {createTikTokProfil}=require('./tiktok-profil');const TikTokProfil=createT
 const {knytVerifieratHandtag}=require('./tiktok-handtagslas');
 const Vault=require('./token-vault');
 const {EventBus,ALLOWED:ALLOWED_EVENT_TYPES,cleanEvent}=require('./event-bus'),{RateLimiter}=require('./rate-limit');
+const ObsMatning=require('./obs-matning');
 const {Metrics,CircuitBreaker,routeName,startRuntimeMonitor,webhookAlert,capacitySnapshot,startCapacityMonitor}=require('./observability');const GoalRuntime=require('./goal-runtime'),GoalSse=require('./goal-sse'),{createEventIngest}=require('./goal-ingest'),{createViewerLevels}=require('./viewer-levels'),{createStreamStats}=require('./stream-stats'),{createStatsReader}=require('./stats-read'),PointsRuntime=require('./points-runtime');
 const {MediaStorage,validateMedia,safeEqualHex}=require('./media-storage');
 const Billing=require('./billing');
@@ -380,7 +381,7 @@ const server=http.createServer(async(req,res)=>{const started=Date.now(),request
 // fall through to the session gate, where it would come back as "Inte inloggad" and read as if the
 // link were the wrong kind of thing. The method is refused before any of it is looked at: a link is
 // read-only, whatever it names.
-const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(publicAccess){const access=await overlayAccess(publicAccess[1]);if(!access)return send(res,401,{ok:false,error:'Overlay-länken är ogiltig eller har gått ut'});if(req.method!=='GET')return send(res,405,{ok:false,error:'Metoden stöds inte'});
+const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(publicAccess){const access=await overlayAccess(publicAccess[1]);if(!access)return send(res,401,{ok:false,error:'Overlay-länken är ogiltig eller har gått ut'});if(req.method!=='GET'&&!(req.method==='POST'&&publicAccess[2]==='matning'))return send(res,405,{ok:false,error:'Metoden stöds inte'});
   // OBS-LÄNKEN KRÄVER ETT AKTIVT ABONNEMANG. Token kontrollerade bara att den fanns, inte var
   // återkallad och inte utgången — ingen plankontroll fanns någonstans i den här grenen, och inte
   // heller i strömmen eller i bryggan som matar den. Uppmätt 2026-09-10: en kund som sa upp och
@@ -395,6 +396,16 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     return send(res,402,{ok:false,error:'Overlay-länken kräver ett aktivt VYRA Premium',entitlementRequired:true});
   }
   const rest=publicAccess[2]||'';
+    // OBS-KALLANS MATNING (2026-11-19): en kort rad om hur sidan i OBS mar, till Studions "Problem i
+    // sandningen". Inte en livehandelse — se server/obs-matning.js. Arbetsytan kommer ur lankens egen
+    // nyckel, aldrig ur anropet. Hogst 20 rader i minuten per arbetsyta; kroppen hogst 4 kB.
+    if(rest==='matning'&&req.method==='POST'){
+      if(await rateLimiter.exceeded(`obs-matning:${access.workspace_id}`,20,60))return send(res,429,{ok:false,error:'För många mätrader'});
+      const rad=ObsMatning.ren(await body(req,4096));
+      if(!rad)return send(res,400,{ok:false,error:'Ogiltig mätrad'});
+      await ObsMatning.spara(await eventBus.connect(),access.workspace_id,rad);
+      return send(res,202,{ok:true});
+    }
     if(rest==='events/stream'){await openEventStream(req,res,u,access.workspace_id,null,access.overlay_id);return}
     // The token's own overlay_id, never an id from the caller: a query string, a body or a header
     // naming another overlay has nothing to attach to, because none of them is read here.
@@ -941,6 +952,8 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
     try{viewerId=decodeURIComponent(rawViewerId)}catch{return send(res,400,{ok:false,error:'Ogiltigt tittar-id'})}
     const ledger=await PointsRuntime.readLedger(pool,workspaceId,viewerId);
     return send(res,200,{ok:true,points:ledger})}
+  // Studion hamtar OBS-kallans matrader (server/obs-matning.js). Bara medlemmar i arbetsytan.
+  const obsMatning=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/obs-matning$/i);if(obsMatning&&req.method==='GET'){if(!await membership(s.user_id,obsMatning[1],['owner','admin','editor','viewer']))return send(res,403,{ok:false,error:'Behörighet saknas'});return send(res,200,{ok:true,rader:await ObsMatning.las(await eventBus.connect(),obsMatning[1],Number(u.searchParams.get('after'))||0)})}
   const match=p.match(/^\/api\/workspaces\/([0-9a-f-]+)\/overlays(?:\/([0-9a-f-]+))?$/i);if(match){const[,workspaceId,overlayId]=match;if(!await membership(s.user_id,workspaceId,req.method==='GET'?['owner','admin','editor','viewer']:['owner','admin','editor']))return send(res,403,{ok:false,error:'Behörighet saknas'});if(req.method==='GET'&&!overlayId){const q=await pool.query('SELECT id,name,version,updated_at FROM overlays WHERE workspace_id=$1 ORDER BY updated_at DESC',[workspaceId]);return send(res,200,{ok:true,overlays:q.rows})}if(req.method==='GET'&&overlayId){const q=await pool.query('SELECT * FROM overlays WHERE id=$1 AND workspace_id=$2',[overlayId,workspaceId]);return q.rows[0]?send(res,200,{ok:true,overlay:q.rows[0]}):send(res,404,{ok:false,error:'Overlay saknas'})}if(req.method==='POST'&&!overlayId){const d=await body(req,5*1024*1024),name=S.safeText(d.name,120),state=d.state;if(!name||!S.validOverlayState(state))return send(res,400,{ok:false,error:'Ogiltig overlay'});const q=await pool.query('INSERT INTO overlays(workspace_id,name,state) VALUES($1,$2,$3) RETURNING *',[workspaceId,name,state]);return send(res,201,{ok:true,overlay:q.rows[0]})}if(req.method==='PUT'&&overlayId){const d=await body(req,5*1024*1024),version=Number(d.version);if(!Number.isInteger(version)||!S.validOverlayState(d.state))return send(res,400,{ok:false,error:'Ogiltig overlay eller version'});// Spara + målsynk i EN transaktion (2026-08-03): ett lyckat Layout-save måste betyda att målet
 // räknar direkt. Delas de upp finns ett fönster där widgeten står på skärmen utan att räkna, och
 // de eventen är förlorade — inget försöker om ett save som redan svarat 200. Läsningen, wipe-

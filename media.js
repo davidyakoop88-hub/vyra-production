@@ -1550,7 +1550,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261117-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261119-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261118-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
