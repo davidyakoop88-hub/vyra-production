@@ -292,3 +292,68 @@ test('10 · ett svar UTAN revision låser inte fast overlayn för all framtid', 
     + 'den rakade ha nar faltet saknades');
   assert.equal(spar.applicerade.length, 2);
 });
+
+// ---- Omritningen väntar på effekterna (2026-11-18) ---------------------------------------------
+// En ny konfiguration ritade om hela vyn direkt, och det som spelades just då försvann: MVP, Fan
+// Level Up och fyrverkeriet. Davids rapport: "mvp kommer inte ut", "gift fireworks", "fan level".
+{
+  const { skapaOmritare } = require('../overlay-config-sync.js');
+  const rigg = (over = {}) => {
+    const r = { ritat: 0, efter: 0, upptagen: false, tid: 0, ko: [] };
+    r.o = skapaOmritare({
+      rita: () => { r.ritat++ }, efter: () => { r.efter++ }, upptagen: () => r.upptagen,
+      nu: () => r.tid, schemalagg: (fn, ms) => { const h = { fn, ms }; r.ko.push(h); return h },
+      avbryt: h => { r.ko = r.ko.filter(x => x !== h) }, ...over,
+    });
+    // Kör nästa schemalagda försök och flyttar fram klockan lika långt.
+    r.steg = () => { const h = r.ko.shift(); if (!h) return false; r.tid += h.ms; h.fn(); return true };
+    return r;
+  };
+
+  test('omritaren: utan pågående effekt ritas det om direkt', () => {
+    const r = rigg();
+    assert.equal(r.o.begar(), true);
+    assert.equal(r.ritat, 1);
+    assert.equal(r.ko.length, 0, 'ingenting ska ligga och vänta');
+  });
+
+  test('omritaren: en pågående effekt får spela klart innan vyn byggs om', () => {
+    const r = rigg();
+    r.upptagen = true;
+    assert.equal(r.o.begar(), false);
+    r.steg(); r.steg(); r.steg();
+    assert.equal(r.ritat, 0, 'omritningen rev effekten mitt i visningen');
+    r.upptagen = false;
+    r.steg();
+    assert.equal(r.ritat, 1);
+    assert.equal(r.efter, 1, 'live-lagren fick ingen signal att måla om efter den sena omritningen');
+    assert.equal(r.o.vantar(), false);
+  });
+
+  test('omritaren: flera besked under väntan blir en enda omritning', () => {
+    const r = rigg();
+    r.upptagen = true;
+    r.o.begar(); r.o.begar(); r.o.begar();
+    assert.equal(r.ko.length, 1);
+    r.upptagen = false;
+    while (r.steg());
+    assert.equal(r.ritat, 1);
+  });
+
+  test('omritaren: en ström av effekter som aldrig tar slut håller inte layouten för alltid', () => {
+    const r = rigg({ maxMs: 2000, pollMs: 250 });
+    r.upptagen = true;
+    r.o.begar();
+    let varv = 0;
+    while (r.ritat === 0 && varv++ < 100) r.steg();
+    assert.equal(r.ritat, 1, 'layouten kom aldrig fram');
+    assert.ok(r.tid >= 2000 && r.tid <= 2250, `ritade om efter ${r.tid} ms, taket är 2000`);
+  });
+
+  test('OBS-källan ritar om genom omritaren, inte direkt', () => {
+    const kalla = require('fs').readFileSync(require('path').join(__dirname, '..', 'overlay-access.js'), 'utf8');
+    assert.match(kalla, /projectReadonlyOverlay\(\{state:copy,extras\}\);[^}]*omritare\.begar\(\)/);
+    assert.match(kalla, /\.mvp-active,\.fan-active/);
+    assert.match(kalla, /VyraGiftFireworks\?\.spelar/);
+  });
+}

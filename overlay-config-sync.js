@@ -128,6 +128,43 @@
     };
   }
 
-  if (typeof module === 'object' && module.exports) module.exports = { skapaKonfigSync };
-  else root.VyraKonfigSync = { skapaKonfigSync };
+  /* OMRITNINGEN VANTAR PA EFFEKTERNA (2026-11-18).
+   *
+   * En ny konfiguration ritades forr om DIREKT: render() bygger om hela vyn, och allt som spelades
+   * just da forsvann — MVP, Fan Level Up och fyrverkeriet lever som klasser och barnnoder pa sin
+   * widget, och den nya noden har ingetdera. Och en ny konfiguration kommer ofta MITT I en effekt:
+   * med Studion oppen sparas layouten nar en handelse skriver pa en widget (vinnarens namn, senaste
+   * gavan), och den sparningen ar har inom en sekund. Davids rapport 2026-11-18: "mvp kommer inte
+   * ut", "gift fireworks funkar inte", "fan level". Uppmatt i overlay: tand, render(), borta.
+   *
+   * Darfor: ar nagot pa skarmen just nu vantar omritningen tills det spelat klart. Tillstandet ar
+   * redan projicerat nar begar() anropas, sa det som ritas sedan ar alltid den SENASTE layouten —
+   * flera besked under vantan blir en enda omritning. Taket (maxMs) finns for en strom av effekter
+   * som aldrig tar slut: da ritas det om anda, hellre en avbruten effekt an en layout som aldrig
+   * kommer fram. */
+  function skapaOmritare({ rita, upptagen, schemalagg, avbryt, nu, efter, maxMs = 12000, pollMs = 250 }) {
+    let vantar = null, sedan = 0;
+    const ar = () => { try { return !!upptagen() } catch (e) { return false } };
+    function forsok() {
+      vantar = null;
+      if (ar() && nu() - sedan < maxMs) { vantar = schemalagg(forsok, pollMs); return }
+      rita();
+      if (efter) { try { efter() } catch (e) {} }
+    }
+    return {
+      // true = ritades direkt, false = vantar pa att effekterna ska spela klart.
+      begar() {
+        if (vantar) return false;
+        if (!ar()) { rita(); return true }
+        sedan = nu();
+        vantar = schemalagg(forsok, pollMs);
+        return false;
+      },
+      vantar: () => !!vantar,
+      avbryt() { if (vantar) { try { avbryt(vantar) } catch (e) {} vantar = null } },
+    };
+  }
+
+  if (typeof module === 'object' && module.exports) module.exports = { skapaKonfigSync, skapaOmritare };
+  else root.VyraKonfigSync = { skapaKonfigSync, skapaOmritare };
 })(typeof window !== 'undefined' ? window : globalThis);
