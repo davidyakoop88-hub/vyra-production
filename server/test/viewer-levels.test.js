@@ -136,3 +136,46 @@ test('ett databasfel tystar nivåerna men kastar inte', async () => {
   const ut = await levels.applyEvent('ws1', event({ fanClubLevel: 5 }));
   assert.deepEqual(ut, { fanLevelUp: null, gifterLevelUp: null });
 });
+
+// ---- samma höjning stämplas en gång (2026-11-18) ----------------------------------------------
+// I sändningen 2026-11-18 låg en och samma level-up kvar i 32 s: fem visningar i rad för samma
+// person och nivå. Två samtidiga anrop för samma tittare läste båda den gamla nivån innan någon
+// hunnit skriva. Den här databasen beter sig som Postgres gör då: läsningen sker när frågan
+// STARTAR, skrivningen när den är klar.
+test('två samtidiga händelser från samma tittare ger EN höjning, inte två', async () => {
+  let lagrad = 4, samtidiga = 0, mestSamtidiga = 0;
+  const query = async (_sql, params) => {
+    samtidiga += 1; mestSamtidiga = Math.max(mestSamtidiga, samtidiga);
+    const forra = lagrad;                       // ögonblicksbilden tas när satsen startar
+    await new Promise(r => setTimeout(r, 5));
+    lagrad = Math.max(lagrad, params[2]);
+    samtidiga -= 1;
+    return { rows: [{ forra_fan: forra, forra_gifter: null }] };
+  };
+  const vl = createViewerLevels({ query, log: () => {} });
+  const ev = { userId: 'u1', fanClubLevel: 5 };
+  const svar = await Promise.all([1, 2, 3, 4, 5].map(() => vl.applyEvent('ws1', ev)));
+  assert.equal(svar.filter(s => s.fanLevelUp).length, 1, 'samma höjning stämplades på flera händelser');
+  assert.deepEqual(svar[0].fanLevelUp, { from: 4, to: 5 });
+  assert.equal(mestSamtidiga, 1, 'samma tittares frågor gick samtidigt mot databasen');
+});
+
+test('olika tittare väntar inte på varandra, och ett fel stoppar inte kön', async () => {
+  let samtidiga = 0, mestSamtidiga = 0, anrop = 0;
+  const query = async () => {
+    anrop += 1; const nr = anrop; samtidiga += 1; mestSamtidiga = Math.max(mestSamtidiga, samtidiga);
+    await new Promise(r => setTimeout(r, 5));
+    samtidiga -= 1;
+    if (nr === 1) throw new Error('databasen svarade inte');
+    return { rows: [{ forra_fan: 2, forra_gifter: null }] };
+  };
+  const vl = createViewerLevels({ query, log: () => {} });
+  const svar = await Promise.all([
+    vl.applyEvent('ws1', { userId: 'a', fanClubLevel: 3 }),
+    vl.applyEvent('ws1', { userId: 'b', fanClubLevel: 3 }),
+    vl.applyEvent('ws1', { userId: 'a', fanClubLevel: 3 }),
+  ]);
+  assert.ok(mestSamtidiga >= 2, 'olika tittare köades efter varandra');
+  assert.equal(svar[0].fanLevelUp, null, 'ett databasfel ska ge ett tomt svar, inte kasta');
+  assert.deepEqual(svar[2].fanLevelUp, { from: 2, to: 3 }, 'anropet efter felet kom aldrig fram');
+});

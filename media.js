@@ -1528,7 +1528,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20261018-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20261118-1';document.body.append(js)});
 /* Fan Level Up:s koreografi. Egen fil av samma skal som CLAUDE.md ger: media.js ar storst i repot,
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
@@ -1552,7 +1552,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    ligger darfor i studio.html, under Insikter. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261117-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261118-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
 Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261025-1';document.body.append(js);let kl=document.createElement('script');kl.src='kompakt-lage.js?v=20261025-2';kl.async=false;document.body.append(kl)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
