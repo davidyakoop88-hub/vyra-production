@@ -409,7 +409,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   // 20261012-1: vakten mot konfig-omhamtningen efter live:start (#271 avsnitt 4).
   // 20261117-1: felrapporten mäter tiden från matchslut till MVP.
-  assert.match(media, /battle-mvp-session\.js\?v=20261117-1/,
+  // 20261118-1: MVP överlever en omritning medan den visas.
+  assert.match(media, /battle-mvp-session\.js\?v=20261118-1/,
     'battle-mvp-session.js cachebustades inte for #271');
   // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
   // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
