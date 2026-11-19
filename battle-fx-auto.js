@@ -328,7 +328,11 @@
     m.timers.push(planera(function () { if (match === m && !m.handskSparr && !forTatt(m)) spelaIMatch(m, 'glove', { id: gid }); }, (langd - SLUT_SEK) * 1000));
     if (m.slutfas) return 'slutfasen';
     var mult = Number(e.multiplier || e.x || e.combo || 0) || 0;
-    var nyckel = mult >= 3 ? 'boost-x3' : mult === 2 ? 'boost-x2' : null;
+    // EXAKT 3 ÄR EN TRIPPELBOOST (2026-11-19). Här stod `mult >= 3`. En tittares Boosting Glove
+    // kommer som samma glove-event med multiplikator 5, så varje handske mitt i matchen spelade
+    // X3-klippet — David efter sändningen i Jungle Spirit: "det var dubbel så räknade trippel".
+    // Samma regel som klippFor ovan: 2 är X2, 3 är X3, 5 är handsken (som planeras några rader upp).
+    var nyckel = mult === 3 ? 'boost-x3' : mult === 2 ? 'boost-x2' : null;
     if (!nyckel) return 'ingen multiplikator';
     if (!forTatt(m)) return spelaIMatch(m, nyckel, e);
     // För tätt efter förra klippet: vänta in avståndet. Har slutfasen hunnit börja då, eller har

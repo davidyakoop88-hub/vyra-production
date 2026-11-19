@@ -421,3 +421,30 @@ test('hela matcher: inga två klipp startar inom 10 s från varandra — längst
     assert.deepEqual(logg.filter(x => x.k === 'snipe').length, 1);
   }
 });
+
+// 2026-11-19, David efter sändningen: "det var dubbel så räknade trippel". Regeln i boostHandelse var
+// `mult >= 3 -> boost-x3`. En tittares Boosting Glove kommer som ett glove-event med multiplikator 5,
+// så varje handske mitt i en match spelade X3-klippet — medan klippFor (och filhuvudet) säger att
+// bara exakt 3 är en trippelboost och att 5 är handsken.
+test('en Boosting Glove (5x) mitt i matchen spelar aldrig X3-klippet', () => {
+  const m = miljo('pinkPrincess');
+  // Provpaketet saknar X3-klipp, och då syns felet inte ("paketet saknar boost-x3"). Jungle Spirit,
+  // som David körde, har det — därför får paketet ett här.
+  m.fonster.VYRA_OVERLAY_PACKAGES.pinkPrincess.files.push({ key: 'boost-x3', label: 'X3 Boost', path: 'a/boost-x3.webm' });
+  ladda(m.fonster);
+  m.fonster.routeLiveBattleEvent(start('m10', { remainingSec: 300 }));
+  m.fonster.routeLiveBattleEvent(boost('m10', 2, 30, 1));          // första boosten är tyst
+  m.spolaFram(40);
+  m.fonster.routeLiveBattleEvent(boost('m10', 5, 30, 2));          // en tittares handske
+  m.spolaFram(1);
+  assert.ok(!m.spelat().includes('boost-x3'), `handsken (5x) spelade X3-klippet: ${m.spelat()}`);
+  m.spolaFram(40);
+  m.fonster.routeLiveBattleEvent(boost('m10', 2, 30, 3));          // en riktig dubbelboost
+  m.spolaFram(1);
+  assert.ok(m.spelat().includes('boost-x2'), `dubbelboosten ska spela X2: ${m.spelat()}`);
+  assert.ok(!m.spelat().includes('boost-x3'), `ingen trippelboost har kommit: ${m.spelat()}`);
+  m.spolaFram(40);
+  m.fonster.routeLiveBattleEvent(boost('m10', 3, 30, 4));          // en riktig trippelboost
+  m.spolaFram(1);
+  assert.ok(m.spelat().includes('boost-x3'), `trippelboosten ska spela X3: ${m.spelat()}`);
+});
