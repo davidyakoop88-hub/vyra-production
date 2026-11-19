@@ -49,6 +49,34 @@ fontänprovet i #801 gjorde så. Räkna i stället skrivningar av nyckeln `vyra-
 `writeActive` (asynkron), och lägg alltid in en kontroll som visar att mätningen kan ge något annat än noll. Fontänprovet är
 rättat och faller nu på gamla koden (`3 !== 0` när `save()` läggs tillbaka i `lfPopPa`).
 
+### Tvingad layout i Goal Pro (rättat)
+
+Mätt i Chromium med en layout med Like Fountain, Last X, Goal Pro och Podium och trafik genom `VyraLive.ingest` (30 händelser):
+läsningar av `clientWidth`/`offsetParent`/`getBoundingClientRect`/`getComputedStyle`, tidtagna per anropsplats.
+
+| | anrop | tid i tvingade layouter |
+|---|---|---|
+| före | 957 | 1 129 ms, **1 102 ms på en enda rad** (`paintSteps`, `playground-widgets.js`) |
+| efter | 24 | 0,0 ms |
+
+**Orsak:** Goal Pro bygger alla nio designer och döljer de som inte är valda med `display:none` på kortet (`.gvc`). Varje
+bildruta (`paintText`, via `loop`) skrev text och staplar för alla designer och läste sedan `clientWidth`/`offsetParent` på
+raderna. Läsningen tvingar webbläsaren att räkna ut hela layouten efter skrivningarna.
+
+**Rättning, två steg (i `playground-widgets.js`):**
+1. `gomd(el)` svarar ur kortets egen inline-stil om designen är dold, utan layout, och `cwOf(el)` ger då 0 — samma svar som
+   `clientWidth` gav för en dold design. Bara att vakten ensam räckte inte: kostnaden flyttade till nästa läsning, i den synliga designen.
+2. Bredden på en synlig design cachas i en `ResizeObserver` (`cwOf`), så bildrutan inte läser den. Utan `ResizeObserver` (jsdom) läses
+   bredden direkt som förut. `offsetParent`-kontrollerna på raderna ersattes av bredden (`clientWidth > 0` betyder renderad).
+   `ring` och `g4` (SVG, där `clientWidth` är 0) behåller `offsetParent`, men bara för synliga designer.
+
+**Likhet mot förut:** alla nio designer jämfördes före och efter med slutvärdet nått (40 %, 799 mynt): texter, markörens
+position (t.ex. `351.56px`) och stapelbredder är identiska för 9 av 9. Före rättningen gick räkneverket också märkbart
+långsammare (787 mot 793 efter 9 s), vilket är samma kostnad sedd från andra hållet.
+
+**Prov:** `tests/browser/pg-tvingad-layout.browser.test.js` räknar läsningar av `clientWidth` som kostar en layout (över 3 ms).
+Gamla koden: 270 av 2 950. Nya koden: 0. Provet har en kontroll att mätningen kan se en läsning.
+
 ### Prov
 
 | Prov | Resultat |
@@ -64,13 +92,13 @@ rättat och faller nu på gamla koden (`3 !== 0` när `save()` läggs tillbaka i
 ### Inte provat — står kvar
 
 - **Riktig TikTok-trafik** och **OBS:s egen webbläsare** (#800 provades mot inspelad trafik i OBS, men inte de här rättningarna).
-- **Tvingad layoutmätning per händelse** i Like Fountain, Last X och Goal Pro (enligt #800 ungefär 50 ms per like i OBS; fyrverkeriets bildtakt halveras när de ligger i samma layout). Inte rättat.
+- **Tvingad layoutmätning per händelse i Like Fountain och Last X.** Goal Pro är rättat (se nedan). Like Fountain och Last X återstår; den här sessionens mätning av en layout med alla tre såg dem inte som kostnadsdrivare (se nedan), men #800 mätte ungefär 50 ms per like i OBS, så de är inte avfärdade.
 - Bryggans retry vid misslyckad leverans, ordning och återanslutning med SSE-ID, och antaganden om TikToks payloads är **inte granskade av den här sessionen**; de kommer från den oberoende granskningen och är inte verifierade.
 
 ### Nästa steg
 
 1. Efter nästa sändning: läs `VyraLjudgrind.stoppade` och `VyraLjudgrind.aldrar` i studiofliken, och `docs/live-verifiering.md`. Fyll i den efteråt.
-2. Den tvingade layoutmätningen per händelse.
+2. Mät Like Fountain och Last X separat i en OBS-lik sida; de kan fortfarande tvinga layout (se ovan).
 
 ## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
 
