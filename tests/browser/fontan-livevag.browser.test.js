@@ -121,10 +121,13 @@ test('klassisk: en like genom live-client räknas EN gång och sparar inte layou
   const page = await oppna(fel);
   try {
     await layout(page, 'catalog:likefountain');
+    // `save` är en const i det globala lexikala scopet: den ligger inte på window och går inte att skriva över, så en spion på
+    // window.save fångar aldrig något (den första versionen av provet gjorde så och hade klarat sig vad som än hände). Alla
+    // sparningar slutar i en skrivning av nyckeln 'vyra-state', så den räknas i stället.
     await page.evaluate(() => {
       window.__sparningar = 0;
-      const orig = window.save;
-      window.save = function () { window.__sparningar += 1; return orig.apply(this, arguments); };
+      const orig = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, v) { if (k === 'vyra-state') window.__sparningar += 1; return orig.apply(this, arguments); };
     });
     const fore = await page.evaluate(() => ({ antal: Number(liveWidget('a').fountainLikeCount) || 0, lagrat: localStorage.getItem('vyra-state') }));
     await page.evaluate(() => window.VyraLive.ingest({ id: 'fontan-1', type: 'like', count: 5, username: 'Sara',
@@ -134,7 +137,7 @@ test('klassisk: en like genom live-client räknas EN gång och sparar inte layou
       sparningar: window.__sparningar, lagrat: localStorage.getItem('vyra-state') }));
     assert.equal(efter.antal - fore.antal, 5, 'fem likes ska bli fem, inte tio (två vägar in)');
     assert.equal(efter.user, 'Sara', 'tittaren skrivs fortfarande på widgeten i minnet');
-    assert.equal(efter.sparningar, 0, 'en like är ingen layoutändring och får inte anropa save()');
+    assert.equal(efter.sparningar, 0, 'en like är ingen layoutändring och får inte skriva vyra-state (save())');
     assert.equal(efter.lagrat, fore.lagrat, 'sparad layout oförändrad av en like');
     assert.deepEqual(fel, [], 'inga sidfel');
   } finally { await page.close(); }

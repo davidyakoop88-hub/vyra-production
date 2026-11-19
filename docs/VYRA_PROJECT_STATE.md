@@ -36,6 +36,19 @@ beslut ändras, inget går genom händelsebussen. **Sound Alerts spelar aldrig i
 - En like ändrar aldrig layouten. Like Fountains livevärden (`fountainUser`, `profileImage`, `fountainLikeCount`) ligger på widgeten i minnet och följer med nästa riktiga sparning. Efter en omladdning visar etiketten tittaren från nästa like.
 - `live-client.js` skickar varje event två vägar. En ny widgettrigger som lyssnar på `vyra-live-event` **och** anropas av `routeLiveBattleEvent` räknar varje event två gånger om den inte markerar eventet.
 
+### Goal Pro och Podium sparar inte layouten (mätt 2026-11-19)
+
+De sex sparningarna på 15 s i provet från #798 kom inte från Goal Pro eller Podium. `tests/browser/pg-sparar-inte.browser.test.js`
+kör en layout med bara de två widgetarna, tolv gåvor, tolv likes och följare genom `VyraLive.ingest`, och räknar skrivningar av
+`vyra-state`: **0**. En kontroll i samma prov anropar `save()` och kräver minst en skrivning, så noll kan inte bero på att
+mätningen är blind. Like Fountain (#801) var den som skrev.
+
+**Lärdom om att mäta sparningar i webbläsarprov:** `save` är en `const` i det globala lexikala scopet. Den ligger inte på `window` och
+går inte att skriva över, så en spion på `window.save` fångar aldrig något och ger noll vad som än händer. Första versionen av
+fontänprovet i #801 gjorde så. Räkna i stället skrivningar av nyckeln `vyra-state` (`Storage.prototype.setItem`), vänta in
+`writeActive` (asynkron), och lägg alltid in en kontroll som visar att mätningen kan ge något annat än noll. Fontänprovet är
+rättat och faller nu på gamla koden (`3 !== 0` när `save()` läggs tillbaka i `lfPopPa`).
+
 ### Prov
 
 | Prov | Resultat |
@@ -51,15 +64,13 @@ beslut ändras, inget går genom händelsebussen. **Sound Alerts spelar aldrig i
 ### Inte provat — står kvar
 
 - **Riktig TikTok-trafik** och **OBS:s egen webbläsare** (#800 provades mot inspelad trafik i OBS, men inte de här rättningarna).
-- **Goal Pro och Podium:** ingen skrivväg vid händelser hittades (livevägen skriver bara till sessionen `S` och instansens `STATE`). De sex sparningarna i provet från #798 kan ha kommit från Like Fountain. Ett prov med bara de två widgetarna avgör det.
 - **Tvingad layoutmätning per händelse** i Like Fountain, Last X och Goal Pro (enligt #800 ungefär 50 ms per like i OBS; fyrverkeriets bildtakt halveras när de ligger i samma layout). Inte rättat.
 - Bryggans retry vid misslyckad leverans, ordning och återanslutning med SSE-ID, och antaganden om TikToks payloads är **inte granskade av den här sessionen**; de kommer från den oberoende granskningen och är inte verifierade.
 
 ### Nästa steg
 
 1. Efter nästa sändning: läs `VyraLjudgrind.stoppade` och `VyraLjudgrind.aldrar` i studiofliken, och `docs/live-verifiering.md`. Fyll i den efteråt.
-2. Prov: sparar Goal Pro och Podium layouten vid händelser?
-3. Den tvingade layoutmätningen per händelse.
+2. Den tvingade layoutmätningen per händelse.
 
 ## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
 
