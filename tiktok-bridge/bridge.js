@@ -307,6 +307,27 @@ if (require.main === module) {
   //
   // Skiftet start -> aktiv -> slut ar per definition en FORANDRING i payloadens skalarer. Loggas bara
   // det som andrats fangas varje overgang, och stillastaende brus kostar ingenting.
+  // BARRAGE-SOND (2026-11-19): formen pa varje BARRAGE som ingen gren ovan kande igen. Se
+  // N.barrageForm for varfor. Entréer kommer hela tiden, sa varje sort loggas hogst tva ganger;
+  // ett meddelande som ror en NIVA loggas varje gang, upp till ett eget tak.
+  const barrageSondSedda = new Map();
+  let barrageSondNiva = 0;
+  const BARRAGE_SOND_PER_SORT = 2, BARRAGE_SOND_NIVA_TAK = 60;
+  function loggaBarrageSond(data) {
+    let form;
+    try { form = N.barrageForm(data); } catch (err) { return }
+    const sort = form.subType + '|' + form.nyckel;
+    if (N.barrageRorNiva(form)) {
+      barrageSondNiva += 1;
+      if (barrageSondNiva > BARRAGE_SOND_NIVA_TAK) return;
+      console.log(`[bridge][barrage-sond] NIVA ej igenkand #${barrageSondNiva} ${JSON.stringify(form)}`);
+      return;
+    }
+    const n = (barrageSondSedda.get(sort) || 0) + 1;
+    barrageSondSedda.set(sort, n);
+    if (n > BARRAGE_SOND_PER_SORT || barrageSondSedda.size > 40) return;
+    console.log(`[bridge][barrage-sond] ${JSON.stringify(form)}`);
+  }
   const battleSondRaknare = new Map();
   const battleSondSenaste = new Map();
   let battleSondMatch = null;
@@ -622,7 +643,8 @@ if (require.main === module) {
       // TikToks EGEN nivahojning. Bar molnets befintliga fanLevelUp-stampel {from,to}, som
       // event-bus.js redan validerar och fan-level-session.js redan laser — klienten rors inte.
       const upp = N.fansUppgradering(data);
-      if (upp) sendEvent('fanlevelup', upp, data);
+      if (upp) { sendEvent('fanlevelup', upp, data); return; }
+      loggaBarrageSond(data);
     });
     // Field mapping lives in normalizer.js (likeFields) so it can be tested without a socket — the
     // v3 rename that silently zeroed every like is exactly the kind of thing a unit test must pin.
