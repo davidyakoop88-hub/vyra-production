@@ -37,6 +37,8 @@ const PORT=Number(process.env.PORT||8080),ORIGIN=process.env.APP_ORIGIN||`http:/
 // leva längre än den andra. Valet ligger på raden (sessions.remember) och bärs så genom MFA-steget.
 const REMEMBER_SECONDS=Number(process.env.REMEMBER_DAYS||30)*86400,sessionSeconds=remember=>remember?REMEMBER_SECONDS:SESSION_SECONDS;
 const SSE_HEARTBEAT_MS=30000;
+// Mest så här många byte får vänta på en mottagare som inte läser (se openEventStream).
+const SSE_MAX_BUFFERT=Number(process.env.SSE_MAX_BUFFERT)||1048576;
 // TIKTOK-VERIFIERING. Nycklarna kommer bara ur miljön — aldrig ur repot, aldrig ur en frontendfil.
 // Saknas de svarar rutten 503 i stället för att bygga en URL som TikTok ändå avvisar.
 const TIKTOK_CLIENT_KEY=process.env.TIKTOK_CLIENT_KEY||'',TIKTOK_CLIENT_SECRET=process.env.TIKTOK_CLIENT_SECRET||'';
@@ -289,7 +291,15 @@ async function openEventStream(req,res,u,workspaceId,accessToken=null,overlayId=
   // The only thing that writes to this response. GoalSse.sseChunk() decides what a message becomes,
   // so the overlay rule is applied BEFORE any bytes exist — on the replay path below as well as the
   // live one — and null means silence rather than an error the client could probe.
-  const write=item=>{const chunk=GoalSse.sseChunk(item,overlayId);if(chunk)res.write(chunk)};
+  // EN MOTTAGARE SOM SLUTAT LÄSA FÅR INTE KÖA I SERVERNS MINNE (2026-11-19). res.write() tar emot
+  // hur mycket som helst: när en OBS-källa fryser eller en dator går i vila fylls TCP-fönstret,
+  // och varje händelse därefter läggs i Nodes skrivbuffert för just den anslutningen — utan tak.
+  // Uppmätt lokalt: servern dog av "JavaScript heap out of memory" vid 4 GB, med minnet i
+  // _http_outgoing.write. En frusen mottagare tog alltså ner strömmen för alla. Över taket stängs
+  // anslutningen; EventSource kopplar upp igen med Last-Event-ID och får det missade via replay.
+  const write=item=>{const chunk=GoalSse.sseChunk(item,overlayId);if(!chunk||res.destroyed)return;
+    if(res.writableLength>SSE_MAX_BUFFERT){console.log(JSON.stringify({level:'warn',event:'event_stream_closed',reason:'slow-client',buffered:res.writableLength,at:new Date().toISOString()}));res.destroy();return}
+    res.write(chunk)};
   // Only replay when the client actually sent a Last-Event-ID (a genuine reconnect) — a brand
   // new connection has nothing to resume from, so it goes straight to the live stream instead of
   // being handed the workspace's entire event history. eventBus.replay() independently treats a
