@@ -663,6 +663,36 @@ function fansUppgradering(data){
   if(String(raa).trim()==='') return null;
   return{...baseUser(data),fanClubLevel:till,fanLevelUp:{from:till-1,to:till}};
 }
+// FORMEN PA ETT BARRAGE-MEDDELANDE, UTAN PERSONER (2026-11-19).
+//
+// Sandningen 2026-11-19: TikTok visade "nadde medlemsniva 25" for en tittare, men bryggan skickade
+// ingen fanlevelup — regeln ovan kande inte igen meddelandet, och ingenting skrev ner hur det sag
+// ut. En annan tittares hojning (niva 20) gick igenom samma kvall. Skillnaden gar inte att lasa i
+// efterhand, sa bryggan loggar nu formen pa varje BARRAGE den INTE kanner igen.
+//
+// BARA FORM: subType, scene, msgType, textnyckeln, TikToks egen mall och vilka SORTERS bitar mallen
+// fylls med. Av bitarnas varden foljer bara rena heltal med (en niva) — aldrig namn, aldrig id.
+function barrageForm(data){
+  const rot=data&&typeof data==='object'?data:{};
+  const en=c=>{const o=c&&typeof c==='object'?c:{};const bitar=Array.isArray(o.pieces)?o.pieces:[];
+    return{nyckel:text(o.key,120),monster:text(o.defaultPattern,160),
+      bitar:bitar.slice(0,8).map(p=>number(p?.type,99)),
+      tal:bitar.slice(0,8).map(p=>String(p?.stringValue??'').trim()).filter(v=>/^[0-9]{1,3}$/.test(v)).map(Number)}};
+  const a=en(rot.content),b=en(rot.commonBarrageContent);
+  return{subType:text(rot.subType,64),scene:text(rot.scene,64),msgType:number(rot.msgType,999),
+    nyckel:a.nyckel||b.nyckel,monster:a.monster||b.monster,bitar:a.bitar.length?a.bitar:b.bitar,tal:a.tal.length?a.tal:b.tal,
+    fansNiva:number(rot.fansLevelParam?.currentGrade,50)};
+}
+// Ror meddelandet en niva? Da loggas det alltid (inom taket), aven om sorten redan setts.
+//
+// ENTREERNA UNDANTAS. `user_level_entrance` har "level" i namnet men ar nagon som kommer in, och den
+// kommer hela tiden — uppmatt 68 pa tolv minuter i fyra sandningar. Raknades den som niva hade
+// taket tagit slut langt innan en riktig hojning kom.
+function barrageRorNiva(form){
+  const sort=String(form?.subType||'')+' '+String(form?.scene||'');
+  if(/entrance|join/i.test(sort))return false;
+  return /upgrade|level|reached|grade|lv[. ]/i.test([sort,form?.nyckel,form?.monster].join(' '));
+}
 // TIKTOKS EGEN BIDRAGSLISTA VID BATTLE-SLUT — uppmatt 2026-09-02, tva battle-slut.
 //
 // LINK_MIC_ARMIES med triggerReason 2 (BATTLE_END) bar hela rankingen fardigraknad:
@@ -880,4 +910,4 @@ function arGloveKort(k,mittAnkarId){
 function kortFordrojningMs(k){
   return boostFordrojningMs(k&&{fonsterStart:k.effektStart,skickatAt:k.skickatAt});
 }
-module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,streakNyckel,streakBeslut,STREAK_GLOMS_MS,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,armeMvp,mvpFields,envelopeFields};
+module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,streakNyckel,streakBeslut,STREAK_GLOMS_MS,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,barrageForm,barrageRorNiva,armeMvp,mvpFields,envelopeFields};
