@@ -422,6 +422,11 @@
     widgetar().forEach(function (w) { if (!(w.hidden && iOverlay())) tappa(w, antal, e); });
     if (klassiska().length && typeof root.triggerLikeFountainPop === 'function') {
       root.triggerLikeFountainPop(Object.assign({}, e, { count: antal, __auto: true }));
+      // HANTERAT (2026-11-19). live-client.js skickar samma like två vägar: emit('vyra-live-event') hit, och sedan
+      // routeLiveBattleEvent(e) (media.js), som också ropar triggerLikeFountainPop. Utan markeringen fick den
+      // klassiska fontänen varje like två gånger: dubbel likesumma, dubbla pop och två skrivningar. Det är
+      // samma objekt i båda vägarna, så en markering på det räcker; routern hoppar över markerade event.
+      try { e.__fontanKlar = true; } catch (x) {}
     }
   });
 

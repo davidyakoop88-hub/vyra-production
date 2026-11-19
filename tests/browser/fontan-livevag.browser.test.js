@@ -112,6 +112,34 @@ test('klassisk: en riktig like fyller båda fontänerna och skriver tittaren som
   } finally { await page.close(); }
 });
 
+// SAMMA VÄG SOM PRODUKTIONEN (2026-11-19). Proven ovan skickar `vyra-live-event` direkt, men live-client.js
+// ingest() skickar varje event TVÅ vägar: emit('vyra-live-event') och sedan routeLiveBattleEvent(e). Båda
+// ropade triggerLikeFountainPop, så en like räknades dubbelt, och varje like med tittare ropade save() — alltså
+// en molnsparning per like. Provet går genom VyraLive.ingest och räknar både summan och sparningarna.
+test('klassisk: en like genom live-client räknas EN gång och sparar inte layouten', { skip, timeout: 120000 }, async () => {
+  const fel = [];
+  const page = await oppna(fel);
+  try {
+    await layout(page, 'catalog:likefountain');
+    await page.evaluate(() => {
+      window.__sparningar = 0;
+      const orig = window.save;
+      window.save = function () { window.__sparningar += 1; return orig.apply(this, arguments); };
+    });
+    const fore = await page.evaluate(() => ({ antal: Number(liveWidget('a').fountainLikeCount) || 0, lagrat: localStorage.getItem('vyra-state') }));
+    await page.evaluate(() => window.VyraLive.ingest({ id: 'fontan-1', type: 'like', count: 5, username: 'Sara',
+      profileImage: 'assets/gifts/events/7460_Cap.png', at: Date.now() }));
+    await page.waitForTimeout(500);
+    const efter = await page.evaluate(() => ({ antal: Number(liveWidget('a').fountainLikeCount) || 0, user: liveWidget('a').fountainUser,
+      sparningar: window.__sparningar, lagrat: localStorage.getItem('vyra-state') }));
+    assert.equal(efter.antal - fore.antal, 5, 'fem likes ska bli fem, inte tio (två vägar in)');
+    assert.equal(efter.user, 'Sara', 'tittaren skrivs fortfarande på widgeten i minnet');
+    assert.equal(efter.sparningar, 0, 'en like är ingen layoutändring och får inte anropa save()');
+    assert.equal(efter.lagrat, fore.lagrat, 'sparad layout oförändrad av en like');
+    assert.deepEqual(fel, [], 'inga sidfel');
+  } finally { await page.close(); }
+});
+
 test('klassisk: en riktig like mitt i ett test når de riktiga fontänerna men inte klonen', { skip, timeout: 120000 }, async () => {
   const fel = [];
   const page = await oppna(fel);
