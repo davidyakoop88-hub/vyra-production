@@ -271,6 +271,78 @@ function startLocalServer(root, port = 4173, options = {}) {
   const liveConnector = options.createLiveConnector?.({ onStatus: setConnection, onEvent: ingestEvent });
   const obsService = options.obsService || null;
 
+  // ---- MOLNSTRÖMMEN (2026-11-19) -----------------------------------------------------------------
+  //
+  // David efter sändningen: "tts i lokal app funkar inte" och "Sound alert funkade inte på appen
+  // heller". Den lokala Studion hämtar bara händelser härifrån, med poll mot /api/events, och kön
+  // fylldes bara av appens EGEN TikTok-anslutning. Hans sändning var kopplad via molnbryggan.
+  // Avläst under sändningen: /api/status gav connected:false och lastEventId:0 — Studion i appen
+  // fick inte en enda händelse, så varken Sound Alerts eller TTS Chat hade något att reagera på.
+  //
+  // Den allmänna vidarebefordran längre ner kan inte bära strömmen: den väntar in hela svaret
+  // (arrayBuffer) och bryter efter 15 s. Därför läser servern strömmen själv och lägger
+  // händelserna i samma kö.
+  //
+  // TRE REGLER:
+  //   1. BARA NÄR APPEN INTE SJÄLV ÄR ANSLUTEN. Är den det speglas varje händelse till molnet
+  //      (speglaTillMolnet) och kommer tillbaka i strömmen — den hade då synts två gånger.
+  //   2. ALDRIG TILLBAKA TILL MOLNET. En händelse härifrån går inte genom ingestEvent, så den
+  //      speglas inte. Den kom ju därifrån.
+  //   3. MOLNETS FÄLT RÖRS INTE. Molnets cleanEvent har redan vitlistat dem, och klienten
+  //      (live-client.js normalizeUserFlags) läser både molnets och appens fältnamn. Bara id:t
+  //      byts mot kons löpnummer, som poll-loopen räknar på; molnets id bärs som eventKey.
+  const MOLN_PULS_MS = Number(options.molnstromPulsMs) > 0 ? Number(options.molnstromPulsMs) : 3000;
+  let molnAvbryt = null, molnSenasteId = '';
+  function molnArbetsyta() { return String((cloudIdentity() || {}).workspaceId || ''); }
+  function taEmotMolnhandelse(e, stromId) {
+    if (!e || typeof e !== 'object' || !e.type || e.type === 'heartbeat' || connection.connected) return;
+    const now = Date.now(), key = 'moln:' + String(e.id || stromId || '');
+    for (const [oldKey, at] of seenEvents) if (now - at > 120000) seenEvents.delete(oldKey);
+    if (key !== 'moln:') { if (seenEvents.has(key)) return; seenEvents.set(key, now); }
+    let id = now;
+    while (events.length && events[events.length - 1].id >= id) id++;
+    events.push({ ...e, id, eventKey: String(e.id || stromId || ''), timestamp: id, viaMoln: true });
+    while (events.length > 5000) events.shift();
+  }
+  function molnBlock(block) {
+    let typ = 'message', id = ''; const data = [];
+    for (const rad of block.split('\n')) {
+      if (rad.startsWith('event:')) typ = rad.slice(6).trim();
+      else if (rad.startsWith('id:')) id = rad.slice(3).trim();
+      else if (rad.startsWith('data:')) data.push(rad.slice(5).replace(/^ /, ''));
+    }
+    if (id) molnSenasteId = id;
+    if (typ !== 'live' || !data.length) return;
+    let e; try { e = JSON.parse(data.join('\n')) } catch (_) { return }
+    taEmotMolnhandelse(e, id);
+  }
+  async function lasMolnstrom() {
+    const avbryt = new AbortController(); molnAvbryt = avbryt;
+    try {
+      const svar = await fetch(`${cloudOrigin}/api/workspaces/${encodeURIComponent(molnArbetsyta())}/events/stream`, {
+        headers: { accept: 'text/event-stream', cookie: cloudSession(), ...(molnSenasteId ? { 'last-event-id': molnSenasteId } : {}) },
+        signal: avbryt.signal
+      });
+      if (!svar.ok || !svar.body) return;
+      const avkoda = new TextDecoder(); let buffert = '';
+      for await (const bit of svar.body) {
+        if (connection.connected) break;
+        buffert += avkoda.decode(bit, { stream: true }).replace(/\r\n/g, '\n');
+        let slut;
+        while ((slut = buffert.indexOf('\n\n')) !== -1) { molnBlock(buffert.slice(0, slut)); buffert = buffert.slice(slut + 2); }
+        if (buffert.length > 1048576) buffert = '';   // ett block utan slut ar trasig data, inte en handelse
+      }
+    } catch (_) { /* natfel eller avbrott: pulsen nedan oppnar igen */ }
+    finally { try { avbryt.abort() } catch (_) {} if (molnAvbryt === avbryt) molnAvbryt = null; }
+  }
+  function molnPuls() {
+    if (connection.connected) { if (molnAvbryt) molnAvbryt.abort(); return; }
+    if (molnAvbryt || !cloudOrigin || !cloudSession() || !molnArbetsyta()) return;
+    lasMolnstrom();
+  }
+  const molnTimer = setInterval(molnPuls, MOLN_PULS_MS);
+  if (typeof molnTimer.unref === 'function') molnTimer.unref();
+
   const server = http.createServer(async (req, res) => {
     try {
       const parsed = new URL(req.url, `http://127.0.0.1:${port}`);
@@ -454,6 +526,35 @@ function startLocalServer(root, port = 4173, options = {}) {
       //
       // Enhetsrutterna ar redan besvarade ovan och kan inte na hit: /api/status ar TikTok-
       // anslutningen i DEN HAR processen och far aldrig ga till molnet.
+      // HÄNDELSESTRÖMMAR SLÄPPS IGENOM SOM STRÖMMAR (2026-11-19). Vidarebefordran nedan väntar in
+      // hela svaret och bryter efter 15 s — en ström som aldrig tar slut blev därför alltid 502.
+      // Målwidgetarna (goal-client.js) öppnar /overlays/<id>/events/stream och fick aldrig en enda
+      // ram i appens Studio. Samma session, samma adressbygge; bara kroppen skickas bit för bit,
+      // och uppkopplingen mot molnet stängs när sidan stänger sin.
+      if (cloudOrigin && req.method === 'GET' && /\/events\/stream$/.test(p)) {
+        const avbryt = new AbortController();
+        res.on('close', () => avbryt.abort());
+        try {
+          const upstream = await fetch(cloudOrigin + p + (parsed.search || ''), {
+            headers: { accept: 'text/event-stream', cookie: cloudSession() || '',
+              ...(req.headers['last-event-id'] ? { 'last-event-id': String(req.headers['last-event-id']) } : {}) },
+            signal: avbryt.signal
+          });
+          if (!upstream.ok || !upstream.body) {
+            const body = Buffer.from(await upstream.arrayBuffer());
+            res.writeHead(upstream.status, { 'Content-Type': upstream.headers.get('content-type') || 'application/json', 'Cache-Control': 'no-store', 'Content-Length': body.length });
+            return res.end(body);
+          }
+          res.writeHead(200, { 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', Connection: 'keep-alive' });
+          for await (const bit of upstream.body) {
+            if (!res.write(bit)) await new Promise(klar => res.once('drain', klar));
+          }
+          return res.end();
+        } catch {
+          if (!res.headersSent) return sendJson(res, { ok: false, error: 'Kunde inte nå VYRA-molnet' }, 502);
+          return res.end();
+        }
+      }
       if (p.startsWith('/api/') && cloudOrigin) {
         const raw = req.method === 'GET' || req.method === 'HEAD' ? undefined : await readBody(req, 5 * 1024 * 1024);
         try {
@@ -517,6 +618,8 @@ function startLocalServer(root, port = 4173, options = {}) {
       try { sendJson(res, { ok: false, error: err.message }, err.statusCode || (err instanceof SyntaxError ? 400 : 500)); } catch { /* response already sent */ }
     }
   });
+
+  server.on('close', () => { clearInterval(molnTimer); if (molnAvbryt) molnAvbryt.abort(); });
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
