@@ -417,6 +417,35 @@ async function saNasta(alert){
   try{await saSpelaAlert(alert)}catch{}
   saNasta(alert);
 }
+/* LJUDGRINDENS MÄTNING (2026-11-19). Gränsen på 30 s kastade händelser i en riktig sändning, men loggen sa bara
+   "kom för sent" — inte VAR tiden försvann. `at` sätts av BRYGGAN när den bygger molnbodyn (normalizer.js
+   cloudEvent), `serverAt` av API-servern när den skickar ut händelsen, och saNu är serverns klocka enligt live-client.js
+   (HTTP Date). Åldern här är alltså summan av TikTok -> brygga -> server -> klient PLUS varje klockas fel mot de andra:
+   en brygga vars klocka går 40 s före eller efter servern ser ut som en 40 s fördröjning utan att något är långsamt.
+   Därför sparas alla tider och de tre sträckorna var för sig. Bara mätvärden: ingen logik fattar beslut på dem, och
+   ingenting skickas till servern eller händelsebussen. Läs av i konsolen: `VyraLjudgrind.stoppade` (de 20 senaste som
+   kastades), `VyraLjudgrind.aldrar` (åldern på de 50 senaste händelserna som nådde grinden, ms), antal, och
+   `VyraLive.klocka()` för PC-klockans fel mot servern. `steg.*` är null när fältet saknas i eventet. */
+const SA_GRIND_MAX=20,SA_GRIND_ALDRAR=50;
+const saGrind=window.VyraLjudgrind=window.VyraLjudgrind||{stoppade:[],aldrar:[],antalStoppade:0,antalMatta:0};
+function saNotera(e,saNu,at,stoppad){
+  try{
+    const g=saGrind,alder=saNu-at,tal=x=>Number(x)>0?Number(x):0,tiktok=tal(e.tiktokAt),brygga=tal(e.bryggaAt),server=tal(e.serverAt);
+    g.antalMatta+=1;g.aldrar.push(alder);if(g.aldrar.length>SA_GRIND_ALDRAR)g.aldrar.shift();
+    if(!stoppad)return;
+    g.antalStoppade+=1;
+    let klocka=null;try{klocka=window.VyraLive?.klocka?.()||null}catch{}
+    const rad={id:String(e.id||e.eventKey||''),typ:String(e.type||e.event||''),alderMs:alder,at,atFalt:Number(e.at)?'at':'timestamp',
+      tiktokAt:tiktok,bryggaAt:brygga,serverAt:server,saNu,mottagen:Date.now(),
+      steg:{tiktokTillBryggaMs:tiktok&&brygga?brygga-tiktok:null,bryggaTillServerMs:brygga&&server?server-brygga:null,serverTillKlientMs:server?saNu-server:null},
+      pcKlockaFelMs:klocka?klocka.skillnadMs:null,
+      // Historik vid laddning (första 20 s) och mycket gamla händelser rapporteras aldrig som "släpar" — markeras så att de syns som just det.
+      historik:alder>=10*60000||(typeof performance!=='undefined'&&performance.now()<=20000)};
+    g.stoppade.push(rad);if(g.stoppade.length>SA_GRIND_MAX)g.stoppade.shift();
+    // Tre första raderna och sedan var 25:e, så att en skur inte fyller konsolen.
+    if(g.antalStoppade<=3||g.antalStoppade%25===0)console.warn('[VYRA ljud] händelse stoppad av 30 s-grinden (nr '+g.antalStoppade+')',rad);
+  }catch{}
+}
 function saTaEmot(e){
   if(!e||saIOverlay())return;
   const id=String(e.id||e.eventKey||'');if(id){if(saSedda.has(id))return;saSedda.add(id);if(saSedda.size>500)saSedda.delete(saSedda.values().next().value)}
@@ -429,6 +458,7 @@ function saTaEmot(e){
   /* Rapporteras bara efter sidans första 20 s: vid laddning spelas kvällens historik upp
      (live-leaderboard.js), och den ska inte se ut som sena händelser. Samma text varje gång, så att
      en skur blir EN rad med ×N. */
+  if(at)saNotera(e,saNu,at,saNu-at>SA_HISTORIK_MS);
   if(at&&saNu-at>SA_HISTORIK_MS){if(saNu-at<10*60000&&(typeof performance==='undefined'||performance.now()>20000))saRapport('varning','Händelser kom mer än 30 s för sent och gav inget ljud — anslutningen till TikTok släpar',null);return}
   const alerts=saAlerts();if(!alerts.length)return;
   if(!saMaster&&window.VyraMasterval?.skapa)saMaster=window.VyraMasterval.skapa({nyckel:'vyra-ljudlarm-master',minNiva:()=>2});

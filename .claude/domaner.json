@@ -973,6 +973,7 @@
       ],
       "tester": [
         "tests/sound-alerts-fristaende.test.js",
+        "tests/ljudgrind-matning.test.js",
         "tests/sound-alerts-katalog.test.js",
         "server/test/tts.test.js",
         "server/test/streamdeck.test.js",
