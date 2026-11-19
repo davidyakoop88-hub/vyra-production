@@ -2,7 +2,7 @@
 
 ## Checkpoint 58 — Efter sändningen: fyra fel till, och mätning där orsaken saknas (2026-11-19)
 
-Fyra PR:er mergade efter #798 (checkpoint 57): #799, #800, #801 och #802. Två felsökningar låg bakom, en
+Fyra PR:er mergade efter #798 (checkpoint 57): #799, #800, #801 och #802, och ett femte fel (`repeatEnd` i skrivbordsappen) rättat i den PR som bär den här checkpointen. Två felsökningar låg bakom, en
 egen genomläsning av koden och en oberoende granskning av samma commit; där de pekade ut samma rad
 verifierades den mot koden innan något ändrades. **#800 är inte provad av den här sessionen** — siffrorna
 för den kommer från PR-beskrivningen.
@@ -15,6 +15,7 @@ för den kommer från PR-beskrivningen.
 | #800 | Top Like Neonramar (`toplike-ljusring.js`): passningen skrev `font-size` och bevakaren lyssnade på sina egna skrivningar, så ett namn som måste krympas startade en synk varje bildruta. OBS-källan frös 20–120 s. Dessutom köade `server/index.js` utan tak åt mottagare som slutat läsa (heap out of memory vid 4 GB) | Passning en gång per namn och bredd; servern stänger anslutningen över 1 MB väntande data och EventSource kopplar upp igen med Last-Event-ID. Enligt PR-beskrivningen: bildrutor per fyrverkeri 2 → 137–181 i OBS:s egen webbläsare, största släp 54,6 s → 0,33 s |
 | #801 | Like Fountain: `live-client.js` skickar varje like två vägar (`emit('vyra-live-event')` och `routeLiveBattleEvent`) och båda ropade `triggerLikeFountainPop` — fem likes räknades som tio. `lfPopPa` ropade dessutom `save()` per like, alltså en molnsparning per like | Lyssnaren i `like-fountain-portal.js` markerar eventet (`__fontanKlar`), routern i `media.js` hoppar över markerade. `lfPopPa` sparar inte längre |
 | #802 | Sound Alerts kastade händelser över 30 s, men loggen sa inte var tiden försvann | Ingen rättning — **mätning**, se nedan |
+| denna PR | Skrivbordsappen skickade aldrig `repeatEnd`, så samma felräkning i Goal Pro/Podium som #799 rättade på molnvägen fanns kvar över desktopvägen | `electron-app/tiktok-service.js` sätter `repeatEnd: true` på varje gåva som skickas (mellanframes returneras redan tidigare), och `local-server.js` `cleanEvent()` bär fältet villkorligt, som `server/event-bus.js` |
 
 ### Mätningen vid ljudgrinden (#802)
 
@@ -42,13 +43,14 @@ beslut ändras, inget går genom händelsebussen. **Sound Alerts spelar aldrig i
 | `tests/streak-molnvagen.test.js` (nytt, 5) | 4 av 5 faller på gamla koden, alla går på nya |
 | `fontan-livevag.browser.test.js`, nytt prov genom `VyraLive.ingest` | gamla koden `10 !== 5`, nya går |
 | `tests/ljudgrind-matning.test.js` (nytt, 4) | 0 av 4 på gamla koden, 4 av 4 på nya |
+| `electron-app/test/larlage-paritet.test.js`, två nya prov för `repeatEnd` (tjänsten och hela vägen genom `cleanEvent`) | båda faller på gamla koden, går på nya |
+| `electron-app npm test` | 171 / 171 |
 | rot `npm test` efter #802 | 3192 godkända, 0 fel, 3 överhoppade |
 | CI på #799, #801, #802 | alla 14 kontroller gröna (`katalogkarta` överhoppad) |
 
 ### Inte provat — står kvar
 
 - **Riktig TikTok-trafik** och **OBS:s egen webbläsare** (#800 provades mot inspelad trafik i OBS, men inte de här rättningarna).
-- **Skrivbordsappen skickar inget `repeatEnd`** (`electron-app/tiktok-service.js` och `local-server.js`), så samma felräkning i Goal Pro/Podium kan finnas där. Inte rättat, inte bekräftat.
 - **Goal Pro och Podium:** ingen skrivväg vid händelser hittades (livevägen skriver bara till sessionen `S` och instansens `STATE`). De sex sparningarna i provet från #798 kan ha kommit från Like Fountain. Ett prov med bara de två widgetarna avgör det.
 - **Tvingad layoutmätning per händelse** i Like Fountain, Last X och Goal Pro (enligt #800 ungefär 50 ms per like i OBS; fyrverkeriets bildtakt halveras när de ligger i samma layout). Inte rättat.
 - Bryggans retry vid misslyckad leverans, ordning och återanslutning med SSE-ID, och antaganden om TikToks payloads är **inte granskade av den här sessionen**; de kommer från den oberoende granskningen och är inte verifierade.
@@ -56,9 +58,8 @@ beslut ändras, inget går genom händelsebussen. **Sound Alerts spelar aldrig i
 ### Nästa steg
 
 1. Efter nästa sändning: läs `VyraLjudgrind.stoppade` och `VyraLjudgrind.aldrar` i studiofliken, och `docs/live-verifiering.md`. Fyll i den efteråt.
-2. `repeatEnd` i skrivbordsappen — bekräfta först att felet uppstår där.
-3. Prov: sparar Goal Pro och Podium layouten vid händelser?
-4. Den tvingade layoutmätningen per händelse.
+2. Prov: sparar Goal Pro och Podium layouten vid händelser?
+3. Den tvingade layoutmätningen per händelse.
 
 ## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
 

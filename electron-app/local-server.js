@@ -139,6 +139,8 @@ function startLocalServer(root, port = 4173, options = {}) {
     giftId: text(d.giftId, 160),
     // Gåvostreakens identitet (streakstart + slutframens gift), så en alert uppdaterar i stället för att visas igen.
     streakId: text(d.streakId, 200),
+    // Gåvan är avslutad (se tiktok-service.js). Bärs bara när fältet finns, som på molnvägen (server/event-bus.js).
+    ...(d.repeatEnd != null ? { repeatEnd: !!d.repeatEnd } : {}),
     battleStatus: text(d.battleStatus, 64),
     fanClubLevel: number(d.fanClubLevel, 0, 50),
     gifterLevel: number(d.gifterLevel, 0, 50),
