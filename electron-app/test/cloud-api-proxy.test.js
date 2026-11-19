@@ -128,3 +128,28 @@ test('the session is attached only to the cloud origin', async (t) => {
   });
   assert.equal(seen[0].url.origin, CLOUD, 'anropet gick nagon annanstans an till molnet');
 });
+
+// 2026-11-19, David: "tts i lokal app funkar inte". TTS Chat hade en EGEN vidarebefordran högre upp
+// i local-server.js, skriven före den allmänna. Den skickade sidans egen kaka (req.headers.cookie)
+// — men den lokala Studion ligger på 127.0.0.1 och har ingen kaka; molnets session finns bara i
+// huvudprocessen (cloudSession). Molnet svarade därför 401 på varje röst, och appen föll tillbaka
+// på datorns egen röst eller tystnad.
+test('TTS Chat: rösten hämtas från molnet med den bryggade sessionen, inte sidans tomma kaka', async (t) => {
+  const seen = stubCloud(t, () => new Response(JSON.stringify({ ok: true, audio: 'QUJD', mimeType: 'audio/wav' }),
+    { status: 200, headers: { 'content-type': 'application/json' } }));
+
+  await withServer(t, 4228, { cloudOrigin: CLOUD, cloudSession: () => SESSION }, async (origin) => {
+    const res = await fetch(origin + '/api/workspaces/ws-1/tts/synthesize', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-vyra-csrf': 'csrf-1' },
+      body: JSON.stringify({ text: 'hej', voice: 'Astrid' })
+    });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).audio, 'QUJD', 'ljudet kom inte tillbaka till Studion');
+  });
+
+  assert.equal(seen.length, 1, 'exakt ett uppströmsanrop');
+  assert.equal(seen[0].url.pathname, '/api/workspaces/ws-1/tts/synthesize');
+  assert.equal(seen[0].headers.cookie, SESSION, 'sessionen bryggades inte — molnet svarar 401 och ingen molnröst hörs');
+  assert.equal(seen[0].headers['x-vyra-csrf'], 'csrf-1', 'CSRF-huvudet följde inte med');
+  assert.equal(seen[0].body, JSON.stringify({ text: 'hej', voice: 'Astrid' }), 'texten kom inte fram');
+});
