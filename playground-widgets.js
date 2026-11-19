@@ -36,7 +36,9 @@ const gomd=el=>{const c=el&&el.closest&&el.closest(".gvc");return !!c&&c.style.d
 const cwCache=new WeakMap();
 let cwRO=null;try{if(typeof ResizeObserver==="function")cwRO=new ResizeObserver(es=>{for(const e of es)cwCache.set(e.target,e.target.clientWidth)})}catch(_){cwRO=null}
 const cwOf=el=>{
-  if(!el||gomd(el))return 0;
+  // Ett element som tagits ur DOM gav 0 med clientWidth. Cachen får inte ge ett gammalt värde där: loopen går då vidare till
+  // fxp() → tgt() → O() för en widget som inte finns längre (TypeError i lager-tva-widgetar.browser.test.js).
+  if(!el||!el.isConnected||gomd(el))return 0;
   if(!cwRO)return el.clientWidth;
   let v=cwCache.get(el);
   if(v===undefined){v=el.clientWidth;cwCache.set(el,v);try{cwRO.observe(el)}catch(_){}}
