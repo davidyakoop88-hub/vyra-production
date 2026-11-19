@@ -740,7 +740,7 @@ function triggerLikeFountainPop(event={}){let amount=+(event.count||event.points
  * gåvokampanjens räknare (gift-event-images.js): livevärdet ligger kvar på widgeten i minnet och följer med
  * nästa riktiga sparning, men ett like ändrar aldrig layouten av sig självt.
  * Följd: efter en omladdning visar etiketten tittaren från nästa like i stället för den sparade. */
-function lfPopPa(w,event,amount){{if(!event.__test&&(event.username||event.profileImage)){w.fountainUser=event.username||w.fountainUser;w.profileImage=event.profileImage||w.profileImage;w.fountainLikeCount=(+w.fountainLikeCount||0)+amount;lfPushLiker(w.id,event.profileImage);lfUpdateLiveLabel(w)}let min=Math.max(1,w.fountainMinLikes||1);if(!event.__test){fountainLikeAccum[w.id]=(fountainLikeAccum[w.id]||0)+amount;if(fountainLikeAccum[w.id]<min)return;fountainLikeAccum[w.id]-=min}let el=document.querySelector(`[data-id="${w.id}"] .fountain-pop`);if(!el)return;let allTypes=[['fountainPopBurst','♥','#ff3c88'],['fountainPopSparkle','✦','#ffe14d'],['fountainPopMiniHearts','♥','#ff86bd'],['fountainPopStars','★','#ffd23c'],['fountainPopConfetti','▮','#4fd8ff'],['fountainPopFirework','✺','#b94cff']],types=allTypes.filter(([key])=>w[key]!==false),showRing=w.fountainPopRing!==false,count=Math.max(4,Math.min(40,w.fountainParticleCount||10)),size=w.fountainParticleSize||18,speed=w.fountainParticleSpeed||200,parts=[];if(showRing)parts.push(`<b class="fp-ring" style="--c:#ffffff"></b>`);types.forEach(([key,glyph,color],ti)=>{for(let i=0;i<count;i++){let a=(i/count)*360+ti*11;parts.push(`<i style="--a:${a}deg;--d:${(60+i%6*10)*(speed/200)}px;--c:${color};--size:${size}px">${glyph}</i>`)}});el.innerHTML=parts.join('');el.classList.remove('play');void el.offsetWidth;el.className='fountain-pop play ws-anim-'+(w.fountainPopEntrance||'pop');clearTimeout(el._fpTimer);el._fpTimer=setTimeout(()=>el.classList.remove('play'),(w.fountainPopDuration||1.6)*1000)}}
+function lfPopPa(w,event,amount){{if(!event.__test&&(event.username||event.profileImage)){w.fountainUser=event.username||w.fountainUser;w.profileImage=event.profileImage||w.profileImage;w.fountainLikeCount=(+w.fountainLikeCount||0)+amount;lfPushLiker(w.id,event.profileImage);lfUpdateLiveLabel(w)}let min=Math.max(1,w.fountainMinLikes||1);if(!event.__test){fountainLikeAccum[w.id]=(fountainLikeAccum[w.id]||0)+amount;if(fountainLikeAccum[w.id]<min)return;fountainLikeAccum[w.id]-=min}let el=document.querySelector(`[data-id="${w.id}"] .fountain-pop`);if(!el)return;let allTypes=[['fountainPopBurst','♥','#ff3c88'],['fountainPopSparkle','✦','#ffe14d'],['fountainPopMiniHearts','♥','#ff86bd'],['fountainPopStars','★','#ffd23c'],['fountainPopConfetti','▮','#4fd8ff'],['fountainPopFirework','✺','#b94cff']],types=allTypes.filter(([key])=>w[key]!==false),showRing=w.fountainPopRing!==false,count=Math.max(4,Math.min(40,w.fountainParticleCount||10)),size=w.fountainParticleSize||18,speed=w.fountainParticleSpeed||200,parts=[];if(showRing)parts.push(`<b class="fp-ring" style="--c:#ffffff"></b>`);types.forEach(([key,glyph,color],ti)=>{for(let i=0;i<count;i++){let a=(i/count)*360+ti*11;parts.push(`<i style="--a:${a}deg;--d:${(60+i%6*10)*(speed/200)}px;--c:${color};--size:${size}px">${glyph}</i>`)}});el.innerHTML=parts.join('');el.classList.remove('play');clearTimeout(el._fpTimer);/* Omstart utan tvingad layout: se lfPulsPa. Förut en `void el.offsetWidth` direkt efter innerHTML — alltså en layout för upp till 60 nya element, per like (uppmätt 11 ms). */const popKlass='fountain-pop play ws-anim-'+(w.fountainPopEntrance||'pop'),popMs=(w.fountainPopDuration||1.6)*1000;lfNastaRuta(()=>{if(!el.isConnected)return;el.className=popKlass;clearTimeout(el._fpTimer);el._fpTimer=setTimeout(()=>el.classList.remove('play'),popMs)})}}
 const lfBaseTriggerLikeFountainPop=triggerLikeFountainPop;
 // PULSEN OCH NIVAN AR TVA OLIKA SAKER — och en enda timer skotte bada fram till 2026-09-06.
 //
@@ -767,6 +767,9 @@ triggerLikeFountainPop=function(event={}){
   });
   return lfBaseTriggerLikeFountainPop(event);
 };
+// Kör fn två bildrutor senare (utan requestAnimationFrame, t.ex. i jsdom, direkt). Två, inte en: en enda rAF körs i SAMMA bildruta
+// som händelsen, före stilberäkningen, och då hinner webbläsaren aldrig se att klassen togs bort.
+function lfNastaRuta(fn){if(typeof requestAnimationFrame==='function')requestAnimationFrame(()=>requestAnimationFrame(fn));else fn()}
 function lfPulsPa(w,amount){
   {
     let root=document.querySelector(`[data-id="${w.id}"]`);
@@ -775,11 +778,19 @@ function lfPulsPa(w,amount){
     // PULSEN: bara react-klassen rivs och satts om. Den tvingade reflowen behovs for att
     // starta om CSS-animationen, men den galler nu ETT element-tillstand, inte fyra.
     root.classList.remove('lf-live-react');
-    void root.offsetWidth;
-    root.style.setProperty('--lf-live-boost',String(Math.min(2.4,1+Math.log10(amount+1)*.42)));
-    root.classList.add('lf-live-react');
     clearTimeout(root._lfPulsTimer);
-    root._lfPulsTimer=setTimeout(()=>root.classList.remove('lf-live-react'),LF_PULS_MS);
+    // OMSTART UTAN TVINGAD LAYOUT (2026-11-19). Klassen lades tillbaka direkt efter en `void root.offsetWidth`, som tvingar
+    // webbläsaren att räkna ut hela layouten efter allt som skrivits i samma händelse: uppmätt 12 ms per like i Chromium, ~25 ms
+    // när andra widgetar ligger i samma sida. Klassen läggs i stället tillbaka två bildrutor senare (lfNastaRuta), då bildrutan
+    // däremellan hunnit rita utan den — och animationen startar om utan att något läser layout.
+    const boost=String(Math.min(2.4,1+Math.log10(amount+1)*.42));
+    lfNastaRuta(()=>{
+      if(!root.isConnected)return;
+      root.style.setProperty('--lf-live-boost',boost);
+      root.classList.add('lf-live-react');
+      clearTimeout(root._lfPulsTimer);
+      root._lfPulsTimer=setTimeout(()=>root.classList.remove('lf-live-react'),LF_PULS_MS);
+    });
     // NIVAN: rors bara nar den faktiskt andras, sa en jamn strom inte byter klass i onodan.
     if(!root.classList.contains('lf-live-'+level)){
       root.classList.remove('lf-live-low','lf-live-mid','lf-live-high');
