@@ -77,6 +77,23 @@ långsammare (787 mot 793 efter 9 s), vilket är samma kostnad sedd från andra 
 **Prov:** `tests/browser/pg-tvingad-layout.browser.test.js` räknar läsningar av `clientWidth` som kostar en layout (över 3 ms).
 Gamla koden: 270 av 2 950. Nya koden: 0. Provet har en kontroll att mätningen kan se en läsning.
 
+### Tvingad layout i Like Fountain (rättat, andra försöket)
+
+Mätt i Chromium, 30 likes genom `VyraLive.ingest`, **utan vald widget** (OBS-likt: `vyra-proportioner.js` läser bara layout i editorn):
+
+| | tvingad layout | tid |
+|---|---|---|
+| före | 60 läsningar | 368 ms (12 ms per like): `lfPulsPa` (`media.js`, `void root.offsetWidth`) och `lfPopPa` (`void el.offsetWidth` direkt efter `innerHTML` med upp till 60 nya element) |
+| efter | 0 | 0,1 ms |
+
+**Rättning:** klassen läggs tillbaka två bildrutor senare (`lfNastaRuta`, två `requestAnimationFrame`) i stället för efter en
+tvingad läsning. Två, inte en: en enda rAF körs i samma bildruta som händelsen, före stilberäkningen, och då ser webbläsaren
+aldrig att klassen togs bort. Utan `requestAnimationFrame` (jsdom) körs det direkt.
+
+**Mätfel jag gjorde först:** instrumenteringen lade getter-omslaget för `offsetWidth` på fel prototyp (`Element` i stället för
+`HTMLElement`) och såg därför ingenting från Like Fountain eller Last X. Mät alltid med en kontroll att instrumenteringen kan se en
+känd läsning.
+
 ### Prov
 
 | Prov | Resultat |
@@ -92,13 +109,13 @@ Gamla koden: 270 av 2 950. Nya koden: 0. Provet har en kontroll att mätningen k
 ### Inte provat — står kvar
 
 - **Riktig TikTok-trafik** och **OBS:s egen webbläsare** (#800 provades mot inspelad trafik i OBS, men inte de här rättningarna).
-- **Tvingad layoutmätning per händelse i Like Fountain och Last X.** Goal Pro är rättat (se nedan). Like Fountain och Last X återstår; den här sessionens mätning av en layout med alla tre såg dem inte som kostnadsdrivare (se nedan), men #800 mätte ungefär 50 ms per like i OBS, så de är inte avfärdade.
+- **Tvingad layout i Last X** är mätt men inte rättad (se "Tvingad layout i Like Fountain" nedan). **Rättelse:** den här checkpointens första version påstod att Like Fountain och Last X inte bidrog märkbart. Det var fel — mätningen läste `offsetWidth` via fel prototyp och var blind för den. Like Fountain kostade ungefär 12 ms per like.
 - Bryggans retry vid misslyckad leverans, ordning och återanslutning med SSE-ID, och antaganden om TikToks payloads är **inte granskade av den här sessionen**; de kommer från den oberoende granskningen och är inte verifierade.
 
 ### Nästa steg
 
 1. Efter nästa sändning: läs `VyraLjudgrind.stoppade` och `VyraLjudgrind.aldrar` i studiofliken, och `docs/live-verifiering.md`. Fyll i den efteråt.
-2. Mät Like Fountain och Last X separat i en OBS-lik sida; de kan fortfarande tvinga layout (se ovan).
+2. Last X: `void box.offsetWidth` i `enterLX` (en gång per alert) och `applyLX` som sparar layouten 700 ms efter varje alert (`w.lastXLatest`, medvetet, så kortet minns senaste personen). Mät `enterLX` separat; `legacyShowLastX` (gamla mallar) ropar `save()` per händelse.
 
 ## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
 
