@@ -82,6 +82,36 @@ test('omkörningen syns: pil på den som klättrar och banderoll när ettan byts
   assert.match(el.querySelector('.tl-banderoll').textContent, /NY ETTA!\s*Cia/);
 });
 
+// 2026-11-19, uppmätt med riktig TikTok-trafik: ett namn som måste krympas fick synken att gå varje
+// bildruta för alltid (passningen skriver style, bevakaren lyssnade på style) och OBS-källan stod
+// still. jsdom har ingen layout, så namnets bredd förfalskas: 300 px text i en ruta på 100 px.
+test('ett långt namn krymps en gång och startar inte en ny synk varje bildruta', async () => {
+  const h = rigg(), el = nod(W());
+  const vanta = ms => new Promise(r => setTimeout(r, ms));
+  await vanta(80);
+  for (const n of el.querySelectorAll('.tl-namn')) {
+    Object.defineProperty(n, 'clientWidth', { configurable: true, get: () => 100 });
+    Object.defineProperty(n, 'scrollWidth', { configurable: true, get: () => 300 });
+  }
+  const tl = el.querySelector(':scope > .tl');
+  let synkar = 0;
+  const riktig = tl.querySelectorAll.bind(tl);
+  tl.querySelectorAll = q => { if (q === '.tl-plats') synkar += 1; return riktig(q); };   // synka() frågar efter platserna en gång per varv
+  el.querySelector('.tln-data .toplike-row strong').textContent = 'عـــــــــــــاصـــــــــ👑م med ett väldigt långt namn';
+  await vanta(400);
+  const namn = el.querySelector('.tl-plats .tl-namn');
+  assert.ok(namn.textContent.includes('väldigt långt'), 'namnet ska ha nått det synliga lagret');
+  assert.ok(namn.classList.contains('tva-rader'), 'ett namn som inte får plats ens krympt ska få två rader');
+  assert.ok(synkar >= 1 && synkar <= 2, `synken ska gå en gång för namnbytet, inte varje bildruta — den gick ${synkar} gånger på 0,4 s`);
+  const fore = synkar;
+  namn.style.setProperty('font-size', '11px', 'important');   // det synliga lagrets egna skrivningar
+  await vanta(200);
+  assert.equal(synkar, fore, 'en stiländring i det synliga lagret får inte starta en synk');
+  el.querySelectorAll('.tln-data .toplike-row strong')[1].textContent = 'Bo';
+  await vanta(200);
+  assert.equal(synkar, fore + 1, 'en ändring i datalagret ska fortfarande synkas');
+});
+
 test('panelens val styr utseendet: läge, ram, form, namnstil, glans, lutning och visa-rutorna', () => {
   const el = nod(W({ tlnLage: 'hoger', tlnRam: 'guld', tlnForm: 'fyrkant', tlnFyr: 'kristall', tlnNamnstil: '3d', tlnGlans: 'svep', tlnLut: 30, showRank: false }));
   const tl = el.querySelector(':scope > .tl');
