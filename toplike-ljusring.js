@@ -132,7 +132,13 @@
     if (!tl) return;
     const rader = [...rot.querySelectorAll(':scope > .tln-data > .toplike-row')];
     const platser = [...tl.querySelectorAll('.tl-plats')];
-    const fore = platser.map(p => p.getBoundingClientRect());
+    // Platsernas läge FÖRE ändringen behövs bara när en omkörning ska spelas. Mätningen tvingar fram
+    // en layout av hela sidan, och topplistan skrivs om var gång livedatan tickar — även när
+    // ingenting har ändrats. Därför läses ordningen först, utan att röra layouten.
+    const forraOrdning = rot.__tlnOrdning;
+    const blir = rader.map(rad => (rad.style.getPropertyValue('display') === 'none' ? '' : ((rad.querySelector('strong') || {}).textContent || '')));
+    const flyttar = !!animera && !!forraOrdning && forraOrdning.join('\n') !== blir.slice(0, platser.length).join('\n');
+    const fore = flyttar ? platser.map(p => p.getBoundingClientRect()) : [];
     const ordning = [];
     rader.forEach((rad, i) => {
       const p = platser[i];
@@ -179,6 +185,16 @@
     const golv = tl.classList.contains('antal-5') ? .45 : .55;
     tl.querySelectorAll('.tl-namn').forEach(n => {
       if (!n.isConnected || n.clientWidth === 0) return;
+      // EN GÅNG PER NAMN OCH BREDD (2026-11-19). Passningen skriver font-size i style, och bevakaren
+      // nedan lyssnade på style i hela widgeten — alltså även på passningens egna skrivningar. Ett
+      // enda namn som behövde krympas startade därför en ny synk nästa bildruta, som tog bort
+      // storleken och krympte om, som startade nästa. Varje varv tvingar fram en layout per
+      // pixelsteg. Uppmätt med riktig TikTok-trafik (långa arabiska namn, emojis): 330 av 420 s gick
+      // åt här, och OBS-källan stod still i upp till två minuter medan fyrverkeriets ljud spelades.
+      // "Tittare 1" passar utan krympning, så inget prov med påhittade namn såg det.
+      const nyckel = n.textContent + '|' + n.clientWidth + '|' + golv;
+      if (n.__tlnPassad === nyckel) return;
+      n.__tlnPassad = nyckel;
       n.classList.remove('tva-rader'); n.style.removeProperty('font-size');
       const start = parseFloat(getComputedStyle(n).fontSize); let f = start;
       while (n.scrollWidth > n.clientWidth && f > start * golv) { f -= 1; n.style.setProperty('font-size', f + 'px', 'important'); }
@@ -194,6 +210,10 @@
         const t = m.target.nodeType === 1 ? m.target : m.target.parentElement;
         if (!t || !t.closest) continue;
         const rot = t.closest('.widget.tln');
+        // Det synliga lagret (.tl) skriver synken själv — namn, storlek, pilar, banderoll. Bara
+        // datalagret och widgeten själv (flytt, storlek, zoom) får starta en ny synk.
+        const synligt = rot && t !== rot && t.closest('.tl');
+        if (synligt && rot.contains(synligt)) continue;
         if (rot) {
           const nyRot = m.type === 'childList' && [...m.addedNodes].some(x => x === rot || (x.contains && x.contains(rot)));
           if (!vantar.has(rot)) { vantar.add(rot); rot.__tlnAnimera = !nyRot && rot.__tlnOrdning !== undefined; }

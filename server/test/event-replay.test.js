@@ -150,3 +150,36 @@ test('openEventStream: disconnect cleans up — subscriber count returns to its 
     await eventBus.close().catch(()=>{});
   }
 });
+
+// 2026-11-19: en mottagare som slutat läsa (frusen OBS-källa, dator i vila) fick servern att köa
+// varje händelse i minnet utan tak, och servern dog till slut av minnesbrist — för alla. Nu stängs
+// anslutningen när kön passerar taket; EventSource kopplar upp igen och får det missade via replay.
+test('openEventStream: en mottagare som inte läser stängs i stället för att köas i minnet',async t=>{
+  const url=process.env.REDIS_URL||'redis://127.0.0.1:6379';
+  if(!await redisReachable(url)){t.skip(`No Redis reachable at ${url} — this test only runs where Redis is available (e.g. CI's redis service).`);return}
+  const workspaceId='33333333-3333-3333-3333-333333333333';
+  let req;
+  try{
+    const stream=fakeStream();
+    req=stream.req;
+    const {res,writes}=stream;
+    res.writableLength=0;res.destroyed=false;
+    res.destroy=()=>{res.destroyed=true;req.emit('close')};
+    await openEventStream(req,res,new URL(`http://x/api/workspaces/${workspaceId}/events/stream`),workspaceId);
+    const vantaPa=(villkor,vad)=>new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>{clearInterval(check);reject(new Error(vad))},4000);
+      const check=setInterval(()=>{if(villkor()){clearInterval(check);clearTimeout(timer);resolve()}},20);
+    });
+    const forsta=buildTestEvent('like',{username:'Laser'});
+    await eventBus.publish(workspaceId,forsta);
+    await vantaPa(()=>writes.some(c=>c.includes(forsta.id)),'en mottagare som läser ska få händelsen');
+    res.writableLength=50*1024*1024;   // mottagaren har slutat läsa: 50 MB väntar redan
+    const andra=buildTestEvent('like',{username:'Frusen'});
+    await eventBus.publish(workspaceId,andra);
+    await vantaPa(()=>res.destroyed,'anslutningen ska stängas när kön passerat taket');
+    assert.ok(!writes.some(c=>c.includes(andra.id)),'ingenting mer ska läggas i kön åt en mottagare som inte läser');
+  }finally{
+    req?.emit('close');
+    await eventBus.close().catch(()=>{});
+  }
+});
