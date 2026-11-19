@@ -642,6 +642,7 @@
         "tests/top-gift-strikt-rekord.test.js",
         "tests/top-gift-konsekvent.test.js",
         "tests/top-gift-molnvagen.test.js",
+        "tests/streak-molnvagen.test.js",
         "tests/live-control-prestanda.test.js"
       ],
       "e2e": [

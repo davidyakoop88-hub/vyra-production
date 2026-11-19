@@ -67,6 +67,10 @@ const event={
     // GÅVOSTREAKENS IDENTITET (2026-10-26). `streakstart` (streakens första frame, bara visning) och
     // slutframens `gift` bär samma streakId, så en alert som redan visat streaken uppdaterar sig.
     streakId:String(input?.streakId||'').slice(0,200),
+    // Gåvan är avslutad (slutframen). Bärs bara när bryggan satt den: Goal Pro och Podium använder den för att
+    // veta att nästa gåva från samma tittare är en NY combo och inte en fortsättning. Saknas den räknas två
+    // avslutade gåvor inom 12 s som en. Villkorlig, så ett event utan fältet ser ut som förut.
+    ...(input?.repeatEnd!=null?{repeatEnd:!!input.repeatEnd}:{}),
     // MOTTAGAREN i ett flervardsrum. `tillVarden` ar HARLEDD av bryggan — servern vet inte
     // streamerns TikTok-id och kan darfor inte rakna ut det sjalv. Forvalet ar TRUE: en aldre
     // brygga som inte skickar faltet ska raknas precis som i dag, inte filtreras bort. #360
