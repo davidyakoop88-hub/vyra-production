@@ -57,7 +57,13 @@ function makeEnv() {
     document: Object.assign(el(), { documentElement: el(), body: el(), createElement: el,
       addEventListener() {} }),
     addEventListener: (namn, fn) => { (lyssnare.get(namn) || lyssnare.set(namn, []).get(namn)).push(fn) },
-    state: { widgets: [] }, view: 'layout', selected: null,
+    // En widget av varje köad typ: proven nedan handlar om hur kön ordnar alerter som HAR en widget.
+    // En alert utan widget tar ingen plats i kön alls — det provas för sig längst ned.
+    state: { widgets: [
+      { id: 'mvp', type: 'templateBattleMvp' }, { id: 'gl', type: 'templateGifterLevel' },
+      { id: 'fl', type: 'templateFanLevel' }, { id: 'fa', type: 'templateFollowerAlert' },
+      { id: 'ge', type: 'templateGuardianEmblem' }
+    ] }, view: 'layout', selected: null,
     bind() {}, render() {}, save() {}, toast() {},
     VyraSessionState: { registerTeardown: (namn, fn) => teardowns.set(namn, fn) }
   };
@@ -138,7 +144,7 @@ test('taket kastar de lagst prioriterade forst, sa en Battle MVP overlever en ga
 test('en alert som vantat for lange spelas inte, den kastas', () => {
   const env = makeEnv();
   // En lang Battle MVP blockerar kon. Fyrverkeriet bakom hinner bli inaktuellt.
-  env.sandbox.state.widgets.push({ type: 'templateBattleMvp', mvpDuration: 120 });
+  env.sandbox.state.widgets.find(w => w.type === 'templateBattleMvp').mvpDuration = 120;
   env.sandbox.triggerBattleMvp({ i: 'lang' });
   env.sandbox.triggerFanLevelUp({ i: 'gammal' });
   env.klocka.fram(300000);
@@ -238,4 +244,40 @@ test('fireworks event bypasses the shared serial queue', () => {
   assert.equal(env.spelade.length, 2);
   assert.equal(env.spelade[0].event, event);
   assert.equal(env.spelade[0].vid, env.spelade[1].vid);
+});
+
+// ---- en alert utan widget tar ingen plats i kön (2026-11-19) ------------------------------------
+// Uppmätt genom den riktiga kedjan (lokal server, OBS-länk): en layout med bara Fan Level Up tände
+// alerten 15 s för sent, för att en ny följare och en Guardian höll kön utan att något syntes.
+// Loggen från sändningen 2026-11-18 visar samma sak för MVP: 19–24 s efter matchslut.
+test('en ny följare håller inte kön när layouten saknar följarlarm', () => {
+  const env = makeEnv();
+  env.sandbox.state.widgets = [{ id: 'fl', type: 'templateFanLevel' }, { id: 'mvp', type: 'templateBattleMvp' }];
+  const start = env.klocka.nu();
+  for (let i = 0; i < 6; i++) env.sandbox.triggerNewFollower({ i: 'följare ' + i });
+  env.sandbox.triggerGuardianEmblem && env.sandbox.triggerGuardianEmblem({ i: 'guardian' });
+  env.sandbox.triggerFanLevelUp({ i: 'nivå' });
+  env.klocka.fram(50);
+  assert.ok(env.spelade.some(s => s.event.i === 'nivå'), 'Fan Level Up väntade bakom alerter som inte har någon widget');
+  const niva = env.spelade.find(s => s.event.i === 'nivå');
+  assert.ok(niva.vid - start <= 50, `Fan Level Up tändes efter ${niva.vid - start} ms`);
+});
+
+test('en dold widget räknas som ingen widget', () => {
+  const env = makeEnv();
+  env.sandbox.state.widgets = [{ id: 'fa', type: 'templateFollowerAlert', hidden: true }, { id: 'fl', type: 'templateFanLevel' }];
+  env.sandbox.triggerNewFollower({ i: 'följare' });
+  env.sandbox.triggerFanLevelUp({ i: 'nivå' });
+  env.klocka.fram(50);
+  assert.ok(env.spelade.some(s => s.event.i === 'nivå'), 'en dold följarwidget höll kön');
+});
+
+test('med widgeten i layouten köas alerten som förut', () => {
+  const env = makeEnv();
+  env.sandbox.triggerNewFollower({ i: 'följare' });
+  env.sandbox.triggerFanLevelUp({ i: 'nivå' });
+  env.klocka.fram(100);
+  assert.equal(env.spelade.length, 1, 'två alerter med var sin widget spelade samtidigt');
+  env.klocka.fram(5000);
+  assert.equal(env.spelade.length, 2);
 });

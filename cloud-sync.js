@@ -125,7 +125,7 @@
   // anvandare ser, och det som fick Spara-knappen att verka nodvandig.
   // Samma signal markerar en osynkad ändring DIREKT (F03), i stället för när tickern hunnit se den
   // och debouncen gått — fram till dess sade raden "Sparat i molnet ✓" om något servern inte sett.
-  root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();paint();offlineNote()});
+  root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();try{koaLokalAndring()}catch(_){}paint();offlineNote()});
   let noteHtml=null;
   function offlineNote(){
     const bar=document.querySelector('.overlay-link-bar');
@@ -222,7 +222,10 @@
     if(nu!==lastLocal){koadLokal=nu;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule()}
     else{koadLokal=null;localStorage.removeItem(QUEUE());saveMeta();setStatus('synced')}
     return true}
-  function schedule(){clearTimeout(timer);timer=setTimeout(push,1800)}
+  // 500 ms (var 1800): lang nog att sla ihop tangenttryck i ett textfalt, kort nog att en flytt syns i OBS inom en sekund.
+  const SKICKA_EFTER_MS=500;
+  // Utloggad eller i konflikt skickas inget av timern (samma regel som tickern): andringen ligger kvar i kon.
+  function schedule(){clearTimeout(timer);timer=setTimeout(()=>{if(status==='utloggad'||status==='conflict')return;push()},SKICKA_EFTER_MS)}
   function choice(remote){return new Promise(resolve=>{pendingChoice=resolve;const modal=document.createElement('div');modal.className='cs-modal';modal.innerHTML='<section><small>FÖRSTA CLOUD-SYNK</small><h2>Vilken layout vill du behålla?</h2><p>Det finns både en layout på den här datorn och en online. Ingenting skrivs över innan du väljer.</p><div><button data-choice="remote">Använd online-versionen</button><button class="primary" data-choice="local">Behåll den här datorns version</button></div></section>';document.body.append(modal);modal.querySelectorAll('[data-choice]').forEach(b=>b.onclick=()=>{modal.remove();pendingChoice=null;resolve(b.dataset.choice)})})}
   function showConflict(){if(document.querySelector('.cs-conflict'))return;const bar=document.createElement('div');bar.className='cs-conflict';bar.innerHTML='<span><b>Synkkonflikt</b><small>Layouten ändrades på en annan dator. Välj vilken version som ska behållas.</small></span><button data-cs-online>Online</button><button class="primary" data-cs-local>Den här datorn</button>';document.body.append(bar);bar.querySelector('[data-cs-online]').onclick=async()=>{try{overlay=await getRemote(overlay.id);await apply(overlay.state);/* lastLocal maste folja med: utan det sag tickern den nyss hamtade layouten som en LOKAL andring och skickade molnets egen layout tillbaka till molnet (uppmatt 2026-10-10: PUT 200 sju sekunder efter varje Online-klick). */lastLocal=localStorage.getItem('vyra-state');saveMeta();localStorage.removeItem(QUEUE());setStatus('synced');bar.remove()}catch{setStatus('offline')}};bar.querySelector('[data-cs-local]').onclick=async()=>{try{overlay=await getRemote(overlay.id);/* VALET AR AVSIKTEN. Serverns 409-text sager "valj version i synkdialogen", och det har ar dialogen: den som trycker "Den har datorn" har sett att versionerna skiljer sig och valt sin egen. Utan flaggan skickade knappen samma sparning som nyss avvisats av krympvakten och fick 409 igen — banderollen stod kvar for evigt (uppmatt 2026-10-10: 44 st 409 pa tre minuter). Flaggan forbrukas av push() nar skrivningen lyckats. */root.__vyraUserRemovedWidget=true;const r=await push();
     // push() KASTAR inte vid 409 — den returnerar {ok:false} och satter sjalv conflict-status.
@@ -456,7 +459,11 @@
     finally{foljer=false}
   }
   function startFoljare(){if(foljTimer)return;foljTimer=setInterval(()=>{if(document.hidden)return;foljMolnet()},FOLJ_MS)}
-  function startTicker(){startFoljare();if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;if(status==='utloggad'||status==='conflict'){paint();return}const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule()}paint()},1000)}
+  /* EN ANDRING KOAS NAR DEN SPARAS, INTE NAR TICKERN HINNER SE DEN (2026-11-18). Forr vantade en flyttad widget
+     0-1 s pa tickern och sedan 1,8 s pa debouncen innan den skickades till molnet - OBS sag flytten forst efter
+     ~3 s. Nu koas den direkt av vyra-session-state-saved; tickern ar kvar som reserv (annan flik, missad signal). */
+  function koaLokalAndring(){if(!workspace||!initialized||!root.VyraSessionState.canQueue())return false;if(status==='utloggad'||status==='conflict')return false;const current=localStorage.getItem('vyra-state');if(current&&current!==lastLocal&&current!==koadLokal){koadLokal=current;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));schedule();return true}return false}
+  function startTicker(){startFoljare();if(tickTimer)return;tickTimer=setInterval(()=>{mountStatus();if(!workspace||!initialized||!root.VyraSessionState.canQueue())return;if(status==='utloggad'||status==='conflict'){paint();return}koaLokalAndring();paint()},1000)}
 
   setTimeout(()=>initialize(root.VyraAuth?.lastDetail?.()),500);
   // Mountningen far INTE hanga pa initialize() eller startTicker(): bada kraver ett workspace, och

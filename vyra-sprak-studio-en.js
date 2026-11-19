@@ -1489,6 +1489,9 @@
     'Battle-klipp': 'Battle clips',
     'Här säger avataren, battle-klippen, MVP, TTS och Sound Alerts till när något inte blir som det ska — och varför.':
       'Here the avatar, battle clips, MVP, TTS and Sound Alerts tell you when something does not go as it should — and why.',
+    'Studion räknar ut samma beslut som OBS-overlayn. Rader märkta OBS-källan kommer från själva sidan i OBS: hur sent tidtagningen går, bildrutor, lagring och filer som inte gick att spela. "Spara som fil" tar med LIVE-kontrollens händelser.':
+      'The studio makes the same decisions as the OBS overlay. Rows marked OBS source come from the page inside OBS itself: how late its timing runs, frames, storage and files that could not be played. "Save as file" includes the LIVE control events.',
+    'OBS-källan': 'OBS source',
     'Studion räknar ut samma beslut som OBS-overlayn. Om OBS själv inte kunde spela en fil syns det inte här. "Spara som fil" tar med LIVE-kontrollens händelser.':
       'The studio makes the same decisions as the OBS overlay. If OBS itself could not play a file, it does not show here. "Save as file" includes the LIVE control events.',
     'Rösten läses i': 'Voice plays in',

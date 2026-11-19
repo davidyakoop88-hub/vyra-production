@@ -391,7 +391,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261018-1: guardian-emblem-models.css doljer inte langre en modell utan fasklocka.
   // 20261019-3: like-fountain-portal.js spelar ▶ Testa widget på en klon och har Färg 1–3 i Egna färger (PR 13).
   // 20261020-6: streamdeck.js beskriver lokal väg och molnväg som två alternativ (granskning F16).
-  assert.match(media, /const version='20261107-21'/);
+  assert.match(media, /const version='20261119-1'/);
   // Bumpad 2026-09-22 for gavororelsen (docs/gavororelsen.md §1 och §7): widget-fas.js fick
   // `spelar(box)` och en uttrycklig vagran att koppla sig nar `triggerNamn` saknas. media.js BAR
   // strangen, sa media.js sjalv maste bumpas — annars pekar en cachad media.js pa den gamla
@@ -409,7 +409,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // provet hogre upp i den har filen forbjuder. De ovriga fyra ar OFORANDRADE och behaller sin.
   // 20261012-1: vakten mot konfig-omhamtningen efter live:start (#271 avsnitt 4).
   // 20261117-1: felrapporten mäter tiden från matchslut till MVP.
-  assert.match(media, /battle-mvp-session\.js\?v=20261117-1/,
+  // 20261118-1: MVP överlever en omritning medan den visas.
+  assert.match(media, /battle-mvp-session\.js\?v=20261118-1/,
     'battle-mvp-session.js cachebustades inte for #271');
   // sound-alerts.js LAMNADE listan 2026-09-23: sound alerts-biblioteket andrade filen, och den ar
   // alltsa inte langre "oforandrad sedan duckningen". Bumpen till 20260923-library gjordes ratt i
@@ -447,7 +448,8 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // action-runtime.js gick vidare till 20261116-1 nar kon fick prioritet (prioritet:'hog').
   assert.match(media, /action-options\.js\?v=20261018-1/, 'action-options.js cachebustades inte for F01');
   // ... och till 20261116-2 nar battle-paketens klipp fick ersatt-gruppen (ett nytt klipp byter ut det forra).
-  assert.match(media, /action-runtime\.js\?v=20261116-2/, 'action-runtime.js cachebustades inte for ersatt-gruppen');
+  // 20261118-1: poangreskontran halls i minnet och skrivs ner hogst fyra ganger i sekunden.
+  assert.match(media, /action-runtime\.js\?v=20261118-1/, 'action-runtime.js cachebustades inte for ersatt-gruppen');
   // action-event-advanced.js gick vidare till 20261014-nya-gavor nar gavovaljaren fick molnets
   // katalog (/api/gavor) och NY-etiketten for gavor TikTok slappt efter forsta listan, och till
   // 20261020-26 nar katalogen delades med Gift Campaigns gavoval (window.VyraGavokatalog), och till

@@ -291,3 +291,16 @@ test('en trasig stämpel ignoreras och reserven tar över', () => {
   assert.equal(env.traffar().length, 1, 'reserven slutade fungera för event utan stämpel');
   assert.equal(env.traffar()[0].fromLevel, 5);
 });
+
+// ---- samma höjning visas en gång (2026-11-18) -------------------------------------------------
+// Uppmätt i inspelningen av sändningen 2026-11-18: "LV. 4 → 5" för samma person låg kvar i 32 s,
+// fem visningar i rad. Servern stämplade höjningen på varje händelse som hann läsa den gamla nivån.
+test('samma level-up på fem händelser i rad visas en gång', () => {
+  const { h, skicka, traffar } = boot();
+  for (let i = 0; i < 5; i++) skicka({ type: 'like', username: 'zemerje', teamLevel: 5, fanLevelUp: { from: 4, to: 5 } });
+  assert.equal(traffar().length + h.window.VyraFanLevel.koLangd(), 1, 'samma höjning köades flera gånger');
+  // Nästa nivå för samma person är en ny höjning och ska visas.
+  h.window.VyraFanLevel.nastaNu();
+  skicka({ type: 'like', username: 'zemerje', teamLevel: 6, fanLevelUp: { from: 5, to: 6 } });
+  assert.equal(traffar().length + h.window.VyraFanLevel.koLangd(), 2);
+});

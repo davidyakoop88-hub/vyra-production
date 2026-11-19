@@ -45,7 +45,7 @@ async function uppsattning({ scener = [1, 2], studio = true, actions = [action()
     lager, skrivbar: false, actions, events })));
 
   await vanta(30);                       // låt master-valet landa under sitt lås
-  if (saldo) flikar[0].VyraPoints.add('lisa', saldo);
+  if (saldo) { flikar[0].VyraPoints.add('lisa', saldo); flikar[0].VyraPoints.flush(); }   // nedskrivet, sa att de andra flikarna ser saldot
   return { lager, flikar, studio: studio ? flikar[0] : null,
     overlay: n => flikar.find(w => w.__namn === `overlay ${n}`) };
 }

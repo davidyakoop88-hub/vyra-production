@@ -546,6 +546,7 @@
         "overlay.html",
         "overlay-access.js",
         "overlay-config-sync.js",
+        "overlay-matning.js",
         "overlay-access.css",
         "overlay-diagnostics.js",
         "overlay-diagnostics.css",

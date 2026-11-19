@@ -350,3 +350,37 @@ test('bidragen slas ihop pa HANDTAGET aven nar visningsnamnet andras mitt i matc
   assert.equal(traffar()[0].score, 1400, 'de tva gavorna ar samma person och ska summeras');
   assert.equal(traffar()[0].name, 'Omar 🔥', 'det SENAST kanda namnet ar det tittarna ser');
 });
+
+// ---- MVP överlever en omritning (2026-11-18) ---------------------------------------------------
+// Att MVP visas är bara klassen mvp-active på noden. render() bygger en ny nod utan den, och en
+// omritning kommer nästan alltid: triggern sparar vinnarens namn, Studion skickar layouten och
+// OBS-källan ritar om. Davids rapport: "mvp kommer inte ut".
+test('en omritning medan MVP visas släcker den inte — och den kommer inte tillbaka efter sin tid', () => {
+  const widgets = [mvpWidget('mvp1', { mvpDuration: 7 })];
+  const h = createDom({ state: { widgets, projectName: 'mvp' } });
+  h.load('overlay-sanitize.js');
+  const run = src => { const s = h.document.createElement('script'); s.textContent = src; h.document.body.append(s) };
+  run(`state.widgets.length=0;state.widgets.push(${JSON.stringify(widgets[0])});
+    window.__rita=()=>{document.querySelectorAll('.battle-mvp').forEach(n=>n.remove());const n=document.createElement('div');n.className='widget battle-mvp';n.dataset.id='mvp1';document.body.append(n)};
+    render=function(){window.__rita()};
+    window.triggerBattleMvp=()=>{document.querySelector('.battle-mvp').classList.add('mvp-active')};
+    window.__rita();`);
+  h.load('battle-mvp-session.js');
+  const aktiv = () => h.document.querySelector('.battle-mvp').classList.contains('mvp-active');
+
+  h.window.triggerBattleMvp({ name: 'omar', score: 1200 });
+  assert.equal(aktiv(), true, 'kontrollmätning: MVP tändes');
+  assert.equal(h.window.VyraBattleMvp.visas().join(), 'mvp1');
+
+  run('render()');
+  assert.equal(aktiv(), true, 'omritningen släckte MVP');
+
+  // Efter visningstiden: en omritning får inte tända den igen.
+  const riktig = h.window.Date.now;
+  h.window.Date.now = () => riktig() + 8000;
+  try {
+    run('render()');
+    assert.equal(aktiv(), false, 'MVP tändes igen efter att visningstiden gått ut');
+    assert.equal(h.window.VyraBattleMvp.visas().length, 0);
+  } finally { h.window.Date.now = riktig; }
+});

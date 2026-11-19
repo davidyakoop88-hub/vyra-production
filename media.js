@@ -1491,7 +1491,7 @@ const campaignPickerBind=bind;bind=function(){campaignPickerBind();if(view!=='ed
    media.js alls, sa den ivriga laddningen nar bara studio.html. */
 
 const bottomDeleteBind=bind;bind=function(){bottomDeleteBind();if(view!=='editor')return;let panel=document.querySelector('.properties'),button=panel?.querySelector('#del');if(button){button.classList.add('delete-at-bottom');panel.append(button)}};
-Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261116-4'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20261117-1','action-event.js?v=20261116-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-logg.js?v=20261116-1','action-snabbstart.js?v=20261116-3','action-backup.js?v=20261116-1','action-battle.js?v=20261116-2','action-event-advanced.js?v=20261116-3','gavovideo.js?v=20261031-1','topgift-video.js?v=20261109-2','action-runtime.js?v=20261116-2'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
+Promise.resolve().then(()=>{['gift-fireworks.css?v=20261020-15','action-event.css?v=20261116-4'].forEach(href=>{let css=document.createElement('link');css.rel='stylesheet';css.href=href;document.head.append(css)});['vyra-masterval.js?v=20260817-tal','action-master.js?v=20260817-tal','vyra-tal.js?v=20261117-1','action-event.js?v=20261116-3','action-media.js?v=20260916-facit','action-scenes.js?v=20260916-facit','action-options.js?v=20261018-1','action-logg.js?v=20261116-1','action-snabbstart.js?v=20261116-3','action-backup.js?v=20261116-1','action-battle.js?v=20261116-2','action-event-advanced.js?v=20261116-3','gavovideo.js?v=20261031-1','topgift-video.js?v=20261109-2','action-runtime.js?v=20261118-1'].forEach(src=>{let js=document.createElement('script');js.src=src;document.body.append(js)})});
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='overview-premium.css?v=20261020-1';document.head.append(css);let js=document.createElement('script');js.src='overview-premium.js?v=20261020-7';document.body.append(js)});
 /* profile-frames-premium.js raderades 2026-08-18: sjalvdeklarerat dott mellansteg vars bindare saknade typvakt och kunde kapa Gift/Alert-familjens picker vid bind() utan render. CSS-filen LEVER — dess .pro-frame-picker-regler stylar dagens ws-picker (button img 58px slar .ws-frame-swatch img 38px) och foljer inte med i raderingen. */
 Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='profile-frames-premium.css?v=9';document.head.append(css)});
@@ -1508,7 +1508,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='vyra
 Promise.resolve().then(()=>{let js=document.createElement('script');js.setAttribute('src','vyra-stor-avatar.js?v=20261018-1');document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gift-alert-chrome.js?v=20260807-frameless';document.body.append(js)});
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='widget-background.js?v=1';document.body.append(js)});
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261025-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='live-leaderboard.js?v=20261118-1';document.body.append(js)});
 // Own loader line, not a second string on the one above: `js.src=a,b` parses as `(js.src=a),b`, so
 // the comma-operator version assigned live-leaderboard.js and dropped this file on the floor — the
 // whole zero-state feature was inert in the browser while every code path still looked correct.
@@ -1528,7 +1528,7 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
 /* Fan Level Up:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och
    den slar upp triggerFanLevelUp vid ANROPET - runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20261018-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='fan-level-session.js?v=20261118-1';document.body.append(js)});
 /* Fan Level Up:s koreografi. Egen fil av samma skal som CLAUDE.md ger: media.js ar storst i repot,
    och gifter-varianten av precis den har mekanismen ligger redan har inne (gifterTransform) och
    ska inte fa sallskap. Kopplingen mot triggern ar idempotent och gors om vid varje skriptladdning,
@@ -1550,9 +1550,9 @@ Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='styl
    Skriptet ensamt racker inte. Vyn ritas av en klicklyssnare pa [data-extra="liveControl"], och
    den knappen fanns inte i sidomenyn — en laddad fil utan ingang ar fortfarande onabar. Knappen
    ligger darfor i studio.html, under Insikter. */
-Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261117-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
+Promise.resolve().then(()=>{let css=document.createElement('link');css.rel='stylesheet';css.href='live-control.css?v=20261117-1';document.head.append(css);let pr=document.createElement('script');pr.src='vyra-problem.js?v=20261119-1';pr.async=false;document.body.append(pr);let js=document.createElement('script');js.src='live-control.js?v=20261117-1';js.async=false;document.body.append(js)});
 /* Gifter Level Up:s trigger, samma monster som fan-level-session.js. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261018-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='gifter-level-session.js?v=20261118-1';document.body.append(js)});
 /* Gifter/Fan Level Up i liten storlek: namnplatta, minsta textstorlek och kompaktlage. */
 Promise.resolve().then(()=>{if(!document.querySelector('link[data-lv-las]')){const css=document.createElement('link');css.rel='stylesheet';css.href='level-lasbar.css?v=20261012-1';css.dataset.lvLas='1';document.head.append(css)}let js=document.createElement('script');js.src='level-lasbar.js?v=20261025-1';document.body.append(js);let kl=document.createElement('script');kl.src='kompakt-lage.js?v=20261025-2';kl.async=false;document.body.append(kl)});
 /* Guardian Emblems trigger, samma monster som fan-level-session.js. Emblemet hade ingen livevag
@@ -1568,7 +1568,7 @@ Promise.resolve().then(()=>{let js=document.createElement('script');js.src='guar
 /* Battle MVP:s trigger. Laddas efter media.js sa routeLiveBattleEvent finns att skriva om, och den
    slar upp triggerBattleMvp vid ANROPET — runtime-controls.js byter ut funktionen mot en koad
    variant en stund efter start, och en tidig referens hade darfor gatt forbi kon. */
-Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261117-1';document.body.append(js)});
+Promise.resolve().then(()=>{let js=document.createElement('script');js.src='battle-mvp-session.js?v=20261118-1';document.body.append(js)});
 /* Fordrojningsmatningen laddas SIST med flit: den som lindar routeLiveBattleEvent sist blir yttersta
    lagret och far eventet forst, vilket ar precis nar natverkstiden ska stampas. Laddades den tidigare
    skulle den mata efter att de fyra sessionsfilerna redan kort. Se latency-probe.js for varfor. */
@@ -1825,7 +1825,7 @@ Promise.resolve().then(()=>{
   // Premium-renderarna ersatter de klassiska renderarna. Den har maste bytas nar
   // premium-final.* andras; annars kan en cachead gammal renderer rita grunddesignen
   // samtidigt som panelen redan erbjuder de nya stilnamnen.
-  const version='20261107-21';
+  const version='20261119-1';
   ['premium-final.css','runtime-controls.css','guardian-emblem-models.css','goal-motion.css','topgift-designer.css'].forEach(href=>{
     if(document.querySelector('link[href^="'+href+'"]'))return;
     const css=document.createElement('link');

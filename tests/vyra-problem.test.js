@@ -126,3 +126,32 @@ test('battle-fx-auto rapporterar avstängt paket när en boost kommer', () => {
   assert.match(l[0].text, /Automatisk battle-FX är avstängd/);
   void fall;
 });
+
+// ---- OBS-källans rader (2026-11-19) ----------------------------------------------------------
+test('OBS-källans mätrader hämtas in i samma lista, och samma rad läggs inte in två gånger', async () => {
+  const w = sida();
+  const anrop = [];
+  w.VyraAuth = {
+    lastDetail: () => ({ workspaces: [{ id: 'ws-1' }] }),
+    api: async adress => { anrop.push(adress); return { ok: true, rader: [
+      { at: 100, niva: 'varning', text: 'OBS-källan släpar: tidtagningen låg upp till 3,2 s efter', data: { lagMaxMs: 3200 } },
+      { at: 200, niva: 'info', text: 'Lagring i OBS: poänglistan 75 kB' } ] }; }
+  };
+  assert.equal(await w.VyraProblem.hamtaObs(), 2);
+  assert.equal(anrop[0], '/api/workspaces/ws-1/obs-matning?after=0');
+  const l = w.VyraProblem.lista();
+  assert.equal(l.length, 2);
+  assert.ok(l.every(r => r.kalla === 'obs'));
+  assert.match(w.document.querySelector('.lc-problem').textContent, /OBS-källan/);
+  await w.VyraProblem.hamtaObs();
+  assert.equal(anrop[1], '/api/workspaces/ws-1/obs-matning?after=200', 'nästa hämtning börjar inte efter den senaste raden');
+  assert.equal(w.VyraProblem.lista().length, 2, 'samma rader lades in igen');
+});
+
+test('utan inloggning hämtas ingenting, och ett serverfel är tyst', async () => {
+  const w = sida();
+  assert.equal(await w.VyraProblem.hamtaObs(), 0);
+  w.VyraAuth = { lastDetail: () => ({ workspaces: [{ id: 'ws-1' }] }), api: async () => { throw new Error('nere'); } };
+  assert.equal(await w.VyraProblem.hamtaObs(), 0);
+  assert.equal(w.VyraProblem.lista().length, 0);
+});

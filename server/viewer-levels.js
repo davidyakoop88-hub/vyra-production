@@ -67,6 +67,21 @@ const TOMT = { fanLevelUp: null, gifterLevelUp: null };
 
 function createViewerLevels({ query, log = (...args) => console.error(...args),
                               now = Date.now } = {}) {
+  // EN TITTARE I TAGET (2026-11-18). SQL-satsen ovan ar ETT uttalande, men det racker inte: tva
+  // samtidiga anrop for samma tittare tar var sin ogonblicksbild INNAN nagon av dem skrivit, sa bada
+  // laser den gamla nivan och bada rapporterar en hojning. Radlaset far den andra skrivningen att
+  // vanta — men `forra` ar redan last. I sandningen 2026-11-18 visades samma level-up fem ganger i
+  // rad. Darfor koas anropen per tittare har i processen: nasta fraga stalls forst nar den forra ar
+  // besvarad, och da ser den den nya nivan. Olika tittare vantar aldrig pa varandra.
+  const pagar = new Map();   // "arbetsyta|tittare" -> lofte for det senaste anropet
+  function iTur(nyckel, fn) {
+    const fore = pagar.get(nyckel) || Promise.resolve();
+    const min = fore.then(fn, fn);
+    pagar.set(nyckel, min);
+    min.then(() => { if (pagar.get(nyckel) === min) pagar.delete(nyckel); });
+    return min;
+  }
+
   return {
     // Returnerar alltid ett objekt och kastar aldrig: det här ligger i livevägen, och en gåva ska
     // nå widgetarna även om nivåminnet strular. Ett tyst level-up är en saknad alert; ett kastat
@@ -81,6 +96,7 @@ function createViewerLevels({ query, log = (...args) => console.error(...args),
       const viewerId = String(event.userId || event.username || '').trim().slice(0, 160);
       if (!viewerId || !workspaceId) return TOMT;
 
+      return iTur(workspaceId + '|' + viewerId, async () => {
       try {
         const { rows } = await query(SQL, [workspaceId, viewerId, fan, gifter]);
         const rad = (rows && rows[0]) || {};
@@ -96,6 +112,7 @@ function createViewerLevels({ query, log = (...args) => console.error(...args),
           message: error.message, at: new Date(now()).toISOString() }));
         return TOMT;
       }
+      });
     }
   };
 }

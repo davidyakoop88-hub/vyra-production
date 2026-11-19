@@ -155,6 +155,15 @@ test('A2 · en ändring markeras DIREKT som osynkad — inte "Sparat i molnet" i
   assert.equal(xPaServern(srv), 20, 'kontrollmätning: servern har fortfarande X=20');
 });
 
+// 2026-11-18: en flyttad widget väntade 0–1 s på tickern och sedan 1,8 s på debouncen. Sparsignalen köar nu själv.
+test('A2b · en sparad ändring skickas utan att tickern behöver gå — flytten når OBS direkt', async () => {
+  const { sida, srv } = await iFas();
+  sida.redigera(100);                         // ingen tick
+  await sida.korSchemalagda();
+  assert.equal(xPaServern(srv), 100, 'ändringen låg kvar och väntade på tickern');
+  assert.match(fs.readFileSync(path.join(ROOT, 'cloud-sync.js'), 'utf8'), /SKICKA_EFTER_MS=500;/, 'debouncen ska vara kort');
+});
+
 test('A3 · klockslaget i molnläge är serverns bekräftelse, inte den lokala sparningen', async () => {
   const { sida } = await iFas();
   sida.redigera(100);

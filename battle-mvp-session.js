@@ -303,7 +303,10 @@
       // En ny vinnare ar korad: namnet i layouten ar fran och med nu den har sandningens.
       vaktaOmhamtning = false;
       try { mvpTand(args && args[0] && args[0].battleId); } catch (_) {}
-      if (typeof original === 'function') return original.apply(self, args);
+      if (typeof original !== 'function') return;
+      const ut = original.apply(self, args);
+      try { minnsVisning(); } catch (_) {}
+      return ut;
     };
     root.triggerBattleMvp = function (event = {}) {
       const bid = event && event.battleId ? String(event.battleId) : '';
@@ -332,8 +335,64 @@
     };
   }
 
-  const tidigareRoute = root.routeLiveBattleEvent;
   const OVERLAY_LAGE = (() => { try { return new URLSearchParams(location.search).has('overlay'); } catch (_) { return false; } })();
+  /* MVP OVERLEVER EN OMRITNING (2026-11-18).
+   *
+   * Att MVP visas ar bara en KLASS pa noden (mvp-active, satt av mvpSpelaPa i media.js). render()
+   * bygger om hela vyn, och den nya noden saknar klassen — MVP slacktes alltsa av forsta omritningen.
+   * Och en omritning kommer nastan alltid: triggerBattleMvp skriver vinnarens namn pa widgeten och
+   * sparar, Studion skickar layouten till molnet, och OBS-kallan hamtar den och ritar om. Med Studion
+   * oppen under sandningen syntes MVP darfor bara nagra sekunder, eller inte alls — Davids rapport
+   * 2026-11-18: "mvp kommer inte ut". Uppmatt i overlay: tand, render(), display:none.
+   *
+   * Darfor minns vi vilka MVP-widgetar som visas och hur lange. Efter varje render() far en nod som
+   * tappat klassen tillbaka den och visningen spelas om fran borjan (entren ar en CSS-animation pa
+   * klassen, den gar inte att hoppa in i mitten av). Aterstallningen galler bara inom den FORSTA
+   * visningens tid, sa en MVP kan som langst synas tva visningstider — aldrig sta kvar. */
+  const visas = new Map();   // widget-id -> { start, ms, timer }
+  function mvpWidgetar() {
+    try { return (typeof state !== 'undefined' && state && Array.isArray(state.widgets)) ? state.widgets.filter(w => w && w.type === 'templateBattleMvp') : []; }
+    catch (_) { return []; }
+  }
+  function minnsVisning() {
+    const nu = Date.now();
+    for (const w of mvpWidgetar()) {
+      const gammal = visas.get(String(w.id));
+      if (gammal && gammal.timer) clearTimeout(gammal.timer);
+      visas.set(String(w.id), { start: nu, ms: (Number(w.mvpDuration) || 7) * 1000, timer: null });
+    }
+  }
+  function aterstallVisning() {
+    if (!visas.size || typeof document === 'undefined') return 0;
+    const nu = Date.now();
+    let antal = 0;
+    for (const [id, post] of visas) {
+      if (nu - post.start >= post.ms) { if (post.timer) clearTimeout(post.timer); visas.delete(id); continue; }
+      const w = mvpWidgetar().find(x => String(x.id) === id);
+      if (!w || (OVERLAY_LAGE && w.hidden)) continue;
+      let nod = null;
+      for (const n of document.querySelectorAll('.battle-mvp[data-id]')) if (n.dataset.id === id) { nod = n; break; }
+      if (!nod || nod.classList.contains('mvp-active')) continue;
+      nod.classList.add('mvp-active');
+      if (post.timer) clearTimeout(post.timer);
+      post.timer = setTimeout(() => { post.timer = null; try { if (nod.isConnected) nod.classList.remove('mvp-active'); } catch (_) {} }, post.ms);
+      antal++;
+    }
+    return antal;
+  }
+  try {
+    if (typeof render === 'function') {
+      const forraRender = render;
+      render = function () {
+        const ut = forraRender.apply(this, arguments);
+        try { aterstallVisning(); } catch (_) {}
+        return ut;
+      };
+    }
+  } catch (_) {}
+  addEventListener('vyra-session-ended', () => { visas.forEach(p => p.timer && clearTimeout(p.timer)); visas.clear(); });
+
+  const tidigareRoute = root.routeLiveBattleEvent;
   root.routeLiveBattleEvent = function (event = {}) {
     if (typeof tidigareRoute === 'function') tidigareRoute(event);
     const typ = String(event.type || event.event || '').toLowerCase();
@@ -411,6 +470,8 @@
     // Exponerad for provet — och som break-glass om en gammal MVP nagon gang star kvar och ingen
     // ny sandning ar pa vag. Returnerar antalet widgetar som faktiskt stadades.
     nollstallText: () => nollstallMvpText(),
+    // For prov: vilka MVP-widgetar som visas just nu, och aterstallningen efter en omritning.
+    visas: () => [...visas.keys()], aterstallVisning: () => aterstallVisning(),
     TOM_MVP
   };
 

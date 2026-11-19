@@ -42,7 +42,18 @@
   window.VyraSessionState?.registerTeardown?.('alert-queue',riv);
   addEventListener('vyra-session-ended',riv);
     const configs={triggerBattleMvp:[8000,10],triggerGifterLevelUp:[6000,8],triggerFanLevelUp:[6000,7],triggerNewFollower:[5000,3],triggerGuardianEmblem:[8000,5]};
-  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
+  /* EN ALERT UTAN WIDGET TAR INGEN PLATS I KON (2026-11-19).
+     Forr lade varje trigger ett jobb med full visningstid i kon, aven nar layouten inte hade nagon
+     widget av den typen: en ny foljare holl kon i 5 s och en Guardian i 8 s utan att nagot syntes.
+     I en sandning kommer foljare hela tiden, sa Fan Level Up och Battle MVP fick vanta bakom jobb
+     som inte gjorde nagot — och det som vantat over 30 s kastades. Uppmatt genom den riktiga kedjan
+     (lokal server, OBS-lank): en layout med bara Fan Level Up tande alerten 15 s for sent. Loggen fran
+     sandningen 2026-11-18 sager samma sak om MVP: 19-24 s efter matchslut.
+     Triggern anropas anda (den gor ingenting utan sin widget) — bara koplatsen uteblir. En widget som
+     ar dold raknas inte: den tands aldrig i sandningen. */
+  const KOTYPER={triggerBattleMvp:'templateBattleMvp',triggerGifterLevelUp:'templateGifterLevel',triggerFanLevelUp:'templateFanLevel',triggerNewFollower:'templateFollowerAlert',triggerGuardianEmblem:'templateGuardianEmblem'};
+  function harWidget(name){const typ=KOTYPER[name];if(!typ)return true;try{return state.widgets.some(w=>w&&w.type===typ&&!w.hidden)}catch{return true}}
+  function installQueueWrappers(){Object.entries(configs).forEach(([name,[duration,priority]])=>{let fn=window[name];if(typeof fn!=='function'||wrapped.has(fn))return;let queued=function(event){let d=duration;if(name==='triggerBattleMvp')d=(state.widgets.find(w=>w.type==='templateBattleMvp')?.mvpDuration||7)*1000;if(name==='triggerGifterLevelUp')d=(state.widgets.find(w=>w.type==='templateGifterLevel')?.gifterDuration||6)*1000;if(name==='triggerFanLevelUp')d=(state.widgets.find(w=>w.type==='templateFanLevel')?.fanDuration||6)*1000;if(!harWidget(name)){try{fn(event)}catch(e){console.error('[VYRA queue]',e)}return}VyraAlertQueue.push(()=>fn(event),d,priority)};wrapped.add(queued);window[name]=queued})}
   setTimeout(installQueueWrappers,500);setTimeout(installQueueWrappers,2200);addEventListener('load',installQueueWrappers);
 
   /* .gift-fireworks-fx star med sedan raketerna borjade visa den RIKTIGA gavan: deras src ar numera

@@ -69,7 +69,17 @@
     root.setTimeout(() => { spelar = false; nasta() }, visningsMs());
   }
 
+  // SAMMA HOJNING VISAS EN GANG (2026-11-18). I sandningen 2026-11-18 lag en och samma level-up kvar
+  // i 32 s — fem visningar i rad for samma person och samma niva (uppmatt i inspelningen, bildruta for
+  // bildruta). Servern stamplar hojningen pa varje handelse som hinner lasa den gamla nivan, och en
+  // tittare som just gatt upp en niva skickar ofta flera handelser i samma ogonblick. En person kan
+  // inte na samma niva tva ganger, sa nyckeln ar namn + niva och den lever sa lange sidan lever.
+  const visade = new Set();
   function koa(jobb) {
+    const nyckel = String(jobb && jobb.name) + '|' + Number(jobb && jobb.level);
+    if (visade.has(nyckel)) return;
+    visade.add(nyckel);
+    if (visade.size > 2000) visade.delete(visade.values().next().value);
     if (ko.length >= NODBROMS) {
       kastade += 1;
       try {
@@ -135,6 +145,6 @@
     // Släpper nästa jobb direkt i stället för att vänta ut visningstiden. Finns för tester och för
     // felsökning; produktionen driver kön på timern i nasta().
     nastaNu: () => { spelar = false; nasta() },
-    glom: () => { senaste.clear(); ko.length = 0; spelar = false; kastade = 0 }
+    glom: () => { senaste.clear(); visade.clear(); ko.length = 0; spelar = false; kastade = 0 }
   };
 })(window);

@@ -24,7 +24,7 @@
   'use strict';
   const NYCKEL = 'vyra-problemlogg', MAX = 300, DUBBLETT_MS = 10000, VISAS = 60;
   const OVERLAY = !!root.VYRA_OVERLAY_SCENE || !!root.VYRA_OVERLAY || /[?&]overlay(=|&|$)/.test(String(root.location && root.location.search || ''));
-  const KALLOR = { avatar: 'Avatar', battle: 'Battle-klipp', mvp: 'MVP', tts: 'TTS', ljud: 'Sound Alerts', action: 'Action & Event' };
+  const KALLOR = { avatar: 'Avatar', battle: 'Battle-klipp', mvp: 'MVP', tts: 'TTS', ljud: 'Sound Alerts', action: 'Action & Event', obs: 'OBS-källan' };
   const NIVAER = { fel: 'Fel', varning: 'Varning', info: 'Info' };
 
   const las = () => { try { const v = JSON.parse(root.localStorage.getItem(NYCKEL) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
@@ -91,7 +91,7 @@
       + `<div class="lc-problem-knappar"><button type="button" data-problem-spara>Spara som fil</button><button type="button" data-problem-rensa>Rensa</button></div>`
       + (l.length ? `<ol class="lc-problem-lista">${l.slice(0, VISAS).map(radHtml).join('')}</ol>`
         : `<p class="lc-problem-tom">Här säger avataren, battle-klippen, MVP, TTS och Sound Alerts till när något inte blir som det ska — och varför.</p>`)
-      + `<small class="lc-problem-not">Studion räknar ut samma beslut som OBS-overlayn. Om OBS själv inte kunde spela en fil syns det inte här. "Spara som fil" tar med LIVE-kontrollens händelser.</small>`;
+      + `<small class="lc-problem-not">Studion räknar ut samma beslut som OBS-overlayn. Rader märkta OBS-källan kommer från själva sidan i OBS: hur sent tidtagningen går, bildrutor, lagring och filer som inte gick att spela. "Spara som fil" tar med LIVE-kontrollens händelser.</small>`;
   }
   function montera(sida) {
     if (!sida || OVERLAY) return;
@@ -102,6 +102,7 @@
       const huvud = sida.querySelector('.lc-head');
       if (huvud) huvud.after(ruta); else sida.prepend(ruta);
     }
+    if (!ruta.dataset.obsHamtad) { ruta.dataset.obsHamtad = '1'; try { hamtaObs(); } catch {} }
     ruta.innerHTML = innehall();
     ruta.querySelector('[data-problem-spara]').onclick = exportera;
     ruta.querySelector('[data-problem-rensa]').onclick = rensa;
@@ -113,5 +114,42 @@
   // En annan flik (OBS i samma webbläsare, en andra studioflik) kan ha skrivit.
   try { root.addEventListener('storage', e => { if (e.key === NYCKEL) rita(); }); } catch {}
 
-  root.VyraProblem = { rapportera, lista: las, rensa, exportera, montera, NYCKEL, KALLOR };
+  /* OBS-KÄLLANS RADER (2026-11-19). OBS-overlayn mäter sig själv (overlay-matning.js) och skickar korta
+     rader till servern; här hämtas de högst var 30:e sekund och läggs i samma lista. `at` är serverns
+     klocka och minns i lagringen, så en omladdad studio inte lägger in samma rad igen. Utan
+     inloggning eller utan arbetsyta görs ingenting, och ett fel är tyst — mätningen får aldrig störa. */
+  const OBS_EFTER = 'vyra-problem-obs-efter', OBS_MS = 30000;
+  let obsHamtar = false;
+  function hamtaObs() {
+    if (OVERLAY || obsHamtar) return Promise.resolve(0);
+    let ws = null;
+    try { ws = root.VyraAuth && root.VyraAuth.lastDetail && root.VyraAuth.lastDetail()?.workspaces?.[0]?.id; } catch {}
+    if (!ws || !root.VyraAuth || typeof root.VyraAuth.api !== 'function') return Promise.resolve(0);
+    let efter = 0;
+    try { efter = Number(root.localStorage.getItem(OBS_EFTER)) || 0; } catch {}
+    obsHamtar = true;
+    return Promise.resolve(root.VyraAuth.api('/api/workspaces/' + ws + '/obs-matning?after=' + efter)).then(d => {
+      const rader = d && Array.isArray(d.rader) ? d.rader : [];
+      let senast = efter;
+      for (const r of rader) {
+        if (!r || !(Number(r.at) > efter)) continue;
+        senast = Math.max(senast, Number(r.at));
+        rapportera('obs', r.niva, r.text, r.data);
+      }
+      if (senast > efter) { try { root.localStorage.setItem(OBS_EFTER, String(senast)); } catch {} }
+      return rader.length;
+    }).catch(() => 0).then(n => { obsHamtar = false; return n; });
+  }
+  // INGEN EGEN KLOCKA. Hämtningen drivs av livehändelserna (högst var 30:e sekund) och av att
+  // LIVE-kontroll öppnas. Utan sändning kommer inga händelser, och då finns inget nytt att hämta.
+  let obsSenast = 0;
+  function hamtaObsVidBehov() {
+    const nu = Date.now();
+    if (nu - obsSenast < OBS_MS) return;
+    obsSenast = nu;
+    hamtaObs();
+  }
+  try { if (!OVERLAY) root.addEventListener('vyra-live-event', hamtaObsVidBehov); } catch {}
+
+  root.VyraProblem = { rapportera, lista: las, rensa, exportera, montera, hamtaObs, NYCKEL, KALLOR };
 })(typeof window !== 'undefined' ? window : globalThis);
