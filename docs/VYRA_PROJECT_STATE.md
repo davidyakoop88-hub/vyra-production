@@ -1,5 +1,67 @@
 # VYRA Project State
 
+## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
+
+PR #798 mergad till `main` (`a92cbc2`, vanlig merge-commit, åtta commits). Underlag: Davids rapport
+2026-11-18 — inspelningen av sändningen (2 h, granskad i sin helhet), LIVE-kontrollens sparade fil
+och "Problem i sändningen". Allt nedan är **mätt** genom en riktig kedja lokalt: VYRA-servern mot
+Postgres 18 och Redis-kompatibel Memurai, en riktig OBS-länk (`?access=`), händelser genom samma
+intag som TikTok-bryggan använder. Gammal kod = `main` före PR:en.
+
+### Fel och mätning
+
+| fel | gammal kod | ny kod |
+|---|---|---|
+| MVP släcks av omritningen när studion sparar vinnarens namn | synlig 1 s | synlig 10 s |
+| Sidan halkar efter under belastning (6 000 tittare, 90 händelser/s) | släp upp till 17,5 s | under 0,45 s |
+| Fan Level Up väntar bakom alerter som saknar widget (följare, Guardian) | tänds 15 s för sent | tänds direkt |
+| Samma level-up stämplas på flera samtidiga händelser | flera visningar i rad | en stämpel av fem händelser |
+| Flyttad widget når OBS | upp till 2,8 s (timrar i koden) | 0,94 s uppmätt |
+
+### Vad som ändrades
+
+1. **Fördröjning över tid** — `live-leaderboard.js` minns topplistan per mått i stället för att
+   sortera alla tittare vid varje händelse. `action-runtime.js` håller poängreskontran i minnet och
+   skriver ner den högst fyra gånger i sekunden.
+2. **Alertkön** — `runtime-controls.js`: en alert utan synlig widget av sin typ tar ingen plats i kön.
+3. **Omritning** — OBS-källan väntar med omritningen tills pågående effekter spelat klart (högst
+   12 s). MVP tänds igen efter en omritning.
+4. **Level-up en gång** — `server/viewer-levels.js` köar per tittare; klienten köar samma
+   namn+nivå en gång.
+5. **Snabbare sparning** — `cloud-sync.js` köar ändringen direkt och skickar efter 0,5 s.
+6. **Mätning i OBS** — `overlay-matning.js` → `server/obs-matning.js` → "Problem i sändningen":
+   tidtagning, bildrutor, lagring, fyrverkeriets bildrutor, filer som inte gick att spela.
+   **Går aldrig genom händelsebussen** — händelsekontraktet är orört. Nya prov:
+   `server/test/obs-matning.test.js`, `tests/overlay-matning.test.js`.
+
+### Alla widgetar
+
+Alla 182 katalognycklar kördes genom den riktiga kedjan med en hel provsändning per omgång: 182
+skapades och ritades, 0 JavaScript-fel, 0 exempelnamn i OBS, 0 alerter som fastnade, 176 syntes. De
+sex som inte syntes är Quiz och Viewer Showcase, som kräver att streamern startar dem.
+
+### CI vid merge
+
+Alla 15 kontroller klara: 14 gröna, `katalogkarta` överhoppad. Bland de gröna: alla sex
+webbläsardelar, `test-visuell`, `test-client`, `test`, `test-tiktok-bridge`, `goal-runtime`,
+`windows-installer`.
+
+### Inte provat — står kvar
+
+- **Riktig TikTok-trafik:** händelserna är inmatade genom intaget, inte från TikTok.
+- **OBS:s egen webbläsare:** provat i Chrome.
+- **TTS och Sound Alerts:** inte provade. Loggen från sändningen visar att ljudlarm ströps för
+  händelser som kom över 30 s för sent.
+- **Layoutsparning vid händelser:** Goal Pro, Podium och Like Fountain får studion att spara
+  layouten vid händelser (sex sparningar på 15 s i provet). Inte ändrat här — på tur.
+
+### Nästa steg
+
+1. Läs `docs/live-verifiering.md` före nästa sändning och fyll i den efteråt; läs av de nya
+   mätraderna i "Problem i sändningen" mot siffrorna ovan.
+2. Titta på varför Goal Pro, Podium och Like Fountain sparar layouten vid händelser.
+3. Prova TTS och Sound Alerts mot sen leverans (över 30 s).
+
 ## Checkpoint 56 — TikTok-event borta: kedjan som aldrig publicerade ett event (2026-09-24)
 
 **TikTok-event finns inte längre.** David och Codex byggde den, men den blev aldrig färdig, och den
