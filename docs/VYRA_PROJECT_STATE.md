@@ -1,5 +1,105 @@
 # VYRA Project State
 
+## Checkpoint 58 — Efter sändningen: fyra fel till, och mätning där orsaken saknas (2026-11-19)
+
+Fyra PR:er mergade efter #798 (checkpoint 57): #799, #800, #801 och #802, och ett femte fel (`repeatEnd` i skrivbordsappen) rättat i den PR som bär den här checkpointen. Två felsökningar låg bakom, en
+egen genomläsning av koden och en oberoende granskning av samma commit; där de pekade ut samma rad
+verifierades den mot koden innan något ändrades. **#800 är inte provad av den här sessionen** — siffrorna
+för den kommer från PR-beskrivningen.
+
+### Vad som rättades
+
+| PR | Fel | Rättning |
+|---|---|---|
+| #799 | `cloudEvent()` (`tiktok-bridge/normalizer.js`) listar sina fält uttryckligen och tappade `streakId` och `repeatEnd`, som bryggan sätter. På molnvägen visades streaken aldrig tidigt (`live-client.js` kräver `streakId`), och Goal Pro/Podium såg inte att en gåva var avslutad: två avslutade gåvor inom 12 s räknades 2 + 1 i stället för 2 + 3 | Båda fälten bärs villkorligt i `cloudEvent()` och serverns `cleanEvent()`. Ett event från en äldre brygga ser ut som förut |
+| #800 | Top Like Neonramar (`toplike-ljusring.js`): passningen skrev `font-size` och bevakaren lyssnade på sina egna skrivningar, så ett namn som måste krympas startade en synk varje bildruta. OBS-källan frös 20–120 s. Dessutom köade `server/index.js` utan tak åt mottagare som slutat läsa (heap out of memory vid 4 GB) | Passning en gång per namn och bredd; servern stänger anslutningen över 1 MB väntande data och EventSource kopplar upp igen med Last-Event-ID. Enligt PR-beskrivningen: bildrutor per fyrverkeri 2 → 137–181 i OBS:s egen webbläsare, största släp 54,6 s → 0,33 s |
+| #801 | Like Fountain: `live-client.js` skickar varje like två vägar (`emit('vyra-live-event')` och `routeLiveBattleEvent`) och båda ropade `triggerLikeFountainPop` — fem likes räknades som tio. `lfPopPa` ropade dessutom `save()` per like, alltså en molnsparning per like | Lyssnaren i `like-fountain-portal.js` markerar eventet (`__fontanKlar`), routern i `media.js` hoppar över markerade. `lfPopPa` sparar inte längre |
+| #802 | Sound Alerts kastade händelser över 30 s, men loggen sa inte var tiden försvann | Ingen rättning — **mätning**, se nedan |
+| denna PR | Skrivbordsappen skickade aldrig `repeatEnd`, så samma felräkning i Goal Pro/Podium som #799 rättade på molnvägen fanns kvar över desktopvägen | `electron-app/tiktok-service.js` sätter `repeatEnd: true` på varje gåva som skickas (mellanframes returneras redan tidigare), och `local-server.js` `cleanEvent()` bär fältet villkorligt, som `server/event-bus.js` |
+
+### Mätningen vid ljudgrinden (#802)
+
+Orsaken till de 30 s-kastade ljudlarmen är **inte fastställd**. Åldern i grinden är `at` (satt av bryggan i
+`cloudEvent`) mot serverns klocka, alltså summan av TikTok → brygga → server → klient plus varje klockas fel
+mot de andra. En brygga vars klocka går fel mot servern ser ut som en fördröjning utan att något är långsamt.
+
+`saNotera()` i `sound-alerts.js` sparar i `window.VyraLjudgrind`: för de 20 senaste kastade händelserna alla
+tider och de tre sträckorna var för sig (`steg.tiktokTillBryggaMs`, `bryggaTillServerMs`,
+`serverTillKlientMs`, `null` när fältet saknas), PC-klockans fel mot servern och en markering för historik vid
+laddning; dessutom åldern på de 50 senaste händelserna som nådde grinden (`aldrar`). Bara mätvärden: inget
+beslut ändras, inget går genom händelsebussen. **Sound Alerts spelar aldrig i OBS-källan**
+(`sound-alerts.js`: `saIOverlay()` ger `return`) — avläsningen görs i studiofliken eller VYRA Desktop.
+
+### Invarianter som gäller efter de här ändringarna
+
+- `streakId` och `repeatEnd` bärs genom hela kedjan brygga → server → klient. Ändras något av leden, ändra alla tre (`tests/streak-molnvagen.test.js` kör hela kedjan).
+- En like ändrar aldrig layouten. Like Fountains livevärden (`fountainUser`, `profileImage`, `fountainLikeCount`) ligger på widgeten i minnet och följer med nästa riktiga sparning. Efter en omladdning visar etiketten tittaren från nästa like.
+- `live-client.js` skickar varje event två vägar. En ny widgettrigger som lyssnar på `vyra-live-event` **och** anropas av `routeLiveBattleEvent` räknar varje event två gånger om den inte markerar eventet.
+
+### Goal Pro och Podium sparar inte layouten (mätt 2026-11-19)
+
+De sex sparningarna på 15 s i provet från #798 kom inte från Goal Pro eller Podium. `tests/browser/pg-sparar-inte.browser.test.js`
+kör en layout med bara de två widgetarna, tolv gåvor, tolv likes och följare genom `VyraLive.ingest`, och räknar skrivningar av
+`vyra-state`: **0**. En kontroll i samma prov anropar `save()` och kräver minst en skrivning, så noll kan inte bero på att
+mätningen är blind. Like Fountain (#801) var den som skrev.
+
+**Lärdom om att mäta sparningar i webbläsarprov:** `save` är en `const` i det globala lexikala scopet. Den ligger inte på `window` och
+går inte att skriva över, så en spion på `window.save` fångar aldrig något och ger noll vad som än händer. Första versionen av
+fontänprovet i #801 gjorde så. Räkna i stället skrivningar av nyckeln `vyra-state` (`Storage.prototype.setItem`), vänta in
+`writeActive` (asynkron), och lägg alltid in en kontroll som visar att mätningen kan ge något annat än noll. Fontänprovet är
+rättat och faller nu på gamla koden (`3 !== 0` när `save()` läggs tillbaka i `lfPopPa`).
+
+### Tvingad layout i Goal Pro (rättat)
+
+Mätt i Chromium med en layout med Like Fountain, Last X, Goal Pro och Podium och trafik genom `VyraLive.ingest` (30 händelser):
+läsningar av `clientWidth`/`offsetParent`/`getBoundingClientRect`/`getComputedStyle`, tidtagna per anropsplats.
+
+| | anrop | tid i tvingade layouter |
+|---|---|---|
+| före | 957 | 1 129 ms, **1 102 ms på en enda rad** (`paintSteps`, `playground-widgets.js`) |
+| efter | 24 | 0,0 ms |
+
+**Orsak:** Goal Pro bygger alla nio designer och döljer de som inte är valda med `display:none` på kortet (`.gvc`). Varje
+bildruta (`paintText`, via `loop`) skrev text och staplar för alla designer och läste sedan `clientWidth`/`offsetParent` på
+raderna. Läsningen tvingar webbläsaren att räkna ut hela layouten efter skrivningarna.
+
+**Rättning, två steg (i `playground-widgets.js`):**
+1. `gomd(el)` svarar ur kortets egen inline-stil om designen är dold, utan layout, och `cwOf(el)` ger då 0 — samma svar som
+   `clientWidth` gav för en dold design. Bara att vakten ensam räckte inte: kostnaden flyttade till nästa läsning, i den synliga designen.
+2. Bredden på en synlig design cachas i en `ResizeObserver` (`cwOf`), så bildrutan inte läser den. Utan `ResizeObserver` (jsdom) läses
+   bredden direkt som förut. `offsetParent`-kontrollerna på raderna ersattes av bredden (`clientWidth > 0` betyder renderad).
+   `ring` och `g4` (SVG, där `clientWidth` är 0) behåller `offsetParent`, men bara för synliga designer.
+
+**Likhet mot förut:** alla nio designer jämfördes före och efter med slutvärdet nått (40 %, 799 mynt): texter, markörens
+position (t.ex. `351.56px`) och stapelbredder är identiska för 9 av 9. Före rättningen gick räkneverket också märkbart
+långsammare (787 mot 793 efter 9 s), vilket är samma kostnad sedd från andra hållet.
+
+**Prov:** `tests/browser/pg-tvingad-layout.browser.test.js` räknar läsningar av `clientWidth` som kostar en layout (över 3 ms).
+Gamla koden: 270 av 2 950. Nya koden: 0. Provet har en kontroll att mätningen kan se en läsning.
+
+### Prov
+
+| Prov | Resultat |
+|---|---|
+| `tests/streak-molnvagen.test.js` (nytt, 5) | 4 av 5 faller på gamla koden, alla går på nya |
+| `fontan-livevag.browser.test.js`, nytt prov genom `VyraLive.ingest` | gamla koden `10 !== 5`, nya går |
+| `tests/ljudgrind-matning.test.js` (nytt, 4) | 0 av 4 på gamla koden, 4 av 4 på nya |
+| `electron-app/test/larlage-paritet.test.js`, två nya prov för `repeatEnd` (tjänsten och hela vägen genom `cleanEvent`) | båda faller på gamla koden, går på nya |
+| `electron-app npm test` | 171 / 171 |
+| rot `npm test` efter #802 | 3192 godkända, 0 fel, 3 överhoppade |
+| CI på #799, #801, #802 | alla 14 kontroller gröna (`katalogkarta` överhoppad) |
+
+### Inte provat — står kvar
+
+- **Riktig TikTok-trafik** och **OBS:s egen webbläsare** (#800 provades mot inspelad trafik i OBS, men inte de här rättningarna).
+- **Tvingad layoutmätning per händelse i Like Fountain och Last X.** Goal Pro är rättat (se nedan). Like Fountain och Last X återstår; den här sessionens mätning av en layout med alla tre såg dem inte som kostnadsdrivare (se nedan), men #800 mätte ungefär 50 ms per like i OBS, så de är inte avfärdade.
+- Bryggans retry vid misslyckad leverans, ordning och återanslutning med SSE-ID, och antaganden om TikToks payloads är **inte granskade av den här sessionen**; de kommer från den oberoende granskningen och är inte verifierade.
+
+### Nästa steg
+
+1. Efter nästa sändning: läs `VyraLjudgrind.stoppade` och `VyraLjudgrind.aldrar` i studiofliken, och `docs/live-verifiering.md`. Fyll i den efteråt.
+2. Mät Like Fountain och Last X separat i en OBS-lik sida; de kan fortfarande tvinga layout (se ovan).
+
 ## Checkpoint 57 — Sändningen: fördröjning över tid, alertkön, omritning och mätning i OBS (2026-11-19)
 
 PR #798 mergad till `main` (`a92cbc2`, vanlig merge-commit, åtta commits). Underlag: Davids rapport

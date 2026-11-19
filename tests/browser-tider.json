@@ -45,6 +45,8 @@
     "mal-livevag.browser.test.js": 45,
     "streak-livevag.browser.test.js": 36,
     "pg-livevag.browser.test.js": 46,
+    "pg-sparar-inte.browser.test.js": 15,
+    "pg-tvingad-layout.browser.test.js": 20,
     "fyrverkeri-livevag.browser.test.js": 50,
     "fontan-livevag.browser.test.js": 76,
     "fl50-glove-livevag.browser.test.js": 41,

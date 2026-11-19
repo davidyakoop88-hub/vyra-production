@@ -224,3 +224,41 @@ test('en icke-streakbar gåva passerar utan repeatEnd', async () => {
   });
   assert.equal(utsanda.length, 1, 'en gåva som inte är streakbar har ingen mellanframe att tappa');
 });
+
+// REPEATEND ÖVER DESKTOPVÄGEN (2026-11-19). Molnbryggan skickar repeatEnd (normalizer.js giftFields); desktop gjorde det
+// aldrig, så Goal Pro och Podium (playground-widgets.js conv) tolkade två avslutade gåvor från samma tittare inom 12 s som
+// EN combo och räknade 2 + 1 i stället för 2 + 3. Fältet sätts i tiktok-service.js och måste överleva cleanEvent() i
+// local-server.js (se vitlistans-paritet.test.js för varför det mäts genom hela vägen).
+test('en avslutad gåva bär repeatEnd true ut ur tjänsten', async () => {
+  const utsanda = [];
+  await medStubbadConnector(async (skapa, hanterare) => {
+    const tjanst = skapa({ onStatus() {}, onEvent: e => utsanda.push(e) });
+    await tjanst.connect('provkonto');
+    hanterare.get('gift')(raGava({ repeatCount: 5, repeatEnd: 1 }));
+    hanterare.get('gift')(raGava({ gift: { type: 0 }, repeatEnd: 0, giftId: 9002 }));   // icke-streakbar: går ut som en färdig gåva
+  });
+  const gavor = utsanda.filter(e => e.type === 'gift');
+  assert.equal(gavor.length, 2);
+  for (const g of gavor) assert.equal(g.repeatEnd, true, 'varje gift som skickas är en färdig gåva');
+});
+
+test('repeatEnd överlever local-servers vitlista hela vägen till klienten', async () => {
+  const { startLocalServer } = require('../local-server');
+  const port = 45290 + Math.floor(Math.random() * 500);
+  const server = await startLocalServer(path.join(__dirname, '..', '..'), port, {});
+  try {
+    const origin = `http://127.0.0.1:${port}`;
+    const post = (nyckel, kropp) => fetch(origin + '/api/events', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'gift', eventKey: nyckel, giftId: '9001', giftName: 'Rose', ...kropp }) });
+    await post('re1', { repeatEnd: true });
+    await post('re2', { repeatEnd: false });
+    await post('re3', {});
+    const svar = await (await fetch(origin + '/api/events?after=0')).json();
+    const rader = svar.events || svar || [];
+    const ar = k => rader.find(x => x.eventKey === k);
+    assert.equal(ar('re1').repeatEnd, true, 'repeatEnd true stryks av cleanEvent');
+    assert.equal(ar('re2').repeatEnd, false, 'repeatEnd false ska bevaras, inte bli saknat');
+    assert.ok(!('repeatEnd' in ar('re3')), 'ett event utan fältet ska se ut som förut');
+  } finally { await new Promise(r => server.close(r)); }
+});

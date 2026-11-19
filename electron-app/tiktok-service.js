@@ -87,7 +87,13 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
         // live-leaderboard.js — den sista kraver migrering eller dubbel lasning.
         diamonds: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
         coins: number(data?.diamondCount ?? data?.gift?.diamondCount ?? data?.gift?.diamond_count, 1e9) * Math.max(1, number(data?.repeatCount || 1, 1e7)),
-        count: number(data?.repeatCount || 1, 1e7)
+        count: number(data?.repeatCount || 1, 1e7),
+        // GÅVAN ÄR AVSLUTAD (2026-11-19). Samma fält som molnbryggan (normalizer.js giftFields). Goal Pro och
+        // Podium (playground-widgets.js conv) räknar bara skillnaden mot förra framen så länge repeatEnd inte
+        // är true; utan fältet såg två avslutade gåvor från samma tittare inom 12 s ut som EN combo och
+        // räknades 2 + 1 i stället för 2 + 3. Varje event som skickas här är en färdig gåva eller streakens
+        // första ram (streakstart, som aldrig räknas) — mellanframes returneras ovan — så värdet är true.
+        repeatEnd: true
       };
       // GÅVAN SYNS VID FÖRSTA TAPPET — samma regel som tiktok-bridge/bridge.js. Streakens första frame
       // går direkt som `streakstart` (bara visning, räknas aldrig); slutframen är `gift` som förut och

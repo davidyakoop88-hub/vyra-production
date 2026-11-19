@@ -22,6 +22,27 @@ const fmt=n=>Math.round(n).toLocaleString("sv-SE");
 function hue(n){let h=0;for(const c of n)h=(h*31+c.charCodeAt(0))%360;return h}
 function grad(n){const h=hue(n);return `linear-gradient(135deg,hsl(${h} 80% 58%),hsl(${(h+50)%360} 80% 42%))`}
 function bump(el){el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump")}
+/* DOLDA DESIGNER LÄSER INGEN LAYOUT (2026-11-19). Goal Pro bygger alla nio designer och döljer de som inte är valda med
+ * display:none på kortet (.gvc, se apply()). Varje bildruta skrev text och bredder för ALLA designer och läste sedan
+ * clientWidth/offsetParent på de dolda — som alltid ger 0 — men läsningen tvingar webbläsaren att räkna ut hela
+ * layouten efter skrivningarna. Uppmätt i Chromium: 82 tvingade layouter på 30 händelser, 1 147 ms, nästan allt på
+ * en enda rad (paintSteps). `gomd` svarar utan layout ur kortets egen inline-stil och ger samma svar som läsningen
+ * hade gett (0 för en dold design); en synlig design läser som förut. */
+const gomd=el=>{const c=el&&el.closest&&el.closest(".gvc");return !!c&&c.style.display==="none"};
+/* Bredden på en SYNLIG design läses ur en cache som en ResizeObserver håller fräsch. Raden skriver text och staplar varje
+ * bildruta och läste sedan clientWidth, så varje bildruta tvingade fram en layout för en bredd som nästan aldrig ändras.
+ * Första läsningen är direkt (och startar bevakningen); observatören körs efter layouten, så dess läsning är gratis.
+ * Utan ResizeObserver (jsdom) läses bredden direkt som förut. */
+const cwCache=new WeakMap();
+let cwRO=null;try{if(typeof ResizeObserver==="function")cwRO=new ResizeObserver(es=>{for(const e of es)cwCache.set(e.target,e.target.clientWidth)})}catch(_){cwRO=null}
+const cwOf=el=>{
+  // Ett element som tagits ur DOM gav 0 med clientWidth. Cachen får inte ge ett gammalt värde där: loopen går då vidare till
+  // fxp() → tgt() → O() för en widget som inte finns längre (TypeError i lager-tva-widgetar.browser.test.js).
+  if(!el||!el.isConnected||gomd(el))return 0;
+  if(!cwRO)return el.clientWidth;
+  let v=cwCache.get(el);
+  if(v===undefined){v=el.clientWidth;cwCache.set(el,v);try{cwRO.observe(el)}catch(_){}}
+  return v};
 
 
 // SESSIONEN S är sändningens: riktiga livehändelser (routeLiveBattleEvent → feed) skriver här och alla
@@ -328,7 +349,7 @@ W.goalvar={name:"Mål-varianter",
     function spawn(fast){const fd=ringFill();if(fd<6)return;parts.push({a:Math.random()*Math.min(fd*.2,18),r:(Math.random()-.5)*14,sp:fast?80+Math.random()*90:26+Math.random()*34,sz:2+Math.random()*3.4,life:0,w:Math.random()*6.28})}
     function cloop(t){
       const dt=Math.max(0,Math.min(.05,((t-lastT)/1000)||0));lastT=Math.max(lastT,t);
-      if(cx2&&ring.offsetParent){
+      if(cx2&&(!gomd(ring)&&ring.offsetParent)){
         const fd=ringFill();spawnAcc+=dt*(fd>6?7:0);while(spawnAcc>1){spawnAcc--;spawn(false)}
         cx2.clearRect(0,0,300,300);
         parts=parts.filter(q=>{q.a+=q.sp*dt;q.life+=dt;q.w+=dt*3;return q.a<fd-1&&q.life<7});
@@ -351,7 +372,7 @@ W.goalvar={name:"Mål-varianter",
     function spawn4(fast){const fd=gFill();if(fd<5)return;p4.push({a:Math.random()*Math.min(fd*.2,12),r:(Math.random()-.5)*20,sp:fast?50+Math.random()*60:17+Math.random()*24,sz:2.4+Math.random()*4.2,w:Math.random()*6.28})}
     function gloop(t){
       const dt=Math.max(0,Math.min(.05,((t-lt4)/1000)||0));lt4=Math.max(lt4,t);
-      if(c4&&g4.offsetParent){
+      if(c4&&(!gomd(g4)&&g4.offsetParent)){
         const fd=gFill();sa4+=dt*(fd>5?7:0);while(sa4>1){sa4--;spawn4(false)}
         c4.clearRect(0,0,420,250);
         p4=p4.filter(q=>{q.a+=q.sp*dt;q.w+=dt*3;return q.a<fd-1});
@@ -364,18 +385,18 @@ W.goalvar={name:"Mål-varianter",
     if(g4){g4.__cloop=gloop;raf4=requestAnimationFrame(gloop)}
     const row5=$(".s5row",root),cv5=row5&&$("canvas",row5),c5=cv5&&cv5.getContext("2d"),mk5=$(".s5mark",root),segs5=row5?[...row5.querySelectorAll(".seg i")]:[];
     let p5=[],lt5=0,sa5=0,raf5=0,lastSeg=0;const H5=40;
-    function headX5(){const W=row5.clientWidth,cw=(W-72)/10,pp=Math.min(1,shown/tgt())*10,i=Math.min(9,Math.floor(pp)),fr=pp>=10?1:pp-i;return i*(cw+8)+fr*cw}
+    function headX5(){const W=cwOf(row5),cw=(W-72)/10,pp=Math.min(1,shown/tgt())*10,i=Math.min(9,Math.floor(pp)),fr=pp>=10?1:pp-i;return i*(cw+8)+fr*cw}
     function paintSteps(){
       if(!row5)return;const pp=Math.min(1,shown/tgt())*10;
       segs5.forEach((e,i)=>{e.firstChild.style.width=Math.max(0,Math.min(1,pp-i))*100+"%"});
       const done=Math.min(10,Math.floor(pp+1e-6));if(done>lastSeg&&done<=10){const e=segs5[done-1];if(e){e.classList.remove("s5pop");void e.offsetWidth;e.classList.add("s5pop")}}lastSeg=done;
-      if(row5.clientWidth){mk5.style.left=klamp(mk5,row5,headX5())+"px";mk5.style.opacity=pp>0?1:0}
+      if(cwOf(row5)){mk5.style.left=klamp(mk5,row5,headX5())+"px";mk5.style.opacity=pp>0?1:0}
     }
-    function spawn5(fast){if(!row5.clientWidth)return;const hx=headX5();if(hx<14)return;p5.push({x:Math.random()*Math.min(hx*.25,70),y:8+Math.random()*(H5-16),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:2+Math.random()*3.6,w:Math.random()*6.28})}
+    function spawn5(fast){if(!cwOf(row5))return;const hx=headX5();if(hx<14)return;p5.push({x:Math.random()*Math.min(hx*.25,70),y:8+Math.random()*(H5-16),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:2+Math.random()*3.6,w:Math.random()*6.28})}
     function loop5(t){
       const dt=Math.max(0,Math.min(.05,((t-lt5)/1000)||0));lt5=Math.max(lt5,t);
-      if(c5&&row5.offsetParent&&row5.clientWidth){
-        const W=row5.clientWidth;if(cv5.width!==W*2){cv5.width=W*2;cv5.height=H5*2;c5.setTransform(2,0,0,2,0,0)}
+      if(c5&&cwOf(row5)){
+        const W=cwOf(row5);if(cv5.width!==W*2){cv5.width=W*2;cv5.height=H5*2;c5.setTransform(2,0,0,2,0,0)}
         const hx=headX5();sa5+=dt*(hx>14?9:0);while(sa5>1){sa5--;spawn5(false)}
         c5.clearRect(0,0,W,H5);
         p5=p5.filter(q=>{q.x+=q.sp*dt;q.w+=dt*3;return q.x<hx-2});
@@ -389,17 +410,17 @@ W.goalvar={name:"Mål-varianter",
     // ETIKETTEN STANNAR INOM RUTAN (2026-10-11, Davids granskning vid 100 %): markörens etikett är
     // centrerad på huvudet (translateX(-50%)), så vid 100 % stack halva utanför raden och klipptes av
     // widgetens kant. Centrum klämms till [halva etikettbredden, radbredd - halva etikettbredden].
-    const klamp=(mk,row,x)=>{const b=(mk&&mk.offsetWidth)||0;return Math.min(Math.max(x,b/2),Math.max(b/2,row.clientWidth-b/2))};
+    const klamp=(mk,row,x)=>{const b=(mk&&mk.offsetWidth)||0;return Math.min(Math.max(x,b/2),Math.max(b/2,cwOf(row)-b/2))};
     function barFx(row,H,fillEl){
       const cv=$("canvas",row),c=cv&&cv.getContext("2d"),head=$(".s6head",row),mk=$(".s5mark",row);let ps=[],lt=0,sa=0,raf=0;
-      const fxp=()=>Math.min(1,shown/tgt())*row.clientWidth;
+      const fxp=()=>Math.min(1,shown/tgt())*cwOf(row);
       function paint(){const p=Math.min(1,shown/tgt());fillEl.style.width=(p*100)+"%";
-        if(row.clientWidth){const x=fxp();head.style.left=x+"px";mk.style.left=klamp(mk,row,x)+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
-      function spawn(fast){if(!row.clientWidth)return;const hx=fxp();if(hx<14)return;ps.push({x:Math.random()*Math.min(hx*.25,70),y:H*.18+Math.random()*(H*.64),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:Math.max(2,H*.07)+Math.random()*Math.max(2.5,H*.1),w:Math.random()*6.28})}
+        if(cwOf(row)){const x=fxp();head.style.left=x+"px";mk.style.left=klamp(mk,row,x)+"px";const v=p>0?1:0;head.style.opacity=v;mk.style.opacity=v}}
+      function spawn(fast){if(!cwOf(row))return;const hx=fxp();if(hx<14)return;ps.push({x:Math.random()*Math.min(hx*.25,70),y:H*.18+Math.random()*(H*.64),sp:fast?170+Math.random()*190:48+Math.random()*60,sz:Math.max(2,H*.07)+Math.random()*Math.max(2.5,H*.1),w:Math.random()*6.28})}
       function loop(t){
         const dt=Math.max(0,Math.min(.05,((t-lt)/1000)||0));lt=Math.max(lt,t);
-        if(c&&row.offsetParent&&row.clientWidth){
-          const W=row.clientWidth;if(cv.width!==W*2){cv.width=W*2;cv.height=H*2;c.setTransform(2,0,0,2,0,0)}
+        if(c&&cwOf(row)){
+          const W=cwOf(row);if(cv.width!==W*2){cv.width=W*2;cv.height=H*2;c.setTransform(2,0,0,2,0,0)}
           const hx=fxp();sa+=dt*(hx>14?9:0);while(sa>1){sa--;spawn(false)}
           c.clearRect(0,0,W,H);
           ps=ps.filter(q=>{q.x+=q.sp*dt;q.w+=dt*3;return q.x<hx-2});
@@ -416,16 +437,16 @@ W.goalvar={name:"Mål-varianter",
     const bx1=r1&&barFx(r1,30,$(".f1",r1)),bx2=r2&&barFx(r2,78,$(".f2",r2));
     const row6=$(".gv6 .s6row",root),cv6=row6&&$("canvas",row6),c6=cv6&&cv6.getContext("2d"),f6=row6&&$(".f6",row6),head6=$(".s6head",root),mk6=$(".s6mark",root);
     let p6=[],lt6=0,sa6=0,raf6=0;const H6=22;
-    const fx6=()=>Math.min(1,shown/tgt())*row6.clientWidth;
+    const fx6=()=>Math.min(1,shown/tgt())*cwOf(row6);
     function paintBar6(){
       if(!row6)return;const p=Math.min(1,shown/tgt());f6.style.width=(p*100)+"%";
-      if(row6.clientWidth){const x=fx6();head6.style.left=x+"px";mk6.style.left=klamp(mk6,row6,x)+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
+      if(cwOf(row6)){const x=fx6();head6.style.left=x+"px";mk6.style.left=klamp(mk6,row6,x)+"px";head6.style.opacity=p>0?1:0;mk6.style.opacity=p>0?1:0}
     }
-    function spawn6(fast){if(!row6.clientWidth)return;const hx=fx6();if(hx<14)return;p6.push({x:Math.random()*Math.min(hx*.25,60),y:5+Math.random()*(H6-10),sp:fast?160+Math.random()*180:44+Math.random()*56,sz:2+Math.random()*3,w:Math.random()*6.28})}
+    function spawn6(fast){if(!cwOf(row6))return;const hx=fx6();if(hx<14)return;p6.push({x:Math.random()*Math.min(hx*.25,60),y:5+Math.random()*(H6-10),sp:fast?160+Math.random()*180:44+Math.random()*56,sz:2+Math.random()*3,w:Math.random()*6.28})}
     function loop6(t){
       const dt=Math.max(0,Math.min(.05,((t-lt6)/1000)||0));lt6=Math.max(lt6,t);
-      if(c6&&row6.offsetParent&&row6.clientWidth){
-        const W=row6.clientWidth;if(cv6.width!==W*2){cv6.width=W*2;cv6.height=H6*2;c6.setTransform(2,0,0,2,0,0)}
+      if(c6&&cwOf(row6)){
+        const W=cwOf(row6);if(cv6.width!==W*2){cv6.width=W*2;cv6.height=H6*2;c6.setTransform(2,0,0,2,0,0)}
         const hx=fx6();sa6+=dt*(hx>14?9:0);while(sa6>1){sa6--;spawn6(false)}
         c6.clearRect(0,0,W,H6);
         p6=p6.filter(q=>{q.x+=q.sp*dt;q.w+=dt*3;return q.x<hx-2});

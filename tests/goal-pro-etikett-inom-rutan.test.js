@@ -7,12 +7,15 @@
 //
 // Kontraktet: alla fyra bindningarna går via klamp(), som håller etikettens centrum inom
 // [halva etikettbredden, radbredd − halva etikettbredden].
+//
+// RADBREDDEN LÄSES VIA cwOf(row) SEDAN 2026-11-19 (cachad bredd; en dold design ger 0, som clientWidth gjorde). Kontraktet är
+// oförändrat: samma klämning mot radens bredd. Se checkpoint 58 "Tvingad layout i Goal Pro".
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
 const src = fs.readFileSync(path.join(__dirname, '..', 'playground-widgets.js'), 'utf8');
 
 test('klamp() finns och håller centrum inom raden', () => {
-  assert.match(src, /const klamp=\(mk,row,x\)=>\{const b=\(mk&&mk\.offsetWidth\)\|\|0;return Math\.min\(Math\.max\(x,b\/2\),Math\.max\(b\/2,row\.clientWidth-b\/2\)\)\}/);
+  assert.match(src, /const klamp=\(mk,row,x\)=>\{const b=\(mk&&mk\.offsetWidth\)\|\|0;return Math\.min\(Math\.max\(x,b\/2\),Math\.max\(b\/2,cwOf\(row\)-b\/2\)\)\}/);
 });
 
 test('Rak bar/Pill, Steg och Bara siffra placerar etiketten via klamp()', () => {
