@@ -176,7 +176,10 @@ test('rejects a non-HTTPS cloudOrigin outright (falls back to local, like no clo
   }
 });
 
-test('proxies the TTS Chat synthesize POST to cloudOrigin, forwarding cookie/CSRF and returning the upstream body as-is', async (t) => {
+// Fram till 2026-11-19 skickade provet SJÄLVT med en kaka till 127.0.0.1 och krävde att just den
+// vidarebefordrades. Den riktiga Studion har ingen kaka där — molnets session finns bara i
+// huvudprocessen — så provet var grönt medan varje molnröst fick 401 i appen.
+test('proxies the TTS Chat synthesize POST to cloudOrigin with the bridged session and CSRF, returning the upstream body as-is', async (t) => {
   const cloudOrigin = 'https://vyra-cloud.invalid';
   const realFetch = global.fetch;
   t.after(() => { global.fetch = realFetch; });
@@ -188,11 +191,11 @@ test('proxies the TTS Chat synthesize POST to cloudOrigin, forwarding cookie/CSR
     return new Response(JSON.stringify({ ok: true, audioContent: 'QkFTRTY0' }), { status: 200, headers: { 'content-type': 'application/json' } });
   };
 
-  const proxied = await startLocalServer(ROOT, 4202, { cloudOrigin });
+  const proxied = await startLocalServer(ROOT, 4202, { cloudOrigin, cloudSession: () => 'vyra_session=bryggad' });
   try {
     const res = await fetch('http://127.0.0.1:4202/api/workspaces/ws-1/tts/synthesize', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', cookie: 'vyra_session=abc123', 'x-vyra-csrf': 'csrf-token-xyz' },
+      headers: { 'content-type': 'application/json', cookie: 'vyra_session=sidans-egen', 'x-vyra-csrf': 'csrf-token-xyz' },
       body: JSON.stringify({ text: 'hej', voiceName: 'sv-SE-SofieNeural' })
     });
     const data = await res.json();
@@ -200,7 +203,7 @@ test('proxies the TTS Chat synthesize POST to cloudOrigin, forwarding cookie/CSR
     assert.equal(data.audioContent, 'QkFTRTY0');
     assert.equal(seen.pathname, '/api/workspaces/ws-1/tts/synthesize');
     assert.equal(seen.method, 'POST');
-    assert.equal(seen.headers.cookie, 'vyra_session=abc123');
+    assert.equal(seen.headers.cookie, 'vyra_session=bryggad', 'molnet ska få huvudprocessens session, aldrig en kaka sidan själv skickar');
     assert.equal(seen.headers['x-vyra-csrf'], 'csrf-token-xyz');
     assert.equal(JSON.parse(seen.body).voiceName, 'sv-SE-SofieNeural');
   } finally {

@@ -400,7 +400,11 @@ function startLocalServer(root, port = 4173, options = {}) {
         try {
           const upstream = await fetch(cloudOrigin + p, {
             method: 'POST',
-            headers: { 'content-type': 'application/json', cookie: req.headers.cookie || '', 'x-vyra-csrf': req.headers['x-vyra-csrf'] || '' },
+            // MOLNETS SESSION, INTE SIDANS KAKA (2026-11-19). Den lokala Studion ligger på 127.0.0.1 och
+            // har ingen kaka alls; sessionen finns bara i huvudprocessen. Med req.headers.cookie
+            // svarade molnet 401 på varje röst, och TTS Chat föll tillbaka på datorns egen röst eller
+            // tystnad. Samma källa som den allmänna vidarebefordran längre ner.
+            headers: { 'content-type': 'application/json', cookie: cloudSession() || '', 'x-vyra-csrf': req.headers['x-vyra-csrf'] || '' },
             body: raw, redirect: 'follow', signal: AbortSignal.timeout(15000)
           });
           const body = Buffer.from(await upstream.arrayBuffer());
