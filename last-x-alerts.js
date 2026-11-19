@@ -326,7 +326,26 @@
       w._lastXPersistTimer = setTimeout(() => { delete w._lastXPersistTimer; save() }, 700);
     }
     const copy = box.querySelector('.last-x-copy');
-    if (swap && copy) { copy.classList.remove('lx-swap'); void copy.offsetWidth; copy.classList.add('lx-swap') }
+    if (swap && copy) startaOmSwap(copy);
+  }
+  // NAMNBYTETS ANIMATION STARTAS OM UTAN ATT RÄKNA OM SIDAN (2026-11-19).
+  // Förut: ta bort klassen, läs offsetWidth, sätt klassen igen. Läsningen tvingar webbläsaren att
+  // räkna om hela sidans layout, och det gjordes för VARJE händelse medan kortet visades. Uppmätt
+  // med riktig TikTok-trafik (1 077 händelser) i Davids layout plus en Last X: 791 av kortets
+  // 1 307 ms låg på den raden, och med elva Last X på samma sida stod OBS-källan still.
+  // Nu tar animationen själv bort klassen när den är klar, så nästa händelse bara sätter den igen.
+  // Kommer en händelse medan animationen ännu spelar startas just den animationen om.
+  function startaOmSwap(copy) {
+    if (!copy._lxSwapLyssnar) {
+      copy._lxSwapLyssnar = true;
+      copy.addEventListener('animationend', e => { if (e.target === copy && e.animationName === 'lx-swap') copy.classList.remove('lx-swap'); });
+    }
+    if (!copy.classList.contains('lx-swap')) { copy.classList.add('lx-swap'); return; }
+    const pagar = typeof copy.getAnimations === 'function' ? copy.getAnimations().find(a => a.animationName === 'lx-swap') : null;
+    if (pagar) { pagar.cancel(); pagar.play(); return; }
+    // Klassen sitter kvar utan animation (webbläsare utan getAnimations, eller ett kort som var dolt
+    // när animationen skulle ha slutat): den gamla vägen, som alltid fungerar.
+    copy.classList.remove('lx-swap'); void copy.offsetWidth; copy.classList.add('lx-swap');
   }
   function enterLX(box) {
     const s = stateFor(box);

@@ -117,3 +117,41 @@ test('katalogsektionen finns kvar', () => {
   assert.doesNotMatch(all, /\[data-last-x\][^\n]*\?\.remove\(\)/,
     'Last-X pensionerades trots att den är live — se live-client.js:130');
 });
+
+// 2026-11-19, uppmätt med riktig TikTok-trafik: varje händelse medan kortet visades tog bort
+// lx-swap, läste offsetWidth (en omräkning av hela sidans layout) och satte klassen igen. Elva
+// Last X på samma sida fick OBS-källan att stå still. Nu tar animationen själv bort klassen när
+// den är klar, och en händelse mitt i animationen startar om just den.
+test('namnbytets animation startas om utan att räkna om sidans layout', () => {
+  const { h, box } = boot();
+  const copy = box.querySelector('.last-x-copy');
+  assert.ok(copy, 'kortets textdel saknas');
+  let layoutlasningar = 0;
+  Object.defineProperty(copy, 'offsetWidth', { configurable: true, get() { layoutlasningar += 1; return 100; } });
+  h.window.routeLiveBattleEvent({ type: 'gift', username: 'forsta', coins: 5 });   // kortet tänds
+  h.window.routeLiveBattleEvent({ type: 'gift', username: 'andra', coins: 5 });    // byte medan det visas
+  assert.equal(nameIn(box), 'andra');
+  assert.ok(copy.classList.contains('lx-swap'), 'bytet ska animeras');
+  assert.equal(layoutlasningar, 0, 'första bytet ska bara sätta klassen');
+
+  // Animationen blir klar: klassen tas bort, så nästa byte inte behöver någon omstart.
+  const klar = new h.window.Event('animationend'); klar.animationName = 'lx-swap';
+  copy.dispatchEvent(klar);
+  assert.ok(!copy.classList.contains('lx-swap'), 'klassen ska bort när animationen är klar');
+  h.window.routeLiveBattleEvent({ type: 'gift', username: 'tredje', coins: 5 });
+  assert.ok(copy.classList.contains('lx-swap'));
+  assert.equal(layoutlasningar, 0, 'ett byte efter en avslutad animation ska inte läsa layouten');
+
+  // Ett byte MEDAN animationen spelar startar om den pågående animationen.
+  let omstarter = 0;
+  copy.getAnimations = () => [{ animationName: 'lx-swap', cancel() {}, play() { omstarter += 1; } }];
+  h.window.routeLiveBattleEvent({ type: 'gift', username: 'fjarde', coins: 5 });
+  assert.equal(nameIn(box), 'fjarde');
+  assert.equal(omstarter, 1, 'den pågående animationen ska startas om');
+  assert.equal(layoutlasningar, 0, 'omstarten ska inte läsa layouten');
+
+  // En annan animations slut får inte ta bort klassen.
+  const annan = new h.window.Event('animationend'); annan.animationName = 'nagot-annat';
+  copy.dispatchEvent(annan);
+  assert.ok(copy.classList.contains('lx-swap'));
+});
