@@ -99,10 +99,12 @@
   const m = skapaMatare();
 
   // 1. Tidtagningen: en klocka per sekund, och hur sent den slår.
+  const UPPSTART_MS = root.performance.now() + 10000;
   let forra = root.performance.now();
   root.setInterval(() => {
     const nu = root.performance.now();
-    m.slag(nu - forra - 1000);
+    // De första tio sekunderna laddar sidan sina filer; det släpet säger ingenting om sändningen.
+    if (nu > UPPSTART_MS) m.slag(nu - forra - 1000);
     forra = nu;
     if (root.document.hidden) m.varDold();
   }, 1000);
