@@ -303,6 +303,39 @@ function startLocalServer(root, port = 4173, options = {}) {
     while (events.length && events[events.length - 1].id >= id) id++;
     events.push({ ...e, id, eventKey: String(e.id || stromId || ''), timestamp: id, viaMoln: true });
     while (events.length > 5000) events.shift();
+    molnSenasteHandelse = now;
+  }
+  // TIKTOK-STATUSEN NÄR SÄNDNINGEN GÅR VIA MOLNET (2026-11-19). /api/status beskrev bara appens
+  // EGEN anslutning, så appen sa "inte ansluten" medan molnbryggan sände och händelserna strömmade.
+  //
+  // "ANSLUTEN" BETYDER ATT HÄNDELSER KOMMER. Molnets connection.active är ett SPARAT konto, inte en
+  // pågående sändning (samma skillnad som byggLiveTillstand gör i webbläget) — därför krävs en
+  // händelse ur molnströmmen de senaste 90 s. Under en sändning kommer tittarsiffran med några
+  // sekunders mellanrum, så en tyst minut och en halv är en avslutad sändning.
+  //
+  // Kontot hämtas i bakgrunden och svaret väntar aldrig på molnet: statusen pollas, och en seg
+  // uppkoppling får inte göra hela Studion seg.
+  const MOLN_LEVER_MS = 90000, MOLN_KONTO_MS = 10000;
+  let molnSenasteHandelse = 0, molnKonto = { namn: '', at: 0, hamtar: false };
+  function uppdateraMolnKonto() {
+    const ws = molnArbetsyta(), kaka = cloudSession();
+    if (!cloudOrigin || !ws || !kaka || molnKonto.hamtar || Date.now() - molnKonto.at < MOLN_KONTO_MS) return;
+    molnKonto.hamtar = true;
+    Promise.resolve()
+      .then(() => fetch(`${cloudOrigin}/api/workspaces/${encodeURIComponent(ws)}/tiktok-connection`, {
+        headers: { accept: 'application/json', cookie: kaka }, signal: AbortSignal.timeout(8000) }))
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { const c = d && d.connection; molnKonto.namn = c && c.active ? text(c.tiktok_username, 120) : ''; })
+      .catch(() => {})
+      .then(() => { molnKonto.at = Date.now(); molnKonto.hamtar = false; });
+  }
+  function molnStatus() {
+    if (connection.connected || !cloudOrigin || !cloudSession() || !molnArbetsyta()) return null;
+    uppdateraMolnKonto();
+    const lever = molnSenasteHandelse > 0 && Date.now() - molnSenasteHandelse < MOLN_LEVER_MS;
+    if (!lever && !molnKonto.namn) return null;
+    return { connected: lever, username: molnKonto.namn, mode: 'live', state: lever ? 'live' : 'idle', roomId: '',
+      heartbeat: molnSenasteHandelse, reconnectAttempt: 0, updated: Date.now(), viaMoln: true };
   }
   function molnBlock(block) {
     let typ = 'message', id = ''; const data = [];
@@ -355,7 +388,7 @@ function startLocalServer(root, port = 4173, options = {}) {
         if (connection.connected && connection.heartbeat && Date.now() - connection.heartbeat > 15000) {
           connection.connected = false; connection.state = 'stale'; connection.updated = Date.now();
         }
-        return sendJson(res, { ok: true, server: 'VYRA Live Server', connection, lastEventId: events.length ? events[events.length - 1].id : 0 });
+        return sendJson(res, { ok: true, server: 'VYRA Live Server', connection: molnStatus() || connection, lastEventId: events.length ? events[events.length - 1].id : 0 });
       }
       // GAVOKATALOGEN (GET). Ren lasning ur en redan oppen anslutning: inga sidoeffekter, inget
       // som skrivs, inga rattigheter utover den anslutning appen redan har. 503 nar TikTok-delen

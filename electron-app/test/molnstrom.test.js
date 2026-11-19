@@ -133,3 +133,64 @@ test('en händelseström från Studion släpps igenom bit för bit, med appens s
   const anrop = sett.find(s => s.path.endsWith('/overlays/ov-1/events/stream'));
   assert.equal(anrop.headers.cookie, SESSION);
 });
+
+// TIKTOK-STATUSEN I APPEN (2026-11-19). /api/status beskrev bara appens EGEN anslutning. När
+// sändningen går via molnbryggan stod det därför "inte ansluten" i appen medan allt sändes.
+test('statusen visar molnets anslutning när appen inte själv är ansluten och händelser kommer', async t => {
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  global.fetch = async (url, init = {}) => {
+    const mal = new URL(String(url));
+    if (mal.origin !== CLOUD) return realFetch(url, init);
+    if (mal.pathname === `/api/workspaces/${WS}/tiktok-connection`)
+      return new Response(JSON.stringify({ ok: true, connection: { active: true, tiktok_username: 'jokero060' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+    if (mal.pathname === `/api/workspaces/${WS}/events/stream`) {
+      const enc = new TextEncoder();
+      return new Response(new ReadableStream({ start(c) { c.enqueue(enc.encode(live('1-0', { id: 'g1', type: 'gift', username: 'anna' }))); init.signal.addEventListener('abort', () => { try { c.close() } catch (_) {} }); } }), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    }
+    return new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  let status;
+  await medServer(t, 4246, { createLiveConnector: ({ onStatus }) => { status = onStatus; return { connect: async () => ({}), disconnect: async () => ({}) }; } }, async origin => {
+    const las = async () => (await (await fetch(origin + '/api/status')).json()).connection;
+    await las(); await vanta(250);
+    const c = await las();
+    assert.equal(c.connected, true, 'molnbryggan sänder och händelser kommer — då är sändningen ansluten');
+    assert.equal(c.username, 'jokero060');
+    assert.equal(c.viaMoln, true, 'det ska gå att se att det är molnets anslutning, inte appens');
+    // Appens egen anslutning går alltid före.
+    status({ connected: true, state: 'live', username: 'lokalt_konto' });
+    const egen = await las();
+    assert.equal(egen.username, 'lokalt_konto');
+    assert.ok(!egen.viaMoln);
+  });
+});
+
+test('ett sparat konto utan händelser är inte "ansluten"', async t => {
+  const realFetch = global.fetch;
+  t.after(() => { global.fetch = realFetch; });
+  global.fetch = async (url, init = {}) => {
+    const mal = new URL(String(url));
+    if (mal.origin !== CLOUD) return realFetch(url, init);
+    if (mal.pathname === `/api/workspaces/${WS}/tiktok-connection`)
+      return new Response(JSON.stringify({ ok: true, connection: { active: true, tiktok_username: 'jokero060' } }), { status: 200, headers: { 'content-type': 'application/json' } });
+    if (mal.pathname.endsWith('/events/stream'))
+      return new Response(new ReadableStream({ start(c) { init.signal.addEventListener('abort', () => { try { c.close() } catch (_) {} }); } }), { status: 200, headers: { 'content-type': 'text/event-stream' } });
+    return new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } });
+  };
+  await medServer(t, 4247, {}, async origin => {
+    const las = async () => (await (await fetch(origin + '/api/status')).json()).connection;
+    await las(); await vanta(250);
+    const c = await las();
+    assert.equal(c.connected, false, 'ingen händelse har kommit — då pågår ingen sändning');
+    assert.equal(c.username, 'jokero060', 'det sparade kontot ska ändå synas');
+  });
+});
+
+test('utan moln eller inloggning är statusen appens egen, som förut', async t => {
+  const server = await startLocalServer(ROOT, 4248, {});
+  try {
+    const c = (await (await fetch('http://127.0.0.1:4248/api/status')).json()).connection;
+    assert.equal(c.connected, false); assert.equal(c.state, 'idle'); assert.ok(!c.viaMoln);
+  } finally { await new Promise(r => server.close(r)); }
+});
