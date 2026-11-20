@@ -57,7 +57,7 @@ function createSplash() {
     center: true, show: true, backgroundColor: '#0a0611', icon: iconPath,
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true }
   });
-  splash.loadFile(path.join(__dirname, 'splash.html'));
+  splash.loadFile(path.join(__dirname, 'splash.html'), { query: { v: app.getVersion() } });
   splash.setMenu(null);
   splash.webContents.on('did-fail-load', (e, code, desc) => log('splash did-fail-load', code, desc));
   splash.on('closed', () => log('splash closed'));

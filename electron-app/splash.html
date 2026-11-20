@@ -58,13 +58,21 @@
     <div class="mark">V</div>
     <div>
       <div class="name">VYRA</div>
-      <div class="tag">Desktop App · v1.0.0</div>
+      <div class="tag">Desktop App<span id="version"></span></div>
     </div>
   </div>
-  <div class="art"><span>STARTAR ÖVERLAY-STUDION …</span></div>
+  <div class="art"><span>STARTAR OVERLAY-STUDION …</span></div>
   <div class="foot">
     <div class="bar"><i></i></div>
     <small>© 2026 VYRA. Körs lokalt på din dator — inte anslutet till TikTok.</small>
   </div>
+  <script>
+    // Versionen kommer från huvudprocessen (app.getVersion() i main.js), aldrig från en fast text:
+    // rutan visade "v1.0.0" i varje version fram till 1.2.7. Saknas den visas ingen version alls.
+    (function () {
+      var v = new URLSearchParams(location.search).get("v") || "";
+      if (/^[0-9]+(\.[0-9]+){1,3}$/.test(v)) document.getElementById("version").textContent = " · v" + v;
+    })();
+  </script>
 </body>
 </html>
