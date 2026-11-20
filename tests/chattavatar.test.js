@@ -512,3 +512,26 @@ test('overlay-aktiveringen visar avataren från första bildrutan', () => {
   const kod = fs.readFileSync(path.join(ROT, 'overlay-aktivering.js'), 'utf8');
   assert.match(kod, /const UNDANTAG = new Set\(\[[^\]]*'templateChatAvatar'/);
 });
+
+// AVATAREN FÅR ALDRIG BLI GENOMSKINLIG I BYTET (David 2026-11-20: "kan vi fixa att chattavatar inte
+// blir genomskinligt"). Uppmätt i studion, bildruta för bildruta: när ett klipp började tonade
+// vilobilden ut samtidigt som klippet tonade in (två halvgenomskinliga lager täcker 75 %), och när
+// klippet slutade försvann det tvärt medan vilobilden tonade in från noll — 158 ms med bakgrunden
+// rakt igenom avataren. Regeln som vaktas: vilobilden byter läge utan toning, och döljs först när
+// klippet har tonat klart; klippet tonar ut ovanpå en vilobild som redan är tillbaka.
+test('bytet mellan vilobild och klipp har alltid ett lager med full täckning', () => {
+  const css = fs.readFileSync(path.join(ROT, 'chattavatar.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const regel = valjare => { const m = new RegExp(valjare.replace(/[.\[\]]/g, '\$&') + '\{([^}]*)\}', 'g'); return [...css.matchAll(m)].map(x => x[1]).join(';'); };
+  const TON = 0.18;
+  // Tillbaka till vila: ingen toning alls — vilobilden är helt framme i samma bildruta.
+  assert.match(regel('.vyra-chattavatar .ca-vila'), /transition:none/, 'vilobilden tonar in från noll när klippet slutar');
+  // Till klipp: vilobilden ligger kvar hela tiden klippet tonar in, och försvinner sedan utan toning.
+  const dold = /transition:opacity 0s linear ([\d.]+)s/.exec(regel('.vyra-chattavatar .ca-vila.ca-dold'));
+  assert.ok(dold, 'vilobilden tonar ut samtidigt som klippet tonar in');
+  const in_ = /transition:opacity ([\d.]+)s/.exec(regel('.vyra-chattavatar .ca-klipp.ca-pa'));
+  assert.ok(in_ && Number(dold[1]) >= Number(in_[1]), 'vilobilden döljs innan klippet har tonat klart');
+  assert.equal(Number(in_[1]), TON);
+  // Från klipp: det tonar ut, och blir osynligt först när toningen är klar.
+  const ut = /transition:opacity ([\d.]+)s ease,visibility 0s linear ([\d.]+)s/.exec(regel('.vyra-chattavatar .ca-klipp'));
+  assert.ok(ut && Number(ut[2]) >= Number(ut[1]), 'klippet försvinner tvärt i stället för att tona ut ovanpå vilobilden');
+});
