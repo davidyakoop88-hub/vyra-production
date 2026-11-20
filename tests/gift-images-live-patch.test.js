@@ -331,3 +331,53 @@ test('livepatchen skriver aldrig platshallaren @StreamQueen i en sandning', () =
     'i overlay ska ett namnlost event ge tomt namn, inte @StreamQueen');
 });
 
+
+// ---- Gift Campaign: gåvans id avgör, inte bara namnet -------------------------------------------------
+// David 2026-11-20: "gift champian räknar inte alla gift". TikTok skickar gåvans namn på streamerns
+// språk ("Ros"), medan facket bär katalogens namn ("Rose"). Räkningen jämförde bara namn, så av sex
+// rosor räknades de två som kom med engelskt namn (uppmätt i studion). Id:t är detsamma på alla
+// språk; gåvovalet sparar det i giftId<i>, och ett fack utan sparat id frågar katalogen.
+const kampanj = extra => makeEnv({
+  widgets: [Object.assign({ id: 'c1', type: 'templateGiftCampaign', giftCurrent0: 0, giftCurrent1: 0 }, extra)],
+  dom: [campaignNode('c1', 2)]
+});
+const gava = (giftName, giftId, count) => ({ type: 'gift', giftName, giftId, username: 'u', coins: count, count });
+
+test('samma gåva på tre språk räknas i facket som bär dess id', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(gava('Rose', '5655', 2)); env.gift(gava('Ros', '5655', 3)); env.gift(gava('Rosa', '5655', 1));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 6, 'gåvor med annat språks namn räknades inte');
+});
+
+test('en annan gåva räknas inte, varken på namn eller id', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(gava('Lejon', '6369', 1));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 0);
+  assert.equal(Number(env.state.widgets[0].giftCurrent1), 0);
+});
+
+test('ett fack utan sparat id frågar katalogen efter namnets id', () => {
+  const env = kampanj({ giftMatch0: 'Rose' });
+  env.sandbox.VyraGavokatalog = { idn: namn => new Set(String(namn).toLowerCase() === 'rose' ? ['5655'] : []) };
+  env.gift(gava('Ros', '5655', 4));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 4);
+});
+
+test('ett fack lär sig gåvans id första gången namnet träffar', () => {
+  const env = kampanj({ giftMatch0: 'Rose' });
+  env.gift(gava('Ros', '5655', 1));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 0, 'utan id och utan katalog finns inget att känna igen gåvan på');
+  env.gift(gava('Rose', '5655', 2));
+  assert.equal(env.state.widgets[0].giftId0, '5655');
+  env.gift(gava('Ros', '5655', 3));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 5);
+});
+
+test('ett sparat id går före katalogen, och namnet räknas som förut utan id i händelsen', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.sandbox.VyraGavokatalog = { idn: () => new Set(['9999']) };
+  env.gift(gava('Annan', '9999', 5));
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 0, 'katalogens id skrev över det id streamern valde');
+  env.gift({ type: 'gift', giftName: 'Rose', username: 'u', coins: 2, count: 2 });
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 2);
+});

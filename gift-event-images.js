@@ -35,6 +35,15 @@
     return moln.karta.get(key(name)) || null;
   }
 
+  // Katalogens id:n för ett gåvonamn (action-event-advanced.js). Tom mängd när katalogen saknas.
+  function kampanjIdn(namn) {
+    try {
+      var K = window.VyraGavokatalog;
+      var idn = K && typeof K.idn === 'function' ? K.idn(namn) : null;
+      return idn && typeof idn.has === 'function' ? idn : new Set();
+    } catch (e) { return new Set(); }
+  }
+
   function resolve(name) {
     return byName.get(key(name)) || molnGava(name);
   }
@@ -553,10 +562,25 @@
           : [];
         // An unnamed incoming gift keys to '' and would otherwise match every empty slot at once.
         var incoming = key(giftName);
-        for (var index = 0; incoming && index < slots.length; index += 1) {
+        // GÅVANS ID AVGÖR, INTE BARA NAMNET (David 2026-11-20: "gift champian räknar inte alla gift").
+        // TikTok skickar namnet på streamerns språk ("Ros"), medan facket bär katalogens namn ("Rose").
+        // Ett namn mot ett namn träffade då aldrig, och kampanjen räknade bara de gåvor som råkade
+        // komma med samma stavning. Id:t är detsamma på alla språk: gåvovalet sparar det i giftId<i>,
+        // och för ett fack utan sparat id frågas katalogen (VyraGavokatalog.idn), som Sound Alerts gör.
+        var incomingId = String(detail.giftId || '');
+        for (var index = 0; (incoming || incomingId) && index < slots.length; index += 1) {
           // Gåvan som valts i panelens gåvoval (vyra-kampanj-gavoval.js) räknas även när visningsnamnet
           // ändrats efteråt. Utan något val är det namnet som förut.
-          if (key(widget['giftMatch' + index] || slots[index].name) !== incoming) continue;
+          var facknamn = widget['giftMatch' + index] || slots[index].name;
+          var traff = !!incoming && key(facknamn) === incoming;
+          if (!traff && incomingId) {
+            var fackId = String(widget['giftId' + index] || '');
+            traff = fackId ? fackId === incomingId : kampanjIdn(facknamn).has(incomingId);
+          }
+          if (!traff) continue;
+          // Ett fack utan sparat id lär sig det första gången namnet träffar. Nästa gång samma gåva
+          // kommer med ett annat språks namn känns den igen ändå.
+          if (incomingId && !widget['giftId' + index] && !!incoming && key(facknamn) === incoming) widget['giftId' + index] = incomingId;
           var amount = Number(detail.count == null ? 1 : detail.count);
           if (!Number.isFinite(amount) || amount <= 0) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];
