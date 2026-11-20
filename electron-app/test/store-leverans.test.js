@@ -13,6 +13,8 @@
 //   3. RETENTION HÖGST ETT DYGN. Artefakten finns för en manuell uppladdning samma dag.
 //   4. INGEN PUBLICERING. Ingen tagg, ingen GitHub-release, inget SignPath-anrop — Store-paket
 //      signeras av Microsoft efter godkänd certifiering.
+//   5. UPPLADDNINGEN TILL PARTNER CENTER ÄR ETT UTKAST om ingen uttryckligen valt annat, sker
+//      SIST, och bara när hemligheterna finns. Hemligheterna når aldrig byggstegen.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -113,4 +115,71 @@ test('paketet byggs genom samma väg som CI redan provar', () => {
   assert.match(FLODE, /npm run build:store/,
     'en egen byggväg hade kunnat driva isär från den som provas på varje PR');
   assert.match(FLODE, /npm test/, 'proven ska köras innan ett paket lämnas ifrån sig');
+});
+
+// ── UPPLADDNINGEN TILL PARTNER CENTER ─────────────────────────────────────────────────────────
+
+const NYCKELNAMN = ['AZURE_AD_TENANT_ID', 'AZURE_AD_APPLICATION_CLIENT_ID',
+  'AZURE_AD_APPLICATION_SECRET', 'SELLER_ID'];
+
+test('uppladdningen till Partner Center sker SIST och bara när nycklarna finns', () => {
+  const koll = STEG.findIndex(s => /id:\s*nycklar/.test(s));
+  const installera = STEG.findIndex(s => /microsoft-store-apppublisher/.test(s));
+  const ladda = STEG.findIndex(s => /msstore @argument/.test(s));
+  assert.ok(koll >= 0 && installera >= 0 && ladda >= 0, 'uppladdningsstegen saknas');
+
+  // Efter ALLA kontroller: ett paket med fel identitet eller exempelbrickor får aldrig nå Microsoft.
+  for (const fore of [/Verifiera AppX-manifestet/, /Verifiera brickorna/, /Get-FileHash/, /upload-artifact/]) {
+    const i = STEG.findIndex(s => fore.test(s));
+    assert.ok(i >= 0 && i < koll, fore + ' ska ligga före uppladdningen till Partner Center');
+  }
+  assert.equal(ladda, STEG.length - 1, 'uppladdningen ska vara flödets sista steg');
+
+  // Utan nycklar ska flödet bete sig exakt som förut — inte falla.
+  for (const i of [installera, ladda]) {
+    assert.match(STEG[i], /if:\s*steps\.nycklar\.outputs\.finns == 'true'/,
+      'steget kör även utan Store-nycklar');
+  }
+  assert.ok(!/throw/.test(STEG[koll]), 'saknade nycklar får inte fälla bygget');
+});
+
+test('paketet stannar som UTKAST om ingen uttryckligen valt inskick', () => {
+  const huvud = FLODE.slice(0, FLODE.indexOf('jobs:'));
+  assert.match(huvud, /skicka_in:[\s\S]*?type:\s*boolean[\s\S]*?default:\s*false/,
+    'skicka_in ska vara en kryssruta som är AV som förval');
+
+  const ladda = STEG.find(s => /msstore @argument/.test(s));
+  assert.match(ladda, /if \(\$env:SKICKA_IN -ne 'true'\) \{ \$argument \+= '--noCommit' \}/,
+    '--noCommit ska läggas till i alla lägen utom uttryckligt inskick');
+  // Det enda sättet att skicka in är alltså publish utan --noCommit. En separat
+  // "submission publish" hade skickat in oavsett kryssrutan.
+  assert.ok(!/submission\s+publish/.test(FLODE), 'flödet skickar in utkastet på egen hand');
+  assert.match(ladda, /LASTEXITCODE/, 'ett misslyckat msstore-anrop ska fälla körningen');
+});
+
+test('Store-hemligheterna når bara uppladdningsstegen', () => {
+  const jobbhuvud = FLODE.slice(FLODE.indexOf('jobs:'), FLODE.indexOf('    steps:'));
+  for (const namn of NYCKELNAMN) {
+    assert.ok(!jobbhuvud.includes(namn),
+      namn + ' ligger på jobbet — då får npm ci, proven och electron-builder den i sin miljö');
+  }
+  const medNyckel = STEG.filter(s => NYCKELNAMN.some(n => s.includes(n)));
+  assert.equal(medNyckel.length, 2, 'bara nyckelkollen och uppladdningen ska se hemligheterna');
+  for (const s of medNyckel) {
+    assert.ok(!/npm |electron-builder|uses:/.test(s), 'ett steg med hemligheter kör tredjepartskod');
+    // Aldrig inbakade i kommandoraden: där hade de hamnat i den utskrivna skripttexten.
+    const kod = s.slice(s.indexOf('run:'));
+    assert.ok(!/secrets\./.test(kod), 'hemligheten interpoleras i skriptet i stället för env');
+  }
+});
+
+test('uppladdningen går till produkten i store-identitet.json', () => {
+  const identitet = require('../store-identitet.json');
+  assert.match(identitet.storeProductId, /^9[A-Z0-9]{11}$/, 'storeProductId har fel form');
+  assert.ok(identitet._sida.includes(identitet.storeProductId),
+    'storeProductId pekar på en annan produkt än Partner Center-sidan i samma fil');
+  const ladda = STEG.find(s => /msstore @argument/.test(s));
+  assert.match(ladda, /storeProductId/, 'produkt-id:t läses inte ur store-identitet.json');
+  assert.match(ladda, /'--inputDirectory', 'dist2'/,
+    'uppladdningen ska ta paketet som verifierades, inte bygga ett nytt');
 });

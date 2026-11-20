@@ -2,15 +2,26 @@ name: VYRA Store-leverans (manuell)
 # MANUELL LEVERANS TILL PARTNER CENTER.
 #
 # Flödet BYGGER och VERIFIERAR ett Store-paket och lämnar det som en privat Actions-artefakt. Det
-# publicerar ingenting: ingen tagg, ingen GitHub-release, inget SignPath-anrop. Paketet laddas upp
-# till Partner Center för hand, och Microsoft signerar det först efter godkänd certifiering — det är
-# den mänskliga grinden.
+# skapar ingen tagg, ingen GitHub-release och anropar inte SignPath. Microsoft signerar paketet
+# först efter godkänd certifiering.
+#
+# UPPLADDNINGEN TILL PARTNER CENTER sker av flödet självt OM de fyra Store-hemligheterna finns
+# (se sista stegen). Saknas de hoppas uppladdningen över och paketet laddas upp för hand ur
+# artefakten, precis som förut. Förvalt stannar paketet som UTKAST i Partner Center.
 #
 # ENDAST workflow_dispatch. Flödet får inte kunna trigga på push eller pull_request: en 314 MB
 # artefakt per körning är precis det som 2026-08-06 fyllde artefaktkvoten och började fälla PR:er
 # som inte hade med desktop-appen att göra.
 on:
   workflow_dispatch:
+    inputs:
+      # FÖRVALT ÄR UTKAST. Paketet laddas upp till Partner Center men skickas inte till
+      # certifiering förrän någon trycker på knappen där. Kryssas rutan i skickas det in direkt —
+      # då är det den som startar körningen som är den mänskliga grinden.
+      skicka_in:
+        description: 'Skicka in till certifiering direkt (annars stannar paketet som utkast)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -154,3 +165,78 @@ jobs:
             electron-app/dist2/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 1
+
+      # ── UPPLADDNING TILL PARTNER CENTER ────────────────────────────────────────────────────
+      #
+      # Allt nedan ligger SIST: ett paket som fallit på manifestet eller brickorna får aldrig nå
+      # Microsoft. Stegen kör bara om hemligheterna finns, så flödet beter sig som förut tills
+      # någon lagt in dem.
+      #
+      # HEMLIGHETERNA NÅR BARA DE STEG SOM BEHÖVER DEM. De sätts som env på just de stegen, inte
+      # på jobbet — annars hade npm ci, proven och electron-builder (tredjepartskod) haft
+      # klienthemligheten i sin miljö.
+      - name: Finns Store-nycklarna?
+        id: nycklar
+        shell: pwsh
+        working-directory: .
+        env:
+          STORE_TENANT: ${{ secrets.AZURE_AD_TENANT_ID }}
+          STORE_KLIENT: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          STORE_HEMLIGHET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          STORE_SALJARE: ${{ secrets.SELLER_ID }}
+        run: |
+          $saknas = @()
+          if (-not $env:STORE_TENANT) { $saknas += 'AZURE_AD_TENANT_ID' }
+          if (-not $env:STORE_KLIENT) { $saknas += 'AZURE_AD_APPLICATION_CLIENT_ID' }
+          if (-not $env:STORE_HEMLIGHET) { $saknas += 'AZURE_AD_APPLICATION_SECRET' }
+          if (-not $env:STORE_SALJARE) { $saknas += 'SELLER_ID' }
+          if ($saknas.Count -eq 0) {
+            "finns=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            Write-Host 'Store-nycklarna finns — paketet laddas upp till Partner Center.'
+          } else {
+            "finns=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+            $rad = "Uppladdningen till Partner Center hoppades over. Saknade hemligheter: $($saknas -join ', '). Paketet finns som artefakt."
+            Write-Host "::warning::$rad"
+            $rad | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          }
+
+      - name: Installera Microsoft Store Developer CLI
+        if: steps.nycklar.outputs.finns == 'true'
+        uses: microsoft/microsoft-store-apppublisher@v1.1
+
+      # msstore publish BYGGER INTE OM. Den letar upp .appx-filen i dist2 — samma fil som
+      # verifierades och checksummades ovan — och laddar upp den till produkten i
+      # store-identitet.json.
+      #
+      # OBS: har produkten redan ett väntande utkast i Partner Center raderar publish det och
+      # skapar ett nytt ur den senast publicerade inlämningen. Osparade textändringar i ett
+      # sådant utkast försvinner alltså.
+      - name: Ladda upp till Partner Center
+        if: steps.nycklar.outputs.finns == 'true'
+        shell: pwsh
+        env:
+          STORE_TENANT: ${{ secrets.AZURE_AD_TENANT_ID }}
+          STORE_KLIENT: ${{ secrets.AZURE_AD_APPLICATION_CLIENT_ID }}
+          STORE_HEMLIGHET: ${{ secrets.AZURE_AD_APPLICATION_SECRET }}
+          STORE_SALJARE: ${{ secrets.SELLER_ID }}
+          SKICKA_IN: ${{ inputs.skicka_in }}
+          PAKETVERSION: ${{ steps.version.outputs.version }}
+        run: |
+          $produkt = (Get-Content 'store-identitet.json' -Raw | ConvertFrom-Json).storeProductId
+          if (-not $produkt) { throw 'store-identitet.json saknar storeProductId.' }
+
+          msstore reconfigure --tenantId $env:STORE_TENANT --sellerId $env:STORE_SALJARE --clientId $env:STORE_KLIENT --clientSecret $env:STORE_HEMLIGHET
+          if ($LASTEXITCODE -ne 0) { throw 'msstore reconfigure misslyckades — kontrollera de fyra Store-hemligheterna.' }
+
+          $argument = @('publish', '.', '--inputDirectory', 'dist2', '--appId', $produkt)
+          if ($env:SKICKA_IN -ne 'true') { $argument += '--noCommit' }
+          msstore @argument
+          if ($LASTEXITCODE -ne 0) { throw "msstore publish misslyckades (kod $LASTEXITCODE)." }
+
+          if ($env:SKICKA_IN -eq 'true') {
+            $rad = "Version $env:PAKETVERSION ar inskickad till certifiering for $produkt."
+          } else {
+            $rad = "Version $env:PAKETVERSION ligger som UTKAST i Partner Center for $produkt. Skicka in den darifran."
+          }
+          Write-Host $rad
+          $rad | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
