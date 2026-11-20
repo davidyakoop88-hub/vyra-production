@@ -238,8 +238,21 @@ const SWEEP_SQL = `
    )
 `;
 
-async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000 } = {}) {
-  const q = await pool.query(SWEEP_SQL, [olderThan, limit]);
+// POINTS_EVENT_APPLY RENSADES ALDRIG (2026-11-20). Tabellen har samma form och samma uppgift som
+// goal_event_apply — en rad per händelse som redan räknats — och fick sitt svep-index i schemat, men
+// ingen DELETE. Den växte en rad per gåva, like och kommentar tills produktionens disk (500 MB) tog
+// slut och Postgres inte längre kunde starta; bara primärnyckeln var 81 MB.
+// Samma sats, samma fönster och samma schema för båda. Tabellnamnet går inte att skicka som
+// parameter, så det väljs ur en fast lista — aldrig ur indata.
+const SWEEP_SQL_BY_TABLE = {
+  goal_event_apply: SWEEP_SQL,
+  points_event_apply: SWEEP_SQL.replace(/goal_event_apply/g, 'points_event_apply'),
+};
+
+async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000, table = 'goal_event_apply' } = {}) {
+  const sql = Object.hasOwn(SWEEP_SQL_BY_TABLE, table) ? SWEEP_SQL_BY_TABLE[table] : null;
+  if (!sql) throw new Error('Okänd tabell för rensning: ' + table);
+  const q = await pool.query(sql, [olderThan, limit]);
   return { deleted: q.rowCount };
 }
 
@@ -254,11 +267,11 @@ async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000 } = {})
 // 20 x 5 000 per 60 s is 100 000 rows/minute against a need of 6 000. The time budget is the real
 // guard; the batch cap stops a pathological queue turning one tick into a long job.
 async function drainApplied(pool, { batch = 5000, maxBatches = 20, budgetMs = 5000,
-                                    olderThan = '48 hours', now = Date.now } = {}) {
+                                    olderThan = '48 hours', now = Date.now, table = 'goal_event_apply' } = {}) {
   const deadline = now() + budgetMs;
   let deleted = 0, batches = 0, exhausted = false;
   while (batches < maxBatches && now() < deadline) {
-    const out = await sweepApplied(pool, { olderThan, limit: batch });
+    const out = await sweepApplied(pool, { olderThan, limit: batch, table });
     deleted += out.deleted;
     batches += 1;
     if (out.deleted < batch) { exhausted = true; break }
@@ -270,7 +283,8 @@ async function drainApplied(pool, { batch = 5000, maxBatches = 20, budgetMs = 50
 // next tick — the same shape startCapacityMonitor already uses. Errors go through the project's JSON
 // line format and are swallowed, so a failing batch leaves the timer alive for the next tick instead
 // of becoming an unhandled rejection.
-function startAppliedDrain({ pool, metrics = null, intervalMs = 60_000, ...options } = {}) {
+// `name` skiljer två svep åt i mätvärden och loggar (goal_cleanup, points_cleanup).
+function startAppliedDrain({ pool, metrics = null, intervalMs = 60_000, name = 'goal_cleanup', ...options } = {}) {
   let running = false;
   const tick = async () => {
     if (running) return { skipped: true };
@@ -280,18 +294,18 @@ function startAppliedDrain({ pool, metrics = null, intervalMs = 60_000, ...optio
       const out = await drainApplied(pool, options);
       const durationMs = Date.now() - startedAt;
       if (metrics) {
-        metrics.gauge('goal_cleanup_last_run_at', startedAt);
-        metrics.gauge('goal_cleanup_deleted', out.deleted);
-        metrics.gauge('goal_cleanup_duration_ms', durationMs);
+        metrics.gauge(name + '_last_run_at', startedAt);
+        metrics.gauge(name + '_deleted', out.deleted);
+        metrics.gauge(name + '_duration_ms', durationMs);
       }
       if (out.deleted) {
-        console.log(JSON.stringify({ level: 'info', event: 'goal_cleanup', deleted: out.deleted,
+        console.log(JSON.stringify({ level: 'info', event: name, deleted: out.deleted,
           batches: out.batches, exhausted: out.exhausted, durationMs, at: new Date().toISOString() }));
       }
       return out;
     } catch (error) {
-      if (metrics) metrics.gauge('goal_cleanup_errors', 1);
-      console.error(JSON.stringify({ level: 'error', event: 'goal_cleanup_failed',
+      if (metrics) metrics.gauge(name + '_errors', 1);
+      console.error(JSON.stringify({ level: 'error', event: name + '_failed',
         message: error.message, at: new Date().toISOString() }));
       return { error: error.message };
     } finally {
@@ -342,7 +356,7 @@ module.exports = {
   METRICS, TRANSPORT_METRICS, CLAIM_SQL, incrementSql,
   goalAmount, contributionsFor, normalizeGoalRow,
   applyEvent, resetGoal, upsertGoal, readGoal,
-  SWEEP_SQL, sweepApplied, drainApplied, startAppliedDrain,
+  SWEEP_SQL, SWEEP_SQL_BY_TABLE, sweepApplied, drainApplied, startAppliedDrain,
   syncGoalsFromState, putOverlayWithGoals,
   MAX_GOAL_VALUE, PATCH_FIELDS, validateGoalPatch, goalItem,
   listGoals, patchGoal, resetGoalWidget, resetWorkspaceGoals

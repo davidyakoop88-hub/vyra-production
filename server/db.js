@@ -37,6 +37,18 @@ const pool = new Pool({
   ssl: sslLage(railwayInternal, process.env.DATABASE_SSL)
 });
 
+// EN TAPPAD DATABASANSLUTNING FÅR INTE FÄLLA PROCESSEN (2026-11-20). pg skickar 'error' på poolen
+// för en vilande anslutning och på klienten för en utlånad. Utan lyssnare blir det ett
+// uncaughtException: när Postgres dog av full disk stängde API:t av sig självt och låg nere i tio
+// timmar, i stället för att svara 503 tills databasen var tillbaka. Frågan som pågick avvisas ändå
+// av pg, och poolen öppnar en ny anslutning nästa gång — här behöver felet bara tas emot och loggas.
+function loggaDbFel(error) {
+  console.error(JSON.stringify({ level: 'error', event: 'db_connection_error',
+    message: error && error.message, at: new Date().toISOString() }));
+}
+pool.on('error', loggaDbFel);
+pool.on('connect', client => client.on('error', loggaDbFel));
+
 // Exported as a factory so tests can run the REAL transaction logic against a fake pool. Copying
 // this into a test would only prove the copy works, and the thing under test here — that the
 // advisory lock is still held when the INSERT lands — lives entirely in this shape.
