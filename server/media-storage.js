@@ -7,15 +7,27 @@ const EXT={'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':
 function cleanName(value){return String(value||'media').replace(/[^\p{L}\p{N}._ -]/gu,'').trim().slice(0,160)||'media'}
 function validateMedia(input){const contentType=String(input?.contentType||'').toLowerCase(),size=Number(input?.size),sha256=String(input?.sha256||'').toLowerCase(),max=Number(process.env.MEDIA_MAX_MB||100)*1024*1024;if(!TYPES.has(contentType))throw Object.assign(new Error('Filtypen stöds inte'),{status:415});if(!Number.isSafeInteger(size)||size<1||size>max)throw Object.assign(new Error(`Filen får vara högst ${process.env.MEDIA_MAX_MB||100} MB`),{status:413});if(!/^[a-f0-9]{64}$/.test(sha256))throw Object.assign(new Error('SHA-256 saknas eller är ogiltig'),{status:400});return{contentType,size,sha256,originalName:cleanName(input.originalName),extension:EXT[contentType]}}
 class MediaStorage{
-  constructor(){const endpoint=process.env.OBJECT_ENDPOINT,credentials=process.env.OBJECT_ACCESS_KEY&&process.env.OBJECT_SECRET_KEY?{accessKeyId:process.env.OBJECT_ACCESS_KEY,secretAccessKey:process.env.OBJECT_SECRET_KEY}:undefined;this.bucket=process.env.OBJECT_BUCKET||'vyra-media';this.cdn=String(process.env.CDN_ORIGIN||'').replace(/\/$/,'');this.s3=new S3Client({region:process.env.OBJECT_REGION||'eu-north-1',endpoint:endpoint||undefined,forcePathStyle:!!endpoint,credentials})}
+  constructor(){const endpoint=process.env.OBJECT_ENDPOINT,credentials=process.env.OBJECT_ACCESS_KEY&&process.env.OBJECT_SECRET_KEY?{accessKeyId:process.env.OBJECT_ACCESS_KEY,secretAccessKey:process.env.OBJECT_SECRET_KEY}:undefined;this.bucket=process.env.OBJECT_BUCKET||'vyra-media';this.cdn=String(process.env.CDN_ORIGIN||'').replace(/\/$/,'');// requestChecksumCalculation: SDK:n lägger annars en CRC32 i varje signerad länk, räknad på en TOM
+    // kropp vid signeringen (x-amz-checksum-crc32 i adressen). Webbläsaren laddar upp den riktiga
+    // filen, så summan stämmer aldrig; en lagring som kontrollerar den avvisar uppladdningen.
+    this.s3=new S3Client({region:process.env.OBJECT_REGION||'eu-north-1',endpoint:endpoint||undefined,forcePathStyle:!!endpoint,credentials,requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED'})}
   // OBJECT_KEY_PREFIX isolates a whole deployment inside a shared bucket, which is what lets a
   // staging environment exist without a second bucket and without any risk of it writing over
   // production's objects. Empty by default, so production keys are byte-for-byte what they were.
   // Normalised to exactly one trailing slash so 'staging', 'staging/' and 'staging//' behave alike.
   keyPrefix(){const raw=String(process.env.OBJECT_KEY_PREFIX||'').trim().replace(/^\/+|\/+$/g,'');return raw?raw+'/':''}
   key(workspaceId,assetId,extension){return`${this.keyPrefix()}workspaces/${workspaceId}/${assetId}.${extension}`}
-  async uploadUrl(key,meta){return getSignedUrl(this.s3,new PutObjectCommand({Bucket:this.bucket,Key:key,ContentType:meta.contentType,ContentLength:meta.size,Metadata:{sha256:meta.sha256}}),{expiresIn:600})}
-  async verify(key,expected){const head=await this.s3.send(new HeadObjectCommand({Bucket:this.bucket,Key:key}));return Number(head.ContentLength)===expected.size&&String(head.ContentType||'').toLowerCase()===expected.contentType&&String(head.Metadata?.sha256||'').toLowerCase()===expected.sha256}
+  // KONTROLLSUMMAN SKA SKICKAS SOM HUVUD, INTE STÅ I ADRESSEN (2026-11-20). Signeraren flyttar annars
+  // x-amz-meta-sha256 till länkens frågesträng. Cloudflare R2, som produktionen kör på, sparar inte
+  // metadata därifrån: filen kom upp, men efterkontrollen hittade ingen summa och svarade 422 på varje
+  // uppladdning. Med huvudet kvar utanför adressen blir det signerat, och klienten måste skicka det —
+  // därför står det i requiredHeaders, som cloud-media.js redan skickar ordagrant.
+  async uploadUrl(key,meta){return getSignedUrl(this.s3,new PutObjectCommand({Bucket:this.bucket,Key:key,ContentType:meta.contentType,ContentLength:meta.size,Metadata:{sha256:meta.sha256}}),{expiresIn:600,unhoistableHeaders:new Set(['x-amz-meta-sha256'])})}
+  requiredHeaders(meta){return{'content-type':meta.contentType,'x-amz-meta-sha256':meta.sha256}}
+  // Saknar objektet summan (en lagring som inte sparar metadata, eller en äldre klient) räknas den på
+  // själva innehållet i stället. Det är dyrare men starkare: metadatan är bara vad klienten påstod.
+  async contentSha256(key){const out=await this.s3.send(new GetObjectCommand({Bucket:this.bucket,Key:key})),hash=crypto.createHash('sha256');for await(const bit of out.Body)hash.update(bit);return hash.digest('hex')}
+  async verify(key,expected){const head=await this.s3.send(new HeadObjectCommand({Bucket:this.bucket,Key:key}));if(Number(head.ContentLength)!==expected.size||String(head.ContentType||'').toLowerCase()!==expected.contentType)return false;const sparad=String(head.Metadata?.sha256||'').toLowerCase();return safeEqualHex(sparad||await this.contentSha256(key),expected.sha256)}
   async readUrl(key){if(this.cdn)return`${this.cdn}/${key.split('/').map(encodeURIComponent).join('/')}`;return getSignedUrl(this.s3,new GetObjectCommand({Bucket:this.bucket,Key:key}),{expiresIn:300})}
   async remove(key){await this.s3.send(new DeleteObjectCommand({Bucket:this.bucket,Key:key}))}
   async close(){this.s3.destroy()}
