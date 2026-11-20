@@ -201,6 +201,12 @@ jobs:
         run: node --test test/goal-cleanup.test.js
         working-directory: server
 
+      # points_event_apply rensades aldrig och fyllde produktionens disk 2026-11-20. Provet lägger in
+      # gamla och färska rader och ser att bara de gamla tas, och att måltabellen lämnas orörd.
+      - name: Poängrensning — gamla rader tas, färska står kvar
+        run: node --test test/points-cleanup.test.js
+        working-directory: server
+
       - name: Churn — 1 000 000 rader, stabiliseras storleken?
         run: node ../scripts/goal-churn.js
         working-directory: server
