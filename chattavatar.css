@@ -13,10 +13,16 @@
 /* Dans 4 är ritad på 420 x 640: 180 * 420 / 360 = 210 bred, centrerad. */
 .vyra-chattavatar .ca-klipp[data-klipp="dance4"]{left:-15px;right:auto;width:210px}
 .vyra-chattavatar .ca-vila{filter:drop-shadow(0 8px 7px #0005)}
-.vyra-chattavatar .ca-vila.ca-dold{opacity:0}
+/* AVATAREN FÅR ALDRIG BLI GENOMSKINLIG I BYTET (David 2026-11-20). Förut tonade vilobilden ut samtidigt som
+   klippet tonade in — två halvgenomskinliga lager täcker bara 75 % — och när klippet tog slut försvann det
+   tvärt medan vilobilden tonade in från noll, så att bakgrunden syntes rakt igenom avataren.
+   Nu ligger vilobilden kvar, helt täckande, under klippet tills klippet är helt framme, och den är tillbaka
+   i samma ögonblick som klippet börjar tona ut. Det är alltid ett lager med full täckning. */
+.vyra-chattavatar .ca-vila{transition:none}
+.vyra-chattavatar .ca-vila.ca-dold{opacity:0;transition:opacity 0s linear .18s}
 .vyra-chattavatar .ca-vard{position:absolute;inset:0}
-.vyra-chattavatar .ca-klipp{opacity:0;visibility:hidden}
-.vyra-chattavatar .ca-klipp.ca-pa{opacity:1;visibility:visible}
+.vyra-chattavatar .ca-klipp{opacity:0;visibility:hidden;transition:opacity .18s ease,visibility 0s linear .18s}
+.vyra-chattavatar .ca-klipp.ca-pa{opacity:1;visibility:visible;transition:opacity .18s ease}
 /* Bubblan sitter fast: botten 19 px ned i avatarlådan (ovanför huvudet), spetsen mot avataren. Högst
    två rader; långa meddelanden delas i chattavatar.js. Ingen glidning, bara toning. */
 .vyra-chattavatar .ca-bubbla{position:absolute;left:6px;bottom:246px;width:168px;box-sizing:border-box;min-height:48px;padding:9px 12px;
