@@ -193,8 +193,29 @@ async function aeWrite(state){
   return result?.ok===true;
 }
 function saEsc(value=''){const el=document.createElement('span');el.textContent=String(value);return el.innerHTML}
-function saReadLibrary(){try{const items=JSON.parse(localStorage.getItem(SA_LIBRARY_KEY)||'[]');return Array.isArray(items)?items:[]}catch{return[]}}
-function saWriteLibrary(items){localStorage.setItem(SA_LIBRARY_KEY,JSON.stringify(items))}
+/* EGNA LJUD FÖLJER KONTOT (David 2026-11-20: "fixa sound alert-filerna så de följer med till appen").
+   Förut låg biblioteksraden i localStorage och själva filen i IndexedDB — båda per webbläsare. Ett
+   ljud som laddats upp på webben fanns därför varken som rad eller som fil i skrivbordsappen, och
+   alerten som pekade på det var tyst där.
+   Nu bor raden också i 'vyra-extras' (soundAlerts.library), bredvid alerterna, och följer samma
+   molnsynk. Filen laddas upp till kontots medielagring (cloud-media.js) och raden får dess id
+   (mediaMeta.cloudId). En dator som saknar filen hämtar den därifrån första gången den behövs och
+   sparar den sedan lokalt. localStorage och IndexedDB finns kvar som förut: de är det som fungerar
+   utan nät och utan inloggning. */
+function saLokaltBibliotek(){try{const items=JSON.parse(localStorage.getItem(SA_LIBRARY_KEY)||'[]');return Array.isArray(items)?items:[]}catch{return[]}}
+function saKontoBibliotek(){const items=saExtras().soundAlerts?.library;return Array.isArray(items)?items:[]}
+function saReadLibrary(){
+  const ut=new Map();
+  for(const rad of[...saKontoBibliotek(),...saLokaltBibliotek()]){
+    if(!rad?.id)continue;const forra=ut.get(rad.id);
+    ut.set(rad.id,{...rad,...forra,mediaMeta:{...(rad.mediaMeta||{}),...(forra?.mediaMeta||{})}});
+  }
+  return[...ut.values()];
+}
+async function saWriteLibrary(items){
+  localStorage.setItem(SA_LIBRARY_KEY,JSON.stringify(items));
+  return saWriteSoundAlerts({library:items.map(rad=>({id:rad.id,name:rad.name,mediaMeta:rad.mediaMeta}))});
+}
 function saSounds(){return [...Object.values(soundAlerts),...saReadLibrary()]}
 /* FRISTÅENDE SOUND ALERTS (David 2026-10-29: "Sound Alerts ska inte behöva nån länk om nån giftar
    mig den ska funka i bakrunden", "fixa sound ska vara som tikfinty").
@@ -207,9 +228,11 @@ function saSounds(){return [...Object.values(soundAlerts),...saReadLibrary()]}
    behövt stå i fyra listor (se session-state.js) för att nå hela vägen. */
 function saExtras(){try{if(window.VyraExtras?.data)return window.VyraExtras.data}catch{}try{return JSON.parse(localStorage.getItem('vyra-extras')||'{}')||{}}catch{return{}}}
 function saAlerts(){const s=saExtras().soundAlerts;return Array.isArray(s?.alerts)?s.alerts.filter(a=>a&&a.id&&a.soundId):[]}
-async function saWriteAlerts(alerts){
+async function saWriteAlerts(alerts){return saWriteSoundAlerts({alerts})}
+/* Alerter och bibliotek ligger i samma objekt. Skrivs den ena får den andra inte försvinna. */
+async function saWriteSoundAlerts(del){
   const ss=window.VyraSessionState;if(typeof ss?.writeActive!=='function')return false;
-  const data={...saExtras(),soundAlerts:{alerts}};
+  const nu=saExtras(),data={...nu,soundAlerts:{...(nu.soundAlerts||{}),...del}};
   const result=await ss.writeActive('vyra-extras',JSON.stringify(data));if(result?.ok!==true)return false;
   /* Molnsynkens ticker skickar bara när 'vyra-state' ändras, inte när en sidonyckel gör det. Utan
      knuffen följde en ny alert med till molnet först vid nästa layoutändring. Svarar push() 'busy'
@@ -225,7 +248,70 @@ function saSound(soundId){return saSounds().find(sound=>sound.id===soundId)||nul
 function saConnection(soundId){return saConnections().find(item=>item.event.soundAlertId===soundId)||null}
 function saOpenDb(){return new Promise((ok,no)=>{const request=indexedDB.open('vyra-action-media',1);request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains('files'))request.result.createObjectStore('files')};request.onsuccess=()=>ok(request.result);request.onerror=()=>no(request.error)})}
 async function saStoreFile(file){const database=await saOpenDb(),id='media-'+Date.now()+'-'+Math.random().toString(36).slice(2);await new Promise((ok,no)=>{const tx=database.transaction('files','readwrite');tx.objectStore('files').put(file,id);tx.oncomplete=ok;tx.onerror=()=>no(tx.error)});database.close();return{id,name:file.name,type:file.type,size:file.size}}
-async function saReadFile(meta){if(!meta?.id)return null;const database=await saOpenDb(),value=await new Promise((ok,no)=>{const request=database.transaction('files').objectStore('files').get(meta.id);request.onsuccess=()=>ok(request.result);request.onerror=()=>no(request.error)});database.close();return value}
+async function saLasLokalt(meta){if(!meta?.id)return null;const database=await saOpenDb(),value=await new Promise((ok,no)=>{const request=database.transaction('files').objectStore('files').get(meta.id);request.onsuccess=()=>ok(request.result);request.onerror=()=>no(request.error)});database.close();return value}
+async function saSparaLokalt(blob,id){const database=await saOpenDb();await new Promise((ok,no)=>{const tx=database.transaction('files','readwrite');tx.objectStore('files').put(blob,id);tx.oncomplete=ok;tx.onerror=()=>no(tx.error)});database.close()}
+async function saReadFile(meta){
+  if(!meta?.id&&!meta?.cloudId)return null;
+  const lokal=meta.id?await saLasLokalt(meta).catch(()=>null):null;
+  if(lokal||!meta.cloudId)return lokal||null;
+  return saHamtaMoln(meta);
+}
+function saMolnWs(){try{return window.VyraCloudSync?.current?.()?.workspace?.id||''}catch{return''}}
+/* Medielagringen tar bara emot tre ljudtyper, och webbläsare namnger dem olika (audio/mp3,
+   audio/x-wav, eller ingenting alls för en fil från vissa program). Ändelsen avgör. */
+function saMolnTyp(namn,typ){const n=String(namn||'').toLowerCase(),t=String(typ||'').toLowerCase();if(/\.mp3$/.test(n)||/mpeg|mp3/.test(t))return'audio/mpeg';if(/\.wav$/.test(n)||/wav/.test(t))return'audio/wav';if(/\.ogg$/.test(n)||/ogg/.test(t))return'audio/ogg';return''}
+async function saLaddaUppMoln(blob,namn){
+  const ws=saMolnWs(),typ=saMolnTyp(namn||blob?.name,blob?.type);
+  if(!ws||!typ||typeof window.VyraCloudMedia?.upload!=='function')return null;
+  const fil=new File([blob],String(namn||blob.name||'ljud'),{type:typ});let asset;
+  /* 401 betyder oftast inte utloggad: en annan flik eller skrivbordsappen har hämtat /api/auth/me och
+     därmed bytt CSRF-token (se push() i cloud-sync.js). Hämta en ny och försök en gång till. */
+  try{asset=await window.VyraCloudMedia.upload(fil)}catch(fel){if(fel?.status!==401)throw fel;await window.VyraAuth.api('/api/auth/me');asset=await window.VyraCloudMedia.upload(fil)}
+  return asset?.id?{cloudId:asset.id,cloudWs:ws}:null;
+}
+/* Hämtar filen ur kontot. Läslänken är signerad och kortlivad, så den sparas aldrig — bara filen.
+   Går filen inte att läsa som data (lagringen släpper inte igenom en fetch från den här adressen)
+   lämnas länken tillbaka i stället: ett <audio> får spela den ändå, och spelarna nedan tar båda. */
+async function saHamtaMoln(meta){
+  const ws=meta.cloudWs||saMolnWs();if(!ws||typeof window.VyraAuth?.api!=='function')return null;
+  let url='';
+  try{url=(await window.VyraAuth.api(`/api/workspaces/${ws}/media/${meta.cloudId}`,{method:'GET'}))?.url||''}catch{return null}
+  if(!url)return null;
+  try{
+    const svar=await fetch(url);if(!svar.ok)return null;
+    const blob=new Blob([await svar.arrayBuffer()],{type:meta.type||saMolnTyp(meta.name,svar.headers.get('content-type'))||'audio/mpeg'});
+    if(meta.id)saSparaLokalt(blob,meta.id).catch(()=>{});
+    return blob;
+  }catch{return{saFjarr:url}}
+}
+const saBlobUrl=blob=>blob.saFjarr||URL.createObjectURL(blob);
+/* ÄLDRE LJUD FÖLJER MED I EFTERHAND. Ett ljud som laddades upp innan det här fanns ligger bara i den
+   webbläsaren. När VYRA öppnas där, inloggad, laddas filen upp och raden skrivs till kontot. Högst
+   tre försök per öppning: en lagring som säger nej ska inte få en ny uppladdning var halvminut. */
+let saSynkar=false,saSynkForsok=0;
+async function saSynkaBibliotek(){
+  if(saSynkar||!saMolnWs())return'vantar';saSynkar=true;
+  try{
+    const bibliotek=saReadLibrary(),iKontot=new Set(saKontoBibliotek().map(rad=>rad?.id));
+    let andrat=bibliotek.some(rad=>!iKontot.has(rad.id)),kvar=0;
+    for(const rad of bibliotek){
+      const meta=rad.mediaMeta;if(!meta?.id||meta.cloudId)continue;
+      const blob=await saLasLokalt(meta).catch(()=>null);if(!blob)continue;
+      try{const moln=await saLaddaUppMoln(blob,meta.name||blob.name||rad.name);if(moln){Object.assign(meta,moln);andrat=true}else kvar++}
+      catch(fel){kvar++;try{console.warn('[SoundAlerts] ljudet nådde inte kontot:',rad.name,fel?.message)}catch{}}
+    }
+    if(andrat)await saWriteLibrary(bibliotek);
+    return kvar?'kvar':'klar';
+  }finally{saSynkar=false}
+}
+function saSynkaSnart(ms=6000){
+  setTimeout(async()=>{
+    let lage='vantar';try{lage=await saSynkaBibliotek()}catch{lage='kvar'}
+    if(lage==='klar')return;if(lage==='kvar'&&++saSynkForsok>=3)return;
+    saSynkaSnart(30000);
+  },ms);
+}
+if(typeof location==='undefined'||!/[?&]overlay=1/.test(location.search))saSynkaSnart();
 async function saGetMediaMeta(sound){if(sound.mediaMeta)return sound.mediaMeta;if(sound.path)return{packagePath:sound.path,name:sound.name};return null}
 function saTriggerOptions(selected='gift'){return Object.entries(SA_TRIGGERS).map(([key,label])=>`<option value="${key}"${key===selected?' selected':''}>${label}</option>`).join('')}
 function saEventLabel(item){const trigger=SA_TRIGGERS[item.event.trigger]||item.event.trigger||'Event';const condition=String(item.event.condition||'').trim();return condition?`${trigger} · ${condition}`:trigger}
@@ -255,7 +341,7 @@ async function saPlaySound(sound,button){
   if(saPlayingAudio){saPlayingAudio.pause();saSetPlaying(saPlayingBtn,false)}
   const meta=await saGetMediaMeta(sound),blob=meta?.packagePath?null:await saReadFile(meta);
   if(!meta?.packagePath&&!blob)throw Error('Ljudfil saknas');
-  const url=meta.packagePath||URL.createObjectURL(blob),audio=new Audio(url);
+  const url=meta.packagePath||saBlobUrl(blob),audio=new Audio(url);
   audio.onended=()=>{saSetPlaying(button,false);if(!meta.packagePath)URL.revokeObjectURL(url);saPlayingAudio=null;saPlayingBtn=null};
   audio.onerror=()=>{saSetPlaying(button,false);if(!meta.packagePath)URL.revokeObjectURL(url);toast('Ljudfilen kunde inte läsas')};
   /* Samma ljudprioritet som Action & Event: preview ska inte konkurrera med TTS. */
@@ -334,7 +420,7 @@ function bindSoundAlerts(){
   document.querySelectorAll('.sa-toggle').forEach(toggle=>toggle.onchange=async()=>{const id=toggle.closest('[data-alert]').dataset.alert,alerts=saAlerts();if(!alerts.some(a=>a.id===id))return;if(!await saWriteAlerts(alerts.map(a=>a.id===id?{...a,enabled:toggle.checked}:a))){toggle.checked=!toggle.checked;toast('Kunde inte spara ändringen')}});
   document.querySelectorAll('.sa-row-play').forEach(button=>button.onclick=async()=>{try{const item=saConnections().find(connection=>connection.event.id===button.closest('[data-alert]').dataset.alert);await saPlaySound(saSound(item?.event.soundAlertId),button)}catch{toast('Ljudet kunde inte spelas')}});
   document.querySelectorAll('.sa-remove').forEach(button=>button.onclick=async()=>{const id=button.closest('[data-alert]').dataset.alert;if(!await saWriteAlerts(saAlerts().filter(a=>a.id!==id))){toast('Kunde inte ta bort sound alerten');return}toast('Sound alert borttagen');renderSoundAlerts()});
-  const upload=document.querySelector('.sa-upload input');if(upload)upload.onchange=async()=>{const file=upload.files?.[0];if(!file)return;if(!/^audio\//.test(file.type)&&!/\.(mp3|wav|ogg)$/i.test(file.name)){toast('Välj en MP3, WAV eller OGG-fil');return}try{const mediaMeta=await saStoreFile(file),id=`custom-${Date.now()}`;saWriteLibrary([...saReadLibrary(),{id,name:file.name.replace(/\.[^.]+$/,''),mediaMeta}]);toast('Ditt ljud är tillagt i biblioteket');renderSoundAlerts()}catch{toast('Kunde inte spara ljudfilen')}};
+  const upload=document.querySelector('.sa-upload input');if(upload)upload.onchange=async()=>{const file=upload.files?.[0];if(!file)return;if(!/^audio\//.test(file.type)&&!/\.(mp3|wav|ogg)$/i.test(file.name)){toast('Välj en MP3, WAV eller OGG-fil');return}try{const mediaMeta=await saStoreFile(file),id=`custom-${Date.now()}`;let iKontot=false;if(saMolnWs()){try{const moln=await saLaddaUppMoln(file,file.name);if(moln){Object.assign(mediaMeta,moln);iKontot=true}}catch(fel){try{console.warn('[SoundAlerts] ljudet nådde inte kontot:',fel?.message)}catch{}}}await saWriteLibrary([...saReadLibrary(),{id,name:file.name.replace(/\.[^.]+$/,''),mediaMeta}]);if(!iKontot&&saMolnWs()){saSynkForsok=0;saSynkaSnart(30000)}toast(iKontot?'Ditt ljud är tillagt och följer med ditt konto':saMolnWs()?'Ditt ljud är tillagt på den här datorn — det nådde inte kontot än, VYRA försöker igen':'Ditt ljud är tillagt i biblioteket');renderSoundAlerts()}catch{toast('Kunde inte spara ljudfilen')}};
   const librarySearch=document.querySelector('.sa-library-search');if(librarySearch)librarySearch.oninput=()=>{const needle=librarySearch.value.trim().toLocaleLowerCase('sv');document.querySelector('.sa-library-grid').innerHTML=saLibraryCards(saSounds().filter(sound=>String(sound.name).toLocaleLowerCase('sv').includes(needle)));bindSoundAlerts()};
 }
 
@@ -386,8 +472,8 @@ const saNamn=alert=>String(alert?.name||alert?.condition||alert?.trigger||'en al
 async function saSpelaAlert(alert){
   const sound=saSound(alert.soundId);if(!sound){saRapport('fel',`Ljudet till "${saNamn(alert)}" finns inte längre — välj ett nytt ljud`,alert);return}
   const meta=await saGetMediaMeta(sound),blob=meta?.packagePath?null:await saReadFile(meta);
-  if(!meta?.packagePath&&!blob){saRapport('fel',`Ljudfilen till "${saNamn(alert)}" finns inte i den här webbläsaren — egna filer sparas per dator, ladda upp den igen här`,alert);return}
-  const url=meta.packagePath||URL.createObjectURL(blob),audio=new Audio(url),bas=Math.max(0,Math.min(100,Number(alert.volume??80)))/100;
+  if(!meta?.packagePath&&!blob){saRapport('fel',meta?.cloudId?`Ljudfilen till "${saNamn(alert)}" kunde inte hämtas från ditt konto — kontrollera att du är inloggad och har internet`:`Ljudfilen till "${saNamn(alert)}" finns bara på datorn där den laddades upp — öppna VYRA där en gång, inloggad, så följer den med hit`,alert);return}
+  const url=meta.packagePath||saBlobUrl(blob),audio=new Audio(url),bas=Math.max(0,Math.min(100,Number(alert.volume??80)))/100;
   if(!meta.packagePath)audio.onended=audio.onerror=()=>URL.revokeObjectURL(url);
   if(window.VyraTal?.duckaLjud)window.VyraTal.duckaLjud(audio,bas);else audio.volume=bas;
   // Löftet löser när ljudet SLUTAT (eller inte kunde spelas) — kön i saKoa väntar på det. Taket på
