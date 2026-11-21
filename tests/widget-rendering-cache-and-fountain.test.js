@@ -208,7 +208,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // 20261012-1: Gift Campaigns rakning nollstalls i Studios minne vid live:start (#271).
   // 20261020-26: kampanjen räknar på gåvan som valts i flikraden (giftMatch), även med ändrat visningsnamn.
   // 20261021-13: en gåva till en annan värd (tillVarden:false) tar inte Top Gift.
-  assert.match(studio, /gift-event-images\.js\?v=20261121-1/);
+  assert.match(studio, /gift-event-images\.js\?v=20261121-2/);
   // Arten laddas ur media.js skriptsvans, efter fabriken — samma vag som fan och gifter.
   assert.match(read('media.js'), /streak-fas\.js\?v=20260923-1/);
   assert.match(studio, /vyra-historik\.js\?v=20260818-scenbakgrund/);
@@ -463,7 +463,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   }
   // live-client.js gick vidare till 20261011-1 nar ingest() borjade byta 72 px-avataren mot
   // profilsidans 1080 px (vyra-stor-avatar.js).
-  assert.match(media, /live-client\.js\?v=20261031-gavovideo/, 'live-client.js cachebustades inte for skarpa profilbilder');
+  assert.match(media, /live-client\.js\?v=20261121-1/, 'live-client.js cachebustades inte for skarpa profilbilder');
   // action-event.js gick vidare till 20260923-2 nar de tva tomma tillstanden lagades (de var
   // hidden, bar avkortad text och lat vyra-tomma-handlingar.js injicera en ANDRA knapp bredvid
   // kortets egen). CSS:en rordes inte och star kvar — strangen foljer sin fil.

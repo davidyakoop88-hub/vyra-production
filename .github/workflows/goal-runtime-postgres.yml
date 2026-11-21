@@ -201,6 +201,12 @@ jobs:
         run: node --test test/goal-cleanup.test.js
         working-directory: server
 
+      # Serverns gåvoräkning per sändning (Gift Campaign). Räknar per gåvo-id, en gång per händelse,
+      # och börjar om vid ny sändning. Femtio samtidiga gåvor ska ge exakt femtio.
+      - name: Gåvor per sändning — idempotens, samtidighet och sändningsbyte
+        run: node --test test/kampanj-gavor.test.js
+        working-directory: server
+
       # points_event_apply rensades aldrig och fyllde produktionens disk 2026-11-20. Provet lägger in
       # gamla och färska rader och ser att bara de gamla tas, och att måltabellen lämnas orörd.
       - name: Poängrensning — gamla rader tas, färska står kvar

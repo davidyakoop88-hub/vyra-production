@@ -462,6 +462,7 @@
     skrivRekord();
     // En ny sändning: nästa konfiguration bär serverns nollor och ska tas emot som den är.
     kampanjNollasTill = Date.now() + 30000;
+    kampanjTotal = {};
     nollstallKampanjerIStudio();
   });
 
@@ -479,6 +480,14 @@
   //   * sparat värde SÄNKT (inkommande < forra)  → det inkommande (streamern har ställt om talet)
   //   * annars (höjt, men inte över den egna)    → den egna räkningen står kvar
   // Ren funktion: muterar bara `inkommande`, och provas utan webbläsare.
+  // SERVERNS TOTAL PER GÅVA (server/kampanj-gavor.js, 2026-11-21). Servern räknar varje gåva en gång
+  // per sändning och stämplar totalen på händelsen (`giftSessionCount`). Sidan minns den senaste
+  // totalen den sett per gåvo-id, och ökar facket med SKILLNADEN — inte med händelsens eget antal.
+  // Då hämtas en tappad händelse in av nästa, en dubblett ger noll, och alla sidor landar på samma
+  // tal. Ett tal streamern skrivit in för hand i panelen ligger kvar som utgångspunkt, eftersom det
+  // är fackets nuvarande tal som ökas. Saknas stämpeln (en äldre server, skrivbordsappens lokala
+  // väg) räknas händelsens antal som förut.
+  var kampanjTotal = {};
   var kampanjNollasTill = 0;
   var kampanjForra = {};
   function behallKampanjrakning(inkommande, lokala, alternativ) {
@@ -506,9 +515,54 @@
     });
     return nyaForra;
   }
+  // STUDION FRÅGAR SERVERN EFTER TOTALERNA när den öppnas och när en ny sändning börjar. OBS-länken får
+  // dem med sin layout (overlay-access.js); utan den här frågan hade en Studio som startas mitt i
+  // sändningen stått kvar på det sparade talet och bara lagt till det den själv såg.
+  function hamtaTotalerIStudio() {
+    try {
+      if (new URLSearchParams(location.search).has('access')) return;
+      var synk = window.VyraCloudSync, auth = window.VyraAuth;
+      var ws = synk && typeof synk.current === 'function' ? (synk.current() || {}).workspace : null;
+      if (!ws || !ws.id || !auth || typeof auth.api !== 'function') return;
+      Promise.resolve(auth.api('/api/workspaces/' + ws.id + '/gift-counts', { method: 'GET' }))
+        .then(function (svar) { if (svar && svar.giftCounts) window.VyraKampanjRaknare.vidTotaler(svar.giftCounts); })
+        .catch(function () { /* utan totaler räknar Studion som förut */ });
+    } catch (e) { /* samma */ }
+  }
+  if (typeof setTimeout === 'function') setTimeout(hamtaTotalerIStudio, 8000);
+  window.addEventListener('vyra-live-session', function (event) {
+    if (event && event.detail && event.detail.event === 'live:start' && typeof setTimeout === 'function') setTimeout(hamtaTotalerIStudio, 4000);
+  });
   window.VyraKampanjRaknare = {
     behall: behallKampanjrakning,
     // OBS-källans väg in: anropas av overlay-access.js med den inkommande layouten, FÖRE den läggs in.
+    // Totalerna för pågående sändning, lästa med layouten (OBS-länkens svar, `giftCounts`). En källa
+    // som öppnas mitt i sändningen har bara det SPARADE talet, som kan vara äldre än sanningen. Ett
+    // fack vars gåva är känd lyfts till serverns total — aldrig nedåt: ett högre tal i facket är ett
+    // som streamern själv ställt in.
+    vidTotaler: function (counts) {
+      if (!counts || typeof counts !== 'object') return;
+      var lokala = typeof state !== 'undefined' && state && Array.isArray(state.widgets) ? state.widgets : [];
+      Object.keys(counts).forEach(function (id) {
+        var t = Number(counts[id]);
+        if (Number.isSafeInteger(t) && t > 0) kampanjTotal[id] = Math.max(t, kampanjTotal[id] || 0);
+      });
+      lokala.forEach(function (widget) {
+        if (!widget || widget.type !== 'templateGiftCampaign') return;
+        var slots = typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(widget) : [];
+        for (var index = 0; index < slots.length; index += 1) {
+          var id = String(widget['giftId' + index] || '');
+          if (!id) {
+            var idn = Array.from(kampanjIdn(widget['giftMatch' + index] || slots[index].name));
+            if (idn.length === 1) id = String(idn[0]);
+          }
+          var total = id ? Number(kampanjTotal[id]) : 0;
+          if (!(total > Number(widget['giftCurrent' + index] || 0))) continue;
+          widget['giftCurrent' + index] = total;
+          schedule(widget);
+        }
+      });
+    },
     vidKonfig: function (inkommandeWidgets) {
       var lokala = typeof state !== 'undefined' && state && Array.isArray(state.widgets) ? state.widgets : [];
       var nollstall = Date.now() < kampanjNollasTill;
@@ -585,6 +639,11 @@
     var newGift = beslut.gift;
     var newStreak = beslut.streak;
 
+    var gavoId = String(detail.giftId || '');
+    var serverTotal = Number(detail.giftSessionCount);
+    if (!gavoId || !Number.isSafeInteger(serverTotal) || serverTotal <= 0) serverTotal = null;
+    var kandTotal = serverTotal == null ? null : (kampanjTotal[gavoId] == null ? null : Number(kampanjTotal[gavoId]));
+
     state.widgets.forEach(function (widget) {
       if (widget.type === 'templateTopGift' && newGift) {
         widget.giftName = giftName || widget.giftName;
@@ -638,6 +697,10 @@
           var amount = Number(detail.count == null ? 1 : detail.count);
           if (!Number.isFinite(amount) || amount <= 0) continue;
           widget['giftImage' + index] = detail.giftImage || widget['giftImage' + index];
+          // Med serverns total är ökningen skillnaden mot den senast sedda. Första stämpeln sidan ser
+          // har inget att jämföra med: då gäller händelsens eget antal, och totalen minns till nästa.
+          if (kandTotal != null) amount = Math.max(0, serverTotal - kandTotal);
+          if (amount <= 0) continue;
           widget['giftCurrent' + index] =
             Number(widget['giftCurrent' + index] || 0) + amount;
           // Same accepted event and same quantity as the counter; no second listener/dedupe.
@@ -648,5 +711,6 @@
         }
       }
     });
+    if (serverTotal != null) kampanjTotal[gavoId] = Math.max(serverTotal, kandTotal || 0);
   });
 })();

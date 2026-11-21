@@ -149,6 +149,8 @@ function makeEnv({ widgets, dom, overlay = false }) {
     ]
   };
   sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  // Lyssnarna nås av prov som behöver skicka något annat än en gåva (t.ex. en ny sändning).
+  sandbox.__lyssnare = listeners;
   vm.runInNewContext(SOURCE, sandbox, { filename: 'gift-event-images.js' });
 
   const gift = detail => {
@@ -438,4 +440,58 @@ test('OBS-källan frågar räknaren innan en ny layout läggs in', () => {
   const kod = fs.readFileSync(path.join(__dirname, '..', 'overlay-access.js'), 'utf8');
   const vid = kod.indexOf('VyraKampanjRaknare?.vidKonfig?.(copy.widgets)'), in_ = kod.indexOf('projectReadonlyOverlay({state:copy,extras})');
   assert.ok(vid > 0 && vid < in_, 'räkningen slås inte ihop före att layouten byts ut');
+});
+
+// ---- Gift Campaign: serverns total per gåva ------------------------------------------------------
+// Servern räknar varje gåva en gång per sändning och stämplar totalen på händelsen
+// (server/kampanj-gavor.js, `giftSessionCount`). Sidan ökar facket med SKILLNADEN mot den total den
+// senast såg, inte med händelsens eget antal. Uppmätt på lokal kedja med riktig OBS-länk: efter fem
+// gåvor och en dubblettleverans visade källan 9, och efter omladdning fortfarande 9 (sparat värde 0).
+const stamplad = (id, count, total) => ({ type: 'gift', giftName: 'Rose', giftId: '5655', username: 'u', coins: count, count, id, giftSessionCount: total });
+const rosor = env => Number(env.state.widgets[0].giftCurrent0);
+
+test('en tappad händelse hämtas in av nästa, och en dubblett ger noll', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 1, 1));
+  assert.equal(rosor(env), 1);
+  // Händelserna med total 2 och 3 nådde aldrig sidan. Nästa bär totalen 4.
+  env.gift(stamplad('d', 1, 4));
+  assert.equal(rosor(env), 4, 'de tappade gåvorna räknades aldrig in');
+  env.gift(stamplad('d', 1, 4));
+  assert.equal(rosor(env), 4, 'en omleverans räknades en gång till');
+  env.gift(stamplad('c', 1, 3));
+  assert.equal(rosor(env), 4, 'en sen, äldre händelse sänkte eller höjde talet');
+});
+
+test('ett tal streamern ställt in för hand står kvar som utgångspunkt', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 2, 2));
+  env.state.widgets[0].giftCurrent0 = 100;            // panelens "Nu"
+  env.gift(stamplad('b', 3, 5));
+  assert.equal(rosor(env), 103);
+});
+
+test('utan stämpel räknas händelsens antal som förut', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(gava('Rose', '5655', 2)); env.gift(gava('Rose', '5655', 3));
+  assert.equal(rosor(env), 5);
+});
+
+test('en källa som öppnas mitt i sändningen lyfts till serverns total — aldrig nedåt', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655', giftCurrent0: 2, giftMatch1: 'Galaxy', giftId1: '5826', giftCurrent1: 40 });
+  env.sandbox.VyraKampanjRaknare.vidTotaler({ '5655': 9, '5826': 12, '7934': 3 });
+  assert.equal(rosor(env), 9, 'det sparade talet stod kvar i stället för serverns');
+  assert.equal(Number(env.state.widgets[0].giftCurrent1), 40, 'ett högre, inställt tal sänktes');
+  // Nästa gåva bär totalen 10: en till, inte tio till.
+  env.gift(stamplad('n', 1, 10));
+  assert.equal(rosor(env), 10);
+});
+
+test('en ny sändning glömmer förra sändningens totaler', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 5, 5));
+  for (const fn of env.sandbox.__lyssnare?.['vyra-live-session'] || []) fn({ detail: { event: 'live:start' } });
+  env.state.widgets[0].giftCurrent0 = 0;              // serverns nollställning, via konfigurationen
+  env.gift(stamplad('b', 1, 1));
+  assert.equal(rosor(env), 1, 'den nya sändningens första gåva jämfördes med förra sändningens total');
 });
