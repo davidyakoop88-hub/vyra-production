@@ -380,7 +380,9 @@ test('vakt: ELECTRON-APPEN filtrerar bort mellanframes i en streak', () => {
   // anrop till normalizer.js. Bryggvakten ovan säger därför ingenting om den här vägen.
   const fs = require('node:fs'), path = require('node:path');
   const kall = fs.readFileSync(path.join(__dirname, '..', '..', 'electron-app', 'tiktok-service.js'), 'utf8');
-  assert.ok(/streakable\s*&&\s*!\s*finalFrame/.test(kall),
+  // Sedan 2026-11-21 (combo utan slut) skrivs regeln som `slut = !streakable || finalFrame` — samma regel:
+  // bara en slutframe eller en gåva som inte kan streaka räknas, mellanframes gör det aldrig.
+  assert.ok(/streakable\s*&&\s*!\s*finalFrame/.test(kall) || /slut\s*=\s*!streakable\s*\|\|\s*finalFrame/.test(kall),
     'tiktok-service.js-filtret är borta — lärläget kan då fånga en mellanframe i desktopvägen');
   // Och att regeln faktiskt är den vi tror: repeatEnd avgör, och saknad repeatEnd = komplett.
   assert.ok(/repeatEnd\s*===\s*undefined\s*\?\s*true/.test(kall),

@@ -125,16 +125,47 @@ function streakNyckel(data){
 // gåvor så, Top Gift-rekorden likaså). En OBS-källa som kör cachad kod från före den här ändringen hade
 // räknat starten som en extra gåva — med ett namn utan "gift" ignorerar den det i stället.
 const STREAK_GLOMS_MS=120000;
+// EN COMBO VARS SLUT ALDRIG KOM (2026-11-21). Uppmätt i fyra sändningar under 20 minuter: 2 av 148
+// combos fick aldrig sin slutframe, båda enstaka gåvor (en frame, repeatCount 1, repeatEnd 0). Gåvan
+// räknades då aldrig. `oppna` håller därför streakens SENASTE frame, och tystaStreaks avslutar en
+// streak som stått tyst i STREAK_TYST_MS med just den framens antal — samma streakId, så en alert
+// som visat starten uppdaterar sig. Bryggan minns sedan den avslutade streaken (`stangd`) tills den
+// glöms, så att en sen slutframe eller en sen mellanframe av SAMMA combo aldrig räknas en gång till.
+// En ny combo av samma tittare och gåva börjar med en mellanframe vars antal inte är högre än det
+// avslutade — då är det en ny combo, och markeringen släpps.
+const STREAK_TYST_MS=Number(process.env.VYRA_STREAK_TYST_MS)>0?Number(process.env.VYRA_STREAK_TYST_MS):10000;
+const antalAv=data=>Math.max(1,Number(data?.repeatCount)||1);
 function streakBeslut(oppna,data,nu=Date.now()){
   const nyckel=streakNyckel(data);
-  if(isStreakable(data)&&!isFinalFrame(data)){
-    if(oppna.has(nyckel))return{typ:null,streakId:nyckel};
-    oppna.set(nyckel,nu);
+  // Glömskan räknas från SENASTE framen: en combo som pågår i över två minuter glömdes förr mitt i,
+  // och resten av den visades som en ny streak.
+  for(const[k,s]of oppna)if(nu-(s.stangd?s.stangdAt:s.sist)>STREAK_GLOMS_MS)oppna.delete(k);
+  const slut=!isStreakable(data)||isFinalFrame(data);
+  const s=oppna.get(nyckel);
+  if(s&&s.stangd){
+    // Samma combo som bryggan redan avslutat: dess slutframe, eller en frame som fortsätter räkningen.
+    if(slut?antalAv(data)>=s.antal:antalAv(data)>s.antal)return{typ:null,streakId:nyckel,sen:true,antal:antalAv(data),skickat:s.antal};
+    oppna.delete(nyckel);
+  }
+  if(!slut){
+    const oppen=oppna.get(nyckel);
+    if(oppen){oppen.sist=nu;oppen.data=data;return{typ:null,streakId:nyckel}}
+    oppna.set(nyckel,{forst:nu,sist:nu,data});
     return{typ:'streakstart',streakId:nyckel};
   }
   const startad=oppna.delete(nyckel);
-  for(const[k,at]of oppna)if(nu-at>STREAK_GLOMS_MS)oppna.delete(k);
   return{typ:'gift',streakId:startad?nyckel:''};
+}
+// Avslutar streaks som stått tysta i tystMs. Returnerar [{streakId, data}] — data är streakens senaste
+// frame, som bryggan skickar som `gift`. Ren funktion: provas i test/gift-streak.test.js.
+function tystaStreaks(oppna,nu=Date.now(),tystMs=STREAK_TYST_MS){
+  const ut=[];
+  for(const[k,s]of oppna){
+    if(s.stangd||nu-s.sist<tystMs)continue;
+    oppna.set(k,{stangd:true,stangdAt:nu,antal:antalAv(s.data)});
+    ut.push({streakId:k,data:s.data});
+  }
+  return ut;
 }
 // The same received event must keep the same id across every delivery attempt, so this is derived
 // from the message, never minted per retry. v3 nests msgId under common; the rest are older shapes.
@@ -910,4 +941,4 @@ function arGloveKort(k,mittAnkarId){
 function kortFordrojningMs(k){
   return boostFordrojningMs(k&&{fonsterStart:k.effektStart,skickatAt:k.skickatAt});
 }
-module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,streakNyckel,streakBeslut,STREAK_GLOMS_MS,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,barrageForm,barrageRorNiva,armeMvp,mvpFields,envelopeFields};
+module.exports={battleKortFields,arGloveKort,kortFordrojningMs,text,number,battleProbe,armelag,karta,tillVardenAv,ligaFields,battleTaskFields,arBoostFonster,boostFordrojningMs,profileImageOf,isStreakable,isFinalFrame,streakNyckel,streakBeslut,tystaStreaks,STREAK_GLOMS_MS,STREAK_TYST_MS,sourceId,identityOf,baseUser,giftFields,likeFields,battleFields,cloudEvent,tillMolnet,TILL_MOLNET,arGuardianEntrance,arSuperfanEntre,superfanFields,emoteFields,fansUppgradering,barrageForm,barrageRorNiva,armeMvp,mvpFields,envelopeFields};

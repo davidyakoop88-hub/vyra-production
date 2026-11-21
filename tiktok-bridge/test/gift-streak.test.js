@@ -195,3 +195,92 @@ test('en streak vars slutframe aldrig kom glöms efter två minuter', { timeout:
   genomBryggan([{ gift: { id: '2', type: 1 }, giftId: '2', repeatCount: 1, user: { idStr: 'annan' } }], oppna, () => t);
   assert.equal(oppna.size, 0, 'en övergiven streak ligger kvar för alltid');
 });
+
+// ---- en combo vars slut aldrig kom (2026-11-21) --------------------------------------------------
+// Uppmätt: 2 av 148 combos i fyra sändningar fick aldrig sin slutframe, båda enstaka gåvor (en frame,
+// repeatCount 1, repeatEnd 0). Bryggan avslutar nu en streak som stått tyst och skickar den som `gift`.
+// Det får aldrig bli dubbelt: en sen slutframe eller sen mellanframe av samma combo räknas inte igen.
+const ros = (anv, repeatCount, repeatEnd) => ({ gift: { id: '5655', name: 'Rose', type: 1, diamondCount: 1 }, giftId: '5655',
+  repeatCount, repeatEnd, user: { idStr: anv, displayId: anv }, common: { msgId: `${anv}-${repeatCount}-${repeatEnd}-${Math.random()}` } });
+
+// Samma väg som bridge.js: varje frame genom streakBeslut, och tystnadsvakten mellan framen.
+function korning(steg) {
+  const oppna = new Map(), ut = [];
+  for (const [t, f] of steg) {
+    for (const { streakId, data } of N.tystaStreaks(oppna, t)) ut.push({ typ: 'gift', streakId, tyst: true, ...N.giftFields(data) });
+    if (!f) continue;
+    const b = N.streakBeslut(oppna, f, t);
+    if (b.typ) ut.push({ typ: b.typ, streakId: b.streakId, ...N.giftFields(f) });
+  }
+  return { ut, oppna };
+}
+const T = N.STREAK_TYST_MS;
+
+test('en enstaka gåva vars slutframe aldrig kom räknas efter tystnaden, en gång, med startens streakId', { timeout: 5000 }, () => {
+  const { ut } = korning([[0, ros('a', 1, 0)], [T - 1, null], [T, null], [T + 5000, null]]);
+  assert.deepEqual(ut.map(e => e.typ), ['streakstart', 'gift']);
+  assert.equal(ut[1].count, 1);
+  assert.equal(ut[1].streakId, ut[0].streakId, 'alerten som visat starten ska kunna uppdatera sig');
+  assert.equal(ut[1].tyst, true);
+});
+
+test('en lång combo räknas med sin senaste frames antal när slutet uteblir', { timeout: 5000 }, () => {
+  const { ut } = korning([[0, ros('a', 1, 0)], [400, ros('a', 4, 0)], [900, ros('a', 9, 0)], [900 + T, null]]);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 9]]);
+});
+
+test('en combo som fortsätter räknas inte förrän den tystnat — varje ny frame skjuter upp avslutet', { timeout: 5000 }, () => {
+  const steg = [];
+  for (let i = 0; i < 20; i++) steg.push([i * (T - 100), ros('a', i + 1, 0)]);
+  steg.push([19 * (T - 100) + 50, ros('a', 20, 1)]);
+  const { ut } = korning(steg);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 20]], 'combon avslutades mitt i');
+});
+
+test('slutframen som kommer i tid räknas som förut, och vakten skickar ingenting efteråt', { timeout: 5000 }, () => {
+  const { ut, oppna } = korning([[0, ros('a', 1, 0)], [800, ros('a', 3, 0)], [2500, ros('a', 3, 1)], [2500 + 3 * T, null]]);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 3]]);
+  assert.equal(ut[1].tyst, undefined);
+  assert.equal(oppna.size, 0);
+});
+
+test('en SEN slutframe efter avslutet räknas inte en gång till — med samma eller högre antal', { timeout: 5000 }, () => {
+  for (const sent of [3, 5]) {
+    const { ut } = korning([[0, ros('a', 1, 0)], [500, ros('a', 3, 0)], [500 + T, null], [500 + T + 4000, ros('a', sent, 1)]]);
+    assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 3]], `sen slutframe ${sent} räknades`);
+  }
+  const oppna = new Map();
+  N.streakBeslut(oppna, ros('a', 2, 0), 0); N.tystaStreaks(oppna, T);
+  const b = N.streakBeslut(oppna, ros('a', 2, 1), T + 10);
+  assert.equal(b.typ, null); assert.equal(b.sen, true); assert.equal(b.skickat, 2);
+});
+
+test('en sen mellanframe som fortsätter den avslutade combon räknas inte heller', { timeout: 5000 }, () => {
+  const { ut } = korning([[0, ros('a', 2, 0)], [T, null], [T + 300, ros('a', 4, 0)], [T + 600, ros('a', 4, 1)], [4 * T, null]]);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 2], ['gift', 2]]);
+});
+
+test('samma tittares NÄSTA combo av samma gåva efter avslutet räknas som en ny gåva', { timeout: 5000 }, () => {
+  const { ut } = korning([[0, ros('a', 1, 0)], [T, null], [T + 3000, ros('a', 1, 0)], [T + 3400, ros('a', 2, 0)], [T + 3500, ros('a', 2, 1)]]);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 1], ['streakstart', 1], ['gift', 2]]);
+});
+
+test('en annan tittare påverkas inte av en avslutad combo', { timeout: 5000 }, () => {
+  const { ut } = korning([[0, ros('a', 1, 0)], [T, null], [T + 10, ros('b', 1, 0)], [T + 20, ros('b', 1, 1)]]);
+  assert.deepEqual(ut.map(e => [e.typ, e.count]), [['streakstart', 1], ['gift', 1], ['streakstart', 1], ['gift', 1]]);
+});
+
+test('en avslutad combo glöms efter två minuter, så kartan växer inte', { timeout: 5000 }, () => {
+  const oppna = new Map();
+  N.streakBeslut(oppna, ros('a', 1, 0), 0); N.tystaStreaks(oppna, T);
+  assert.equal(oppna.size, 1);
+  N.streakBeslut(oppna, ros('z', 1, 1), T + N.STREAK_GLOMS_MS + 1);
+  assert.equal(oppna.size, 0);
+});
+
+test('bryggan kör tystnadsvakten och skickar avslutet som gift med streakId', { timeout: 5000 }, () => {
+  const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'bridge.js'), 'utf8');
+  assert.match(src, /N\.tystaStreaks\(oppnaStreaks\)/);
+  assert.match(src, /sendEvent\('gift', \{ \.\.\.N\.giftFields\(data, mittAnkarId\), streakId \}, data\)/);
+  assert.match(src, /streakVakt\.unref/);
+});
