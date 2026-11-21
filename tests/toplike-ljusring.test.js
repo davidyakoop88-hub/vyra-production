@@ -242,3 +242,25 @@ test('texten växer med 1/sqrt(skala) under 100 %, högst 1,8 gånger, och inte 
   const katalog = require('./helpers/katalognycklar.js').kravNycklar().filter(k => /^catalog:toplike:ljusring(:|$)/.test(k)).sort();
   assert.deepEqual(lagen, katalog, 'varje Neonramar-nyckel i katalogen mäts med valet av i storleksproven');
 });
+
+// OMSLAGET SOM FÖRSVANN UR KEDJAN (CI 2026-11-18 och 2026-11-21): alla Neonram-nycklar ritades som en
+// vanlig Top Like, 145 px bred, för att ljusringens wh-omslag inte fanns i kedjan på den sidladdningen.
+// Här lindar ett omslag utan rang kedjan så att Neonramarna går förbi — samma utfall — och filen ska
+// märka det på den ritade roten och lägga sitt omslag ytterst igen.
+test('en Neonram-widget som ritas utan omslaget läker kedjan: omslaget läggs ytterst igen', async () => {
+  const h = createDom({ state: { widgets: [], projectName: 'toplike-ljusring-lakning' } });
+  for (const f of ['overlay-sanitize.js', 'toplike-design.js', 'topcoins-v2.js', 'toppoints-v2.js', 'toplike-studio.js', 'ranking-sixpack.js', 'toplike-ljusring-panel.js', 'toplike-ljusring.js']) h.load(f);
+  h.window.dispatchEvent(new h.window.Event('load'));
+  h.window.console.warn = () => {};
+  const forbi = h.document.createElement('script');
+  forbi.textContent = "{ const f = wh; wh = function (w) { return w && w.skin === 'ljusring' ? f(Object.assign({}, w, { skin: 'ljusring-av' })) : f(w); }; }";
+  h.document.body.append(forbi);
+  const w = W({ id: 'tln-lak' });
+  const tillstand = h.document.createElement('script');
+  tillstand.textContent = `state.widgets.length = 0; state.widgets.push(${JSON.stringify(w)});`;
+  h.document.body.append(tillstand);
+  assert.ok(!/class="[^"]*\btln\b/.test(h.window.wh(w)), 'förutsättningen: kedjan går förbi Neonramarna');
+  h.paint([w]);
+  await new Promise(r => setTimeout(r, 20));
+  assert.match(h.window.wh(w), /class="[^"]*\btln\b/, 'omslaget lades inte tillbaka i kedjan');
+});

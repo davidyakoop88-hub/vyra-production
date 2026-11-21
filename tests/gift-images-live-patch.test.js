@@ -121,7 +121,7 @@ function campaignNode(id, slots) {
   return root;
 }
 
-function makeEnv({ widgets, dom, overlay = false }) {
+function makeEnv({ widgets, dom, overlay = false, search = null }) {
   const calls = { save: 0, render: 0 };
   const root = node('div', 'canvas');
   dom.forEach(d => root.append(d));
@@ -133,12 +133,14 @@ function makeEnv({ widgets, dom, overlay = false }) {
     JSON, Object, Array, String, Number, Math, Map, Set, Boolean, Error,
     // Overlay-laget lases ur URL:en av bade den har filen och vyra-tom-widget.js.
     URLSearchParams,
-    location: { search: overlay ? '?overlay=1' : '' },
+    location: { search: search != null ? search : (overlay ? '?overlay=1' : '') },
     document: {
       querySelector: sel => root.querySelector(sel),
       querySelectorAll: sel => root.querySelectorAll(sel)
     },
     addEventListener: (name, fn) => { (listeners[name] = listeners[name] || []).push(fn) },
+    // Studions bevakning av nya fack sitter efter bind(); proven anropar bind() själva.
+    bind: () => { calls.bind = (calls.bind || 0) + 1 },
     state,
     save: () => { calls.save += 1 },
     render: () => { calls.render += 1 },
@@ -494,4 +496,100 @@ test('en ny sändning glömmer förra sändningens totaler', () => {
   env.state.widgets[0].giftCurrent0 = 0;              // serverns nollställning, via konfigurationen
   env.gift(stamplad('b', 1, 1));
   assert.equal(rosor(env), 1, 'den nya sändningens första gåva jämfördes med förra sändningens total');
+});
+
+// ---- Gift Campaign: ett fack som läggs till mitt i sändningen -----------------------------------
+// David 2026-11-21. Ett nytt fack, eller ett fack som fick en ny gåva, började på 0 fast gåvan redan
+// fått gåvor i sändningen, och räknade sedan bara skillnaden mot den total sidan senast sett.
+const galax = (id, count, total) => ({ type: 'gift', giftName: 'Galaxy', giftId: '5826', username: 'u', coins: count, count, id, giftSessionCount: total });
+
+test('OBS-källan lyfter ett nytt fack till den total den redan sett för gåvan', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655', giftCurrent0: 4, giftName1: 'Heart Me', giftMatch1: 'Heart Me', giftId1: '7934' });
+  const R = env.sandbox.VyraKampanjRaknare;
+  R.vidKonfig([Object.assign({}, env.state.widgets[0])]);
+  env.gift(galax('g1', 6, 6));                                   // Galaxy har inget fack än
+  const ny = Object.assign({}, env.state.widgets[0], { giftName1: 'Galaxy', giftMatch1: 'Galaxy', giftId1: '5826', giftCurrent1: 0 });
+  R.vidKonfig([ny]);
+  assert.equal(Number(ny.giftCurrent1), 6, 'det nya facket började på 0 i stället för sändningens total');
+  assert.equal(Number(ny.giftCurrent0), 4, 'ett fack som inte bytt gåva rördes');
+  // Nästa Galaxy bär totalen 7: en till.
+  env.state.widgets[0] = ny;
+  env.gift(galax('g2', 1, 7));
+  assert.equal(Number(env.state.widgets[0].giftCurrent1), 7);
+});
+
+test('OBS-källan lyfter inte ett gammalt fack som streamern sänkt', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  const R = env.sandbox.VyraKampanjRaknare;
+  R.vidKonfig([Object.assign({}, env.state.widgets[0])]);
+  env.gift(stamplad('a', 8, 8));
+  R.vidKonfig([Object.assign({}, env.state.widgets[0])]);       // studion sparar 8
+  const sankt = Object.assign({}, env.state.widgets[0], { giftCurrent0: 2 });
+  R.vidKonfig([sankt]);
+  assert.equal(Number(sankt.giftCurrent0), 2, 'en sänkning i ett fack med samma gåva lyftes tillbaka');
+});
+
+test('Studion lyfter ett nytt fack ur sitt eget minne och sedan ur serverns svar', async () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655', giftName1: 'Heart Me', giftMatch1: 'Heart Me', giftId1: '7934' });
+  env.sandbox.VyraCloudSync = { current: () => ({ workspace: { id: 'ws1' } }) };
+  const fragor = [];
+  env.sandbox.VyraAuth = { api: async url => { fragor.push(url); return { ok: true, giftCounts: { '5826': 9 } }; } };
+  env.gift(galax('g1', 6, 6));
+  const w = env.state.widgets[0];
+  Object.assign(w, { giftName1: 'Galaxy', giftMatch1: 'Galaxy', giftId1: '5826' });
+  env.sandbox.VyraKampanjRaknare.nyaFack(w, 1, 2);
+  assert.equal(Number(w.giftCurrent1), 6, 'facket bar inte Studions kända total när det sparades');
+  await new Promise(r => setImmediate(r));
+  assert.deepEqual(fragor, ['/api/workspaces/ws1/gift-counts']);
+  assert.equal(Number(w.giftCurrent1), 9, 'serverns färskare total lyfte inte facket');
+  assert.equal(env.calls.save, 0, 'räknarfilen sparade själv');
+  assert.equal(Number(w.giftCurrent0), 0, 'ett annat fack rördes');
+});
+
+// ---- Gift Campaign: ett tal skrivet för hand når OBS -------------------------------------------
+// En höjning i panelen som var LÄGRE än OBS-källans egen räkning togs för studions vanliga räkning
+// och stod inte fram. Panelen stämplar nu facket (giftSetAt<i>) när streamern skriver ett tal.
+test('ett handskrivet tal tas emot även när det är lägre än källans egen räkning', () => {
+  const R = raknare();
+  const in_ = [Object.assign(K('c1', 7, 0), { giftSetAt0: '111' })];
+  R.behall(in_, [K('c1', 10, 0)], { forra: { c1: { giftCurrent0: 3, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [7, 0], 'streamerns tal gick inte fram till OBS');
+});
+
+test('samma stämpel en gång till är studions räkning, inte ett handgrepp', () => {
+  const R = raknare();
+  const in_ = [Object.assign(K('c1', 7, 0), { giftSetAt0: '111' })];
+  R.behall(in_, [K('c1', 10, 0)], { forra: { c1: { giftCurrent0: 3, giftCurrent1: 0, giftSetAt0: '111' } } });
+  assert.deepEqual(tal(in_[0]), [10, 0], 'en vanlig sparning sänkte källan');
+});
+
+test('panelen stämplar bara ett handskrivet tal, och anropar nyaFack före sparningen', () => {
+  const media = fs.readFileSync(path.join(__dirname, '..', 'media.js'), 'utf8');
+  const bind = media.slice(media.indexOf('const campaignBind=bind'), media.indexOf("set('#campaignTitle'", media.indexOf('const campaignBind=bind')));
+  assert.ok(bind.includes(String.raw`if(/^giftCurrent\d+$/.test(key))w["giftSetAt"+key.slice(11)]=Date.now();save()`), 'panelen stämplar inte ett handskrivet tal');
+  assert.match(media, /const foreAntal=campaignGiftCount\(w\);w\.giftCount=\+e\.target\.value;window\.VyraKampanjRaknare\?\.nyaFack\?\.\(w,foreAntal\);save\(\)/);
+  const val = fs.readFileSync(path.join(__dirname, '..', 'vyra-kampanj-gavoval.js'), 'utf8');
+  const lyft = val.indexOf('VyraKampanjRaknare.nyaFack(w, i, i + 1)'), spara = val.indexOf('save()', lyft);
+  assert.ok(lyft > 0 && spara > lyft, 'gåvovalet lyfter inte facket före sparningen');
+});
+
+test('Studion lyfter en kampanj som läggs till mitt i sändningen, men inte de fack som redan fanns', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655', giftCurrent0: 3 });
+  const varv = () => env.sandbox.bind();
+  varv();
+  assert.equal(env.calls.bind, 1, 'Studions bind() lindades fel');
+  env.gift(stamplad('a', 1, 20));                                // Rose: total 20, facket 4
+  varv();                                                        // första varvet minns bara
+  env.state.widgets[0].giftCurrent0 = 2;                         // streamern sänker
+  env.state.widgets.push({ id: 'c2', type: 'templateGiftCampaign', giftMatch0: 'Rose', giftId0: '5655', giftCurrent0: 0, giftCurrent1: 0 });
+  varv();
+  assert.equal(Number(env.state.widgets[1].giftCurrent0), 20, 'den nya kampanjen började på 0');
+  assert.equal(Number(env.state.widgets[0].giftCurrent0), 2, 'ett fack som redan fanns lyftes tillbaka');
+  assert.equal(env.calls.save, 0, 'bevakningen sparade');
+});
+
+test('en OBS-länk bevakar inte facken som Studion gör', () => {
+  const env = makeEnv({ widgets: [], dom: [], search: '?overlay=1&access=x' });
+  assert.ok(/calls.bind/.test(String(env.sandbox.bind)), 'OBS-länkens bind() lindades');
+  assert.ok(!/setInterval\s*\(/.test(SOURCE), 'en evig timer håller jsdom-proven vid liv');
 });

@@ -201,6 +201,26 @@
       if (n.scrollWidth > n.clientWidth) n.classList.add('tva-rader');
     });
   }
+  // OMSLAGET SOM FÖRSVANN UR KEDJAN (CI 2026-11-18 storlek-matning och 2026-11-21 test-visuell, PR 823).
+  // Alla fem Neonram-nycklarna ritades som en vanlig Top Like, 145 px bred: ljusringens wh-omslag fanns
+  // inte i kedjan på den sidladdningen. Rangvakten (install) räknar med att den yttersta rangen säger
+  // vad som ligger innanför, men toplike-studio.js läggs in asynkront ur media.js och flera andra skript
+  // lindar wh utan rang, så kedjans ordning skiljer sig mellan laddningar och gick inte att återskapa
+  // lokalt (36 laddningar). I stället för att gissa vägen läker filen utfallet: syns en Neonram-widget
+  // utan sitt omslag (rot utan .tln) läggs omslaget ytterst igen och studion ritar om. Högst tre gånger
+  // per sida, så att en kedja som av annat skäl aldrig ger .tln inte ritar om i en slinga.
+  let lakningar = 0;
+  function laka() {
+    if (lakningar >= 3 || typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    const trasig = [...document.querySelectorAll('.widget.vyra-toplike[data-id]:not(.tln)')].some(el => {
+      const w = state.widgets.find(x => x && String(x.id) === el.dataset.id);
+      return w && w.type === 'templateTopLike' && w.skin === SKIN;
+    });
+    if (!trasig) return;
+    lakningar++;
+    console.warn('[VYRA] Neonramar: omslaget saknades i renderkedjan, läggs ytterst igen');
+    install(true, true);
+  }
   // Livedatan skriver i datalagret i sin egen takt; synken körs en gång per bildruta efter en ändring.
   const vantar = new Set();
   function bevaka() {
@@ -221,6 +241,7 @@
           m.addedNodes.forEach(x => { if (x.nodeType === 1) (x.matches && x.matches('.widget.tln') ? [x] : x.querySelectorAll ? [...x.querySelectorAll('.widget.tln')] : []).forEach(r => { vantar.add(r); r.__tlnAnimera = false; }); });
         }
       }
+      if (lista.some(m => m.type === 'childList' && m.addedNodes.length)) laka();
       if (vantar.size) (typeof requestAnimationFrame === 'function' ? requestAnimationFrame : setTimeout)(() => {
         vantar.forEach(r => { if (r.isConnected) synka(r, r.__tlnAnimera); }); vantar.clear();
       });
@@ -229,8 +250,9 @@
 
   // ---------- wh-omslaget (rang 3.5) ----------
   const djup = { wh: 0 };
-  function install(sent) {
-    if (typeof wh !== 'function' || wh.__vyraYtter >= RANG) return;
+  // tvinga: lägg omslaget ytterst även om rangen säger att det redan finns ett — se laka() nedan.
+  function install(sent, tvinga) {
+    if (typeof wh !== 'function' || (!tvinga && wh.__vyraYtter >= RANG)) return;
     const tidigare = wh;
     const f = function (w) {
       if (djup.wh) return tidigare.apply(this, arguments);
