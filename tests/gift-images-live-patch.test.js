@@ -149,6 +149,8 @@ function makeEnv({ widgets, dom, overlay = false }) {
     ]
   };
   sandbox.window = sandbox; sandbox.globalThis = sandbox;
+  // Lyssnarna nås av prov som behöver skicka något annat än en gåva (t.ex. en ny sändning).
+  sandbox.__lyssnare = listeners;
   vm.runInNewContext(SOURCE, sandbox, { filename: 'gift-event-images.js' });
 
   const gift = detail => {
@@ -380,4 +382,116 @@ test('ett sparat id går före katalogen, och namnet räknas som förut utan id 
   assert.equal(Number(env.state.widgets[0].giftCurrent0), 0, 'katalogens id skrev över det id streamern valde');
   env.gift({ type: 'gift', giftName: 'Rose', username: 'u', coins: 2, count: 2 });
   assert.equal(Number(env.state.widgets[0].giftCurrent0), 2);
+});
+
+// ---- Gift Campaign: OBS-källan behåller sin räkning när layouten sparas ---------------------------
+// David 2026-11-20: "gift champian räknar inte alla gift". Räknaren bor i varje sida för sig, och i
+// OBS byts hela layouten ut varje gång studion sparar något. Uppmätt med en riktig OBS-länk: källan
+// hade räknat 5 gåvor, studion öppnades och flyttade en ANNAN widget en pixel, och kampanjen i OBS
+// föll till 0. Regeln nedan avgör, per fack, vems tal som gäller. `forra` är värdet i den
+// konfiguration källan senast tog emot.
+const raknare = () => makeEnv({ widgets: [], dom: [] }).sandbox.VyraKampanjRaknare;
+const K = (id, n0, n1) => ({ id, type: 'templateGiftCampaign', giftCurrent0: n0, giftCurrent1: n1 });
+const tal = w => [Number(w.giftCurrent0), Number(w.giftCurrent1)];
+
+test('en sparning som inte rör räknaren lämnar OBS-källans räkning kvar', () => {
+  const R = raknare(), in_ = [K('c1', 0, 0)];
+  R.behall(in_, [K('c1', 5, 2)], { forra: { c1: { giftCurrent0: 0, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [5, 2], 'studions sparning skrev över det källan räknat');
+});
+
+test('en studio som räknat färre och sparar sänker inte källan', () => {
+  const R = raknare(), in_ = [K('c1', 2, 0)];
+  R.behall(in_, [K('c1', 7, 0)], { forra: { c1: { giftCurrent0: 0, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [7, 0]);
+});
+
+test('ett sparat tal som är högre än källans tas emot', () => {
+  const R = raknare(), in_ = [K('c1', 50, 0)];
+  R.behall(in_, [K('c1', 7, 0)], { forra: { c1: { giftCurrent0: 2, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [50, 0]);
+});
+
+test('ett sparat tal som streamern sänkt tas emot', () => {
+  const R = raknare(), in_ = [K('c1', 1, 0)];
+  R.behall(in_, [K('c1', 7, 0)], { forra: { c1: { giftCurrent0: 2, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [1, 0], 'en medveten sänkning i panelen gick inte fram');
+});
+
+test('en ny sändning tar emot serverns nollor', () => {
+  const R = raknare(), in_ = [K('c1', 0, 0)];
+  R.behall(in_, [K('c1', 9, 4)], { nollstall: true, forra: { c1: { giftCurrent0: 0, giftCurrent1: 0 } } });
+  assert.deepEqual(tal(in_[0]), [0, 0], 'förra sändningens räkning följde med in i den nya');
+});
+
+test('första konfigurationen, en ny kampanj och andra widgetar rörs inte', () => {
+  const R = raknare();
+  const forsta = [K('c1', 3, 1)];
+  const minne = R.behall(forsta, [], {});
+  assert.deepEqual(tal(forsta[0]), [3, 1]);
+  assert.deepEqual(JSON.parse(JSON.stringify(minne)), { c1: { giftCurrent0: 3, giftCurrent1: 1 } }, 'det sparade värdet minns inte till nästa gång');
+  const annan = [{ id: 'c1', type: 'templateTopGift', giftCurrent0: 0 }, K('ny', 0, 0)];
+  R.behall(annan, [K('c1', 8, 8)], { forra: minne });
+  assert.equal(annan[0].giftCurrent0, 0, 'en annan widgettyp fick kampanjens räkning');
+  assert.deepEqual(tal(annan[1]), [0, 0]);
+});
+
+test('OBS-källan frågar räknaren innan en ny layout läggs in', () => {
+  const kod = fs.readFileSync(path.join(__dirname, '..', 'overlay-access.js'), 'utf8');
+  const vid = kod.indexOf('VyraKampanjRaknare?.vidKonfig?.(copy.widgets)'), in_ = kod.indexOf('projectReadonlyOverlay({state:copy,extras})');
+  assert.ok(vid > 0 && vid < in_, 'räkningen slås inte ihop före att layouten byts ut');
+});
+
+// ---- Gift Campaign: serverns total per gåva ------------------------------------------------------
+// Servern räknar varje gåva en gång per sändning och stämplar totalen på händelsen
+// (server/kampanj-gavor.js, `giftSessionCount`). Sidan ökar facket med SKILLNADEN mot den total den
+// senast såg, inte med händelsens eget antal. Uppmätt på lokal kedja med riktig OBS-länk: efter fem
+// gåvor och en dubblettleverans visade källan 9, och efter omladdning fortfarande 9 (sparat värde 0).
+const stamplad = (id, count, total) => ({ type: 'gift', giftName: 'Rose', giftId: '5655', username: 'u', coins: count, count, id, giftSessionCount: total });
+const rosor = env => Number(env.state.widgets[0].giftCurrent0);
+
+test('en tappad händelse hämtas in av nästa, och en dubblett ger noll', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 1, 1));
+  assert.equal(rosor(env), 1);
+  // Händelserna med total 2 och 3 nådde aldrig sidan. Nästa bär totalen 4.
+  env.gift(stamplad('d', 1, 4));
+  assert.equal(rosor(env), 4, 'de tappade gåvorna räknades aldrig in');
+  env.gift(stamplad('d', 1, 4));
+  assert.equal(rosor(env), 4, 'en omleverans räknades en gång till');
+  env.gift(stamplad('c', 1, 3));
+  assert.equal(rosor(env), 4, 'en sen, äldre händelse sänkte eller höjde talet');
+});
+
+test('ett tal streamern ställt in för hand står kvar som utgångspunkt', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 2, 2));
+  env.state.widgets[0].giftCurrent0 = 100;            // panelens "Nu"
+  env.gift(stamplad('b', 3, 5));
+  assert.equal(rosor(env), 103);
+});
+
+test('utan stämpel räknas händelsens antal som förut', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(gava('Rose', '5655', 2)); env.gift(gava('Rose', '5655', 3));
+  assert.equal(rosor(env), 5);
+});
+
+test('en källa som öppnas mitt i sändningen lyfts till serverns total — aldrig nedåt', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655', giftCurrent0: 2, giftMatch1: 'Galaxy', giftId1: '5826', giftCurrent1: 40 });
+  env.sandbox.VyraKampanjRaknare.vidTotaler({ '5655': 9, '5826': 12, '7934': 3 });
+  assert.equal(rosor(env), 9, 'det sparade talet stod kvar i stället för serverns');
+  assert.equal(Number(env.state.widgets[0].giftCurrent1), 40, 'ett högre, inställt tal sänktes');
+  // Nästa gåva bär totalen 10: en till, inte tio till.
+  env.gift(stamplad('n', 1, 10));
+  assert.equal(rosor(env), 10);
+});
+
+test('en ny sändning glömmer förra sändningens totaler', () => {
+  const env = kampanj({ giftMatch0: 'Rose', giftId0: '5655' });
+  env.gift(stamplad('a', 5, 5));
+  for (const fn of env.sandbox.__lyssnare?.['vyra-live-session'] || []) fn({ detail: { event: 'live:start' } });
+  env.state.widgets[0].giftCurrent0 = 0;              // serverns nollställning, via konfigurationen
+  env.gift(stamplad('b', 1, 1));
+  assert.equal(rosor(env), 1, 'den nya sändningens första gåva jämfördes med förra sändningens total');
 });

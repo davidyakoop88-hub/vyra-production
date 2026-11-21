@@ -122,7 +122,9 @@ db('gamla poängrader tas bort, färska och måltabellens rader står kvar', asy
   await lagg('points_event_apply', 'farsk:', 300, '10 seconds');
   await lagg('goal_event_apply', 'mal-gammal:', 50, '72 hours');
   const out = await G.drainApplied(pool, { batch: 5000, maxBatches: 20, table: 'points_event_apply' });
-  assert.equal(out.deleted, 12000);
+  // Svepet gäller hela tabellen, inte bara provets arbetsyta: andra prov i samma körning kan ha lämnat
+  // gamla rader. Det som ska hålla är att provets egna rader är borta (nedan), inte ett exakt antal.
+  assert.ok(out.deleted >= 12000, `bara ${out.deleted} rader togs bort`);
   assert.equal(out.exhausted, true);
   assert.equal(await antal('points_event_apply', 'gammal:%'), 0);
   assert.equal(await antal('points_event_apply', 'farsk:%'), 300, 'rader innanför fönstret togs bort — händelsen kan ge poäng två gånger');

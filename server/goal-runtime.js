@@ -247,6 +247,7 @@ const SWEEP_SQL = `
 const SWEEP_SQL_BY_TABLE = {
   goal_event_apply: SWEEP_SQL,
   points_event_apply: SWEEP_SQL.replace(/goal_event_apply/g, 'points_event_apply'),
+  session_gift_apply: SWEEP_SQL.replace(/goal_event_apply/g, 'session_gift_apply'),
 };
 
 async function sweepApplied(pool, { olderThan = '48 hours', limit = 5000, table = 'goal_event_apply' } = {}) {
