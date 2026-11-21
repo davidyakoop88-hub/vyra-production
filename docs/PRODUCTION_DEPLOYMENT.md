@@ -296,10 +296,15 @@ HTML types are rejected, filenames are normalized, objects are isolated under
 the workspace id, downloads expire after five minutes, and stale pending
 uploads are removed after one hour. Set `CDN_ORIGIN` for immutable CDN delivery.
 
-For public production, set `MEDIA_SCAN_REQUIRED=true` and connect the object
-provider's malware-scanning workflow. Assets remain quarantined until that
-scanner promotes them to `ready`; never disable this requirement for untrusted
-customer uploads.
+`MEDIA_SCAN_REQUIRED=true` is mandatory in production. The scan that runs today is built in:
+after size, MIME type and checksum are verified, the server reads the first bytes of the object and
+only marks it `ready` if the content really is the declared image, audio or video type. Anything
+else is deleted and answered with 422. This is a file-type check, not malware scanning.
+
+To put a real scanner in front of delivery, set `MEDIA_EXTERNAL_SCAN=true`. Assets then stay
+`quarantined` until the scanner promotes them through `/api/internal/media-scan/:id`. Do not set it
+without a scanner connected: until 2026-11-21 every upload in production stayed quarantined forever
+because nothing promoted them.
 
 ## Billing
 
