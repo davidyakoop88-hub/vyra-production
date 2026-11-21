@@ -235,6 +235,11 @@
           // (gift-campaign-video.js) — samma namn kan ha flera id med olika video. Utan id i katalogen
           // tas ett gammalt id bort, så att platsen inte spelar förra gåvans video.
           if (g.giftId) w['giftId' + i] = String(g.giftId); else delete w['giftId' + i];
+          // Mitt i en sändning har gåvan kanske redan fått gåvor: facket lyfts till sändningens total
+          // innan det sparas, i stället för att börja på 0 (gift-event-images.js nyaFack).
+          if (window.VyraKampanjRaknare && typeof window.VyraKampanjRaknare.nyaFack === 'function') {
+            try { window.VyraKampanjRaknare.nyaFack(w, i, i + 1); } catch (_) {}
+          }
           stang(false);
           if (typeof save === 'function') save();
           if (typeof render === 'function') render();

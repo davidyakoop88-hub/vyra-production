@@ -479,6 +479,11 @@
   //   * sparat värde högre än den egna räkningen → det inkommande (studion vet mer)
   //   * sparat värde SÄNKT (inkommande < forra)  → det inkommande (streamern har ställt om talet)
   //   * annars (höjt, men inte över den egna)    → den egna räkningen står kvar
+  //   * talet INSKRIVET FÖR HAND sedan förra      → det inkommande, även när det är lägre än den
+  //     konfigurationen (ny `giftSetAt<i>`)          egna räkningen. Panelen stämplar facket när
+  //                                                  streamern skriver ett tal (media.js), och bara
+  //                                                  då — så att studions vanliga räkning, som också
+  //                                                  höjer talet, aldrig tas för ett handgrepp.
   // Ren funktion: muterar bara `inkommande`, och provas utan webbläsare.
   // SERVERNS TOTAL PER GÅVA (server/kampanj-gavor.js, 2026-11-21). Servern räknar varje gåva en gång
   // per sändning och stämplar totalen på händelsen (`giftSessionCount`). Sidan minns den senaste
@@ -506,8 +511,11 @@
       Object.keys(nycklar).forEach(function (n) {
         var in_ = Number(w[n]) || 0, egen = lokal ? Number(lokal[n]) || 0 : 0;
         var kand = Object.prototype.hasOwnProperty.call(sparat, n), fore = kand ? Number(sparat[n]) || 0 : in_;
+        var stampel = 'giftSetAt' + n.slice(11), handNy = w[stampel] == null ? null : String(w[stampel]);
         minns[n] = in_;
+        if (handNy != null) minns[stampel] = handNy;
         if (nollstall || !lokal) return;
+        if (kand && handNy != null && handNy !== sparat[stampel]) return;
         if (in_ > egen) return;
         if (kand && in_ < fore) return;
         if (egen > in_) w[n] = egen;
@@ -515,23 +523,99 @@
     });
     return nyaForra;
   }
+  // Vilken gåva ett fack räknar: dess id, eller — för ett fack utan id — det enda id katalogen har för
+  // namnet. Tom sträng när det inte går att avgöra; då lyfts facket aldrig.
+  function fackGavoId(widget, index, slots) {
+    var id = String(widget['giftId' + index] || '');
+    if (id) return id;
+    var namn = widget['giftMatch' + index] || (slots && slots[index] ? slots[index].name : '');
+    var idn = namn ? Array.from(kampanjIdn(namn)) : [];
+    return idn.length === 1 ? String(idn[0]) : '';
+  }
+  function kampanjFack(widget) {
+    return typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(widget) || [] : [];
+  }
+  function vardaTotal(counts) {
+    if (!counts || typeof counts !== 'object') return;
+    Object.keys(counts).forEach(function (id) {
+      var t = Number(counts[id]);
+      if (Number.isSafeInteger(t) && t > 0) kampanjTotal[id] = Math.max(t, kampanjTotal[id] || 0);
+    });
+  }
+  // Lyfter ETT fack till den kända totalen för dess gåva. Aldrig nedåt. Sant om talet ändrades.
+  function lyftFack(widget, index, slots) {
+    var id = fackGavoId(widget, index, slots);
+    var total = id ? Number(kampanjTotal[id]) : 0;
+    if (!(total > Number(widget['giftCurrent' + index] || 0))) return false;
+    widget['giftCurrent' + index] = total;
+    return true;
+  }
+  // ETT FACK SOM LÄGGS TILL MITT I SÄNDNINGEN (David 2026-11-21). Ett nytt fack, eller ett fack som
+  // byter gåva, började på 0 — fast gåvan redan hade fått gåvor i sändningen — och räknade sedan
+  // bara det som kom efteråt. OBS-källan lyfter det här ur sitt eget minne av totalerna: de kom med
+  // länkens svar och har följt med varje gåvohändelse sedan dess. Bara fack vars gåva är NY jämfört
+  // med förra konfigurationen rörs, så ett tal streamern sänkt i ett gammalt fack står kvar.
+  // Studion gör samma sak med sina egna widgetar (bevakningen längre ned), så att ett nytt fack eller
+  // en ny kampanj visar samma tal i Studion som i OBS.
+  var kampanjFackIdn = {};
+  function lyftNyaFack(widgets, minne, baraMinns) {
+    var nya = {}, rorda = [];
+    (Array.isArray(widgets) ? widgets : []).forEach(function (w) {
+      if (!w || w.type !== 'templateGiftCampaign' || w.id == null) return;
+      var slots = kampanjFack(w), forra = (minne && minne[w.id]) || [], idn = nya[w.id] = [], rort = false;
+      for (var index = 0; index < slots.length; index += 1) {
+        idn[index] = fackGavoId(w, index, slots);
+        if (!baraMinns && idn[index] && idn[index] !== forra[index] && lyftFack(w, index, slots)) rort = true;
+      }
+      if (rort) rorda.push(w);
+    });
+    return { minne: nya, rorda: rorda };
+  }
   // STUDION FRÅGAR SERVERN EFTER TOTALERNA när den öppnas och när en ny sändning börjar. OBS-länken får
   // dem med sin layout (overlay-access.js); utan den här frågan hade en Studio som startas mitt i
   // sändningen stått kvar på det sparade talet och bara lagt till det den själv såg.
-  function hamtaTotalerIStudio() {
+  function hamtaTotalerIStudio(klar) {
     try {
       if (new URLSearchParams(location.search).has('access')) return;
       var synk = window.VyraCloudSync, auth = window.VyraAuth;
       var ws = synk && typeof synk.current === 'function' ? (synk.current() || {}).workspace : null;
       if (!ws || !ws.id || !auth || typeof auth.api !== 'function') return;
       Promise.resolve(auth.api('/api/workspaces/' + ws.id + '/gift-counts', { method: 'GET' }))
-        .then(function (svar) { if (svar && svar.giftCounts) window.VyraKampanjRaknare.vidTotaler(svar.giftCounts); })
+        .then(function (svar) {
+          if (!svar || !svar.giftCounts) return;
+          if (typeof klar === 'function') klar(svar.giftCounts); else window.VyraKampanjRaknare.vidTotaler(svar.giftCounts);
+        })
         .catch(function () { /* utan totaler räknar Studion som förut */ });
     } catch (e) { /* samma */ }
   }
-  if (typeof setTimeout === 'function') setTimeout(hamtaTotalerIStudio, 8000);
+  if (typeof setTimeout === 'function') setTimeout(function () { hamtaTotalerIStudio(); }, 8000);
+  // STUDIONS BEVAKNING AV NYA FACK. Panelens egna vägar (nyaFack nedan) täcker gåvovalet och antalet
+  // gåvor; en kampanj som läggs till ur biblioteket, en ångrad ändring eller en mall som byter
+  // gåvor går andra vägar. Efter varje bind() — alltså varje omritning, även redigerarens, där
+  // layout-safe.js tar över render() — jämförs varje fack med gåvan det hade förra gången, och bara
+  // ett fack vars gåva är ny lyfts ur Studions minne av totalerna. Ingen save(): talet följer med
+  // nästa sparning, och OBS-källan lyfter samma fack själv (vidKonfig). Ingen timer: ett evigt
+  // setInterval höll jsdom-proven vid liv så att sviten aldrig blev klar.
+  var studioFackIdn = null;
+  function bevakaStudionsFack() {
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    // Första varvet minns bara: facken som redan finns lyfts av totalerna när Studion öppnas.
+    var svar = lyftNyaFack(state.widgets, studioFackIdn || {}, !studioFackIdn);
+    svar.rorda.forEach(function (w) { schedule(w); });
+    studioFackIdn = svar.minne;
+  }
+  var arStudio = false;
+  try { arStudio = !new URLSearchParams(location.search).has('access'); } catch (e) { arStudio = false; }
+  if (arStudio && typeof bind === 'function') {
+    var bindFore = bind;
+    bind = function () {
+      var ut = bindFore.apply(this, arguments);
+      try { bevakaStudionsFack(); } catch (e) { /* räknaren får aldrig stoppa en omritning */ }
+      return ut;
+    };
+  }
   window.addEventListener('vyra-live-session', function (event) {
-    if (event && event.detail && event.detail.event === 'live:start' && typeof setTimeout === 'function') setTimeout(hamtaTotalerIStudio, 4000);
+    if (event && event.detail && event.detail.event === 'live:start' && typeof setTimeout === 'function') setTimeout(function () { hamtaTotalerIStudio(); }, 4000);
   });
   window.VyraKampanjRaknare = {
     behall: behallKampanjrakning,
@@ -543,24 +627,12 @@
     vidTotaler: function (counts) {
       if (!counts || typeof counts !== 'object') return;
       var lokala = typeof state !== 'undefined' && state && Array.isArray(state.widgets) ? state.widgets : [];
-      Object.keys(counts).forEach(function (id) {
-        var t = Number(counts[id]);
-        if (Number.isSafeInteger(t) && t > 0) kampanjTotal[id] = Math.max(t, kampanjTotal[id] || 0);
-      });
+      vardaTotal(counts);
       lokala.forEach(function (widget) {
         if (!widget || widget.type !== 'templateGiftCampaign') return;
-        var slots = typeof window.VyraCampaignItems === 'function' ? window.VyraCampaignItems(widget) : [];
-        for (var index = 0; index < slots.length; index += 1) {
-          var id = String(widget['giftId' + index] || '');
-          if (!id) {
-            var idn = Array.from(kampanjIdn(widget['giftMatch' + index] || slots[index].name));
-            if (idn.length === 1) id = String(idn[0]);
-          }
-          var total = id ? Number(kampanjTotal[id]) : 0;
-          if (!(total > Number(widget['giftCurrent' + index] || 0))) continue;
-          widget['giftCurrent' + index] = total;
-          schedule(widget);
-        }
+        var slots = kampanjFack(widget), rort = false;
+        for (var index = 0; index < slots.length; index += 1) if (lyftFack(widget, index, slots)) rort = true;
+        if (rort) schedule(widget);
       });
     },
     vidKonfig: function (inkommandeWidgets) {
@@ -568,6 +640,26 @@
       var nollstall = Date.now() < kampanjNollasTill;
       kampanjNollasTill = 0;
       kampanjForra = behallKampanjrakning(inkommandeWidgets, lokala, { nollstall: nollstall, forra: kampanjForra });
+      kampanjFackIdn = lyftNyaFack(inkommandeWidgets, kampanjFackIdn).minne;
+    },
+    // STUDIONS VÄG för ett nytt fack: panelen anropar den när ett fack läggs till (antalet gåvor höjs,
+    // media.js) eller får en ny gåva (vyra-kampanj-gavoval.js), FÖRE save(). Facken [fran, till) lyfts
+    // först ur Studions eget minne av totalerna — så att sparningen redan bär talet — och sedan ur ett
+    // färskt svar från servern, eftersom Studion kan ha missat händelser.
+    nyaFack: function (widget, fran, till) {
+      if (!widget || widget.type !== 'templateGiftCampaign') return;
+      var lyft = function () {
+        var slots = kampanjFack(widget), slut = Math.min(till == null ? slots.length : till, slots.length), rort = false;
+        for (var index = Math.max(0, Number(fran) || 0); index < slut; index += 1) if (lyftFack(widget, index, slots)) rort = true;
+        return rort;
+      };
+      if (lyft()) schedule(widget);
+      // Serverns svar kommer efter sparningen. Ingen egen save() (gift-campaign-fountain-motion.test.js:
+      // räknarfilen sparar aldrig): talet följer med nästa sparning, och OBS-källan lyfter facket själv.
+      hamtaTotalerIStudio(function (counts) {
+        vardaTotal(counts);
+        if (lyft()) schedule(widget);
+      });
     }
   };
 
