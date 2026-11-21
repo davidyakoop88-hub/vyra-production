@@ -288,19 +288,46 @@ const saBlobUrl=blob=>blob.saFjarr||URL.createObjectURL(blob);
 /* ÄLDRE LJUD FÖLJER MED I EFTERHAND. Ett ljud som laddades upp innan det här fanns ligger bara i den
    webbläsaren. När VYRA öppnas där, inloggad, laddas filen upp och raden skrivs till kontot. Högst
    tre försök per öppning: en lagring som säger nej ska inte få en ny uppladdning var halvminut. */
+/* SKRIV ALDRIG OVANPÅ EN GAMMAL VERSION (2026-11-21). Biblioteket ligger i samma sparade layout som
+   allt annat, och molnsynken avvisar en skrivning som bygger på en äldre version än molnets. Den
+   automatiska uppladdningen skrev direkt: hade en annan enhet sparat sedan fliken senast hämtade,
+   fick streamern rutan "Synkkonflikt — välj version" utan att ha ändrat något själv (uppmätt: enhet B
+   sparade två sekunder efter att enhet A öppnats). Därför hämtas molnets senaste version FÖRST
+   (foljMolnet tar in den när fliken inte har egna osparade ändringar), och biblioteket skrivs bara
+   när fliken är i fas. Visas redan en konflikt rörs ingenting förrän streamern har valt. */
+async function saIFasMedMolnet(){
+  const synk=window.VyraCloudSync;
+  if(!synk||typeof synk.status!=='function'||!saMolnWs())return true;       // inget moln: bara lokalt
+  const konflikt=()=>synk.status()==='conflict'||!!document.querySelector('.cs-conflict');
+  if(konflikt())return false;
+  try{if(typeof synk.foljMolnet==='function')await synk.foljMolnet()}catch{}
+  return synk.status()==='synced'&&!konflikt();
+}
+function saSkrivBibliotekLokalt(items){localStorage.setItem(SA_LIBRARY_KEY,JSON.stringify(items))}
+/* Uppladdade filer minns tills raden är sparad, så att ett nytt försök inte laddar upp samma fil igen. */
+const saUppladdade=new Map();
 let saSynkar=false,saSynkForsok=0;
 async function saSynkaBibliotek(){
   if(saSynkar||!saMolnWs())return'vantar';saSynkar=true;
   try{
-    const bibliotek=saReadLibrary(),iKontot=new Set(saKontoBibliotek().map(rad=>rad?.id));
-    let andrat=bibliotek.some(rad=>!iKontot.has(rad.id)),kvar=0;
-    for(const rad of bibliotek){
-      const meta=rad.mediaMeta;if(!meta?.id||meta.cloudId)continue;
+    let kvar=0;
+    for(const rad of saReadLibrary()){
+      const meta=rad.mediaMeta;if(!meta?.id||meta.cloudId||saUppladdade.has(rad.id))continue;
       const blob=await saLasLokalt(meta).catch(()=>null);if(!blob)continue;
-      try{const moln=await saLaddaUppMoln(blob,meta.name||blob.name||rad.name);if(moln){Object.assign(meta,moln);andrat=true}else kvar++}
+      try{const moln=await saLaddaUppMoln(blob,meta.name||blob.name||rad.name);if(moln)saUppladdade.set(rad.id,moln);else kvar++}
       catch(fel){kvar++;try{console.warn('[SoundAlerts] ljudet nådde inte kontot:',rad.name,fel?.message)}catch{}}
     }
-    if(andrat)await saWriteLibrary(bibliotek);
+    if(!(await saIFasMedMolnet()))return'vantar';
+    // Läs om EFTER att molnets version tagits in: det är den raderna ska läggas ovanpå.
+    const bibliotek=saReadLibrary(),iKontot=new Map(saKontoBibliotek().map(rad=>[rad?.id,rad]));
+    let andrat=false;
+    for(const rad of bibliotek){
+      const moln=saUppladdade.get(rad.id);
+      if(moln&&!rad.mediaMeta?.cloudId){rad.mediaMeta={...(rad.mediaMeta||{}),...moln};andrat=true}
+      const sparad=iKontot.get(rad.id);
+      if(!sparad||(rad.mediaMeta?.cloudId&&!sparad.mediaMeta?.cloudId))andrat=true;
+    }
+    if(andrat&&!(await saWriteLibrary(bibliotek)))return'vantar';
     return kvar?'kvar':'klar';
   }finally{saSynkar=false}
 }
@@ -420,7 +447,7 @@ function bindSoundAlerts(){
   document.querySelectorAll('.sa-toggle').forEach(toggle=>toggle.onchange=async()=>{const id=toggle.closest('[data-alert]').dataset.alert,alerts=saAlerts();if(!alerts.some(a=>a.id===id))return;if(!await saWriteAlerts(alerts.map(a=>a.id===id?{...a,enabled:toggle.checked}:a))){toggle.checked=!toggle.checked;toast('Kunde inte spara ändringen')}});
   document.querySelectorAll('.sa-row-play').forEach(button=>button.onclick=async()=>{try{const item=saConnections().find(connection=>connection.event.id===button.closest('[data-alert]').dataset.alert);await saPlaySound(saSound(item?.event.soundAlertId),button)}catch{toast('Ljudet kunde inte spelas')}});
   document.querySelectorAll('.sa-remove').forEach(button=>button.onclick=async()=>{const id=button.closest('[data-alert]').dataset.alert;if(!await saWriteAlerts(saAlerts().filter(a=>a.id!==id))){toast('Kunde inte ta bort sound alerten');return}toast('Sound alert borttagen');renderSoundAlerts()});
-  const upload=document.querySelector('.sa-upload input');if(upload)upload.onchange=async()=>{const file=upload.files?.[0];if(!file)return;if(!/^audio\//.test(file.type)&&!/\.(mp3|wav|ogg)$/i.test(file.name)){toast('Välj en MP3, WAV eller OGG-fil');return}try{const mediaMeta=await saStoreFile(file),id=`custom-${Date.now()}`;let iKontot=false;if(saMolnWs()){try{const moln=await saLaddaUppMoln(file,file.name);if(moln){Object.assign(mediaMeta,moln);iKontot=true}}catch(fel){try{console.warn('[SoundAlerts] ljudet nådde inte kontot:',fel?.message)}catch{}}}await saWriteLibrary([...saReadLibrary(),{id,name:file.name.replace(/\.[^.]+$/,''),mediaMeta}]);if(!iKontot&&saMolnWs()){saSynkForsok=0;saSynkaSnart(30000)}toast(iKontot?'Ditt ljud är tillagt och följer med ditt konto':saMolnWs()?'Ditt ljud är tillagt på den här datorn — det nådde inte kontot än, VYRA försöker igen':'Ditt ljud är tillagt i biblioteket');renderSoundAlerts()}catch{toast('Kunde inte spara ljudfilen')}};
+  const upload=document.querySelector('.sa-upload input');if(upload)upload.onchange=async()=>{const file=upload.files?.[0];if(!file)return;if(!/^audio\//.test(file.type)&&!/\.(mp3|wav|ogg)$/i.test(file.name)){toast('Välj en MP3, WAV eller OGG-fil');return}try{const mediaMeta=await saStoreFile(file),id=`custom-${Date.now()}`;let iKontot=false;if(saMolnWs()){try{const moln=await saLaddaUppMoln(file,file.name);if(moln){Object.assign(mediaMeta,moln);iKontot=true}}catch(fel){try{console.warn('[SoundAlerts] ljudet nådde inte kontot:',fel?.message)}catch{}}}const iFas=await saIFasMedMolnet(),rader=[...saReadLibrary(),{id,name:file.name.replace(/\.[^.]+$/,''),mediaMeta}];if(iFas)await saWriteLibrary(rader);else saSkrivBibliotekLokalt(rader);if((!iKontot||!iFas)&&saMolnWs()){saSynkForsok=0;saSynkaSnart(30000)}toast(iKontot?'Ditt ljud är tillagt och följer med ditt konto':saMolnWs()?'Ditt ljud är tillagt på den här datorn — det nådde inte kontot än, VYRA försöker igen':'Ditt ljud är tillagt i biblioteket');renderSoundAlerts()}catch{toast('Kunde inte spara ljudfilen')}};
   const librarySearch=document.querySelector('.sa-library-search');if(librarySearch)librarySearch.oninput=()=>{const needle=librarySearch.value.trim().toLocaleLowerCase('sv');document.querySelector('.sa-library-grid').innerHTML=saLibraryCards(saSounds().filter(sound=>String(sound.name).toLocaleLowerCase('sv').includes(needle)));bindSoundAlerts()};
 }
 

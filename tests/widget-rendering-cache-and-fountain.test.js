@@ -420,7 +420,7 @@ test('studio och premium-bundlen cachebustas tillsammans', () => {
   // ar INTE gallringens: det faller likadant pa main utan en rad ur den har grenen.
   // 20261020-6: felmeddelandet sa "VYRA Studio" i stället för VYRA (granskning F33).
   // 20261117-1: färskheten mäts mot serverklockan och felrapporten får veta om ljud som uteblir.
-  assert.match(media, /sound-alerts\.js\?v=20261120-1/, 'sound-alerts.js cachebustades inte');
+  assert.match(media, /sound-alerts\.js\?v=20261121-1/, 'sound-alerts.js cachebustades inte');
   // vyra-tal.js LÄMNADE listan 2026-11-17: röstmästaren följer numera valet "Rösten läses i".
   assert.match(media, /vyra-tal\.js\?v=20261117-1/, 'vyra-tal.js cachebustades inte');
   // action-event.js LAMNADE listan 2026-09-16: Action-vyn byggdes om mot TikFinity-facit
