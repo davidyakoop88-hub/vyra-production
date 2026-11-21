@@ -522,12 +522,24 @@ prov('panelen i studion: "Syns i sändningen först när …" i Innehåll', asyn
   const kontext = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   try {
     const sida = await oppna(kontext, '/studio.html?open=layout');
+    // Raden läses först när panelen visar JUST den här widgeten. Föll två gånger i CI på main
+    // (2026-11-20 och 2026-11-21) med null efter en fast halv sekund, direkt efter provet som lämnar en
+    // pågående sändning i riggen: Studion hinner byta ut sina widgetar efter uppsättningen, och panelen
+    // står då tom. Uppsättningen görs om tills panelen bär widgetens id (högst 15 s).
     const rad = async (nyckel) => {
-      await sida.evaluate(k => {
-        view = 'editor'; state.widgets.length = 0;
-        const w = window.VyraWidgets.create(k); w.x = 40; w.y = 40; state.widgets.push(w); selected = w.id; render();
-      }, nyckel);
-      await sida.waitForTimeout(500);
+      const slut = Date.now() + 15000;
+      for (;;) {
+        const id = await sida.evaluate(k => {
+          view = 'editor'; state.widgets.length = 0;
+          const w = window.VyraWidgets.create(k); w.x = 40; w.y = 40; state.widgets.push(w); selected = w.id; render();
+          return w.id;
+        }, nyckel);
+        const visar = await sida.waitForFunction(i => {
+          const p = document.querySelector('.properties[data-panelram-widget]');
+          return !!p && p.dataset.panelramWidget === String(i) && state.widgets.some(w => w.id === i);
+        }, id, { timeout: 3000, polling: 50 }).then(() => true, () => false);
+        if (visar || Date.now() > slut) break;
+      }
       return sida.evaluate(() => document.querySelector('.properties [data-aktivering-rad]')?.textContent || null);
     };
     assert.equal(await rad('catalog:topgift:premium:neon'), 'Syns i sändningen först när första gåvan kommer.');
