@@ -173,9 +173,27 @@
   // Målet räknas EFTER flikbytet: kortet växer när Skapa konto visar namnfältet och villkoren, och
   // en glidning (styles.css har scroll-behavior:smooth) mot den gamla positionen stannade 561 px
   // för tidigt på telefon — uppmätt. Därför en bildruta väntan, sedan ett eget mål.
+  // STARTSIDAN 2026-11-22 (Webbdesignern): kortet bor nu i ett lager (data-konto-lager) i stället
+  // för i hjälten. Finns lagret öppnar knapparna det med rätt flik; landing-startsida.js äger
+  // öppna/stäng. Finns det inte (äldre sida) gäller den gamla glidningen nedan.
   const lugn = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const lager = kort.closest('[data-konto-lager]');
+  function oppnaLager(flik) {
+    visaFlik(flik);
+    if (window.vyraKontoLager) window.vyraKontoLager.oppna();
+    else if (lager) lager.hidden = false;   // landing-startsida.js laddas efter och tar över
+    const falt = flik === 'register' ? namnFalt.querySelector('input') : form.querySelector('#loginEmail');
+    requestAnimationFrame(() => { if (falt) falt.focus({ preventScroll: true }); });
+  }
+  document.querySelectorAll('[data-konto-oppna]').forEach(b => {
+    b.onclick = () => oppnaLager(b.dataset.kontoOppna === 'register' ? 'register' : 'login');
+  });
+  if (lager && /^#(logga-in|skapa-konto)$/.test(location.hash)) {
+    oppnaLager(location.hash === '#skapa-konto' ? 'register' : 'login');
+  }
   document.querySelectorAll('[data-prova-gratis]').forEach(b => {
     b.onclick = () => {
+      if (lager) { oppnaLager('register'); return; }
       visaFlik('register');
       requestAnimationFrame(() => {
         const r = kort.getBoundingClientRect();

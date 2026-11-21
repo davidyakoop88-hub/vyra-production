@@ -24,6 +24,64 @@
       'Top Gifters, Gift Alerts and leaderboards — right in OBS, Streamlabs and TikTok Live Studio. No coding.',
     'VYRA — overlays för TikTok Live': 'VYRA — overlays for TikTok Live',
 
+    // ---- startsidan 2026-11-22 (Webbdesignern) ------------------------------------------------
+    'VYRA — overlays som gör din LIVE till en show': 'VYRA — overlays that turn your LIVE into a show',
+    'VYRA — overlays för LIVE Streaming': 'VYRA — overlays for LIVE Streaming',
+    'Gåvoeffekter, topplistor och mål för din LIVE Streaming — direkt i OBS, Streamlabs och TikTok LIVE Studio. Ingen kodning. 3 dagar gratis, därefter 15 USD/månad.':
+      'Gift effects, leaderboards and goals for your LIVE Streaming — right in OBS, Streamlabs and TikTok LIVE Studio. No coding. 3 days free, then 15 USD/month.',
+    'Gåvoeffekter, topplistor och mål för din LIVE Streaming — direkt i OBS, Streamlabs och TikTok LIVE Studio. Ingen kodning.':
+      'Gift effects, leaderboards and goals for your LIVE Streaming — right in OBS, Streamlabs and TikTok LIVE Studio. No coding.',
+    'OVERLAYS FÖR LIVE STREAMING': 'OVERLAYS FOR LIVE STREAMING',
+    'Gör din LIVE till en': 'Turn your LIVE into a',
+    'Gåvoeffekter, topplistor och mål som syns ovanpå din LIVE när tittarna skickar gåvor. Välj en design, anpassa den och lägg in länken i OBS. Klart på några minuter, ingen kodning.':
+      'Gift effects, leaderboards and goals that appear on top of your LIVE when viewers send gifts. Pick a design, customize it and add the link in OBS. Done in minutes, no coding.',
+    'Testa 3 dagar gratis →': 'Try 3 days free →',
+    'Testa 3 dagar gratis': 'Try 3 days free',
+    'Se effekterna': 'See the effects',
+    '15 USD/mån efter provperioden': '15 USD/month after the trial',
+    'säg upp innan så dras inget': 'cancel before and nothing is charged',
+    'dina overlays sparas': 'your overlays are saved',
+    'Funkar med OBS, Streamlabs och TikTok LIVE Studio': 'Works with OBS, Streamlabs and TikTok LIVE Studio',
+    'Varje gåva spelar sin egen video': 'Every gift plays its own video',
+    'Tittaren firas med guldhjärta': 'The viewer is celebrated with a golden heart',
+    'Gift Campaign: varje gåva spelar sin egen video': 'Gift Campaign: every gift plays its own video',
+    'Fan Level Up: tittaren firas med guldhjärta': 'Fan Level Up: the viewer is celebrated with a golden heart',
+    'Stäng': 'Close',
+    'VYRA i korthet': 'VYRA at a glance',
+    'widgetdesigner': 'widget designs',
+    'VYRA-röster till TTS Chat, även svenska': 'VYRA voices for TTS Chat, including Swedish',
+    '3 steg': '3 steps',
+    'från widget till OBS': 'from widget to OBS',
+    'Svensk': 'Swedish',
+    'support på support@vyralive.app': 'support at support@vyralive.app',
+    'Vanliga frågor': 'FAQ',
+    'Vad är en overlay?': 'What is an overlay?',
+    'Grafik som ligger ovanpå din stream: en gåvoeffekt när någon skickar en gåva, en topplista över dina gifters eller en mätare för kvällens mål. VYRA ger dig en länk som du lägger in i OBS eller Streamlabs, och sedan uppdateras allt av sig självt under din LIVE.':
+      'Graphics on top of your stream: a gift effect when someone sends a gift, a leaderboard of your gifters or a meter for tonight\'s goal. VYRA gives you a link that you add in OBS or Streamlabs, and everything updates by itself during your LIVE.',
+    'När börjar de 3 gratisdagarna?': 'When do the 3 free days start?',
+    'När du startar provperioden i appen och godkänner abonnemanget hos PayPal, inte när du skapar kontot. E-posten behöver vara verifierad först.':
+      'When you start the trial in the app and approve the subscription with PayPal, not when you create your account. Your email needs to be verified first.',
+    'Vad händer när provperioden slutar?': 'What happens when the trial ends?',
+    'Säger du upp innan dras ingenting. Annars fortsätter VYRA Premium för 15 USD per månad. Du kan säga upp när som helst, direkt i VYRA eller under Automatiska betalningar i PayPal, och åtkomsten finns kvar periodens slut. Dina overlays och inställningar sparas.':
+      'If you cancel before, nothing is charged. Otherwise VYRA Premium continues for 15 USD per month. You can cancel any time, right in VYRA or under Automatic payments in PayPal, and you keep access until the end of the period. Your overlays and settings are saved.',
+    'Hur betalar jag?': 'How do I pay?',
+    'Via PayPal, med PayPal-saldo eller kort. Priset debiteras i USD, och skatter och valutaväxling kan tillkomma.':
+      'Through PayPal, with PayPal balance or card. The price is charged in USD, and taxes and currency conversion may apply.',
+    'Behöver jag installera något?': 'Do I need to install anything?',
+    'Nej, allt sker i webbläsaren. Windows-appen VYRA Studio behövs bara om du vill styra OBS-scener, använda Stream Deck utan parkopplingskod eller ha automatisk backup.':
+      'No, everything happens in the browser. The Windows app VYRA Studio is only needed if you want to control OBS scenes, use Stream Deck without a pairing code or have automatic backup.',
+    'Varför ansluter inte mitt konto?': 'Why won\'t my account connect?',
+    'Du måste vara live när du ansluter. Klicka på knappen uppe till höger i VYRA och skriv ditt användarnamn. Kontrollera också att din e-post är verifierad.':
+      'You have to be live when you connect. Click the button in the top right corner of VYRA and enter your username. Also check that your email is verified.',
+    'Är VYRA en del av TikTok?': 'Is VYRA part of TikTok?',
+    'Nej. VYRA är ett oberoende verktyg och är inte sponsrat, godkänt eller drivet av TikTok.':
+      'No. VYRA is an independent tool and is not sponsored, endorsed or operated by TikTok.',
+    'Fler frågor? Skriv till': 'More questions? Write to',
+    'Ladda ner VYRA Studio för Windows': 'Download VYRA Studio for Windows',
+    'Redo att göra din LIVE till en show?': 'Ready to turn your LIVE into a show?',
+    '3 dagar gratis, därefter 15 USD/månad. Säg upp innan så dras inget. Funkar med OBS, Streamlabs och TikTok LIVE Studio.':
+      '3 days free, then 15 USD/month. Cancel before and nothing is charged. Works with OBS, Streamlabs and TikTok LIVE Studio.',
+
     // ---- inloggningskortet (index.html + landing-login.js) --------------------------------------
     'Logga in eller skapa konto': 'Log in or create an account',
     'Logga in': 'Log in',
