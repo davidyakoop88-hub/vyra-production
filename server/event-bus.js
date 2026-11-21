@@ -172,6 +172,10 @@ const event={
     event.sdVarde=String(input?.sdVarde||'').slice(0,300);
     event.sdVal=String(input?.sdVal||'').slice(0,40);
   }
+  // SERVERNS GÅVORÄKNING (kampanj-gavor.js): hur många av just den här gåvan värden fått under
+  // sändningen, den här händelsen inräknad. Bara på `gift`, och bara ett positivt heltal — ett fält
+  // som saknas låter mottagaren räkna själv; en nolla hade nollställt en kampanj.
+  if(typ==='gift'){const n=Number(input?.giftSessionCount);if(Number.isSafeInteger(n)&&n>0)event.giftSessionCount=n}
   const fanUpp=hojning(input?.fanLevelUp),gifterUpp=hojning(input?.gifterLevelUp);
   if(fanUpp)event.fanLevelUp=fanUpp;
   if(gifterUpp)event.gifterLevelUp=gifterUpp;

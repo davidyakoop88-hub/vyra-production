@@ -45,8 +45,15 @@ const INGA_NIVAER = { applyEvent: async () => ({ fanLevelUp: null, gifterLevelUp
 // goal-ramar: en sidoeffekt som brister får aldrig hindra det rå eventet från att nå overlayet.
 const INGA_POANG = { applyEvent: async () => null };
 
+// kampanjGavor är valfri på samma sätt: server/kampanj-gavor.js räknar varje gåva per gåvo-id under
+// aktuell sändning, i sin EGEN transaktion med sin egen idempotenta rad. Totalen stämplas på
+// händelsen FÖRE publish (`giftSessionCount`), av samma skäl som nivåhöjningen: det är det
+// publicerade eventet widgeten läser. Faller räkningen går gåvan ut utan stämpel, och Gift Campaign
+// räknar den händelsen själv som förut.
+const INGA_GAVOR = { applyEvent: async () => null };
+
 function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
-                             viewerLevels = INGA_NIVAER, pointsRuntime = INGA_POANG,
+                             viewerLevels = INGA_NIVAER, pointsRuntime = INGA_POANG, kampanjGavor = INGA_GAVOR,
                              log = (...args) => console.error(...args), now = Date.now } = {}) {
   // A frame failure must not fail the request: the number is committed and the raw event is out, so
   // the response is already true. The widget corrects itself on the next event or the next GET,
@@ -98,11 +105,23 @@ function createEventIngest({ pool, eventBus, goalRuntime, goalSse, cleanEvent,
           message: error.message, at: new Date(now()).toISOString() }));
         return null;
       });
-    const [nivaer, applied, points] = await Promise.all([
+    // Stämpeln är SERVERNS. Ett värde som kom med utifrån tas bort innan något räknas, så att ingen
+    // avsändare kan sätta ett kampanjtal.
+    delete event.giftSessionCount;
+    const gavoSteg = Promise.resolve()
+      .then(() => kampanjGavor.applyEvent(pool, workspaceId, event))
+      .catch(error => {
+        log(JSON.stringify({ level: 'error', event: 'gift_count_apply_failed',
+          message: error.message, at: new Date(now()).toISOString() }));
+        return null;
+      });
+    const [nivaer, applied, points, gavor] = await Promise.all([
       viewerLevels.applyEvent(workspaceId, event),
       goalRuntime.applyEvent(pool, workspaceId, event),
-      poangSteg
+      poangSteg,
+      gavoSteg
     ]);
+    if (gavor && Number.isSafeInteger(gavor.antal) && gavor.antal > 0) event.giftSessionCount = gavor.antal;
     if (nivaer && nivaer.fanLevelUp) event.fanLevelUp = nivaer.fanLevelUp;
     if (nivaer && nivaer.gifterLevelUp) event.gifterLevelUp = nivaer.gifterLevelUp;
     // Servertiden när eventet var räknat och gick ut. Med bryggans bryggaAt och TikToks tiktokAt

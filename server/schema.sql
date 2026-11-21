@@ -1014,3 +1014,29 @@ CREATE TABLE IF NOT EXISTS streamdeck_devices (
 );
 CREATE INDEX IF NOT EXISTS streamdeck_devices_workspace_idx ON streamdeck_devices(workspace_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS streamdeck_devices_active_token_idx ON streamdeck_devices(token_hash) WHERE revoked_at IS NULL;
+
+-- ================================================================================================
+-- GÅVOR PER SÄNDNING (server/kampanj-gavor.js, 2026-11-21). Serverns räkning av varje gåva per
+-- gåvo-id under aktuell LIVE. Gift Campaign visar talet; förut räknade varje sida för sig, och den
+-- som sparade layouten skrev över de andras. En rad per (workspace, sändning, gåva): litet, och
+-- gamla sändningars rader städas efter sju dagar (kampanj-gavor.js sweepOld).
+CREATE TABLE IF NOT EXISTS session_gift_counts (
+  workspace_id uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  session_id   uuid        NOT NULL,
+  gift_id      text        NOT NULL,
+  antal        bigint      NOT NULL DEFAULT 0 CHECK (antal >= 0),
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, session_id, gift_id)
+);
+CREATE INDEX IF NOT EXISTS session_gift_counts_gamla_idx ON session_gift_counts (updated_at);
+
+-- Samma form som goal_event_apply och points_event_apply: en rad per (workspace, event.id) som
+-- redan räknats. SVEPS efter 48 timmar (goal-runtime.js SWEEP_SQL_BY_TABLE) — points_event_apply
+-- fick aldrig sitt svep och fyllde produktionens disk 2026-11-20.
+CREATE TABLE IF NOT EXISTS session_gift_apply (
+  workspace_id uuid        NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  event_id     text        NOT NULL,
+  applied_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (workspace_id, event_id)
+) WITH (fillfactor = 90);
+CREATE INDEX IF NOT EXISTS session_gift_apply_sweep_brin ON session_gift_apply USING brin (applied_at);
