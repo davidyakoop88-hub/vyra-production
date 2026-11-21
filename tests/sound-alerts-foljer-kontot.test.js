@@ -89,3 +89,57 @@ test('medielagringens tre ljudtyper väljs efter ändelsen, vad webbläsaren än
   assert.equal(w.saMolnTyp('a.ogg', ''), 'audio/ogg');
   assert.equal(w.saMolnTyp('a.flac', 'audio/flac'), '');
 });
+
+// SKRIV ALDRIG OVANPÅ EN GAMMAL VERSION (2026-11-21). Den automatiska uppladdningen skrev biblioteket
+// direkt. Hade en annan enhet sparat sedan fliken senast hämtade, avvisade molnsynken skrivningen och
+// streamern fick "Synkkonflikt — välj version" utan att ha ändrat något. Uppmätt med två enheter på
+// samma konto: B sparade två sekunder efter att A öppnats, och A hamnade i konflikt. Nu hämtas
+// molnets senaste version först, och biblioteket skrivs bara när fliken är i fas.
+function molnstubbe(w, lage) {
+  const logg = [];
+  w.VyraCloudSync = {
+    current: () => ({ workspace: { id: 'ws1' } }),
+    status: () => lage.nu,
+    foljMolnet: async () => { logg.push('folj'); if (lage.efterFolj) lage.nu = lage.efterFolj; },
+    push: async () => { logg.push('push'); return { ok: true }; },
+  };
+  return logg;
+}
+const lokalRad = { id: 'custom-9', name: 'bara här', mediaMeta: { name: 'bara här.wav', type: 'audio/wav', size: 9 } };
+
+test('molnets version hämtas först, och fliken räknas som i fas bara när den är synkad', async () => {
+  const w = await studio({ alerts: [] });
+  const lage = { nu: 'synced' }, logg = molnstubbe(w, lage);
+  assert.equal(await w.saIFasMedMolnet(), true);
+  assert.deepEqual(logg, ['folj'], 'molnets senaste version hämtades inte före skrivningen');
+  lage.nu = 'saving';
+  assert.equal(await w.saIFasMedMolnet(), false, 'en flik med egna osparade ändringar räknades som i fas');
+});
+
+test('en visad konflikt rörs inte — varken hämtning eller skrivning', async () => {
+  const w = await studio({ alerts: [] });
+  const lage = { nu: 'conflict' }, logg = molnstubbe(w, lage);
+  assert.equal(await w.saIFasMedMolnet(), false);
+  assert.deepEqual(logg, []);
+});
+
+test('utan moln skrivs biblioteket som förut', async () => {
+  const w = await studio({ alerts: [] });
+  delete w.VyraCloudSync;
+  assert.equal(await w.saIFasMedMolnet(), true);
+});
+
+test('en rad som bara finns lokalt väntar tills fliken är i fas, och skrivs då till kontot', async () => {
+  const w = await studio({ alerts: [alert], library: [rad] });
+  w.localStorage.setItem('vyra-sound-alert-library-v1', JSON.stringify([lokalRad]));
+  const lage = { nu: 'conflict' }, logg = molnstubbe(w, lage);
+  assert.equal(await w.saSynkaBibliotek(), 'vantar');
+  assert.deepEqual(Array.from(extras(w).soundAlerts.library, r => r.id), ['custom-1'], 'biblioteket skrevs mitt i en konflikt');
+  assert.deepEqual(logg, []);
+  // Streamern har valt, molnet har gått vidare: fliken hämtar och skriver ovanpå det.
+  lage.nu = 'saving'; lage.efterFolj = 'synced';
+  assert.equal(await w.saSynkaBibliotek(), 'klar');
+  assert.equal(logg[0], 'folj', 'skrivningen gjordes utan att molnets version hämtats först');
+  assert.deepEqual(Array.from(extras(w).soundAlerts.library, r => r.id).sort(), ['custom-1', 'custom-9']);
+  assert.deepEqual(extras(w).soundAlerts.alerts.length, 1, 'alerterna försvann när biblioteket skrevs');
+});
