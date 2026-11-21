@@ -174,6 +174,16 @@ if (require.main === module) {
   // Öppna gåvostreaks: streakNyckel → när första framen skickades som `streakstart`. En streak vars
   // slutframe aldrig kom (tappad anslutning) glöms efter två minuter (N.streakBeslut).
   const oppnaStreaks = new Map();
+  // EN COMBO VARS SLUT ALDRIG KOM räknas ändå (2026-11-21): en streak som stått tyst i
+  // N.STREAK_TYST_MS skickas som `gift` med sin senaste frames antal och samma streakId. Se
+  // tystaStreaks och streakBeslut i normalizer.js — en sen slutframe av samma combo räknas inte igen.
+  const streakVakt = setInterval(() => {
+    for (const { streakId, data } of N.tystaStreaks(oppnaStreaks)) {
+      console.log(`[bridge] combo utan slutframe avslutad efter ${N.STREAK_TYST_MS} ms tystnad`);
+      sendEvent('gift', { ...N.giftFields(data, mittAnkarId), streakId }, data);
+    }
+  }, 1000);
+  streakVakt.unref?.();
   const proxyManager = createProxyManager();
   let currentProxy = null;
 
@@ -437,6 +447,7 @@ if (require.main === module) {
       // streakId, så en alert som redan visat streaken uppdaterar sig i stället för att visas igen.
       // Beslutet är en ren funktion (normalizer.js streakBeslut), provad mot de uppmätta framen.
       const beslut = N.streakBeslut(oppnaStreaks, data);
+      if (beslut.sen) console.log(`[bridge] sen frame för combo som redan avslutats (antal ${beslut.antal}, skickat ${beslut.skickat}) — räknas inte igen`);
       if (!beslut.typ) return;
       // mittAnkarId aven har: i ett flervardsrum gar en del gavor till en MEDVARD, och bara
       // bryggan vet vem varden ar. Se giftFields. #360

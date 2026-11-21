@@ -5,6 +5,9 @@ const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-liv
 const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering, superfanFields,
   battleStatusAv, mvpFields, envelopeFields } = require('./tiktok-fields');
 
+// Samma tider som tiktok-bridge/normalizer.js (STREAK_TYST_MS, STREAK_GLOMS_MS).
+const STREAK_TYST_MS = 10000, STREAK_GLOMS_MS = 120000;
+
 function eventKey(type, data, fields) {
   const nativeId = data?.common?.msgId || data?.msgId || data?.messageId || data?.logId || data?.id;
   return nativeId
@@ -23,6 +26,16 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
   let mittAnkarId = '';
   // Öppna gåvostreaks (streaknyckel → när streakstart skickades). Se GIFT-hanteraren nedan.
   const oppnaStreaks = new Map();
+  const streakVakt = setInterval(() => {
+    const nu = Date.now();
+    for (const [k, s] of oppnaStreaks) {
+      if (s.stangd || nu - s.sist < STREAK_TYST_MS) continue;
+      oppnaStreaks.set(k, { stangd: true, stangdAt: nu, antal: Math.max(1, Number(s.data?.repeatCount) || 1) });
+      log(`combo utan slutframe avslutad efter ${STREAK_TYST_MS} ms tystnad`);
+      emit('gift', { ...s.falt, streakId: k }, s.data);
+    }
+  }, 1000);
+  streakVakt.unref?.();
 
   function emit(type, fields, data) {
     onEvent({ type, eventKey: eventKey(type, data, fields), source: 'tiktok-live', ...fields });
@@ -99,15 +112,25 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
       // går direkt som `streakstart` (bara visning, räknas aldrig); slutframen är `gift` som förut och
       // bär samma streakId. Nyckeln: tittare + gåva + TikToks groupId (normalizer.js streakNyckel).
       const nyckel = `${text(data?.user?.idStr || data?.user?.userId || data?.userId || data?.uniqueId || '', 80)}:${falt.giftId}:${text(data?.groupId || '', 60)}`;
-      if (streakable && !finalFrame) {
-        if (!oppnaStreaks.has(nyckel)) {
-          oppnaStreaks.set(nyckel, Date.now());
-          emit('streakstart', { ...falt, streakId: nyckel }, data);
-        }
+      // EN COMBO VARS SLUT ALDRIG KOM (2026-11-21) — samma regel som normalizer.js streakBeslut och
+      // tystaStreaks: streakVakt nedan avslutar en streak som stått tyst, och en sen frame av samma
+      // combo räknas då inte igen. Glömskan räknas från senaste framen.
+      const nu = Date.now(), antal = Math.max(1, Number(data?.repeatCount) || 1);
+      for (const [k, s] of oppnaStreaks) if (nu - (s.stangd ? s.stangdAt : s.sist) > STREAK_GLOMS_MS) oppnaStreaks.delete(k);
+      const slut = !streakable || finalFrame;
+      const s = oppnaStreaks.get(nyckel);
+      if (s && s.stangd) {
+        if (slut ? antal >= s.antal : antal > s.antal) return;
+        oppnaStreaks.delete(nyckel);
+      }
+      if (!slut) {
+        const oppen = oppnaStreaks.get(nyckel);
+        if (oppen) { oppen.sist = nu; oppen.falt = falt; oppen.data = data; return; }
+        oppnaStreaks.set(nyckel, { sist: nu, falt, data });
+        emit('streakstart', { ...falt, streakId: nyckel }, data);
         return;
       }
       const startad = oppnaStreaks.delete(nyckel);
-      for (const [k, at] of oppnaStreaks) if (Date.now() - at > 120000) oppnaStreaks.delete(k);
       emit('gift', { ...falt, ...(startad ? { streakId: nyckel } : {}) }, data);
     });
     connection.on(WebcastEvent.FOLLOW, data => emit('follow', baseUser(data), data));
