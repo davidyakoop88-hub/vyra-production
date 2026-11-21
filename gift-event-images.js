@@ -460,8 +460,62 @@
     records.giftCoins = 0;
     records.streakCoins = 0;
     skrivRekord();
+    // En ny sändning: nästa konfiguration bär serverns nollor och ska tas emot som den är.
+    kampanjNollasTill = Date.now() + 30000;
     nollstallKampanjerIStudio();
   });
+
+  // OBS-KÄLLAN BEHÅLLER SIN RÄKNING NÄR LAYOUTEN SPARAS (David 2026-11-20: "gift champian räknar inte
+  // alla gift"). Räknaren bor i varje sida för sig, och i OBS byts hela layouten ut varje gång
+  // studion eller skrivbordsappen sparar NÅGOT (overlay-access.js apply). Den sparade layouten bär
+  // studions räkning — och en studio som öppnats senare, eller inte fått alla händelser, bär en
+  // lägre. Uppmätt: OBS hade räknat 5 gåvor, studion öppnades och flyttade en annan widget en
+  // pixel, och kampanjen i OBS föll till 0.
+  //
+  // Regeln, per fack. `forra` är värdet i den konfiguration källan senast tog emot:
+  //   * ny sändning (live:start nyss)            → det inkommande, alltså serverns nollor
+  //   * sparat värde orört (inkommande = forra)  → den egna räkningen står kvar
+  //   * sparat värde högre än den egna räkningen → det inkommande (studion vet mer)
+  //   * sparat värde SÄNKT (inkommande < forra)  → det inkommande (streamern har ställt om talet)
+  //   * annars (höjt, men inte över den egna)    → den egna räkningen står kvar
+  // Ren funktion: muterar bara `inkommande`, och provas utan webbläsare.
+  var kampanjNollasTill = 0;
+  var kampanjForra = {};
+  function behallKampanjrakning(inkommande, lokala, alternativ) {
+    var nollstall = !!(alternativ && alternativ.nollstall);
+    var forra = (alternativ && alternativ.forra) || {};
+    var nyaForra = {};
+    var lokalPerId = {};
+    (Array.isArray(lokala) ? lokala : []).forEach(function (w) {
+      if (w && w.type === 'templateGiftCampaign' && w.id != null) lokalPerId[w.id] = w;
+    });
+    (Array.isArray(inkommande) ? inkommande : []).forEach(function (w) {
+      if (!w || w.type !== 'templateGiftCampaign' || w.id == null) return;
+      var lokal = lokalPerId[w.id], sparat = forra[w.id] || {}, minns = nyaForra[w.id] = {};
+      var nycklar = {};
+      Object.keys(w).concat(lokal ? Object.keys(lokal) : []).forEach(function (n) { if (/^giftCurrent\d+$/.test(n)) nycklar[n] = true; });
+      Object.keys(nycklar).forEach(function (n) {
+        var in_ = Number(w[n]) || 0, egen = lokal ? Number(lokal[n]) || 0 : 0;
+        var kand = Object.prototype.hasOwnProperty.call(sparat, n), fore = kand ? Number(sparat[n]) || 0 : in_;
+        minns[n] = in_;
+        if (nollstall || !lokal) return;
+        if (in_ > egen) return;
+        if (kand && in_ < fore) return;
+        if (egen > in_) w[n] = egen;
+      });
+    });
+    return nyaForra;
+  }
+  window.VyraKampanjRaknare = {
+    behall: behallKampanjrakning,
+    // OBS-källans väg in: anropas av overlay-access.js med den inkommande layouten, FÖRE den läggs in.
+    vidKonfig: function (inkommandeWidgets) {
+      var lokala = typeof state !== 'undefined' && state && Array.isArray(state.widgets) ? state.widgets : [];
+      var nollstall = Date.now() < kampanjNollasTill;
+      kampanjNollasTill = 0;
+      kampanjForra = behallKampanjrakning(inkommandeWidgets, lokala, { nollstall: nollstall, forra: kampanjForra });
+    }
+  };
 
   // GIFT CAMPAIGN I STUDIO-LAGET (uppmatt 2026-10-12, #271 avsnitt 4).
   //
