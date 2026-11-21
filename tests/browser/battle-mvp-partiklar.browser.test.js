@@ -158,9 +158,31 @@ function rapportera(rubrik, m) {
   }
 }
 
+// EN OMMÄTNING NÄR KRAVEN INTE HÅLLER (2026-11-21). Provet föll fyra gånger på tre PR:er på en dag
+// (40,4–47,9 FPS i fas 1, mot golvet 50), alla på PR:er som inte rörde någon klientkod, och var
+// grönt lokalt varje gång. Fas 1 är 1,6 s: ett enda hack på löparen räcker. En verklig försämring av
+// motorn faller i BÅDA mätningarna — det är den som ska fånga den, inte en enskild körning. Kraven
+// nedan är oförändrade; bara antalet försök har blivit två.
+function bildfrekvensFel(m) {
+  const FAS1_TAPPADE = 8, fel = [];
+  for (const f of m.faser) {
+    if (!(f.rutor > 0)) fel.push(f.namn + ' fick inga bildrutor alls');
+    else if (!(f.fps >= 50)) fel.push(f.namn + ' snittade ' + f.fps + ' FPS (golv 50)');
+    else if (f === m.faser[0] && !(f.tappade <= FAS1_TAPPADE)) fel.push(f.namn + ' tappade ' + f.tappade + ' rutor (budget ' + FAS1_TAPPADE + ')');
+    else if (f !== m.faser[0] && !(f.p95 <= 26)) fel.push(f.namn + ' hade p95 ' + f.p95 + ' ms (tak 26)');
+  }
+  return fel;
+}
+
 test('bildfrekvensen halls uppe genom hela sekvensen, med bada dukarna igang', { skip }, async () => {
-  const m = await mat({ intensitet: 100 });
+  let m = await mat({ intensitet: 100 });
   rapportera('coronation · 100 % intensitet', m);
+  const forstaFel = bildfrekvensFel(m);
+  if (forstaFel.length) {
+    console.log('    första mätningen höll inte (' + forstaFel.join('; ') + ') — mäter om');
+    m = await mat({ intensitet: 100 });
+    rapportera('coronation · 100 % intensitet, ommätning', m);
+  }
 
   // Först: mätte vi över huvud taget något?
   assert.equal(m.reducerad, false, 'reducerad rorelse var pa - da ar duken tom och matningen vardelos');
@@ -185,13 +207,8 @@ test('bildfrekvensen halls uppe genom hela sekvensen, med bada dukarna igang', {
   // eller 15 ms per ruta hinner fortfarande inom en vsync (inget att fånga), 20 ms fäller provet på
   // FPS-golvet och på budgeten (20 tappade i fas 1). Medianen stod på 16,7 även då, så den är ingen
   // vakt och står inte här.
-  const FAS1_TAPPADE = 8;
-  for (const f of m.faser) {
-    assert.ok(f.rutor > 0, f.namn + ' fick inga bildrutor alls');
-    assert.ok(f.fps >= 50, f.namn + ' snittade ' + f.fps + ' FPS (golv 50)');
-    if (f === m.faser[0]) assert.ok(f.tappade <= FAS1_TAPPADE, f.namn + ' tappade ' + f.tappade + ' rutor (budget ' + FAS1_TAPPADE + ')');
-    else assert.ok(f.p95 <= 26, f.namn + ' hade p95 ' + f.p95 + ' ms (tak 26)');
-  }
+  const fel = bildfrekvensFel(m);
+  assert.deepEqual(fel, [], (forstaFel.length ? 'BÅDA mätningarna föll. ' : '') + fel.join('; '));
 
   // MVP-firandena (WOW) frontladdar nu utslappet: avslojandet fyrar tidigt (utslapp under forsta
   // ~22 %, partiklar lever kvar en bit in i fas 3) och lugnar sig sedan medan den statiska ramen far
