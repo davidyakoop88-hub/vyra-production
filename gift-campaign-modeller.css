@@ -102,7 +102,12 @@
 
 /* ---- Gåvoflöde: gåvorna glider ut åt ena hållet och kommer in från det andra ------------------- */
 .vyra-gcm .gcm-flode{position:absolute;inset:0;overflow:hidden}
-.vyra-gcm[data-orient=landscape] .gcm-flode{-webkit-mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+/* LIGGANDE KANTER (David 2026-11-22): sex gåvor på 82 px avstånd fyller 492 px i ett 420 px fönster, så gåvorna längst ut
+ * står alltid halvvägs utanför. Masken tonade bara 6 % (25 px) och talen ("55 / 150", 72 px) skars av hårt i kanten.
+ * Nu tonas 17 % (ungefär en gåva) så att de kommer in och går ut mjukt, och talen är mindre (≤ 60 px) och tränger inte. */
+.vyra-gcm[data-orient=landscape] .gcm-flode{-webkit-mask-image:linear-gradient(90deg,transparent,#000 17%,#000 83%,transparent);mask-image:linear-gradient(90deg,transparent,#000 17%,#000 83%,transparent)}
+.vyra-gcm[data-orient=landscape] .gcm-mini{font-size:20px}
+.vyra-gcm[data-orient=landscape] .gcm-mini small{font-size:13px}
 .vyra-gcm[data-orient=portrait] .gcm-flode{-webkit-mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent)}
 .vyra-gcm .gcm-post{position:absolute;left:0;top:0;width:72px;height:114px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;will-change:transform}
 .vyra-gcm[data-orient=portrait] .gcm-post{width:88px}

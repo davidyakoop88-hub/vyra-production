@@ -57,6 +57,19 @@ test('stående: masken tonar bara kanten, inte grannradernas text', () => {
   assert.ok(Number(m[1]) <= 3, `masken tonar ${m[1]} % — namnet på raden överst försvinner`);
 });
 
+// LIGGANDE GÅVOFLÖDE: gåvorna längst ut står alltid halvvägs utanför fönstret. Med 6 % mask skars talen av hårt.
+test('liggande Gåvoflöde: kanterna tonas över ungefär en gåvas bredd', () => {
+  const m = regel('.vyra-gcm[data-orient=landscape] .gcm-flode').match(/mask-image\s*:\s*linear-gradient\(90deg,transparent,#000 ([\d.]+)%/);
+  assert.ok(m, 'liggande flödets mask saknas');
+  assert.ok(Number(m[1]) >= 15, `masken tonar bara ${m[1]} % — gåvorna i kanten skärs av i stället för att tonas ut`);
+});
+
+test('liggande Gåvoflöde: talen är mindre än avståndet mellan gåvorna', () => {
+  const stor = px(regel('.vyra-gcm[data-orient=landscape] .gcm-mini'), 'font-size');
+  const liten = px(regel('.vyra-gcm[data-orient=landscape] .gcm-mini small'), 'font-size');
+  assert.ok(stor <= 21 && liten <= 14, `talen är ${stor}/${liten} px — "80 / 250" blev 72 px brett med 82 px mellan gåvorna`);
+});
+
 test('media.js laddar den nya stilen', () => {
   const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
   assert.match(media, /gift-campaign-modeller\.css\?v=20261122-1/, 'stilfilens version är inte höjd — webbläsare behåller den gamla raden');
