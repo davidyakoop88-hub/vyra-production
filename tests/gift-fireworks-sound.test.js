@@ -19,7 +19,9 @@ const fs = require('fs'), path = require('path');
 const { createDom, closeAll } = require('./helpers/dom-harness.js');
 
 const ROOT = path.join(__dirname, '..');
-const LJUD = 'assets/sounds/freesound/gift-fireworks.mp3';
+// TVA LJUD (David 2026-11-22): uppskjutning nar raketen lyfter, EN small nar den slar ut. Forr en fil
+// pa 8,5 s med en hel serie smallar.
+const UPP = 'assets/sounds/fyrverkeri/uppskjutning.mp3', SMALL = 'assets/sounds/fyrverkeri/small.mp3';
 
 test.after(closeAll);
 
@@ -52,29 +54,52 @@ function panel(extra = {}) {
 }
 
 // ---- filen ---------------------------------------------------------------------------------------
-test('ljudfilen ligger i repot', () => {
-  const p = path.join(ROOT, ...LJUD.split('/'));
-
-  assert.ok(fs.existsSync(p), `${LJUD} saknas — kryssrutan skulle da lova ett ljud som inte finns`);
-  assert.ok(fs.statSync(p).size > 10000, 'filen ar misstankt liten');
+test('ljudfilerna ligger i repot', () => {
+  for (const LJUD of [UPP, SMALL]) {
+    const p = path.join(ROOT, ...LJUD.split('/'));
+    assert.ok(fs.existsSync(p), `${LJUD} saknas — kryssrutan skulle da lova ett ljud som inte finns`);
+    assert.ok(fs.statSync(p).size > 10000, LJUD + ' ar misstankt liten');
+  }
 });
 
 test('ljudets ursprung ar antecknat', () => {
-  const p = path.join(ROOT, 'assets', 'sounds', 'freesound', 'ATTRIBUTION.md');
+  const p = path.join(ROOT, 'assets', 'sounds', 'fyrverkeri', 'ATTRIBUTION.md');
 
   assert.ok(fs.existsSync(p), 'ingen attribution — kallan till ett ljud som levereras publikt ' +
     'maste ga att sparas');
 });
 
 // ---- uppspelningen -------------------------------------------------------------------------------
-test('ett fyrverkeri spelar ljudet', () => {
+test('ett fyrverkeri spelar uppskjutningen direkt och EN small nar raketen slar ut', async () => {
   const { h, run } = panel({ fwSound: true });
-  run(`triggerGiftFireworks({ combo: 2, username: 'a', giftName: 'Rose' })`);
+  run(`window.__entre = VyraFireworks.tiderFor(state.widgets[0], { combo: 2 }).entre;
+       triggerGiftFireworks({ combo: 2, username: 'a', giftName: 'Rose' })`);
   const ljud = h.window.__ljud;
 
-  assert.equal(ljud.length, 1, `${ljud.length} ljud skapades`);
-  assert.match(ljud[0].src, /assets\/sounds\/freesound\/gift-fireworks\.mp3/, `sokvagen var ${ljud[0].src}`);
+  assert.equal(ljud.length, 1, `${ljud.length} ljud direkt — bara uppskjutningen ska spela innan raketen slagit ut`);
+  assert.match(ljud[0].src, /assets\/sounds\/fyrverkeri\/uppskjutning\.mp3/, `sokvagen var ${ljud[0].src}`);
   assert.equal(ljud[0].spelade, 1, 'play() anropades aldrig');
+  assert.ok(h.window.__entre > 0, 'raketens fard saknas');
+  await new Promise(r => setTimeout(r, h.window.__entre + 80));
+  assert.equal(ljud.length, 2, `${ljud.length} ljud efter smallen`);
+  assert.match(ljud[1].src, /assets\/sounds\/fyrverkeri\/small\.mp3/, `smallens sokvag var ${ljud[1].src}`);
+  assert.equal(ljud[1].spelade, 1);
+});
+
+test('November: ljudet foljer sidans signal per raket, med sparr mot ett brus av samtidiga ljud', () => {
+  const { h, run } = panel({ fwSound: true, fwTheme: 'november' });
+  run(`triggerGiftFireworks({ combo: 3, username: 'a', giftName: 'Rose' })`);
+  const ram = h.document.querySelector('[data-id="fw1"] .gift-fireworks-fx iframe');
+  assert.ok(ram, 'November-ramen ritades inte');
+  assert.equal(h.window.__ljud.length, 0, 'November spelar inget innan sidan i ramen sagt till');
+  h.window.VyraFireworks.ljudSignal(ram, 'launch');
+  h.window.VyraFireworks.ljudSignal(ram, 'launch');
+  h.window.VyraFireworks.ljudSignal(ram, 'burst');
+  const src = Array.from(h.window.__ljud, a => String(a.src).replace(/^.*\//, ''));
+  assert.deepEqual(src, ['uppskjutning.mp3', 'small.mp3'], 'tva uppskjutningar inom 180 ms ska ge ett ljud: ' + src.join(', '));
+  const sida = fs.readFileSync(path.join(ROOT, 'assets', 'gift-fireworks-november', 'widget.js'), 'utf8');
+  assert.match(sida, /addEventListener\('firework-sound'[\s\S]*VyraFireworks\.ljudSignal\(frameElement, ev\.detail\)[\s\S]*effect\.launch/,
+    'widget.js skickar inte sidans signal vidare, eller satter lyssnaren forst efter launch()');
 });
 
 test('ar ljudet avstangt spelas ingenting', () => {
@@ -116,7 +141,7 @@ test('volym 0 ar tyst men valter ingenting', () => {
   run(`window.__fel=null;try{triggerGiftFireworks({combo:1})}catch(e){window.__fel=e.message}`);
 
   assert.equal(h.window.__fel, null, 'volym 0 kastade');
-  assert.equal(h.window.__ljud[0].volume, 0);
+  assert.ok(h.window.__ljud.every(a => a.volume === 0), 'ett ljud spelade med volym over 0');
 });
 
 test('utan satt volym anvands ett rimligt standardvarde', () => {

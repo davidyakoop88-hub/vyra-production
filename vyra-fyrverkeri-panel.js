@@ -196,7 +196,6 @@
   // ctl.signal fångar dessutom ett avbrott som inte går genom stoppa().
   const T = window.VyraTestspel;
   if (!T || typeof T.registrera !== 'function') return;
-  const FW_LJUD = 'assets/sounds/freesound/gift-fireworks.mp3';
   const faser = t => ({ entre: Math.round(t.entre), visning: Math.round(t.visning), utgang: Math.round(t.utgang) });
   const gava = ex => ({ username: ex.namn, giftName: ex.gava.namn, giftImage: ex.bild(ex.gava.bild), profileImage: ex.bild(ex.profil) });
   const vidAvbrott = (ctl, fn) => { try { ctl.signal.addEventListener('abort', fn, { once: true }); } catch (_) {} };
@@ -205,7 +204,7 @@
     const S = window.VyraSupernova;
     nod.querySelectorAll('.fw-event').forEach(g => { try { if (S && S.dispose) S.dispose(g); } catch (_) {} g.remove(); });
     try { if (S && typeof S.glom === 'function') S.glom(k.id); } catch (_) {}
-    if (nod.__fwLjud) { try { nod.__fwLjud.pause(); } catch (_) {} nod.__fwLjud = null; }
+    if (nod.__fwLjud) { try { if (typeof nod.__fwLjud === 'function') nod.__fwLjud(); else nod.__fwLjud.pause(); } catch (_) {} nod.__fwLjud = null; }
     const fx = nod.querySelector('.gift-fireworks-fx');
     if (fx) fx.classList.remove('play');
   }
@@ -219,10 +218,10 @@
       const t = F.tiderFor(k, ev);
       if (!F.spelaPa(nod, k, ev)) throw new Error('klonen saknar fyrverkeriets yta');
       vidAvbrott(ctl, () => stadaFyrverkeri(nod, k));
-      // Ljudet spelas lokalt med widgetens volym, som i sändningen (en gång per fyrverkeri).
-      const vol = typeof F.ljudVolym === 'function' ? F.ljudVolym(k) : 0;
-      if (vol > 0 && typeof Audio === 'function') {
-        try { const a = new Audio(FW_LJUD); a.volume = vol; const p = a.play(); if (p && p.catch) p.catch(() => {}); nod.__fwLjud = a; } catch (_) {}
+      // Ljudet spelas lokalt med widgetens volym, som i sändningen: uppskjutning och smäll (gift-fireworks.js
+      // fwSpelaLjud). Stoppfunktionen sparas för ■ och städningen.
+      if (typeof F.spelaLjud === 'function') {
+        try { nod.__fwLjud = F.spelaLjud(k, ev, nod.querySelector('.gift-fireworks-fx') || nod); } catch (_) {}
       }
       return faser(t);
   }
