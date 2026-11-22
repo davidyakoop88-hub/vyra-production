@@ -251,6 +251,10 @@ window.VyraFireworks={
     const utgang=Math.min(1000,duration/6);
     return{duration,release:s.release*1000,entre,visning:Math.max(0,duration-entre-utgang),utgang,niva:s.level.name}},
   ljudVolym:w=>w&&w.fwSound!==false?Math.min(1,Math.max(0,(w.fwVolume??60)/100)):0,
+  // Uppskjutning + small for en tandning (se fwSpelaLjud). ▶ Testa widget anvander samma som livet.
+  spelaLjud:(w,d,e)=>fwSpelaLjud(w,d,e),
+  // November-sidans signal per raket ('launch' / 'burst'), vidareskickad av widget.js i ramen.
+  ljudSignal:(ram,typ)=>{try{if(ram&&typeof ram.__fwLjud==='function')ram.__fwLjud(typ)}catch(_){}},
   capacityFor:fwCapacity,
   pending:()=>fwPending.length,
   // Renderaren och bada koerna anvander exakt samma langsta synliga speltid.
@@ -366,6 +370,34 @@ function fwSlapperIgenom(w,d){
    har och ingen annanstans.
    Nyckeln ar molnets event-id. Saknas det sparras ingenting: panelens testknapp skickar inget id, och
    ett tryck till maste alltid ge ett nytt fyrverkeri. */
+/* TVA LJUD PER FYRVERKERI (David 2026-11-22: "fyrverkerier ska ge tva ljud, en nar den skjuter upp och
+   en small"). Forr spelades EN fil pa 8,5 s med en hel serie smallar, oberoende av vad som syntes.
+   Nu: ett uppskjutningsvissel nar raketen lyfter och EN small nar den slar ut.
+     - November: sidan i ramen skickar en signal per raket ('firework-sound' launch/burst i app.js);
+       widget.js skickar den vidare hit (VyraFireworks.ljudSignal), sa ljudet foljer varje raket.
+     - Duk och CSS: visslet direkt, smallen nar raketen nar sin forsta small (samma entre som
+       tiderFor och ▶ Testa widget raknar med).
+   SPARR: en kombo pa x100 skjuter 100 raketer. Samma ljud startas hogst en gang per 180 ms (vissel)
+   respektive 120 ms (small), annars blir det ett brus i stallet for fyrverkeri.
+   Duckas medan nagon talar (§14). Ett gavoljud hor ihop med sin effekt i TID och far darfor aldrig
+   koas bakom en uppslasning - det sanker sig i stallet. Fail-open: saknas vyra-tal.js spelar det pa
+   sin basvolym. play() kan nekas (autoplay i editorn utan gest) - det fangas tyst, animationen ar
+   det som syns och far aldrig falla for att ljudet nekades. */
+const FW_LJUD={upp:'assets/sounds/fyrverkeri/uppskjutning.mp3',small:'assets/sounds/fyrverkeri/small.mp3'},FW_LJUD_GLAPP={upp:180,small:120},fwLjudSenast={upp:0,small:0};
+const fwLjudBas=w=>w&&w.fwSound!==false?Math.min(1,Math.max(0,(w.fwVolume??60)/100)):0;
+function fwLjud(typ,w,lista){const bas=fwLjudBas(w);if(!(bas>0)||typeof Audio!=='function')return null;
+ const nu=Date.now();if(nu-fwLjudSenast[typ]<FW_LJUD_GLAPP[typ])return null;fwLjudSenast[typ]=nu;
+ try{const a=new Audio(FW_LJUD[typ]);if(!window.VyraTal?.duckaLjud?.(a,bas))a.volume=bas;a.currentTime=0;
+  const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{});if(lista)lista.push(a);return a}catch(_){return null}}
+/* Bada ljuden for EN tandning pa noden e (.gift-fireworks-fx). Returnerar en stoppfunktion
+   (▶ Testa widgets ■ och stadning). */
+function fwSpelaLjud(w,d,e){const lista=[];let timer=0,stoppad=false;
+ if(fwNovember(w)){const ram=e&&e.querySelectorAll?[...e.querySelectorAll('iframe')].pop():null;
+  if(ram)ram.__fwLjud=typ=>{if(!stoppad)fwLjud(typ==='launch'?'upp':'small',w,lista)}}
+ else{fwLjud('upp',w,lista);
+  let entre=1400;try{entre=window.VyraFireworks.tiderFor(w,d).entre}catch(_){}
+  timer=setTimeout(()=>{if(!stoppad)fwLjud('small',w,lista)},Math.max(0,entre))}
+ return()=>{stoppad=true;clearTimeout(timer);lista.forEach(a=>{try{a.pause()}catch(_){}})}}
 const fwSedda=new Map(),FW_SPARR_MS=1500;
 function fwRedanTand(d){
   const id=d&&d.id;if(!id)return false;
@@ -403,12 +435,7 @@ if(!nagotTandes)return false;
    editorn utan anvandargest. Det fangas tyst: animationen ar det som syns och far aldrig
    falla for att ljudet nekades. */
 const ljudW=traffar.find(w=>w.fwSound!==false);
-if(ljudW){try{const a=new Audio('assets/sounds/freesound/gift-fireworks.mp3');const bas=Math.min(1,Math.max(0,(ljudW.fwVolume??60)/100));
-/* Duckas medan nagon talar (§14). Ett gavoljud hor ihop med sin effekt i TID och far darfor
-   aldrig koas bakom en uppslasning - det sanker sig i stallet. Fail-open: saknas vyra-tal.js
-   spelar det pa sin basvolym, precis som forr. */
-if(!window.VyraTal?.duckaLjud?.(a,bas))a.volume=bas;
-a.currentTime=0;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(_){}}
+if(ljudW)fwSpelaLjud(ljudW,d,document.querySelector(`[data-id="${ljudW.id}"] .gift-fireworks-fx`));
 return true};
 window.triggerGiftFireworks=fwTrigger;
 document.addEventListener('click',event=>{if(!event.target.closest('[data-burst] [data-fw-theme]'))return;setTimeout(()=>{let w=state.widgets.filter(x=>x.type==='templateGiftFireworks').at(-1);if(!w||fwCanvas(w))return;w.x=120;w.y=380;w.width=360;w.hidden=false;w.fwGiftImage=campaignGiftList()[0]?.file;selected=w.id;save();render()},0)});
