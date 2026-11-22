@@ -130,3 +130,19 @@ test('battleStatus raknas fram OCH overlever vitlistan — bada leden kravs', ()
   assert.match(las('local-server.js'), /battleStatus: text\(d\.battleStatus/,
     'faltet stryks av vitlistan i sista ledet — precis det #350 trodde hande, fast pa riktigt');
 });
+
+// VÄRDENS !quiz (2026-11-22): appens egen anslutning märker streamerns chattrader med isHost, och
+// vitlistan får inte stryka det — annars startar streamerns !quiz aldrig quizet.
+test('isHost överlever vitlistan och regeln är densamma som bryggans', async () => {
+  const B = require('../../tiktok-bridge/normalizer');
+  for (const [falt, ankare, rum] of [[{ userId: '1', username: 'a' }, '1', ''], [{ userId: '', username: 'Lisa' }, '', '@lisa'], [{ userId: '2', username: 'b' }, '1', 'a']]) {
+    assert.equal(F.arVarden(falt, ankare, rum), B.arVarden(falt, ankare, rum), JSON.stringify(falt));
+  }
+  await medServer(async origin => {
+    await fetch(origin + '/api/events', { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'chatcommand', eventKey: 'v1', username: 'lisa_live', name: '!quiz', isHost: true }) });
+    const svar = await (await fetch(origin + '/api/events?after=0')).json();
+    const e = (svar.events || svar || []).slice(-1)[0];
+    assert.equal(e.isHost, true, 'vitlistan strök isHost');
+  });
+});

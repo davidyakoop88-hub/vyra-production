@@ -417,8 +417,11 @@ if (require.main === module) {
       // so on the cloud path the chat text was dropped outright and TTS Chat, chat-triggered
       // Actions and chatbot commands all received an empty string. Both readers do
       // `ev.comment || ev.name`, so sending both keeps desktop and cloud on one shape.
+      // isHost: streamerns egna rader (N.arVarden). Bars bara nar det ar sant.
+      const avsandare = N.baseUser(data);
       sendEvent(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', {
-        ...N.baseUser(data),
+        ...avsandare,
+        ...(N.arVarden(avsandare, mittAnkarId, username) ? { isHost: true } : {}),
         name: comment,
         comment,
       }, data);

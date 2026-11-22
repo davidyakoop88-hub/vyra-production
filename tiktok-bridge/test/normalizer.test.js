@@ -77,3 +77,18 @@ test('cloud event carries the chat comment through to the browser',()=>{
   const out=N.cloudEvent('evt-2','CHAT',{userId:'u2',username:'mia',comment:'hej alla!'},456);
   assert.equal(out.comment,'hej alla!');
 });
+// VARDENS EGNA CHATTRADER (2026-11-22). Quiz (!quiz) och Ordjakten (!nästa) tar kommandon fran varden,
+// men TikTok markerar inte varden som moderator i sitt eget rum och inget i kedjan satte isHost — sa
+// streamerns eget !quiz startade aldrig quizet. Bevisat i den lokala kedjan (gammal brygga: inget hande).
+test('rummets agare kanns igen som vard: pa ankar-id, och pa kontonamnet innan id:t hamtats',()=>{
+  const vard=N.baseUser({user:{userId:'7400000000000000001',uniqueId:'Davids_Live'}});
+  const tittare=N.baseUser({user:{userId:'7400000000000000099',uniqueId:'tittare'}});
+  assert.equal(N.arVarden(vard,'7400000000000000001',''),true,'ankar-id ska racka');
+  assert.equal(N.arVarden(vard,'','@davids_live'),true,'kontonamnet ska racka, oavsett @ och versaler');
+  assert.equal(N.arVarden(tittare,'7400000000000000001','davids_live'),false,'en tittare ar ingen vard');
+  assert.equal(N.arVarden({userId:'',username:''},'',''),false,'tomt mot tomt ar ingen vard');
+});
+test('isHost bars i molnbodyn bara nar det ar sant',()=>{
+  assert.equal(N.cloudEvent('e1','chatcommand',{userId:'u',username:'v',comment:'!quiz',isHost:true},1).isHost,true);
+  assert.equal('isHost' in N.cloudEvent('e2','chat',{userId:'u',username:'t',comment:'A'},1),false);
+});

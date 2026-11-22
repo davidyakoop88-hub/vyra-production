@@ -144,7 +144,7 @@ function startLocalServer(root, port = 4173, options = {}) {
     battleStatus: text(d.battleStatus, 64),
     fanClubLevel: number(d.fanClubLevel, 0, 50),
     gifterLevel: number(d.gifterLevel, 0, 50),
-    isModerator: !!d.isModerator, isFollower: !!d.isFollower, isSubscriber: !!d.isSubscriber,
+    isModerator: !!d.isModerator, ...(d.isHost ? { isHost: true } : {}), isFollower: !!d.isFollower, isSubscriber: !!d.isSubscriber,
     // Nivahojningen ar ett OBJEKT och bars villkorligt: ett tomt {from:0,to:0} hade sett ut som
     // en riktig hojning till niva 0.
     ...(d.fanLevelUp && Number(d.fanLevelUp.to) > 0

@@ -212,3 +212,15 @@ test('en like bär INGA gåvofält — annars räknas den som en gåva någonsta
   assert.equal(like.giftName, '', 'en like bar ett gåvonamn');
   assert.equal(like.giftId, '', 'en like bar ett gift-id');
 });
+
+// VÄRDENS !quiz (2026-11-22): isHost ska överleva cleanEvent, annars startar streamerns eget !quiz aldrig
+// quizet i OBS (quiz.js och ordjakten.js läser isModerator || isHost). Och bara när det är sant.
+test('värdens chattrad behåller isHost genom kedjan', () => {
+  const data = { content: '!quiz', user: { userId: VART_ANKARE, uniqueId: 'varden', nickname: 'Värden' } };
+  const falt = N.baseUser(data);
+  const moln = N.cloudEvent('evt-v', 'chatcommand', { ...falt, ...(N.arVarden(falt, VART_ANKARE, '') ? { isHost: true } : {}), name: '!quiz', comment: '!quiz' }, 1757000000000);
+  const ren = cleanEvent(moln);
+  assert.equal(ren.isHost, true, 'isHost tappades i cleanEvent');
+  assert.equal(ren.comment, '!quiz');
+  assert.equal('isHost' in cleanEvent(N.cloudEvent('evt-t', 'chat', { userId: 'x', username: 't', comment: 'A' }, 1)), false);
+});
