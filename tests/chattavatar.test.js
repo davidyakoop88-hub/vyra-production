@@ -216,7 +216,7 @@ test('katalognyckeln bygger widgeten, alla klipp finns och den ritas i paketets 
 
 test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och byter alla filer', async () => {
   const { $, CA, w, h, skicka, spelade, k } = rigg({ overlay: true });
-  assert.deepEqual(Object.keys(CA.MODELLER), ['nr1', 'nr2']);
+  assert.deepEqual(Object.keys(CA.MODELLER), ['nr1', 'nr2', 'nr3']);
   assert.equal(CA.STANDARD_MODELL, 'nr1', 'befintliga widgetar behåller sin avatar');
   for (const m of Object.keys(CA.MODELLER)) {
     const f = CA.filerFor(m);
@@ -230,6 +230,7 @@ test('avatarerna: nr 1 är standard och finns kvar, nr 2 väljs per widget och b
     }
   }
   assert.notEqual(CA.filerFor('nr2').vila, CA.VILA, 'nr 2 skriver inte över nr 1');
+  assert.equal(new Set(['nr1', 'nr2', 'nr3'].map(m => CA.filerFor(m).vila)).size, 3, 'varje avatar har sin egen vilobild');
   assert.equal(CA.filerFor('hack').vila, CA.VILA, 'okänd modell faller tillbaka på nr 1');
 
   assert.equal(w().caModell, undefined);
@@ -317,7 +318,10 @@ test('varje avatar är en egen widget: egen nyckel, inget avatarval i panelen', 
   assert.equal(tva.type, 'templateChatAvatar');
   assert.equal(tva.title, 'Chattavatar 2 · helkropp');
   assert.throws(() => W.create('catalog:vyrapaket:chattavatar:9'), /Okänd chattavatar/);
-  assert.deepEqual(Object.values(CA.MODELLER).map(m => m.nyckel), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2']);
+  assert.deepEqual(Object.values(CA.MODELLER).map(m => m.nyckel), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2', 'catalog:vyrapaket:chattavatar:3']);
+  const tre = W.create('catalog:vyrapaket:chattavatar:3');
+  assert.equal(tre.caModell, 'nr3');
+  assert.equal(tre.title, 'Chattavatar 3 · flanell');
 
   h.window.eval(`selected='ca1'`);
   const panel1 = h.window.eval('props()');
@@ -332,9 +336,9 @@ test('katalogen: ett kort per avatar, och varje kort skapar sin egen avatar', ()
   h.document.body.insertAdjacentHTML('beforeend', '<div class="widget-catalog"></div>');
   h.window.eval(`view='editor'; try { bind() } catch (e) {}`);
   const kort = [...h.document.querySelectorAll('.ca-katalog [data-ca-skapa]')];
-  assert.deepEqual(kort.map(b => b.dataset.catalogKey), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2']);
-  assert.deepEqual(kort.map(b => b.querySelector('img').getAttribute('src')), [CA.VILA, CA.filerFor('nr2').vila]);
-  assert.deepEqual(kort.map(b => b.querySelector('b').textContent), ['Chattavatar', 'Chattavatar 2 · helkropp']);
+  assert.deepEqual(kort.map(b => b.dataset.catalogKey), ['catalog:vyrapaket:chattavatar', 'catalog:vyrapaket:chattavatar:2', 'catalog:vyrapaket:chattavatar:3']);
+  assert.deepEqual(kort.map(b => b.querySelector('img').getAttribute('src')), [CA.VILA, CA.filerFor('nr2').vila, CA.filerFor('nr3').vila]);
+  assert.deepEqual(kort.map(b => b.querySelector('b').textContent), ['Chattavatar', 'Chattavatar 2 · helkropp', 'Chattavatar 3 · flanell']);
   kort[1].click();
   const ny = h.window.eval('state.widgets[state.widgets.length-1]');
   assert.equal(ny.caModell, 'nr2', 'kortet för avatar 2 skapade inte avatar 2');

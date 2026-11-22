@@ -417,12 +417,14 @@
     // 1080 bred OBS-bild, samma storlek som paketets fristående källa. Till höger, där TikTok-chatten
     // inte ligger. Moderatorstyrd från början; hälsning och tack är påslagna.
     // Varje avatar är en EGEN widget i katalogen (David 2026-11-08: "jag vill varje avatar ska vara för
-    // sig själv") — catalog:vyrapaket:chattavatar är avatar 1, …:chattavatar:2 avatar 2 (helkropp).
-    // Avataren bärs av caModell (chattavatar.js MODELLER) och väljs inte i panelen.
+    // sig själv") — catalog:vyrapaket:chattavatar är avatar 1, …:chattavatar:2 avatar 2 (helkropp),
+    // …:chattavatar:3 avatar 3 (flanell). Avataren bärs av caModell (chattavatar.js MODELLER) och väljs
+    // inte i panelen.
     'chattavatar': v => ({
       type: 'templateChatAvatar', x: 350, y: 400, width: 72, title: 'Chattavatar',
       caPublik: 'mod', caHalsa: true, caTacka: true,
-      ...(v && v.modell === 'nr2' ? { title: 'Chattavatar 2 · helkropp', caModell: 'nr2' } : {})
+      ...(v && v.modell === 'nr2' ? { title: 'Chattavatar 2 · helkropp', caModell: 'nr2' } : {}),
+      ...(v && v.modell === 'nr3' ? { title: 'Chattavatar 3 · flanell', caModell: 'nr3' } : {})
     }),
     // Viewer Showcase (viewer-showcase.js, David 2026-11-07): streamern eller en moderator väljer en tittare
     // som lyfts fram i 8 sekunder. 300 bred, centrerad i den 432 breda duken, i övre tredjedelen.
@@ -845,7 +847,8 @@
       if (parts[0] === 'chattavatar') {
         if (parts[1] === undefined) return ['chattavatar', {}];
         if (parts[1] === '2') return ['chattavatar', { modell: 'nr2' }];
-        throw new Error('Okänd chattavatar "' + parts[1] + '" — finns: 1 (utan suffix) och 2');
+        if (parts[1] === '3') return ['chattavatar', { modell: 'nr3' }];
+        throw new Error('Okänd chattavatar "' + parts[1] + '" — finns: 1 (utan suffix), 2 och 3');
       }
       if (parts[0] === 'quiz') {
         const namn = { fragerad: 'Frågerad', spelkort: 'Spelkort', quizshow: 'Quiz Show' };

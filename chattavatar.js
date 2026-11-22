@@ -45,7 +45,12 @@
     // som de andra klippen. chattavatar.css ger dess video motsvarande bredare låda.
     nr1: Object.freeze({ namn: 'Avatar 1', kort: 'Chattavatar', nyckel: 'catalog:vyrapaket:chattavatar', mapp: 'assets/chattavatar/',
       extra: Object.freeze({ kick: 'vyra-avatar-flow-kickboxning.webm', dance4: 'vyra-avatar-flow-dance4.webm' }) }),
-    nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', kort: 'Chattavatar 2 · helkropp', nyckel: 'catalog:vyrapaket:chattavatar:2', mapp: 'assets/chattavatar/nr2/' })
+    nr2: Object.freeze({ namn: 'Avatar 2 · helkropp', kort: 'Chattavatar 2 · helkropp', nyckel: 'catalog:vyrapaket:chattavatar:2', mapp: 'assets/chattavatar/nr2/' }),
+    // Nr 3 (2026-11-22): Davids egen avatar, animerad i Google Flow (Veo 3.1) från en stillbild på
+    // magenta och friläggs till VP9 med alfa i samma 360 x 530 och fotlinje som nr 2. Klippen är ~8 s
+    // (widgeten följer videons längd). Fira-klippet saknas än: filen är tills vidare en kopia av
+    // vinkningen och byts mot det riktiga klippet utan kodändring.
+    nr3: Object.freeze({ namn: 'Avatar 3 · flanell', kort: 'Chattavatar 3 · flanell', nyckel: 'catalog:vyrapaket:chattavatar:3', mapp: 'assets/chattavatar/nr3/' })
   });
   const STANDARD_MODELL = 'nr1';
   const modell = w => (w && Object.prototype.hasOwnProperty.call(MODELLER, w.caModell) ? w.caModell : STANDARD_MODELL);
