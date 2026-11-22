@@ -68,8 +68,8 @@
     'Via PayPal, med PayPal-saldo eller kort. Priset debiteras i USD, och skatter och valutaväxling kan tillkomma.':
       'Through PayPal, with PayPal balance or card. The price is charged in USD, and taxes and currency conversion may apply.',
     'Behöver jag installera något?': 'Do I need to install anything?',
-    'Nej, allt sker i webbläsaren. Windows-appen VYRA Studio behövs bara om du vill styra OBS-scener, använda Stream Deck utan parkopplingskod eller ha automatisk backup.':
-      'No, everything happens in the browser. The Windows app VYRA Studio is only needed if you want to control OBS scenes, use Stream Deck without a pairing code or have automatic backup.',
+    'Nej, allt sker i webbläsaren. Windows-appen VYRA Desktop behövs bara om du vill styra OBS-scener, använda Stream Deck utan parkopplingskod eller ha automatisk backup.':
+      'No, everything happens in the browser. The Windows app VYRA Desktop is only needed if you want to control OBS scenes, use Stream Deck without a pairing code or have automatic backup.',
     'Varför ansluter inte mitt konto?': 'Why won\'t my account connect?',
     'Du måste vara live när du ansluter. Klicka på knappen uppe till höger i VYRA och skriv ditt användarnamn. Kontrollera också att din e-post är verifierad.':
       'You have to be live when you connect. Click the button in the top right corner of VYRA and enter your username. Also check that your email is verified.',
@@ -77,7 +77,7 @@
     'Nej. VYRA är ett oberoende verktyg och är inte sponsrat, godkänt eller drivet av TikTok.':
       'No. VYRA is an independent tool and is not sponsored, endorsed or operated by TikTok.',
     'Fler frågor? Skriv till': 'More questions? Write to',
-    'Ladda ner VYRA Studio för Windows': 'Download VYRA Studio for Windows',
+    'Ladda ner VYRA Desktop för Windows': 'Download VYRA Desktop for Windows',
     'Redo att göra din LIVE till en show?': 'Ready to turn your LIVE into a show?',
     '3 dagar gratis, därefter 15 USD/månad. Säg upp innan så dras inget. Funkar med OBS, Streamlabs och TikTok LIVE Studio.':
       '3 days free, then 15 USD/month. Cancel before and nothing is charged. Works with OBS, Streamlabs and TikTok LIVE Studio.',

@@ -43,8 +43,8 @@ test('svenska är standard, även i en engelsk webbläsare', async () => {
   await vanta(w);
   assert.equal(w.VyraLang.current(), 'sv');
   assert.equal(w.document.documentElement.lang, 'sv');
-  assert.match(w.document.querySelector('h1').textContent, /som får din/);
-  assert.equal(w.document.title, 'VYRA — TikTok LIVE, under kontroll');
+  assert.match(w.document.querySelector('h1').textContent, /Gör din LIVE/);   // startsidan 2026-11-22: ny hjälterubrik
+  assert.equal(w.document.title, 'VYRA — overlays som gör din LIVE till en show');
 });
 
 test('?lang=en översätter text, attribut och titel och sparar valet', async () => {
@@ -61,7 +61,7 @@ test('?lang=en översätter text, attribut och titel och sparar valet', async ()
   }
   const w = sida('index.html', '?lang=en');
   await vanta(w);
-  assert.equal(w.document.querySelector('h1').textContent.replace(/\s+/g, ' ').trim(), 'Overlays that make your TikTok Live stand out');
+  assert.equal(w.document.querySelector('h1').textContent.replace(/\s+/g, ' ').trim(), 'Turn your LIVE into a show');
   assert.equal(w.document.querySelector('[data-login] input[type=password]').getAttribute('placeholder') == null
     || !/[åäö]/.test(w.document.querySelector('[data-login] input[type=password]').getAttribute('placeholder')), true);
 });
@@ -75,13 +75,13 @@ test('text som ett skript skriver efteråt översätts, och svenska återställs
   p.textContent = 'Fel e-post eller lösenord';
   await vanta(w);
   assert.equal(p.textContent, 'Wrong email or password');
-  const h1Sv = 'Overlays som får din TikTok Live att sticka ut';
+  const h1Sv = 'Gör din LIVE till en show';
   w.VyraLang.set('sv');
   assert.equal(d.querySelector('h1').textContent.replace(/\s+/g, ' ').trim(), h1Sv);
-  assert.equal(d.title, 'VYRA — TikTok LIVE, under kontroll');
+  assert.equal(d.title, 'VYRA — overlays som gör din LIVE till en show');
   assert.equal(p.textContent, 'Fel e-post eller lösenord');
   w.VyraLang.set('en');
-  assert.equal(d.title, 'VYRA — TikTok LIVE, under control');
+  assert.equal(d.title, 'VYRA — overlays that turn your LIVE into a show');
   assert.equal(w.localStorage.getItem('vyra-sprak'), 'en');
 });
 

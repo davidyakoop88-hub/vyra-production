@@ -32,6 +32,10 @@ function startsidan() {
   fangaAnrop(dom.window, anrop);
   dom.window.matchMedia = () => ({ matches: true });   // reducerad rörelse: ingen dörr, ingen väntan
   dom.window.eval(las('landing-login.js'));
+  // STARTSIDAN 2026-11-22: kortet bor i ett lager (data-konto-lager) som öppnas från toppradens
+  // Logga in. Öppna det som en besökare gör innan kortets lägen mäts.
+  dom.window.requestAnimationFrame = dom.window.requestAnimationFrame || (f => setTimeout(f, 0));
+  dom.window.document.querySelector('[data-konto-oppna="login"]').click();
   return { w: dom.window, anrop };
 }
 async function loggaInPaKortet(w, kryss) {

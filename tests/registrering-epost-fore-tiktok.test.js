@@ -23,6 +23,10 @@ function startsidan() {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://vyra.test/' });
   dom.window.fetch = async () => ({ ok: true, json: async () => ({}) });
   dom.window.eval(las('landing-login.js'));
+  // STARTSIDAN 2026-11-22: kortet bor i ett lager (data-konto-lager) som öppnas från toppradens
+  // Logga in. Öppna det som en besökare gör innan kortets lägen mäts.
+  dom.window.requestAnimationFrame = dom.window.requestAnimationFrame || (f => setTimeout(f, 0));
+  dom.window.document.querySelector('[data-konto-oppna="login"]').click();
   return dom.window;
 }
 const synlig = el => {
