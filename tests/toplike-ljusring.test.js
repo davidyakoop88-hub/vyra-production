@@ -264,3 +264,32 @@ test('en Neonram-widget som ritas utan omslaget läker kedjan: omslaget läggs y
   await new Promise(r => setTimeout(r, 20));
   assert.match(h.window.wh(w), /class="[^"]*\btln\b/, 'omslaget lades inte tillbaka i kedjan');
 });
+
+// SAMMA FEL PÅ MAIN 2026-11-21, TROTS LÄKNINGEN OVAN: läkningen lagade bara kedjan och väntade på en omritning,
+// och tittade bara på rötter med .vyra-toplike utan .tln. Här kommer en ritad rot som gått förbi HELA kedjan
+// — med Top Likes klasser, utan synligt lager — och den ska lagas på plats: samma element (studions lyssnare
+// sitter på det), handtaget kvar, och Neonramarnas synliga lager i stället för den vanliga listan.
+test('en ritad Neonram-rot utan sitt synliga lager lagas på plats, med samma element och handtag', async () => {
+  const h = createDom({ state: { widgets: [], projectName: 'toplike-ljusring-plats' } });
+  for (const f of ['overlay-sanitize.js', 'toplike-design.js', 'topcoins-v2.js', 'toppoints-v2.js', 'toplike-studio.js', 'ranking-sixpack.js', 'toplike-ljusring-panel.js', 'toplike-ljusring.js']) h.load(f);
+  h.window.dispatchEvent(new h.window.Event('load'));
+  h.window.console.warn = () => {};
+  const w = W({ id: 'tln-plats' });
+  const tillstand = h.document.createElement('script');
+  tillstand.textContent = `state.widgets.length = 0; state.widgets.push(${JSON.stringify(w)});`;
+  h.document.body.append(tillstand);
+  const host = h.document.createElement('div');
+  h.document.body.append(host);
+  host.innerHTML = '<div class="widget vyra-toplike skin-clean-bar like-voltage" data-id="tln-plats" style="left:10px;top:20px;width:250px">'
+    + '<div class="toplike-row"><b>1</b><span><strong>Vanlig</strong></span><em><i></i>5</em></div>'
+    + '<span class="resize-handle" data-handle="se"></span></div>';
+  const rot = host.firstElementChild, handtag = rot.querySelector('.resize-handle');
+  await new Promise(r => setTimeout(r, 30));
+  const nu = host.querySelector('[data-id="tln-plats"]');
+  assert.ok(nu.querySelector(':scope > .tl'), 'roten lagades inte: ' + nu.className);
+  assert.equal(nu, rot, 'roten byttes ut — studions lyssnare på den hade försvunnit');
+  assert.equal(nu.querySelector(':scope > .resize-handle'), handtag, 'handtaget byttes ut eller försvann');
+  assert.ok(nu.classList.contains('tln') && !/\bskin-|\blike-/.test(nu.className), 'Top Likes designklasser ligger kvar: ' + nu.className);
+  assert.match(nu.getAttribute('style'), /left:10px/, 'positionen från kedjan försvann');
+  assert.equal(nu.querySelectorAll(':scope > .tln-data > .toplike-row').length, 3, 'datalagret byggdes inte');
+});
