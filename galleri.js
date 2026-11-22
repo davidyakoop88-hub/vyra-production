@@ -138,7 +138,8 @@
     { id: 'chatt-och-spel', namn: 'Chatt och spel', ingress: 'Låt tittarna vara med: avatarer, spel och låtönskningar.', familjer: [
       { namn: 'Chattavatar', om: 'En animerad avatar i din LIVE. Tryck för att spela.', designer: [
         tryck('Chattavatar', 'assets/chattavatar/vyra-avatar-flow-wave.webm', 'assets/chattavatar/vyra-avatar-idle.png'),
-        tryck('Chattavatar 2 helkropp', 'assets/chattavatar/nr2/vyra-avatar-flow-wave.webm', 'assets/chattavatar/nr2/vyra-avatar-idle.png')] },
+        tryck('Chattavatar 2 helkropp', 'assets/chattavatar/nr2/vyra-avatar-flow-wave.webm', 'assets/chattavatar/nr2/vyra-avatar-idle.png'),
+        tryck('Chattavatar 3 flanell', 'assets/chattavatar/nr3/vyra-avatar-flow-wave.webm', 'assets/chattavatar/nr3/vyra-avatar-idle.png')] },
       { namn: 'Ordjakten', om: 'Tittarna skriver ordet i chatten, och den som först skriver rätt får poäng.', designer: [kort('Ordjakten')] },
       { namn: 'Quiz', om: 'Frågor som tittarna svarar på i chatten.', designer: [kort('Frågerad'), kort('Spelkort'), kort('Quiz Show')] },
       { namn: 'Skattkista', om: 'En nedräkning till när skattkistan i din LIVE öppnas.', designer: [kort('Skattkista'), kort('Skattkista som rad')] },
