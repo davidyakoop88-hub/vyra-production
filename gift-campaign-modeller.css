@@ -108,7 +108,9 @@
 .vyra-gcm[data-orient=landscape] .gcm-flode{-webkit-mask-image:linear-gradient(90deg,transparent,#000 17%,#000 83%,transparent);mask-image:linear-gradient(90deg,transparent,#000 17%,#000 83%,transparent)}
 .vyra-gcm[data-orient=landscape] .gcm-mini{font-size:20px}
 .vyra-gcm[data-orient=landscape] .gcm-mini small{font-size:13px}
-.vyra-gcm[data-orient=portrait] .gcm-flode{-webkit-mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent);mask-image:linear-gradient(transparent,#000 7%,#000 93%,transparent)}
+/* STÅENDE KANTER (David 2026-11-22): sex gåvor på 120 px fyller 720 px i ett 440 px fönster. Med 7 % mask syntes ett tal
+ * överst utan sin gåva och en gåva nederst utan sitt tal. Nu tonas 22 % (ungefär en gåva) i båda ändar. */
+.vyra-gcm[data-orient=portrait] .gcm-flode{-webkit-mask-image:linear-gradient(transparent,#000 22%,#000 78%,transparent);mask-image:linear-gradient(transparent,#000 22%,#000 78%,transparent)}
 .vyra-gcm .gcm-post{position:absolute;left:0;top:0;width:72px;height:114px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;will-change:transform}
 .vyra-gcm[data-orient=portrait] .gcm-post{width:88px}
 .vyra-gcm .gcm-post .gcm-art{width:48px;height:48px}

@@ -70,6 +70,13 @@ test('liggande Gåvoflöde: talen är mindre än avståndet mellan gåvorna', ()
   assert.ok(stor <= 21 && liten <= 14, `talen är ${stor}/${liten} px — "80 / 250" blev 72 px brett med 82 px mellan gåvorna`);
 });
 
+// STÅENDE GÅVOFLÖDE: med 7 % mask syntes ett tal överst utan sin gåva och en gåva nederst utan sitt tal.
+test('stående Gåvoflöde: kanterna tonas över ungefär en gåvas höjd', () => {
+  const m = regel('.vyra-gcm[data-orient=portrait] .gcm-flode').match(/mask-image\s*:\s*linear-gradient\(transparent,#000 ([\d.]+)%/);
+  assert.ok(m, 'stående flödets mask saknas');
+  assert.ok(Number(m[1]) >= 20, `masken tonar bara ${m[1]} % — halva gåvor syns i över- och underkant`);
+});
+
 test('media.js laddar den nya stilen', () => {
   const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
   assert.match(media, /gift-campaign-modeller\.css\?v=20261122-1/, 'stilfilens version är inte höjd — webbläsare behåller den gamla raden');
