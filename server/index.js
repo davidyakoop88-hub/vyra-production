@@ -669,6 +669,36 @@ const publicAccess=p.match(/^\/api\/overlay-access\/([^/]+)(?:\/(.*))?$/);if(pub
   // ANVÄNDARSIFFROR för Driftcentralen (anvandarsiffror.js). Bara antal — inga e-postadresser eller
   // namn. Ligger innanför /api/admin/-spärren ovan: utan is_platform_admin blir svaret 403.
   if(p==='/api/admin/anvandare'&&req.method==='GET')return send(res,200,{ok:true,...(await Anvandarsiffror.anvandarsiffror(pool))});
+  // ÅTERSTÄLL TVÅSTEG ÅT EN KUND som tappat både autentiseringsappen och återställningskoderna.
+  // Innan den här rutten fanns ingen väg tillbaka alls utom en handskriven UPDATE i produktionens
+  // databas. Supportrutinen (docs/SUPPORT_OPERATIONS.md) säger att kunden ska ha mejlat från
+  // kontots egen adress — det kontrollerar administratören innan formuläret skickas.
+  // FYRA SPÄRRAR, i den ordningen:
+  //   1. administratören har själv tvåsteg PÅ och sessionen är verifierad (annars räcker en stulen
+  //      admin-kaka för att stänga av skyddet på vilket konto som helst)
+  //   2. administratören bekräftar med en FÄRSK kod ur sin egen app (stegvis verifiering)
+  //   3. ett skäl måste anges — det hamnar i audit_log
+  //   4. det egna kontot kan inte återställas här (då hade spärr 2 varit meningslös)
+  // Kunden loggas ut överallt och får ett säkerhetsmejl, så att en obehörig återställning syns.
+  // Provas mot riktig Postgres i server/test/mfa-aterstallning-http.test.js.
+  if(p==='/api/admin/mfa-aterstallning'&&req.method==='POST'){const d=await body(req);
+    if(!s.mfa_enabled_at||!s.mfa_verified_at)return send(res,403,{ok:false,error:'Slå på tvåstegsverifiering på ditt eget konto först'});
+    const email=S.safeText(d.email,254).trim().toLowerCase(),skal=S.safeText(d.skal,300).trim();
+    if(!email||!email.includes('@'))return send(res,400,{ok:false,error:'Ange kundens e-postadress'});
+    if(skal.length<5)return send(res,400,{ok:false,error:'Skriv varför tvåsteg återställs'});
+    if(!await tx(c=>checkMfaCode(c,s,d.adminKod)))return send(res,401,{ok:false,error:'Fel kod från din egen autentiseringsapp'});
+    const utfall=await tx(async c=>{
+      const q=await c.query('SELECT id,email,mfa_enabled_at FROM users WHERE lower(email)=$1 FOR UPDATE',[email]),kund=q.rows[0];
+      if(!kund)return{status:404,error:'Inget konto har den e-postadressen'};
+      if(String(kund.id)===String(s.user_id))return{status:400,error:'Ditt eget konto kan inte återställas här'};
+      if(!kund.mfa_enabled_at)return{status:409,error:'Kontot har inte tvåstegsverifiering påslagen'};
+      await c.query("UPDATE users SET mfa_secret_enc=NULL,mfa_enabled_at=NULL,mfa_recovery_hashes='[]'::jsonb WHERE id=$1",[kund.id]);
+      const ut=await c.query('DELETE FROM sessions WHERE user_id=$1',[kund.id]);
+      await c.query("INSERT INTO audit_log(actor_user_id,action,target_type,target_id,metadata) VALUES($1,'mfa_aterstalld_av_admin','user',$2,$3)",[s.user_id,String(kund.id),JSON.stringify({skal,utloggadeSessioner:ut.rowCount})]);
+      await c.query("INSERT INTO notification_outbox(recipient,template,payload,dedupe_key) VALUES($1,'mfa_reset','{}'::jsonb,$2)",[kund.email,`mfa_reset:${kund.id}:${Date.now()}`]);
+      return{status:200,email:kund.email,utloggadeSessioner:ut.rowCount}});
+    if(utfall.status!==200)return send(res,utfall.status,{ok:false,error:utfall.error});
+    return send(res,200,{ok:true,email:utfall.email,utloggadeSessioner:utfall.utloggadeSessioner})}
   // VERIFIERADE TIKTOK-KOPPLINGAR. Frågan den svarar på är EN: bär godkännandet för andra konton
   // än sandboxens testanvändare? Sandbox-nycklarna slapper in exakt ett konto, sa en lista dar
   // BARA det kontot star ar inte ett bevis — och `VYRA_TIKTOK_VERIFIERING_KRAVS=1` far inte sattas

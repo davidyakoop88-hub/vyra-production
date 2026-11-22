@@ -39,6 +39,18 @@ async function laddaAnvandare(){const box=document.querySelector('#anvandare');i
     box.querySelector('#anvandareUppdatera').onclick=laddaAnvandare}
   catch(error){box.innerHTML=`<p>${esc(error.message)}</p>`}
   finally{box.removeAttribute('aria-busy')}}
+// ÅTERSTÄLL TVÅSTEG ÅT EN KUND (POST /api/admin/mfa-aterstallning, server/index.js). Servern
+// kräver att administratören själv har tvåsteg på och bekräftar med en färsk kod — formuläret
+// skickar bara vidare. Fälten töms efteråt så att koden inte ligger kvar i rutan.
+function kopplaMfaAterstallning(){const form=document.querySelector('#mfaAterstallForm');if(!form)return;
+  form.onsubmit=async event=>{event.preventDefault();const svar=document.querySelector('#mfaAterstallSvar'),knapp=form.querySelector('button'),d=Object.fromEntries(new FormData(form));
+    if(!root.confirm('Stänga av tvåsteg för '+d.email+'? Kunden loggas ut på alla enheter.'))return;
+    knapp.disabled=true;svar.textContent='Återställer…';
+    try{const out=await root.VyraAuth.api('/api/admin/mfa-aterstallning',{method:'POST',body:JSON.stringify({email:d.email,skal:d.skal,adminKod:d.adminKod})});
+      form.reset();svar.textContent='Klart: tvåsteg är avstängt för '+out.email+'. Kunden har loggats ut ('+(Number(out.utloggadeSessioner)||0)+' enheter) och fått ett mejl.'}
+    catch(error){form.querySelector('[name=adminKod]').value='';svar.textContent=error.message}
+    finally{knapp.disabled=false}}}
+kopplaMfaAterstallning();
 root.addEventListener('vyra-auth-ready',load);root.addEventListener('vyra-auth-ready',laddaVerifieringar);root.addEventListener('vyra-auth-ready',laddaAnvandare)
 // FILEN ANROPADES UTAN ARGUMENT. `root` var undefined, sa sista raden kastade TypeError och
 // supportkon laddades aldrig — den stod kvar pa "Laddar…" for alltid. Incidentformularet
