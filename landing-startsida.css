@@ -143,3 +143,73 @@ html.konto-oppet{overflow:hidden}
 .faq-mer{margin:20px 0 0;text-align:center;font-size:13px;color:#a99cba}
 .faq-mer a{color:#d9cbef}
 .faq-mer .faq-hamta{display:block;margin-top:8px}
+
+/* ---------- Två styrkor under knappen (David 2026-11-22) ----------
+   Bara text och tunna linjeikoner — inga logotyper från Microsoft eller TikTok. */
+.hero-styrkor{position:relative;z-index:3;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 10px;margin:14px auto 0;padding:0;list-style:none;max-width:720px}
+.hero-styrkor li{display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 10px;
+  position:relative;z-index:3;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(14,9,22,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-size:12.5px;line-height:1.35;color:#cfc2e2;text-align:left}
+.hero-styrkor svg{width:15px;height:15px;flex:none;fill:none;stroke:#d9b8ff;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:981px) and (max-height:820px){.hero-styrkor{margin-top:10px}}
+@media (max-width:760px){.hero-styrkor{flex-direction:column;align-items:center;gap:6px}.hero-styrkor li{max-width:320px}}
+
+/* ---------- Prova en effekt direkt (idé 1) ----------
+   Samma ram som Fan Level Up-sektionen nedanför: 1040 px, tunna linjer, mörk panel. */
+.prova{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:56px 20px 40px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);grid-template-areas:"topp scen" "kontroll scen";
+  column-gap:44px;row-gap:0;align-items:center;
+  background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
+.prova-text{text-align:left}
+.prova-topp{grid-area:topp;align-self:end}
+.prova-kontroll{grid-area:kontroll;align-self:start}
+.prova-scen{grid-area:scen}
+.prova-text h2{margin:0 0 10px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text);letter-spacing:-.01em}
+.prova-ingress{margin:0 0 24px;max-width:440px;color:var(--muted);font-size:14.5px;line-height:1.65}
+.prova-gavor{display:flex;gap:12px;margin:0 0 18px}
+.prova-gava{display:flex;flex-direction:column;align-items:center;gap:8px;width:112px;padding:14px 10px 12px;cursor:pointer;
+  border:1px solid var(--line);border-radius:16px;background:linear-gradient(170deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+  color:#e9defa;font:600 13px var(--font-body);transition:border-color .25s ease,background .25s ease,transform .25s ease}
+.prova-gava img{width:56px;height:56px;object-fit:contain;transition:transform .35s ease}
+.prova-gava:hover{border-color:rgba(216,88,255,.45)}
+.prova-gava:hover img{transform:translateY(-2px)}
+.prova-gava[aria-pressed="true"]{border-color:rgba(228,179,90,.7);background:linear-gradient(170deg,rgba(228,179,90,.12),rgba(168,58,239,.06))}
+.prova-gava:focus-visible,.prova-design button:focus-visible,.prova-galleri:focus-visible{outline:2px solid var(--violet-light);outline-offset:3px}
+.prova-design{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 18px}
+.prova-etikett{margin-right:6px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8f829f}
+.prova-design button{padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;
+  color:#cfc2e2;font:600 12.5px var(--font-body);transition:border-color .2s ease,color .2s ease,background .2s ease}
+.prova-design button:hover{color:#fff;border-color:rgba(216,88,255,.45)}
+.prova-design button[aria-pressed="true"]{color:#fff;border-color:rgba(216,88,255,.6);background:rgba(168,58,239,.12)}
+.prova-not{margin:0 0 14px;max-width:440px;color:#8f829f;font-size:12.5px;line-height:1.6}
+.prova-galleri{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
+.prova-galleri:hover{color:#fff;border-color:var(--violet-light)}
+.prova-scen{margin:0;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:#0b0713;
+  box-shadow:0 34px 80px -44px #000,0 0 0 1px rgba(255,255,255,.03) inset}
+.prova-film{position:relative;aspect-ratio:5/4;background:radial-gradient(120% 90% at 50% 40%,#140c22 0%,#070417 70%)}
+.prova-film video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.prova-tips{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);margin:0;padding:6px 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);background:rgba(7,4,14,.72);color:#cfc2e2;font-size:12px;white-space:nowrap;
+  transition:opacity .3s ease}
+.prova-film.spelar .prova-tips{opacity:0}
+.prova-scen figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px 13px;
+  border-top:1px solid var(--line);background:var(--panel)}
+.prova-scen figcaption b{font:700 13.5px var(--font-display);color:var(--text)}
+.prova-scen figcaption span{font-size:12.5px;color:var(--muted);text-align:right}
+@media (max-width:860px){
+  .prova{grid-template-columns:minmax(0,1fr);grid-template-areas:"topp" "scen" "kontroll";row-gap:20px;padding:44px 16px 32px}
+  .prova-ingress{margin-bottom:0}
+  .prova-text{text-align:center}
+  .prova-ingress,.prova-not{margin-left:auto;margin-right:auto}
+  .prova-gavor,.prova-design{justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  .prova-gava,.prova-gava img,.prova-tips{transition:none}
+  .prova-gava:hover img{transform:none}
+}
+
+/* Galleri-länken bredvid knappen under widgetlistan */
+.widgetar-knappar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 24px;margin-top:26px}
+.widgetar-knappar .widgetar-knapp{margin-top:0}
+.widgetar-galleri-lank{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
+.widgetar-galleri-lank:hover{color:#fff;border-color:var(--violet-light)}
