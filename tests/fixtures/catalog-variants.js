@@ -22,6 +22,7 @@ const CONTRACT = [
   { name: 'Bertil paket', key: 'catalog:vyrapaket:bertil' },
   { name: 'Chattavatar', key: 'catalog:vyrapaket:chattavatar' },
   { name: 'Chattavatar 2 · helkropp', key: 'catalog:vyrapaket:chattavatar:2' },
+  { name: 'Chattavatar 3 · flanell', key: 'catalog:vyrapaket:chattavatar:3' },
   // Viewer Showcase (viewer-showcase.js): en nyckel per komposition, samma fabriksbyggare.
   { name: 'Viewer Showcase · Name Takeover', key: 'catalog:vyrapaket:showcase:takeover' },
   { name: 'Viewer Showcase · Halo Reveal', key: 'catalog:vyrapaket:showcase:halo' },
