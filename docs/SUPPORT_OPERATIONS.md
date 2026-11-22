@@ -33,3 +33,11 @@ Use this only when a customer has lost **both** their authenticator app and thei
 5. Reply to the customer: they can now sign in with their password and should turn two-step verification on again under Settings. If they did **not** ask for this, they must change their password immediately.
 
 Covered by `server/test/mfa-aterstallning-http.test.js` against a real Postgres.
+
+## New tickets reach the support inbox
+
+Every new ticket from the in-app support form, and every customer reply in an existing ticket, also queues an internal email to `SUPPORT_INBOX` (default `support@vyralive.app`) through the notification outbox. The email carries the customer's address, category, subject, message and ticket id, and sets the customer's address as reply-to.
+
+- Reply in `/operations.html` when possible: the reply shows in the app and the customer gets an email. Replying to the internal email goes straight to the customer, but the ticket status in the app does not change.
+- At most five such emails per customer and hour. Tickets beyond that are still saved and visible in `/operations.html`.
+- `SUPPORT_INBOX` is optional. An invalid value falls back to the default.
