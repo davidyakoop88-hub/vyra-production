@@ -55,9 +55,11 @@
 .vyra-gcm .gcm-hero .gcm-mal{font-size:12px;margin-top:5px}
 .vyra-gcm .gcm-hero .gcm-bar{margin-top:12px}
 .vyra-gcm .gcm-ko{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;gap:7px;padding-top:10px;border-top:1px solid #dfbd6733}
-.vyra-gcm .gcm-ko span{width:36px;height:38px;padding:3px;opacity:.45;position:relative;transition:opacity .4s}
+/* GÅVORADEN SYNS I SÄNDNINGEN (David 2026-11-22): raden låg på opacitet .45 och försvann mot kamerabilden i TikTok LIVE.
+ * Alla gåvor visas fullt, med mörk skugga för kontrast mot ljus bakgrund; den aktiva märks på storlek och sken i stället. */
+.vyra-gcm .gcm-ko span{width:36px;height:38px;padding:3px;opacity:1;position:relative;filter:drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 0 1px rgba(0,0,0,.9));transition:transform .4s}
 .vyra-gcm .gcm-ko img{width:100%;height:100%;object-fit:contain}
-.vyra-gcm .gcm-ko span.gcm-aktiv{opacity:1}
+.vyra-gcm .gcm-ko span.gcm-aktiv{transform:scale(1.18);filter:drop-shadow(0 0 6px rgba(255,214,140,.75)) drop-shadow(0 2px 3px rgba(0,0,0,.85))}
 .vyra-gcm .gcm-ko span.gcm-aktiv:after{content:'';position:absolute;left:9px;right:9px;bottom:-5px;height:2px;background:#ffe2a2;box-shadow:0 0 9px #ffc96d}
 .vyra-gcm .gcm-hero.gcm-in .gcm-art{animation:gcmValkommen .95s cubic-bezier(.16,1,.3,1) both}
 .vyra-gcm .gcm-hero.gcm-in .gcm-info{animation:gcmInfoIn .8s both}
@@ -79,6 +81,7 @@
 .vyra-gcm[data-gcm=classic] .gcm-bar i{background:linear-gradient(90deg,#ff416a,#bd6ccc,#25d6dc);box-shadow:none;border-radius:12px}
 .vyra-gcm[data-gcm=classic] .gcm-hero .gcm-bar{position:absolute;left:-78px;right:0;bottom:4px;margin:0}
 .vyra-gcm[data-gcm=classic] .gcm-ko{border:0}
+.vyra-gcm[data-gcm=classic] .gcm-ko span.gcm-aktiv{filter:drop-shadow(0 0 6px rgba(66,225,222,.8)) drop-shadow(0 2px 3px rgba(0,0,0,.85))}
 .vyra-gcm[data-gcm=classic] .gcm-ko span.gcm-aktiv:after{background:#42e1de;box-shadow:0 0 8px #42e1de}
 
 /* ---- stående: tre platser, den aktiva i mitten, nästa kommer uppåt (172 × 263) ----------------- */
