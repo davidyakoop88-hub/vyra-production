@@ -166,6 +166,30 @@ const RIGG = `(() => {
       + 'html.overlay-output body:has(.editor-shell) .workarea{background:#050308!important;background-image:none!important}';
     document.head.append(st);
   }
+  // SIDANS TIMERS KAN HALLAS (2026-11-22). Frysningen pausar CSS-animationerna men inte JS-timers.
+  // Ett levelkort med 6 s visning fotograferas efter drygt 12 s - mitt i sin utgang - och dess egen
+  // timer slacker det 0,5 s senare. Landade slackningen mellan de tva kontrollfotona (140 ms isar)
+  // blev de olika och catalog:gifterlevel:reveal foll i CI med "stod aldrig stilla". Medan
+  // __visHall(true) galler skjuts varje timer- och bildruteanrop upp och kors forst vid
+  // __visHall(false). Playwrights egna vantningar kor i en isolerad varld och paverkas inte.
+  if (!window.__visHall) {
+    const ursST = window.setTimeout.bind(window), ursRAF = window.requestAnimationFrame.bind(window);
+    let haller = false; const vantar = [];
+    const vakt = f => function (...a) { if (haller) vantar.push(() => f.apply(this, a)); else return f.apply(this, a) };
+    window.setTimeout = (f, ms, ...a) => ursST(typeof f === 'function' ? vakt(f) : f, ms, ...a);
+    window.requestAnimationFrame = f => ursRAF(vakt(f));
+    window.__visHall = pa => {
+      haller = !!pa;
+      if (!haller) vantar.splice(0).forEach(k => { try { k() } catch (e) { console.error(e) } });
+      return vantar.length;
+    };
+  }
+  // Ar widgeten ett levelkort vars utgang hamnar i fotofonstret? Se __visHall och fotografera().
+  window.__visKortSek = () => {
+    const w = state.widgets[0];
+    if (!w || (w.type !== 'templateGifterLevel' && w.type !== 'templateFanLevel')) return 0;
+    return Number(w.type === 'templateGifterLevel' ? w.gifterDuration : w.fanDuration) || 6;
+  };
   window.__visBygg = (nyckel) => {
     try {
       state.widgets.length = 0;
@@ -649,18 +673,32 @@ async function fotografera(sida, nyckel, ALERTS) {
   const skann = b.regi
     ? { vald: `regi: fas ${b.regi.fas} vid ${b.regi.ms} ms`, stabilt: { antal: b.regi.animationer } }
     : await sida.evaluate(st => window.__visSkanna(st), STEGE);
+  // LEVELKORT MED KORT VISNING HÅLLS STILLA UNDER KONTROLLFOTONA (2026-11-22). Med 6 s visning tas
+  // fotot i kortets utgång, och kortets egen timer släcker det 0,5 s senare — ibland mellan de två
+  // fotona. Se __visHall. Uppmätt lokalt med sexfaldigt strypt processor: utan hållningen föll
+  // catalog:gifterlevel:reveal minst 4 av 33 gånger med "stod aldrig stilla", med den 0 av 50. Alla
+  // 23 levelnycklar gav identiska bilder i två separata sessioner (fyrfaldigt strypt), så
+  // referenserna gäller oförändrade. Kort med längre visning (7–13 s) är inte i utgången vid fotot
+  // och rörs inte — luminous fotograferas t.ex. levande och dess referens måste förbli densamma.
+  const halls = (await sida.evaluate(() => window.__visKortSek())) > 0
+    && (await sida.evaluate(() => window.__visKortSek())) <= 6.5;
   const matt = await sida.evaluate(() => window.__visSynlig());
 
   if (!matt.doljd && matt.b >= 2 && matt.h >= 2 && matt.o >= 0.02) {
-    const ett = await fota(sida);
-    // Frysningen står stilla per definition — men bara om den faktiskt frös något. Kontrollen är
-    // ett andra foto: är de identiska står widgeten still, och då duger bilden som referens.
-    if (ett && ett.fyllnad.procent >= 3) {
-      await sida.waitForTimeout(140);
-      const tva = await fota(sida);
-      if (tva && tva.b64 === ett.b64) {
-        return { b64: ett.b64, fyllnad: ett.fyllnad, bildruta: skann && skann.vald, hur: 'fryst' };
+    if (halls) await sida.evaluate(() => window.__visHall(true));
+    try {
+      const ett = await fota(sida);
+      // Frysningen står stilla per definition — men bara om den faktiskt frös något. Kontrollen är
+      // ett andra foto: är de identiska står widgeten still, och då duger bilden som referens.
+      if (ett && ett.fyllnad.procent >= 3) {
+        await sida.waitForTimeout(140);
+        const tva = await fota(sida);
+        if (tva && tva.b64 === ett.b64) {
+          return { b64: ett.b64, fyllnad: ett.fyllnad, bildruta: skann && skann.vald, hur: 'fryst' };
+        }
       }
+    } finally {
+      if (halls) await sida.evaluate(() => window.__visHall(false));
     }
   }
 
