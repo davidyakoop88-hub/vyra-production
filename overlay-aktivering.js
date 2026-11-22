@@ -341,7 +341,14 @@
     }
     return 'Syns i sändningen först när ' + nar + '.';
   }
-  if (!OVERLAY && window.VyraPanelram && typeof window.VyraPanelram.tillagg === 'function') {
+  // REGISTRERAS NÄR PANELRAMEN FINNS, inte bara om den redan finns (CI på main 2026-11-20 och -21).
+  // Den här filen läggs in dynamiskt ur media.js och körs så fort den hämtats — ibland innan parsern
+  // nått vyra-panelram.js längre ned i studio.html. Då fanns ingen VyraPanelram, raden registrerades
+  // aldrig och panelen saknade "Syns i sändningen först när …" för hela den sidladdningen.
+  let panelradKlar = false;
+  function registreraPanelrad(sen) {
+    if (panelradKlar || OVERLAY || !window.VyraPanelram || typeof window.VyraPanelram.tillagg !== 'function') return;
+    panelradKlar = true;
     try {
       window.VyraPanelram.tillagg(2, w => {
         const t = narText(w);
@@ -354,6 +361,15 @@
         return p;
       });
     } catch (_) {}
+    // Sent registrerad: panelen kan redan ha ritats utan raden. Rita om en gång, så att den syns
+    // utan att något klickas.
+    if (sen === true) try { if (typeof window.VyraRitaSnart === 'function') window.VyraRitaSnart(); } catch (_) {}
+  }
+  registreraPanelrad();
+  if (!panelradKlar && !OVERLAY) {
+    const sent = () => registreraPanelrad(true);
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', sent, { once: true });
+    addEventListener('load', sent, { once: true });
   }
 
   // TESTHANDELSER RAKNAS INTE I SANDNINGEN: live-client.js ingest() skickar dem inte som

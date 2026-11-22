@@ -349,6 +349,19 @@ jobs:
         run: node --test test/mfa-http.test.js
         working-directory: server
 
+      # ÅTERSTÄLL TVÅSTEG ÅT EN KUND (2026-11-22). Rutten stänger av skyddet på ett ANNAT konto; spärrarna
+      # (bara admin med eget verifierat tvåsteg, färsk kod, skäl) och att återställningen tömmer koderna,
+      # loggar ut kunden och skriver audit_log syns bara mot riktig Postgres och Redis.
+      - name: Återställ tvåsteg åt en kund — spärrarna och att återställningen gör allt
+        run: node --test test/mfa-aterstallning-http.test.js
+        working-directory: server
+
+      # SUPPORTÄRENDEN GER ETT INTERNT MEJL (2026-11-22). Ärendet sparas alltid och mejlet till SUPPORT_INBOX
+      # läggs i notification_outbox med kundens svarsadress och tak per timme. Kräver Postgres och Redis.
+      - name: Supportärenden — mejlet till supportinkorgen läggs i kön
+        run: node --test test/supportarende-mejl.test.js
+        working-directory: server
+
       # HÅLL MIG INLOGGAD (2026-10-21). Kakans Max-Age och sessionsradens expires_at ska räknas ur
       # samma tal, rulla på /api/auth/me, bäras genom tvåsteget och dö vid utloggning, "Logga ut alla
       # andra" och lösenordsåterställning. Det syns bara på raden Postgres faktiskt sparade.

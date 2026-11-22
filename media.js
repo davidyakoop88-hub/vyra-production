@@ -1915,7 +1915,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-mvp-celebratio
 
 // Supernova shares the VFX ticker; load its dependencies before the fireworks entry point.
 Promise.resolve().then(()=>{
-  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261019-1','gift-fireworks.js?v=20261117-1','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261021-7'];
+  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','gift-classics-engine.js?v=20260912-3','vfx-rng.js?v=20260925-natural1','gift-natural-engine.js?v=20261018-1','gift-festival-engine.js?v=20261018-1','gift-supernova-engine.js?v=20261019-1','gift-fireworks.js?v=20261122-1','gift-fireworks-session.js?v=20261018-7','gift-supernova-panel.js?v=20261021-7'];
   const next=i=>{if(i>=files.length)return;const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};
   next(0);
 });
@@ -1967,7 +1967,7 @@ Promise.resolve().then(()=>{
 // väntetider, kö, pratbubblans delar) laddas först.
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-chattavatar]')){let css=document.createElement('link');css.rel='stylesheet';css.href='chattavatar.css?v=20261120-1';css.dataset.chattavatar='1';document.head.append(css)}
-  for(const f of ['chattavatar-modell.js?v=20261117-1','chattavatar.js?v=20261117-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
+  for(const f of ['chattavatar-modell.js?v=20261117-1','chattavatar.js?v=20261122-1']){const s=document.createElement('script');s.src=f;s.async=false;s.onerror=()=>console.error('Kunde inte ladda '+f.split('?')[0]);document.body.append(s)}
 });
 // Viewer Showcase - streamern eller en moderator lyfter fram en tittare i 8 sekunder (viewer-showcase.js).
 Promise.resolve().then(()=>{
@@ -2019,7 +2019,7 @@ Promise.resolve().then(()=>{
  const css=document.createElement('link');css.rel='stylesheet';css.href='gift-campaign-aura.css?v=20261020-15';document.head.append(css);
  // Fokus, Classic och Gåvoflöde (2026-11-06) ritas av gift-campaign-modeller.js, som läggs UTANPÅ Aura i
  // wh-kedjan; gift-campaign-video.js spelar varje gåvas egen animation (strikt på giftId).
- if(!document.querySelector('link[data-gcm]')){const m=document.createElement('link');m.rel='stylesheet';m.href='gift-campaign-modeller.css?v=20261106-3';m.dataset.gcm='1';document.head.append(m)}
+ if(!document.querySelector('link[data-gcm]')){const m=document.createElement('link');m.rel='stylesheet';m.href='gift-campaign-modeller.css?v=20261122-1';m.dataset.gcm='1';document.head.append(m)}
  const files=['vfx-types.js?v=20260912-2','vfx-ticker.js?v=20260912-2','vfx-performance-monitor.js?v=20260912-1','vfx-quality-manager.js?v=20260912-1','gift-campaign-aura-engine.js?v=20261019-1','gift-campaign-aura.js?v=20261020-15','gift-campaign-aura-session.js?v=20260912-1','gift-campaign-video.js?v=20261106-1','gift-campaign-modeller.js?v=20261106-2'];
  const next=i=>{if(i>=files.length){if(typeof render==='function')render();return}const script=document.createElement('script');script.src=files[i];script.async=false;script.onload=()=>next(i+1);script.onerror=()=>console.error('Kunde inte ladda',files[i]);document.body.append(script)};next(0);
 });
@@ -2037,7 +2037,7 @@ Promise.resolve().then(()=>{if(!document.querySelector('link[data-fl50]')){const
 // inte pa ordningen: overlay-dolda.js fragar DOM:en efter varje render med en MutationObserver.
 // Aktiveringsregeln (overlay-aktivering.js: dold i sandningen tills forsta riktiga handelsen) laddas
 // FORE vakten, sa att vaktens forsta svep redan vet vilka widgetar som vantar.
-Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261108-71';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
+Promise.resolve().then(()=>{let a=document.createElement('script');a.src='overlay-aktivering.js?v=20261122-1';const sen=()=>{let js=document.createElement('script');js.src='overlay-dolda.js?v=20261021-1';document.body.append(js)};a.onload=sen;a.onerror=sen;document.body.append(a)});
 // ▶ Testa widget aven i OBS, bara nar ingen sandning pagar (overlay-testspel.js). Eget meddelandeslag, aldrig en livehandelse.
 Promise.resolve().then(()=>{let js=document.createElement('script');js.src='overlay-testspel.js?v=20261021-5';document.body.append(js)});
 

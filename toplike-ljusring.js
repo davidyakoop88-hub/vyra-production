@@ -209,17 +209,45 @@
   // lokalt (36 laddningar). I stället för att gissa vägen läker filen utfallet: syns en Neonram-widget
   // utan sitt omslag (rot utan .tln) läggs omslaget ytterst igen och studion ritar om. Högst tre gånger
   // per sida, så att en kedja som av annat skäl aldrig ger .tln inte ritar om i en slinga.
-  let lakningar = 0;
+  //
+  // OCH DET RITADE LAGAS PÅ PLATS (2026-11-22). Läkningen ovan räckte inte: på main 2026-11-21 ritades alla
+  // fem nycklarna ändå 145×172, och 177 nycklar i pixelprovets ordning på samma sida gick inte att få att
+  // falla lokalt. Den läkte bara kedjan och litade på att studion ritade om — och bara rötter som bar
+  // .vyra-toplike och saknade .tln. Nu lagas varje ritad Neonram-rot som saknar sitt synliga lager (.tl)
+  // direkt i DOM:en med samma omslut() som kedjan använder, oavsett vilken väg som tappade omslaget och
+  // vilka klasser roten fick. Roten själv (och dess handtag) behålls, så att studions lyssnare på den
+  // finns kvar. Kedjan läks fortfarande, högst tre gånger per sida, så att nästa ritning blir rätt direkt.
+  let lakningar = 0, varnat = false;
+  function lagaRot(el, w) {
+    const ny = omslut(el.outerHTML, w);
+    if (!/\btln\b/.test(ny)) return false;
+    const mall = document.createElement('template');
+    mall.innerHTML = ny;
+    const n = mall.content.firstElementChild;
+    if (!n || !n.querySelector(':scope > .tl')) return false;
+    el.className = n.className;
+    if (n.hasAttribute('style')) el.setAttribute('style', n.getAttribute('style'));
+    el.removeAttribute('data-rk6');
+    const handtag = el.querySelector(':scope > .resize-handle');
+    [...el.childNodes].forEach(c => { if (c !== handtag) c.remove(); });
+    [...n.childNodes].forEach(c => { if (!(c.nodeType === 1 && c.classList.contains('resize-handle'))) el.insertBefore(c, handtag || null); });
+    return true;
+  }
   function laka() {
-    if (lakningar >= 3 || typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
-    const trasig = [...document.querySelectorAll('.widget.vyra-toplike[data-id]:not(.tln)')].some(el => {
-      const w = state.widgets.find(x => x && String(x.id) === el.dataset.id);
-      return w && w.type === 'templateTopLike' && w.skin === SKIN;
+    if (typeof state === 'undefined' || !state || !Array.isArray(state.widgets)) return;
+    // Körs vid varje tillagd nod (även livedatans): utan en enda Neonram-widget i state görs ingenting.
+    const mina = new Map();
+    for (const x of state.widgets) if (x && x.type === 'templateTopLike' && x.skin === SKIN) mina.set(String(x.id), x);
+    if (!mina.size) return;
+    let lagade = 0;
+    document.querySelectorAll('.widget[data-id]').forEach(el => {
+      const w = mina.get(el.dataset.id);
+      if (!w || el.querySelector(':scope > .tl')) return;
+      try { if (lagaRot(el, w)) { lagade++; synka(el, false); } } catch (e) {}
     });
-    if (!trasig) return;
-    lakningar++;
-    console.warn('[VYRA] Neonramar: omslaget saknades i renderkedjan, läggs ytterst igen');
-    install(true, true);
+    if (!lagade) return;
+    if (!varnat) { varnat = true; console.warn('[VYRA] Neonramar: omslaget saknades i renderkedjan, lagas på plats och läggs ytterst igen'); }
+    if (lakningar < 3) { lakningar++; install(true, true); }
   }
   // Livedatan skriver i datalagret i sin egen takt; synken körs en gång per bildruta efter en ändring.
   const vantar = new Set();
