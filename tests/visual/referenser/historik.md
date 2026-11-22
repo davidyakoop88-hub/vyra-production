@@ -708,3 +708,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Nytt battle-paket Golden Holiday (helbild 9:16)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 177 (filter: goldenHoliday) — catalog:glovesnipe:goldenHoliday:pack:2
+
+## 2026-11-22 — 6 referenser skrivna
+
+- **Motiv:** Gift Campaign: gåvoraden syns fullt, stående rader klipps inte, Gåvoflödets kanter tonas mjukt (PR 827)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 6 av 177 (filter: giftcampaign:fokus,giftcampaign:classic,giftcampaign:flode) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait

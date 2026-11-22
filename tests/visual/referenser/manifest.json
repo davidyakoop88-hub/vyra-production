@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 257,
  "senaste": {
-  "motiv": "Nytt battle-paket Golden Holiday (helbild 9:16)",
-  "nycklar": 1,
-  "filter": "goldenHoliday",
-  "tid": "2026-11-15T19:18:05.969Z"
+  "motiv": "Gift Campaign: gåvoraden syns fullt, stående rader klipps inte, Gåvoflödets kanter tonas mjukt (PR 827)",
+  "nycklar": 6,
+  "filter": "giftcampaign:fokus,giftcampaign:classic,giftcampaign:flode",
+  "tid": "2026-11-22T15:58:46.803Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {
