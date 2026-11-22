@@ -32,6 +32,31 @@ test('den aktiva gåvan märks på storlek, inte på att de andra tonas', () => 
   assert.match(aktiv.kropp, /transform\s*:\s*scale\(/, 'den aktiva gåvan förstoras inte');
 });
 
+// STÅENDE FOKUS OCH CLASSIC: raden har 86 px. Textblocket var 78–95 px, målraden bröts på två rader och masken
+// tonade bort namnet överst. Uppmätt i Chromium efter rättningen: 62–65 px av 74 px, målraden på en rad.
+const regel = val => (regler.find(r => r.val === val) || {}).kropp || '';
+const px = (kropp, prop) => { const m = kropp.match(new RegExp('(?:^|;)\\s*' + prop + '\\s*:\\s*([\\d.]+)px')); return m ? Number(m[1]) : NaN; };
+
+test('stående: målraden och namnet bryts aldrig på två rader', () => {
+  assert.match(regel('.vyra-gcm .gcm-rad .gcm-mal'), /white-space\s*:\s*nowrap/, '"av 250 · 170 kvar" kan brytas och spränga raden');
+  assert.match(regel('.vyra-gcm .gcm-rad .gcm-namn'), /white-space\s*:\s*nowrap/, 'ett långt gåvonamn kan brytas och spränga raden');
+});
+
+test('stående: textblocket ryms i radens 86 px', () => {
+  const namn = regel('.vyra-gcm .gcm-rad .gcm-namn'), num = regel('.vyra-gcm .gcm-rad .gcm-num'), mal = regel('.vyra-gcm .gcm-rad .gcm-mal');
+  const lh = k => Number((k.match(/line-height\s*:\s*([\d.]+)/) || [])[1]);
+  const hojd = px(namn, 'font-size') * lh(namn) + px(namn, 'margin-bottom') + px(num, 'font-size') * lh(num) +
+    px(mal, 'margin-top') + px(mal, 'font-size') * lh(mal) + px(regel('.vyra-gcm .gcm-rad .gcm-bar'), 'margin-top') + 2;
+  assert.ok(Number.isFinite(hojd), 'kunde inte läsa radens mått');
+  assert.ok(hojd <= 86 - 12, `textblocket blir ${hojd.toFixed(1)} px — raden har 74 px innanför sin utfyllnad`);
+});
+
+test('stående: masken tonar bara kanten, inte grannradernas text', () => {
+  const m = regel('.vyra-gcm .gcm-lista').match(/mask-image\s*:\s*linear-gradient\(transparent,#000 ([\d.]+)%/);
+  assert.ok(m, 'listans mask saknas');
+  assert.ok(Number(m[1]) <= 3, `masken tonar ${m[1]} % — namnet på raden överst försvinner`);
+});
+
 test('media.js laddar den nya stilen', () => {
   const media = fs.readFileSync(path.join(ROOT, 'media.js'), 'utf8');
   assert.match(media, /gift-campaign-modeller\.css\?v=20261122-1/, 'stilfilens version är inte höjd — webbläsare behåller den gamla raden');
