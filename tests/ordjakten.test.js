@@ -181,3 +181,27 @@ test('rotation: varv 1 i listans ordning, senare varv blandade men lika i alla k
     assert.notEqual(Array.from({ length: n }, (_, i) => ord(a, n + i)).join(), Array.from({ length: n }, (_, i) => ord(a, 2 * n + i)).join(), 'varv 2 och 3 ska skilja sig');
   } finally { a.window.close(); b.window.close(); }
 });
+
+test('lösta ord kommer inte igen: nästa ord är alltid olöst, och först när alla är lösta börjar listan om', () => {
+  const a = sida(), b = sida();
+  try {
+    const w = ny({ ojOrd: 'KATT; Ett husdjur\nHUND; Skäller\nHÄST; Rids', ojBaraEgna: true });
+    a.window.state.widgets.push(w); b.window.state.widgets.push(w);
+    const O = a.window.VyraOrdjakten, P = b.window.VyraOrdjakten, sett = [];
+    const losOchNasta = (D) => { const r = D.runda(w, D.lage(w).nr); D.hantera(w, chatt(r.ord)); D.nasta(w); return r.ord; };
+    // Varv 1: lös alla tre. Varje löst ord ska försvinna ur rotationen.
+    for (let i = 0; i < 3; i++) { sett.push(losOchNasta(O)); losOchNasta(P); }
+    assert.deepEqual([...sett].sort(), ['HUND', 'HÄST', 'KATT'], 'alla tre ord ska komma en gång');
+    assert.equal(O.lage(w).losta.length, 0, 'när alla är lösta börjar listan om');
+    assert.equal(O.lage(w).nr, P.lage(w).nr, 'två OBS-källor ska stå på samma runda');
+    // Lös ett ord och visa ett annat med !lösning: det lösta kommer inte igen, det visade får komma igen.
+    const forsta = losOchNasta(O);
+    const kvar = new Set();
+    for (let i = 0; i < 12; i++) { const r = O.runda(w, O.lage(w).nr); kvar.add(r.ord); O.losning(w); O.nasta(w); }
+    assert.ok(!kvar.has(forsta), 'ett löst ord ska aldrig komma igen förrän alla är lösta');
+    assert.equal(kvar.size, 2, 'de två olösta orden ska fortsätta komma');
+    // Lösta ord överlever en omladdning.
+    const c = sida({ ['vyra-ordjakten-' + w.id]: a.window.localStorage.getItem('vyra-ordjakten-' + w.id) });
+    try { c.window.state.widgets.push(w); assert.deepEqual([...c.window.VyraOrdjakten.lage(w).losta], [forsta]); } finally { c.window.close(); }
+  } finally { a.window.close(); b.window.close(); }
+});
