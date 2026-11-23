@@ -413,7 +413,8 @@
         "tests/energimatare.test.js",
         "tests/ordjakten.test.js",
         "tests/quiz.test.js",
-        "tests/spelinnehall.test.js"
+        "tests/spelinnehall.test.js",
+        "tests/spelinnehall-forslag.test.js"
       ],
       "matning": [
         {
