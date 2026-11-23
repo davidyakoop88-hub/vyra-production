@@ -96,6 +96,18 @@ async function createMainWindow() {
   const isSpotifyAuthUrl=url=>{
     try{return new URL(url).origin==='https://accounts.spotify.com'}catch{return false}
   };
+  // SPOTIFY-FONSTRET MASTE FA GA VIDARE TILL INLOGGNINGSTJANSTERNA (David 2026-11-23: "klickar pa
+  // nasta sa gar ingen stans"). "Fortsatt med Google" skickar fonstret till accounts.google.com via en
+  // omdirigering, som will-navigate inte provar. Men Googles Nasta ar en vanlig navigering inom
+  // accounts.google.com, och den stoppades tyst eftersom bara Spotify och appen var tillatna. Samma sak
+  // for Facebook och Apple, och for Spotifys egen robotkontroll (challenge.spotify.com).
+  const SPOTIFY_LOGIN_ORIGINS=['https://accounts.spotify.com','https://challenge.spotify.com','https://www.spotify.com',
+    'https://accounts.google.com','https://accounts.youtube.com','https://consent.google.com',
+    'https://www.facebook.com','https://m.facebook.com','https://web.facebook.com',
+    'https://appleid.apple.com','https://idmsa.apple.com'];
+  const isSpotifyLoginUrl=url=>{
+    try{return SPOTIFY_LOGIN_ORIGINS.includes(new URL(url).origin)}catch{return false}
+  };
   main.loadURL(`${CLOUD_ORIGIN}/studio.html?desktop-auth=1`)
     .catch(err => log('forsta laddningen mot molnet foll:', err.message));
   main.webContents.setWindowOpenHandler(({url})=>{
@@ -104,10 +116,17 @@ async function createMainWindow() {
     if(/^https:\/\//i.test(url))shell.openExternal(url);
     return{action:'deny'};
   });
-  main.webContents.on('did-create-window',(child)=>{
+  main.webContents.on('did-create-window',(child,details)=>{
     child.setMenu(null);
+    // Google vagrar logga in i fonster som presenterar sig som Electron ("webblasaren kanske inte ar
+    // saker"). Spotify-fonstret visar darfor samma Chrome-identitet som Electron bygger pa, utan
+    // Electron- och appnamnet. Bara inloggningsfonstret, inte appen sjalv.
+    if(isSpotifyAuthUrl(details&&details.url)){
+      const ua=child.webContents.getUserAgent().replace(/\s(Electron|vyra[\w-]*)\/\S+/gi,'');
+      child.webContents.setUserAgent(ua);
+    }
     child.webContents.on('will-navigate',(event,url)=>{
-      if(!isSpotifyAuthUrl(url)&&!isTrustedAppUrl(url))event.preventDefault();
+      if(!isSpotifyLoginUrl(url)&&!isTrustedAppUrl(url))event.preventDefault();
     });
     child.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   });

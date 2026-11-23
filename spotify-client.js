@@ -105,9 +105,18 @@
       return api(path, options, false);
     }
     if (response.status === 204) return null;
-    const payload = await response.json().catch(() => ({}));
+    // Spotify svarar inte alltid med JSON (David 2026-11-23: "Inte ansluten — Spotify kunde inte utföra
+    // åtgärden"). 403 för ett konto som inte lagts till i utvecklarappen kommer som REN TEXT ("Check
+    // settings on developer.spotify.com/dashboard, the user may not be registered."). response.json()
+    // föll då, orsaken slängdes och lasbarOrsak() fick bara reservtexten att läsa. Nu läses kroppen som
+    // text och tolkas som JSON när den är det; annars är texten själv orsaken.
+    const text = typeof response.text === 'function'
+      ? await response.text().catch(() => '')
+      : JSON.stringify(await response.json().catch(() => ({})));
+    let payload = {};
+    try { payload = text ? JSON.parse(text) : {}; } catch { payload = { error: { message: text.trim().slice(0, 300) } }; }
     if (!response.ok) {
-      const message = payload?.error?.message || 'Spotify kunde inte utföra åtgärden';
+      const message = String(payload?.error?.message || payload?.error_description || '').replace(/\.\s*$/, '') || 'Spotify kunde inte utföra åtgärden';
       throw new Error(response.status === 403
         ? `${message}. Uppspelning kräver Spotify Premium.`
         : message);
