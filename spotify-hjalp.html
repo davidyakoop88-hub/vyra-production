@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Steg för steg med bilder: så ansluter du ditt Spotify-konto till VYRA med en egen gratis Spotify-app. Tar ett par minuter och görs en gång.">
+<title>Anslut Spotify till VYRA · steg för steg</title>
+<link rel="stylesheet" href="legal.css">
+<!-- spotify-hjalp.html (2026-11-24): hjälpsidan med bilder till guiden i Spotify-kortet (spotify-eget-id.js länkar hit).
+     Bilderna ligger i assets/hjalp-spotify/ och är tagna på Spotifys utvecklarsida med exempelvärden — inget riktigt
+     konto, ingen riktig e-post och inget riktigt Client ID syns. Byter Spotify utseende: ta om bilderna. -->
+<style>
+.steg{counter-reset:steg;list-style:none;padding:0;margin:40px 0 0}
+.steg>li{counter-increment:steg;position:relative;margin:0 0 56px;padding-left:58px}
+.steg>li::before{content:counter(steg);position:absolute;left:0;top:2px;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#8d38ee,#d83be0);color:#fff;font-weight:900}
+.steg h2{margin:0 0 8px;color:#f7f2fa;font-size:24px}
+.steg figure{margin:18px 0 0}
+.steg img,.steg video{display:block;width:100%;height:auto;border:1px solid #34203d;border-radius:14px;background:#fff}
+.steg figcaption{margin-top:8px;font-size:14px;color:#927f9c}
+.adress{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0}
+.adress code{padding:6px 10px;border-radius:8px;background:#170b20;border:1px solid #34203d;color:#1ed760;font-size:14px;word-break:break-all}
+.adress button{padding:6px 12px;border:1px solid #61367a;border-radius:8px;background:#261034;color:#fff;font:inherit;font-size:14px;cursor:pointer}
+.fel dt{margin-top:16px;font-weight:700;color:#f7f2fa}
+.fel dd{margin:4px 0 0;color:#cfc3d5;max-width:68ch}
+.video{margin:36px 0 0}
+.video video{max-width:360px;margin:0 auto;background:#000}
+.steg>li{scroll-margin-top:90px}
+@media (max-width:560px){.steg>li{padding-left:0;padding-top:52px}.steg h2{font-size:21px}}
+</style>
+</head>
+<body>
+<header><a class="brand" href="index.html"><i>V</i>VYRA</a><a href="studio.html">Öppna VYRA</a></header>
+<main>
+<h1>Anslut Spotify till VYRA</h1>
+<p class="lead">Med en egen gratis Spotify-app ansluter du ditt konto direkt. Det tar ett par minuter och görs en gång. Sedan styr tittarna musiken med !play, !skip och !song i din LIVE.</p>
+<div class="notice"><b>Du behöver:</b> ett Spotify-konto med <b>Premium</b>. Spotify kräver Premium för att en app ska få spela och köa låtar.</div>
+<p>Varför ett eget steg? Spotify släpper bara in ett fåtal konton genom VYRA:s gemensamma app. Din egen app har bara ett konto – ditt – och då gäller inget tak.</p>
+
+<section class="video" id="video">
+<video controls playsinline preload="metadata" poster="assets/hjalp-spotify/video-omslag.webp"><source src="assets/hjalp-spotify/spotify-guide.mp4" type="video/mp4"></video>
+</section>
+
+<ol class="steg">
+<li>
+<h2>Skapa appen</h2>
+<p>Öppna <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">developer.spotify.com/dashboard</a> och logga in med ditt vanliga Spotify-konto. Tryck på den lila knappen <b>Create app</b> uppe till höger.</p>
+<figure><img src="assets/hjalp-spotify/1-create-app.webp" width="1220" height="300" alt="Spotifys Dashboard med knappen Create app markerad uppe till höger" loading="lazy"><figcaption>Tryck på Create app – inte på Spotify Soloist API Key.</figcaption></figure>
+</li>
+<li>
+<h2>Fyll i namn och beskrivning</h2>
+<p>Namn och beskrivning väljer du själv, till exempel <b>Min VYRA</b> och <b>Spotify i min LIVE</b>. Fältet Website kan vara tomt.</p>
+<figure><img src="assets/hjalp-spotify/2a-create-app.webp" width="1456" height="823" alt="Formuläret Create app med App name Min VYRA, App description Spotify i min LIVE och två adresser under Redirect URIs" loading="lazy"></figure>
+</li>
+<li>
+<h2>Lägg till adresserna</h2>
+<p>Klistra in adresserna en i taget under <b>Redirect URIs</b> och tryck <b>Add</b> efter varje. Kopiera dem härifrån – en enda felstavad bokstav gör att Spotify säger nej.</p>
+<div class="adress"><code>https://vyralive.app/spotify-callback.html</code><button type="button" data-kopiera="https://vyralive.app/spotify-callback.html">Kopiera</button></div>
+<div class="adress"><code>http://127.0.0.1:4173/spotify-callback.html</code><button type="button" data-kopiera="http://127.0.0.1:4173/spotify-callback.html">Kopiera</button></div>
+<p>Kryssa sedan i <b>Web API</b>, kryssa i rutan där du godkänner Spotifys villkor och tryck <b>Save</b>.</p>
+<figure><img src="assets/hjalp-spotify/2b-redirect-webapi.webp" width="1482" height="655" alt="Redirect URIs med båda adresserna tillagda, Web API ikryssat, rutan för villkoren och knappen Save markerade" loading="lazy"></figure>
+</li>
+<li>
+<h2>Släpp in ditt konto</h2>
+<p>Öppna fliken <b>User Management</b> i din nya app. Skriv ditt namn och <b>e-postadressen till ditt Spotify-konto</b> och tryck <b>Add user</b>.</p>
+<figure><img src="assets/hjalp-spotify/3-user-management.webp" width="1482" height="710" alt="Fliken User Management med fälten Full Name och Email och knappen Add user markerade" loading="lazy"><figcaption>Använd samma e-postadress som du loggar in på Spotify med.</figcaption></figure>
+</li>
+<li>
+<h2>Kopiera Client ID</h2>
+<p>Gå tillbaka till fliken <b>Basic Information</b>. Överst står <b>Client ID</b>, en rad med 32 tecken. Tryck på kopieringsikonen till höger om den.</p>
+<figure><img src="assets/hjalp-spotify/4-client-id.webp" width="1482" height="465" alt="Fliken Basic Information med rutan Client ID och kopieringsikonen markerade" loading="lazy"><figcaption>Client ID är inte hemligt. Client secret behöver du inte.</figcaption></figure>
+</li>
+<li>
+<h2>Klistra in i VYRA</h2>
+<p>Öppna <a href="studio.html">VYRA</a> och sidan <b>Spotify</b>. Öppna raden <b>Kan du inte ansluta? Använd din egen Spotify-app</b>, klistra in ditt Client ID och tryck <b>Spara och anslut</b>. Spotify frågar om lov – tryck <b>Godkänn</b>.</p>
+<figure><img src="assets/hjalp-spotify/5-vyra.webp" width="1175" height="551" alt="Spotify-kortet i VYRA med guiden öppen och Client ID inklistrat i rutan bredvid knappen Spara och anslut" loading="lazy"></figure>
+<p>Klart. Kortet visar nu <b>Ansluter via din egen Spotify-app</b>.</p>
+</li>
+</ol>
+
+<h2>Om något går fel</h2>
+<dl class="fel">
+<dt>”INVALID_CLIENT: Invalid redirect URI”</dt>
+<dd>En adress i steg 3 saknas eller är felstavad. Ta bort den, kopiera den igen härifrån och tryck Add.</dd>
+<dt>”Spotify-kontot är inte tillagt i din egen Spotify-app”</dt>
+<dd>Steg 4 är inte gjort, eller så står en annan e-postadress än den till ditt Spotify-konto.</dd>
+<dt>Anslutet, men inget spelas</dt>
+<dd>Kontot har inte Premium, eller så är Spotify inte öppet på någon enhet. Starta en låt i Spotify en gång, så hittar VYRA spelaren.</dd>
+<dt>”Client ID är 32 tecken”</dt>
+<dd>Något extra följde med när du kopierade. Kopiera med ikonen i steg 5 i stället för att markera texten.</dd>
+</dl>
+<p>Fastnar du ändå? Skriv till oss under Support i VYRA.</p>
+</main>
+<footer>© 2026 VYRA · <a href="terms.html">Villkor</a> · <a href="privacy.html">Integritet</a></footer>
+<script>
+document.querySelectorAll('[data-kopiera]').forEach(function (b) {
+  b.onclick = function () {
+    var t = b.getAttribute('data-kopiera');
+    var klart = function () { b.textContent = 'Kopierad'; setTimeout(function () { b.textContent = 'Kopiera'; }, 1600); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(klart, function () {}); else klart();
+  };
+});
+</script>
+</body>
+</html>

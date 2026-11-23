@@ -764,7 +764,8 @@
     'Släpp in ditt konto': 'Let your account in',
     'Öppna fliken ”User Management” i appen och lägg till ditt namn och e-postadressen till ditt Spotify-konto.': 'Open the “User Management” tab in the app and add your name and the email address of your Spotify account.',
     'Klistra in Client ID': 'Paste the Client ID',
-    'Öppna ”Settings” i appen, kopiera ”Client ID” och klistra in det här.': 'Open “Settings” in the app, copy the “Client ID” and paste it here.',
+    'Öppna appen. ”Client ID” står överst under ”Basic Information”. Kopiera det och klistra in det här.': 'Open the app. The “Client ID” is at the top under “Basic Information”. Copy it and paste it here.',
+    'Visa steg för steg med bilder': 'Show step by step with pictures',
     'Client ID, 32 tecken': 'Client ID, 32 characters',
     'Client ID från din Spotify-app': 'Client ID from your Spotify app',
     'Spara och anslut': 'Save and connect',
@@ -772,7 +773,7 @@
     'Kopierad': 'Copied',
     'Spotify Premium krävs för att VYRA ska kunna spela och köa låtar.': 'Spotify Premium is required for VYRA to play and queue songs.',
     'Klistra in Client ID från din Spotify-app först.': 'Paste the Client ID from your Spotify app first.',
-    'Client ID är 32 tecken, bara siffror och a–f. Kopiera det från appens Settings på developer.spotify.com.': "The Client ID is 32 characters, only digits and a–f. Copy it from the app's Settings on developer.spotify.com.",
+    'Client ID är 32 tecken, bara siffror och a–f. Det står överst i din app på developer.spotify.com, under ”Basic Information”.': 'The Client ID is 32 characters, only digits and a–f. It is at the top of your app on developer.spotify.com, under “Basic Information”.',
     'VYRA:s Spotify-app används igen': "VYRA's Spotify app is used again",
     // Designgranskning 2026-11-12: blandad svenska/engelska rättad i studions egna texter.
     'sparat · väntar på anslutning': 'saved · waiting for connection',

@@ -293,7 +293,7 @@
   // så den kopplas från. Tom sträng går tillbaka till VYRA:s app.
   function setClientId(value) {
     const id = String(value || '').trim().toLowerCase();
-    if (id && !CLIENT_ID_RE.test(id)) throw new Error('Client ID är 32 tecken, bara siffror och a–f. Kopiera det från appens Settings på developer.spotify.com.');
+    if (id && !CLIENT_ID_RE.test(id)) throw new Error('Client ID är 32 tecken, bara siffror och a–f. Det står överst i din app på developer.spotify.com, under ”Basic Information”.');
     const fore = egetClientId();
     if (!id || id === CLIENT_ID) localStorage.removeItem(CLIENT_ID_KEY);
     else localStorage.setItem(CLIENT_ID_KEY, id);

@@ -84,7 +84,7 @@ test('byte av app kopplar från den gamla kopplingen; samma app gör det inte', 
 test('ett felaktigt Client ID avvisas med en mening som säger var det finns', () => {
   const { s } = rigg();
   for (const fel of ['abc', EGET + '0', 'zz' + EGET.slice(2), 'https://developer.spotify.com']) {
-    assert.throws(() => s.setClientId(fel), /32 tecken[\s\S]*Settings/);
+    assert.throws(() => s.setClientId(fel), /32 tecken[\s\S]*Basic Information/);
   }
   assert.equal(s.egetClientId(), '');
 });

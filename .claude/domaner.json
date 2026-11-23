@@ -973,6 +973,7 @@
         "streamdeck-plugin/*",
         "streamdeck-plugin/se.vyra.live.sdPlugin/*",
         "spotify-callback.html",
+        "spotify-hjalp.html",
         "obs-client.js",
         "chatbot-controls.js",
         "chatbot-overlay.js",

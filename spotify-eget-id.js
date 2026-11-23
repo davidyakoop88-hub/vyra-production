@@ -36,6 +36,7 @@
       '<summary><span class="spe-rubrik">' + rubrik + '</span><i aria-hidden="true">⌄</i></summary>' +
       '<div class="spe-kropp">' +
         '<p class="spe-ingress">Spotify släpper bara in ett fåtal konton genom VYRA:s app. Med en egen gratis app ansluter du ditt konto direkt. Det tar ett par minuter och görs en gång.</p>' +
+        '<a class="spe-lank spe-bilder" href="spotify-hjalp.html" target="_blank" rel="noopener">Visa steg för steg med bilder</a>' +
         '<ol class="spe-steg">' +
           '<li><b>Skapa appen</b><span>Logga in på Spotifys utvecklarsida med ditt Spotify-konto och tryck ”Create app”. Namn och beskrivning väljer du själv.</span>' +
             '<a class="spe-lank" href="' + DASHBOARD + '" target="_blank" rel="noopener">developer.spotify.com/dashboard</a></li>' +
@@ -43,7 +44,7 @@
             REDIRECTS.map(function (u) { return '<span class="spe-adress"><code>' + esc(u) + '</code><button type="button" data-spe-kopiera="' + esc(u) + '">Kopiera</button></span>'; }).join('') +
           '</li>' +
           '<li><b>Släpp in ditt konto</b><span>Öppna fliken ”User Management” i appen och lägg till ditt namn och e-postadressen till ditt Spotify-konto.</span></li>' +
-          '<li><b>Klistra in Client ID</b><span>Öppna ”Settings” i appen, kopiera ”Client ID” och klistra in det här.</span></li>' +
+          '<li><b>Klistra in Client ID</b><span>Öppna appen. ”Client ID” står överst under ”Basic Information”. Kopiera det och klistra in det här.</span></li>' +
         '</ol>' +
         '<div class="spe-rad">' +
           '<input type="text" inputmode="text" autocomplete="off" spellcheck="false" maxlength="64" placeholder="Client ID, 32 tecken" aria-label="Client ID från din Spotify-app" value="' + esc(eget) + '" data-spe-id>' +
