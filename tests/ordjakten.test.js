@@ -158,6 +158,7 @@ test('inbyggda ord: bara bokstäver, inga dubbletter, ledtråd finns, och de sv�
       assert.ok(!ledtrad.toUpperCase().includes(ord), 'ledtråden avslöjar ordet: ' + ord);
     }
     assert.equal(O.ORD[0][0], 'BANAN', 'de första orden är oförändrade');
-    assert.ok(O.ORD.length >= 55 && O.ORD.slice(-1)[0][0] === 'FJÄRRKONTROLL');
+    assert.ok(O.ORD.length >= 85, 'de svåra orden finns kvar');
+    assert.ok(O.ORD.findIndex(o => o[0] === 'FJÄRRKONTROLL') >= 32, 'svåra ord ligger efter de första 32');
   } finally { dom.window.close(); }
 });

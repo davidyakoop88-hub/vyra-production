@@ -36,7 +36,16 @@
     ['KAMELEONT', 'Reptil som byter färg'], ['TRAMPOLIN', 'Man studsar högt på den'], ['SCHACKMATT', 'Slutet för kungen'], ['KANELBULLE', 'Snurrad fika på kafferasten'],
     ['KRÄFTSKIVA', 'Fest i augusti med partyhattar'], ['TANGENTBORD', 'Knappar för varje bokstav'], ['CHOKLADBOLL', 'Rullad fika utan ugn'], ['ELEKTRICITET', 'Går genom sladdarna'],
     ['SMÖRGÅSTÅRTA', 'Salt tårta på festen'], ['HOCKEYKLUBBA', 'Redskap på isen'], ['SPARKSTÖTTING', 'Vinterfordon med medar'], ['VULKANUTBROTT', 'Glödande lava sprutar upp'],
-    ['FJÄRRKONTROLL', 'Byter kanal på avstånd']
+    ['FJÄRRKONTROLL', 'Byter kanal på avstånd'],
+    // Fler svåra ord (2026-11-23).
+    ['ÄVENTYRARE', 'Söker det okända'], ['VATTENFALL', 'Forsar rakt ner'], ['SOLNEDGÅNG', 'Himlen färgas röd på kvällen'], ['REGNBÅGE', 'Syns efter skurar'],
+    ['SKRIVBORD', 'Plats för läxor och dator'], ['KYLSKÅP', 'Håller maten kall'], ['DAMMSUGARE', 'Plockar upp smuts från golvet'], ['BRANDMAN', 'Släcker eldar'],
+    ['ASTRONOMI', 'Läran om stjärnorna'], ['PARAPLY', 'Skydd när det öser ner'], ['VÄDERLEK', 'Sol, moln eller snö'], ['TRÄDGÅRD', 'Där blommor och grönsaker odlas'],
+    ['HAVSÖRN', 'Stor rovfågel vid kusten'], ['PINGVIN', 'Fågel som inte flyger och trivs i kyla'], ['ELEFANT', 'Har snabel och betar'], ['GIRAFF', 'Djur med mycket lång hals'],
+    ['SKORPION', 'Spindeldjur med gadd i svansen'], ['KNÄCKEBRÖD', 'Hårt och torrt bröd'], ['LAKRITS', 'Svart godis'], ['FLYGPLATS', 'Där planen lyfter'],
+    ['HELIKOPTER', 'Flyger med rotorblad'], ['SKRIDSKOR', 'Man glider på isen med dem'], ['SNÖSKOTER', 'Fordon med medar och motor'], ['TIDSMASKIN', 'Reser i tiden i sagor'],
+    ['DINOSAURIE', 'Utdöd jätte från urtiden'], ['ORIENTERING', 'Karta och kompass i skogen'], ['FÖDELSEDAG', 'Dagen man fyller år'], ['KÄRNKRAFT', 'Energi ur atomer'],
+    ['VINDKRAFT', 'Energi från snurrande kvarnar'], ['BIBLIOTEKARIE', 'Jobbar bland böcker och lånekort'], ['ÖVERRASKNING', 'Något oväntat'], ['FJÄLLVANDRING', 'Tur på stigar i höga berg']
   ];
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
