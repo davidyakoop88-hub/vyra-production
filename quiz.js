@@ -34,7 +34,50 @@
     gaming: { namn: 'Gaming', fragor: [
       ['v1', 'Vad heter Marios bror?', ['Wario', 'Toad', 'Luigi'], 2, 'https://mario.nintendo.com/ca/characters/'],
       ['v2', 'Vilken typ har Pikachu i Pokémon-spelen?', ['Eld', 'Elektrisk', 'Vatten'], 1, 'https://www.pokemon.com/uk/pokedex/pikachu'],
-      ['v3', 'Vilken Minecraft-varelse är känd för att explodera?', ['Creeper', 'Ko', 'Bybo'], 0, 'https://www.minecraft.net/en-us/article/meet-creeper']] }
+      ['v3', 'Vilken Minecraft-varelse är känd för att explodera?', ['Creeper', 'Ko', 'Bybo'], 0, 'https://www.minecraft.net/en-us/article/meet-creeper']] },
+    // Svåra paket (2026-11-23): tolv till femton frågor vardera, för tittare som redan klarar startpaketen.
+    allmansvar: { namn: 'Allmänbildning · svår', fragor: [
+      ['ha1', 'Vilken svensk fick Nobelpriset i litteratur 1909, som första svensk?', ['Verner von Heidenstam', 'Selma Lagerlöf', 'Pär Lagerkvist'], 1, 'https://sv.wikipedia.org/wiki/Selma_Lagerl%C3%B6f'],
+      ['ha2', 'Vilket år sjönk regalskeppet Vasa på sin jungfruresa?', ['1618', '1628', '1648'], 1, 'https://sv.wikipedia.org/wiki/Vasa_(skepp)'],
+      ['ha3', 'Vilken gas utgör störst del av jordens atmosfär?', ['Syre', 'Koldioxid', 'Kväve'], 2, 'https://en.wikipedia.org/wiki/Atmosphere_of_Earth'],
+      ['ha4', 'Vilken sjö är den djupaste i världen?', ['Bajkalsjön', 'Tanganyikasjön', 'Vänern'], 0, 'https://en.wikipedia.org/wiki/Lake_Baikal'],
+      ['ha5', 'Vilken stad är Australiens huvudstad?', ['Sydney', 'Melbourne', 'Canberra'], 2, 'https://en.wikipedia.org/wiki/Canberra'],
+      ['ha6', 'Vilket grundämne har atomnummer 79?', ['Silver', 'Guld', 'Platina'], 1, 'https://en.wikipedia.org/wiki/Gold'],
+      ['ha7', 'Vilket år publicerade Einstein sin allmänna relativitetsteori?', ['1905', '1915', '1925'], 1, 'https://en.wikipedia.org/wiki/General_relativity'],
+      ['ha8', 'Vilket fördrag avslutade trettioåriga kriget 1648?', ['Westfaliska freden', 'Versaillesfreden', 'Wienkongressen'], 0, 'https://sv.wikipedia.org/wiki/Westfaliska_freden'],
+      ['ha9', 'Vilket organ tillverkar insulin?', ['Levern', 'Njurarna', 'Bukspottkörteln'], 2, 'https://en.wikipedia.org/wiki/Insulin'],
+      ['ha10', 'Hur många kromosomer har en människas vanliga kroppscell?', ['23', '46', '48'], 1, 'https://en.wikipedia.org/wiki/Chromosome'],
+      ['ha11', 'Vilket är Afrikas högsta berg?', ['Mount Kenya', 'Kilimanjaro', 'Ruwenzori'], 1, 'https://en.wikipedia.org/wiki/Mount_Kilimanjaro'],
+      ['ha12', 'Vilken blodgrupp används som universalgivare av röda blodkroppar?', ['AB positiv', 'A positiv', '0 negativ'], 2, 'https://en.wikipedia.org/wiki/Blood_type'],
+      ['ha13', 'Vilket kemiskt tecken har wolfram?', ['W', 'Wo', 'Tu'], 0, 'https://en.wikipedia.org/wiki/Tungsten'],
+      ['ha14', 'Vilken är jordens längsta bergskedja ovan havsytan?', ['Himalaya', 'Anderna', 'Klippiga bergen'], 1, 'https://en.wikipedia.org/wiki/Andes'],
+      ['ha15', 'Vilken stad var Rysslands huvudstad strax före revolutionen 1917?', ['Kiev', 'Novgorod', 'Sankt Petersburg'], 2, 'https://en.wikipedia.org/wiki/Saint_Petersburg']] },
+    sportsvar: { namn: 'Sport · svår', fragor: [
+      ['hs1', 'Vilket land har vunnit flest herr-VM i fotboll?', ['Tyskland', 'Brasilien', 'Italien'], 1, 'https://en.wikipedia.org/wiki/FIFA_World_Cup'],
+      ['hs2', 'Hur långt är ett maratonlopp?', ['40 km', '42,195 km', '45 km'], 1, 'https://en.wikipedia.org/wiki/Marathon'],
+      ['hs3', 'Vilket år hölls de första moderna olympiska sommarspelen?', ['1888', '1896', '1900'], 1, 'https://en.wikipedia.org/wiki/1896_Summer_Olympics'],
+      ['hs4', 'Hur många Wimbledon-titlar i rad vann Björn Borg 1976–1980?', ['Tre', 'Fem', 'Sju'], 1, 'https://en.wikipedia.org/wiki/Bj%C3%B6rn_Borg'],
+      ['hs5', 'Vilken stad arrangerade sommar-OS 1912?', ['Stockholm', 'Antwerpen', 'Paris'], 0, 'https://sv.wikipedia.org/wiki/Olympiska_sommarspelen_1912'],
+      ['hs6', 'Hur många poäng ger en touchdown i amerikansk fotboll, utan extrapoäng?', ['Fem', 'Sex', 'Sju'], 1, 'https://en.wikipedia.org/wiki/Touchdown'],
+      ['hs7', 'Vilket land vann herrarnas fotbolls-VM 2010?', ['Nederländerna', 'Tyskland', 'Spanien'], 2, 'https://en.wikipedia.org/wiki/2010_FIFA_World_Cup'],
+      ['hs8', 'Vad kallas det i golf när man klarar ett hål på två slag under par?', ['Birdie', 'Eagle', 'Albatross'], 1, 'Golfens poängtermer: birdie är ett slag under par, eagle två och albatross tre.'],
+      ['hs9', 'Hur lång är en olympisk simbassäng?', ['25 meter', '50 meter', '100 meter'], 1, 'https://en.wikipedia.org/wiki/Olympic-size_swimming_pool'],
+      ['hs10', 'På vilken höjd över golvet hänger en basketkorg?', ['2,85 meter', '3,05 meter', '3,25 meter'], 1, 'https://about.fiba.basketball/en/our-sport/official-basketball-rules'],
+      ['hs11', 'Hur bred är ett fotbollsmål mellan stolparna?', ['6,32 meter', '7,32 meter', '8,32 meter'], 1, 'https://www.theifab.com/laws/latest/the-field-of-play/'],
+      ['hs12', 'Hur många set måste en herrspelare vinna för att ta en match i en Grand Slam-turnering?', ['Två', 'Tre', 'Fyra'], 1, 'https://en.wikipedia.org/wiki/Grand_Slam_(tennis)']] },
+    gamingsvar: { namn: 'Gaming · svår', fragor: [
+      ['hv1', 'Vilket år släpptes Minecraft i version 1.0?', ['2009', '2011', '2013'], 1, 'https://en.wikipedia.org/wiki/Minecraft'],
+      ['hv2', 'Vilket företag utvecklade The Witcher 3: Wild Hunt?', ['BioWare', 'Bethesda', 'CD Projekt Red'], 2, 'https://en.wikipedia.org/wiki/The_Witcher_3:_Wild_Hunt'],
+      ['hv3', 'Vad heter kungariket där The Legend of Zelda oftast utspelar sig?', ['Hyrule', 'Termina', 'Lorule'], 0, 'https://en.wikipedia.org/wiki/Hyrule'],
+      ['hv4', 'Vilket år släpptes de första Pokémon-spelen i Japan?', ['1994', '1996', '1998'], 1, 'https://en.wikipedia.org/wiki/Pok%C3%A9mon'],
+      ['hv5', 'Vilken spelmotor är Fortnite byggt i?', ['Unity', 'Source', 'Unreal Engine'], 2, 'https://en.wikipedia.org/wiki/Fortnite'],
+      ['hv6', 'I vilket spel finns undervattensstaden Rapture?', ['BioShock', 'Fallout', 'Dishonored'], 0, 'https://en.wikipedia.org/wiki/BioShock'],
+      ['hv7', 'Vilket svenskt spelbolag köpte Microsoft 2014 för cirka 2,5 miljarder dollar?', ['DICE', 'Mojang', 'King'], 1, 'https://en.wikipedia.org/wiki/Mojang_Studios'],
+      ['hv8', 'Vilken stad utspelar sig Grand Theft Auto V i?', ['Vice City', 'Liberty City', 'Los Santos'], 2, 'https://en.wikipedia.org/wiki/Grand_Theft_Auto_V'],
+      ['hv9', 'Vilket år släpptes den första PlayStation-konsolen i Japan?', ['1992', '1994', '1996'], 1, 'https://en.wikipedia.org/wiki/PlayStation_(console)'],
+      ['hv10', 'I vilket spel dök Mario först upp, då under namnet Jumpman?', ['Super Mario Bros.', 'Donkey Kong', 'Mario Bros.'], 1, 'https://en.wikipedia.org/wiki/Donkey_Kong_(video_game)'],
+      ['hv11', 'Hur många Pokémon fanns i den första generationen?', ['150', '151', '251'], 1, 'https://en.wikipedia.org/wiki/Pok%C3%A9mon'],
+      ['hv12', 'Vad kallas valutan i Animal Crossing?', ['Rupees', 'Bells', 'Caps'], 1, 'https://en.wikipedia.org/wiki/Animal_Crossing']] }
   };
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

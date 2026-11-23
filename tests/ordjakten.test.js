@@ -146,3 +146,18 @@ test('panelen: SÅ FUNKAR DET står överst med fem steg, och reglerna sägs int
     assert.ok(box.querySelector('#ojNoll'), 'steg 5 pekar på Börja om-knappen');
   } finally { dom.window.close(); }
 });
+
+test('inbyggda ord: bara bokstäver, inga dubbletter, ledtråd finns, och de svåra orden ligger sist', () => {
+  const dom = sida(), O = dom.window.VyraOrdjakten;
+  try {
+    const sett = new Set();
+    for (const [ord, ledtrad] of O.ORD) {
+      assert.match(ord, /^[\p{Lu}]{4,14}$/u, 'ogiltigt ord: ' + ord);
+      assert.ok(!sett.has(ord), 'dubblett: ' + ord); sett.add(ord);
+      assert.ok(ledtrad && ledtrad.length <= 60, 'ledtråd saknas/för lång: ' + ord);
+      assert.ok(!ledtrad.toUpperCase().includes(ord), 'ledtråden avslöjar ordet: ' + ord);
+    }
+    assert.equal(O.ORD[0][0], 'BANAN', 'de första orden är oförändrade');
+    assert.ok(O.ORD.length >= 55 && O.ORD.slice(-1)[0][0] === 'FJÄRRKONTROLL');
+  } finally { dom.window.close(); }
+});

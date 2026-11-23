@@ -27,7 +27,16 @@
     ['KANIN', 'Ett djur med långa öron'], ['JORDGUBBE', 'Ett rött bär'], ['TÅRTA', 'Äts på födelsedagar'], ['FJÄRIL', 'En insekt med färgglada vingar'],
     ['SKOLA', 'Där barn lär sig'], ['GLASS', 'Kall och söt'], ['MÅNE', 'Lyser på natten'], ['STJÄRNA', 'Blinkar på himlen'],
     ['PENNA', 'Man skriver med den'], ['SPEGEL', 'Man ser sig själv i den'], ['TRÄD', 'Har stam och blad'], ['BLOMMA', 'Växer i trädgården'],
-    ['DATOR', 'Man spelar och arbetar på den'], ['MUSIK', 'Något man lyssnar på'], ['KUDDE', 'Man sover på den'], ['TOFFEL', 'Varm sko inomhus']
+    ['DATOR', 'Man spelar och arbetar på den'], ['MUSIK', 'Något man lyssnar på'], ['KUDDE', 'Man sover på den'], ['TOFFEL', 'Varm sko inomhus'],
+    // Svåra ord (2026-11-23): 7–14 bokstäver. Ligger sist, så de lättare orden kommer först.
+    ['KOMPASS', 'Pekar mot norr'], ['SYMFONI', 'Långt stycke för orkester'], ['KÄNGURU', 'Hoppar runt i Australien'], ['KROKODIL', 'Reptil med kraftig käft'],
+    ['SKÄRGÅRD', 'Tusentals öar vid kusten'], ['LABYRINT', 'Man går vilse i den'], ['ÅSKVÄDER', 'Blixt och dunder'], ['SNÖSTORM', 'Vitt kaos utomhus'],
+    ['NORRSKEN', 'Gröna ljus på natthimlen'], ['ARKEOLOG', 'Gräver fram det förflutna'], ['ORKESTER', 'Många musiker som spelar tillsammans'], ['HÄNGMATTA', 'Gungar mellan två träd'],
+    ['MIKROSKOP', 'Gör det lilla stort'], ['ASTRONAUT', 'Reser utanför atmosfären'], ['FJÄLLRÄV', 'Vit päls i Arktis'], ['LOKOMOTIV', 'Drar tågvagnarna'],
+    ['KAMELEONT', 'Reptil som byter färg'], ['TRAMPOLIN', 'Man studsar högt på den'], ['SCHACKMATT', 'Slutet för kungen'], ['KANELBULLE', 'Snurrad fika på kafferasten'],
+    ['KRÄFTSKIVA', 'Fest i augusti med partyhattar'], ['TANGENTBORD', 'Knappar för varje bokstav'], ['CHOKLADBOLL', 'Rullad fika utan ugn'], ['ELEKTRICITET', 'Går genom sladdarna'],
+    ['SMÖRGÅSTÅRTA', 'Salt tårta på festen'], ['HOCKEYKLUBBA', 'Redskap på isen'], ['SPARKSTÖTTING', 'Vinterfordon med medar'], ['VULKANUTBROTT', 'Glödande lava sprutar upp'],
+    ['FJÄRRKONTROLL', 'Byter kanal på avstånd']
   ];
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);

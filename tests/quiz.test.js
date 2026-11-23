@@ -117,3 +117,22 @@ test('CSS: dold i vila i OBS, ingen kortram från studion', () => {
   assert.match(css, /\.widget\.vyra-quiz\{background:transparent!important/);
   assert.match(fs.readFileSync(path.join(ROOT, 'overlay-aktivering.js'), 'utf8'), /const UNDANTAG = new Set\(\[[^\]]*'templateQuiz'/);
 });
+
+test('alla inbyggda paket: unika id, tre svar, giltigt rätt-index, källa, och de svåra paketen finns', () => {
+  const dom = sida(), P = dom.window.VyraQuiz.PAKET;
+  try {
+    const ids = new Set();
+    for (const [nyckel, p] of Object.entries(P)) {
+      for (const f of p.fragor) {
+        assert.ok(!ids.has(f[0]), 'dubbelt id ' + f[0]); ids.add(f[0]);
+        assert.ok(f[1].endsWith('?'), nyckel + ': frågan saknar frågetecken: ' + f[0]);
+        assert.equal(f[2].length, 3, f[0]);
+        assert.equal(new Set(f[2]).size, 3, 'två lika svar i ' + f[0]);
+        assert.ok(Number.isInteger(f[3]) && f[3] >= 0 && f[3] <= 2, 'rätt-index i ' + f[0]);
+        assert.ok(f[4] && f[4].length > 10, 'källa saknas i ' + f[0]);
+      }
+    }
+    for (const k of ['allmansvar', 'sportsvar', 'gamingsvar']) assert.ok(P[k].fragor.length >= 12, k + ' ska ha minst tolv frågor');
+    assert.equal(P.allman.fragor.length, 3, 'startpaketen är oförändrade');
+  } finally { dom.window.close(); }
+});
