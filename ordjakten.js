@@ -75,8 +75,23 @@
     return ut === ord ? b.slice(1).concat(b[0]).join('') : ut;
   }
   // En runda: vilket ord, vilken blandning.
+  // ROTATION (2026-11-23): varv 1 går i listans egen ordning (lätta ord först, som listan är skriven). Från varv 2
+  // blandas ordningen, så den som tittar länge inte får samma ord i samma följd igen. Blandningen är bestämd av
+  // varvnumret och listans längd — aldrig Math.random eller lokalt minne — så alla OBS-källor får samma ord. Ett nytt
+  // varv börjar aldrig med det ord som var sist i varvet innan.
+  function varvOrdning(langd, varv) {
+    let fore = Array.from({ length: langd }, (_, i) => i);
+    for (let k = 1; k <= varv; k++) {
+      const r = slump(fro('ordjakten-varv#' + k + '#' + langd)), a = fore.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      if (a.length > 1 && a[0] === fore[fore.length - 1]) [a[0], a[1]] = [a[1], a[0]];
+      fore = a;
+    }
+    return fore;
+  }
   function runda(w, nr) {
-    const lista = ordlista(w), [ord, ledtrad] = lista[((nr % lista.length) + lista.length) % lista.length];
+    const lista = ordlista(w), n = lista.length, pos = ((nr % n) + n) % n, varv = Math.max(0, Math.floor(nr / n));
+    const [ord, ledtrad] = lista[varv === 0 ? pos : varvOrdning(n, varv)[pos]];
     return { nr, ord, ledtrad, blandat: blanda(ord, nr) };
   }
   // Vad en chattrad betyder: 'ratt' (gissningen), 'nasta'/'losning' (moderator) eller null.
@@ -259,6 +274,6 @@
   // Stillbild för pixelvakten: första rundan, olöst, ingen topplista.
   function stilla() { for (const w of widgetar()) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; } ritaOm(); return document.querySelectorAll('.vyra-ordjakten').length; }
 
-  window.VyraOrdjakten = Object.freeze({ typ: TYP, ORD, norm, egnaOrd, ordlista, blanda, runda, tolka, hantera, lage, nasta, losning, nollstall, stilla, _lage: LAGE });
+  window.VyraOrdjakten = Object.freeze({ typ: TYP, ORD, norm, egnaOrd, ordlista, blanda, varvOrdning, runda, tolka, hantera, lage, nasta, losning, nollstall, stilla, _lage: LAGE });
   ritaOm();
 })();

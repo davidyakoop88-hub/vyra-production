@@ -192,11 +192,20 @@
       return ['e' + i, d[0].slice(0, 140), [d[1], d[2], d[3]].map(x => x.slice(0, 60)), ratt, ''];
     }).filter(Boolean).slice(0, 50);
   }
-  function fragor(w) {
-    const egna = egnaFragor(w && w.qzEgna);
-    if (w && w.qzPaket === 'egna') return egna;
-    const p = PAKET[w && w.qzPaket] || PAKET.allman;
-    return p.fragor.slice(0, klamp(w && w.qzAntal, 1, 10, p.fragor.length));
+  // ROTATION (2026-11-23): varje omgång får en egen blandning av paketet och tar de första N frågorna. Blandningen
+  // räknas ur omgångens starttid (samma för alla OBS-källor) — aldrig ur lokalt minne eller Math.random, så alla
+  // källor visar samma frågor i samma ordning. Utan start (vila, studion) gäller paketets egen ordning.
+  const STANDARD_ANTAL = 10;
+  function ordna(lista, fraFro) {
+    const r = slump(fro(fraFro)), a = lista.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function fragor(w, start) {
+    const bland = (l, nyckel) => (start > 0 ? ordna(l, 'quiz#' + nyckel + '#' + start + '#' + l.length) : l);
+    if (w && w.qzPaket === 'egna') return bland(egnaFragor(w && w.qzEgna), 'egna');
+    const nyckel = PAKET[w && w.qzPaket] ? w.qzPaket : 'allman', p = PAKET[nyckel];
+    return bland(p.fragor, nyckel).slice(0, klamp(w && w.qzAntal, 1, 50, Math.min(p.fragor.length, STANDARD_ANTAL)));
   }
   function fro(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.codePointAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
   function slump(f) { let a = f >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -209,7 +218,7 @@
   // Var i tidslinjen är vi? { fas: 'vila'|'fraga'|'svar'|'slut', i, kvar } — bara ur start och klockan.
   function fas(w, start, nu) {
     if (!start) return { fas: 'vila', i: -1, kvar: 0 };
-    const n = fragor(w).length, t = tider(w), varv = t.svar + t.paus, gatt = nu - start;
+    const n = fragor(w, start).length, t = tider(w), varv = t.svar + t.paus, gatt = nu - start;
     if (gatt < 0) return { fas: 'vila', i: -1, kvar: 0 };
     const i = Math.floor(gatt / varv);
     if (i >= n) return { fas: 'slut', i: n - 1, kvar: 0 };
@@ -241,7 +250,7 @@
   function spara(w) { const s = LAGE.get(String(w.id)); if (!s) return; try { localStorage.setItem(LAGRING + w.id, JSON.stringify(s)); } catch (_) {} }
   // Poängen: frågor som är rättade (fas svar/slut efter dem), rätt svar ger qzPoang.
   function poang(w, nu) {
-    const s = lage(w), f = fas(w, s.start, nu), lista = fragor(w), p = klamp(w.qzPoang, 1, 1000, 100), ut = {};
+    const s = lage(w), f = fas(w, s.start, nu), lista = fragor(w, s.start), p = klamp(w.qzPoang, 1, 1000, 100), ut = {};
     for (let i = 0; i < lista.length; i++) {
       const rattad = f.fas === 'slut' || i < f.i || (i === f.i && f.fas === 'svar');
       if (!rattad) break;
@@ -294,7 +303,7 @@
   const oldWh = wh;
   wh = function (w) {
     if (!w || w.type !== TYP) return oldWh(w);
-    const s = lage(w), nu = Date.now(), lista = fragor(w);
+    const s = lage(w), nu = Date.now(), lista = fragor(w, STILLA ? 0 : s.start);
     let f = STILLA ? { fas: 'fraga', i: 0, kvar: tider(w).svar / 1000 } : fas(w, s.start, nu);
     const visa = f.fas === 'vila' ? (OVERLAY ? null : { fas: 'vila', i: 0 }) : f;
     const valt = !OVERLAY && typeof selected !== 'undefined' && selected === w.id;
@@ -348,6 +357,7 @@
     const paket = w.qzPaket === 'egna' ? 'egna' : PAKET[w.qzPaket] ? w.qzPaket : 'allman';
     return `<h3>QUIZ</h3><div class="template-badge">CHATTEN SVARAR A, B ELLER C · LIVE</div><div hidden><input id="pt" value="Quiz"><input id="pv" value=""></div>`
       + `<div class="property-group"><h4>FRÅGORNA</h4><label>Paket<select id="qzPaket">${Object.entries(PAKET).map(([k, p]) => `<option value="${k}"${k === paket ? ' selected' : ''}>${esc(p.namn)} · ${p.fragor.length} frågor</option>`).join('')}<option value="egna"${paket === 'egna' ? ' selected' : ''}>Egna frågor</option></select></label>`
+      + (paket !== 'egna' ? `<label>Frågor per omgång<input id="qzAntal" type="number" min="1" max="50" value="${klamp(w.qzAntal, 1, 50, Math.min(PAKET[paket].fragor.length, STANDARD_ANTAL))}"></label><small>Varje omgång får en egen blandning av paketet, så tittarna ser inte samma frågor i samma ordning varje gång.</small>` : '')
       + `<label>Egna frågor (en per rad: Fråga | A | B | C | rätt bokstav)<textarea id="qzEgna" rows="4" placeholder="Vilken färg har himlen? | Grön | Blå | Röd | B">${esc(w.qzEgna || '')}</textarea></label>`
       + `<small>${lista.length} frågor i omgången.${paket !== 'egna' ? ' Källor finns för startpaketens frågor.' : ''}</small></div>`
       + `<div class="property-group"><h4>OMGÅNGEN</h4><label>Svarstid per fråga (sekunder)<input id="qzTid" type="number" min="10" max="60" value="${tider(w).svar / 1000}"></label>`
@@ -394,6 +404,7 @@
     const satt = (falt, v) => { w[falt] = v; if (typeof save === 'function') save(); ritaOm(); };
     let el;
     if ((el = q('#qzPaket'))) el.onchange = e => satt('qzPaket', e.target.value === 'egna' || PAKET[e.target.value] ? e.target.value : 'allman');
+    if ((el = q('#qzAntal'))) el.onchange = e => satt('qzAntal', klamp(Math.round(+e.target.value), 1, 50, STANDARD_ANTAL));
     if ((el = q('#qzEgna'))) el.onchange = e => satt('qzEgna', String(e.target.value || '').slice(0, 10000));
     if ((el = q('#qzTid'))) el.onchange = e => satt('qzTid', klamp(Math.round(+e.target.value), 10, 60, 20));
     if ((el = q('#qzPaus'))) el.onchange = e => satt('qzPaus', klamp(Math.round(+e.target.value), 3, 30, 6));

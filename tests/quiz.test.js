@@ -59,7 +59,7 @@ test('ett svar per tittare och fråga; svar efter fönstret räknas inte; poäng
   const dom = sida(), Q = dom.window.VyraQuiz, w = ny();
   try {
     Q.hantera(w, chatt('!quiz', T0, { isModerator: true }));
-    const alt = Q.alternativ(Q.fragor(w)[0], T0), ratt = 'ABC'[alt.findIndex(a => a.ratt)], fel = 'ABC'[alt.findIndex(a => !a.ratt)];
+    const alt = Q.alternativ(Q.fragor(w, T0)[0], T0), ratt = 'ABC'[alt.findIndex(a => a.ratt)], fel = 'ABC'[alt.findIndex(a => !a.ratt)];
     assert.equal(Q.hantera(w, chatt(ratt, T0 + 1000)), 'svar');
     assert.equal(Q.hantera(w, chatt(fel, T0 + 2000)), 'redan', 'ett andra svar räknades');
     assert.equal(Q.hantera(w, chatt(fel, T0 + 3000, { userId: 'u2', nickname: 'Leo' })), 'svar');
@@ -135,4 +135,24 @@ test('alla inbyggda paket: unika id, tre svar, giltigt rätt-index, källa, och 
     for (const k of ['allmansvar', 'sportsvar', 'gamingsvar', 'historiasvar', 'geografisvar']) assert.ok(P[k].fragor.length >= 12, k + ' ska ha minst tolv frågor');
     assert.equal(P.allman.fragor.length, 3, 'startpaketen är oförändrade');
   } finally { dom.window.close(); }
+});
+
+test('rotation: varje omgång får egen blandning, samma i alla källor, och vila behåller paketets ordning', () => {
+  const a = sida(), b = sida();
+  try {
+    const w = ny({ qzPaket: 'allmansvar' });
+    const id = f => Array.from(f, x => x[0]).join();
+    const vila = a.window.VyraQuiz.fragor(w, 0), ren = a.window.VyraQuiz.PAKET.allmansvar.fragor;
+    assert.equal(vila.length, 10, 'ett stort paket ger 10 frågor per omgång som standard');
+    assert.equal(id(vila), id(ren.slice(0, 10)), 'utan start gäller paketets ordning');
+    const x = a.window.VyraQuiz.fragor(w, T0), y = b.window.VyraQuiz.fragor(w, T0), z = a.window.VyraQuiz.fragor(w, T0 + 90_000);
+    assert.equal(id(x), id(y), 'två källor med samma start ska visa samma frågor');
+    assert.notEqual(id(x), id(z), 'en ny omgång ska ge en annan blandning');
+    assert.equal(new Set(id(x).split(',')).size, 10, 'ingen fråga två gånger i en omgång');
+    const allt = new Set();
+    for (let k = 0; k < 40; k++) for (const f of a.window.VyraQuiz.fragor(w, T0 + k * 1000)) allt.add(f[0]);
+    assert.ok(allt.size > 10, 'över flera omgångar ska fler än tio olika frågor dyka upp');
+    assert.equal(a.window.VyraQuiz.fragor(ny({ qzPaket: 'allmansvar', qzAntal: 4 }), T0).length, 4, 'qzAntal styr antalet');
+    assert.equal(a.window.VyraQuiz.fragor(ny(), T0).length, 3, 'startpaketet med tre frågor är oförändrat');
+  } finally { a.window.close(); b.window.close(); }
 });
