@@ -6,6 +6,11 @@
 // skickar den likadant till alla). Därför är bokstavsblandningen bestämd av ordet och rundan (ett frö, aldrig
 // Math.random) och "först" är den första rätta chattraden i strömmen — inte klockan i en viss webbläsare.
 //
+// LÖSTA ORD KOMMER INTE IGEN (David 2026-11-23: "om folk har svarat på de frågor kommer nya"). Ett ord som en tittare
+// har löst hoppas över i alla senare rundor, så nästa ord är alltid ett som ingen har svarat på. Först när ALLA ord är
+// lösta töms listan och allt börjar om. Bara lösta ord räknas — ett ord som visats med !lösning kan komma igen.
+// Listan över lösta ord byggs av samma händelseström i varje OBS-källa, så alla källor hoppar likadant.
+//
 // MODERATORERNA STYR I CHATTEN: !nästa (nytt ord) och !lösning (visa ordet, inga poäng). Bara chattrader med
 // isModerator räknas, så kommandot når alla OBS-källor utan en egen servertransport. Efter ett löst eller visat
 // ord kommer nästa automatiskt efter en paus (standard 8 s). Ordlistan börjar om när den tar slut.
@@ -104,14 +109,14 @@
     const id = String(w.id);
     let s = LAGE.get(id);
     if (!s) {
-      s = { nr: 0, lost: null, poang: {}, timer: 0 };
-      try { const sp = JSON.parse(localStorage.getItem(LAGRING + id) || 'null'); if (sp && Number.isInteger(sp.nr)) { s.nr = sp.nr; s.lost = sp.lost || null; s.poang = sp.poang || {}; } } catch (_) {}
+      s = { nr: 0, lost: null, poang: {}, losta: [], timer: 0 };
+      try { const sp = JSON.parse(localStorage.getItem(LAGRING + id) || 'null'); if (sp && Number.isInteger(sp.nr)) { s.nr = sp.nr; s.lost = sp.lost || null; s.poang = sp.poang || {}; s.losta = Array.isArray(sp.losta) ? sp.losta.filter(o => typeof o === 'string').slice(0, 2000) : []; } } catch (_) {}
       LAGE.set(id, s);
       if (s.lost) planeraNasta(w);
     }
     return s;
   }
-  function spara(w) { const s = LAGE.get(String(w.id)); if (!s) return; try { localStorage.setItem(LAGRING + w.id, JSON.stringify({ nr: s.nr, lost: s.lost, poang: s.poang })); } catch (_) {} }
+  function spara(w) { const s = LAGE.get(String(w.id)); if (!s) return; try { localStorage.setItem(LAGRING + w.id, JSON.stringify({ nr: s.nr, lost: s.lost, poang: s.poang, losta: s.losta })); } catch (_) {} }
   // I OBS RITAS BARA DEN HÄR WIDGETENS EGNA NODER OM — ALDRIG HELA LAYOUTEN (2026-11-09).
   // render() bygger om varje widget i layouten. Under en sändning rev det allt annat som just spelade
   // (uppmätt med Match 1 vs 1, som gjorde samma sak varje sekund: Battle MVP syntes 0,8 s i stället
@@ -137,7 +142,15 @@
     clearTimeout(s.timer);
     s.timer = setTimeout(() => { const lw = hitta(w.id); if (lw) nasta(lw); }, klamp(w.ojPaus, 2, 60, 8) * 1000);
   }
-  function nasta(w) { const s = lage(w); clearTimeout(s.timer); s.nr += 1; s.lost = null; spara(w); ritaOm(); }
+  // Nästa runda vars ord ingen har löst. Är alla ord lösta börjar listan om: de lösta töms och nästa runda tas som den är.
+  function nastaOlosta(w, s) {
+    const lista = ordlista(w), losta = new Set(s.losta);
+    if (lista.every(([o]) => losta.has(o))) { s.losta = []; return s.nr + 1; }
+    let nr = s.nr + 1;
+    for (let i = 0; i < lista.length * 2 && losta.has(runda(w, nr).ord); i++) nr += 1;
+    return nr;
+  }
+  function nasta(w) { const s = lage(w); clearTimeout(s.timer); s.nr = nastaOlosta(w, s); s.lost = null; spara(w); ritaOm(); }
   function losning(w) { const s = lage(w); if (s.lost) return; s.lost = { namn: '', sjalv: true }; spara(w); ritaOm(); planeraNasta(w); }
   function vinnare(w, uid, namn) {
     const s = lage(w);
@@ -146,10 +159,12 @@
     const rad = s.poang[uid] || (s.poang[uid] = { namn, p: 0 });
     rad.namn = namn; rad.p += p;
     s.lost = { namn, sjalv: false, p };
+    const ord = runda(w, s.nr).ord;
+    if (!s.losta.includes(ord)) s.losta.push(ord);
     spara(w); ritaOm(); planeraNasta(w);
     return true;
   }
-  function nollstall(w) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; spara(w); ritaOm(); }
+  function nollstall(w) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; s.losta = []; spara(w); ritaOm(); }
   // En chattrad mot en widget. Returnerar vad som hände (för proven).
   function hantera(w, e) {
     const s = lage(w), r = runda(w, s.nr), vad = tolka(e, r.ord);
@@ -203,7 +218,7 @@
       + `<div class="property-group oj-hjalp"><h4>SÅ FUNKAR DET</h4><ol>`
       + `<li>Ställ widgeten där den syns i bilden. Den startar direkt med första ordet.</li>`
       + `<li>Tittarna skriver hela ordet i chatten. Bara ordet – inga emojis eller utropstecken efter.</li>`
-      + `<li>Först med rätt svar får poängen. Vinnaren och topplistan visas i widgeten.</li>`
+      + `<li>Först med rätt svar får poängen. Vinnaren och topplistan visas i widgeten. Ett löst ord kommer inte igen – nästa ord är alltid nytt, och först när alla är lösta börjar listan om.</li>`
       + `<li>Du och dina moderatorer skriver !nästa för nytt ord och !lösning för att visa ordet utan poäng.</li>`
       + `<li>Poängen ligger kvar mellan sändningar. Börja om här nedanför nollställer förhandsvisningen i studion – poängen i OBS ligger kvar.</li>`
       + `</ol></div>`
@@ -264,7 +279,7 @@
   };
 
   // Stillbild för pixelvakten: första rundan, olöst, ingen topplista.
-  function stilla() { for (const w of widgetar()) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; } ritaOm(); return document.querySelectorAll('.vyra-ordjakten').length; }
+  function stilla() { for (const w of widgetar()) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; s.losta = []; } ritaOm(); return document.querySelectorAll('.vyra-ordjakten').length; }
 
   window.VyraOrdjakten = Object.freeze({ typ: TYP, ORD, INNEHALLSVERSION, norm, egnaOrd, ordlista, blanda, varvOrdning, runda, tolka, hantera, lage, nasta, losning, nollstall, stilla, _lage: LAGE });
   ritaOm();
