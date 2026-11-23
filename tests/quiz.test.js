@@ -132,7 +132,7 @@ test('alla inbyggda paket: unika id, tre svar, giltigt rätt-index, källa, och 
         assert.ok(f[4] && f[4].length > 10, 'källa saknas i ' + f[0]);
       }
     }
-    for (const k of ['allmansvar', 'sportsvar', 'gamingsvar']) assert.ok(P[k].fragor.length >= 12, k + ' ska ha minst tolv frågor');
+    for (const k of ['allmansvar', 'sportsvar', 'gamingsvar', 'historiasvar', 'geografisvar']) assert.ok(P[k].fragor.length >= 12, k + ' ska ha minst tolv frågor');
     assert.equal(P.allman.fragor.length, 3, 'startpaketen är oförändrade');
   } finally { dom.window.close(); }
 });

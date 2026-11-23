@@ -77,7 +77,33 @@
       ['hv9', 'Vilket år släpptes den första PlayStation-konsolen i Japan?', ['1992', '1994', '1996'], 1, 'https://en.wikipedia.org/wiki/PlayStation_(console)'],
       ['hv10', 'I vilket spel dök Mario först upp, då under namnet Jumpman?', ['Super Mario Bros.', 'Donkey Kong', 'Mario Bros.'], 1, 'https://en.wikipedia.org/wiki/Donkey_Kong_(video_game)'],
       ['hv11', 'Hur många Pokémon fanns i den första generationen?', ['150', '151', '251'], 1, 'https://en.wikipedia.org/wiki/Pok%C3%A9mon'],
-      ['hv12', 'Vad kallas valutan i Animal Crossing?', ['Rupees', 'Bells', 'Caps'], 1, 'https://en.wikipedia.org/wiki/Animal_Crossing']] }
+      ['hv12', 'Vad kallas valutan i Animal Crossing?', ['Rupees', 'Bells', 'Caps'], 1, 'https://en.wikipedia.org/wiki/Animal_Crossing']] },
+    historiasvar: { namn: 'Historia · svår', fragor: [
+      ['hh1', 'Vilket år erövrade osmanerna Konstantinopel?', ['1453', '1492', '1517'], 0, 'https://en.wikipedia.org/wiki/Fall_of_Constantinople'],
+      ['hh2', 'Vilket år stupade Gustav II Adolf i slaget vid Lützen?', ['1611', '1632', '1648'], 1, 'https://sv.wikipedia.org/wiki/Gustav_II_Adolf'],
+      ['hh3', 'Vilken drottning regerade Sverige 1632–1654?', ['Ulrika Eleonora', 'Margareta', 'Kristina'], 2, 'https://sv.wikipedia.org/wiki/Kristina_av_Sverige'],
+      ['hh4', 'I vilken fred förlorade Sverige Finland 1809?', ['Fredrikshamn', 'Roskilde', 'Nystad'], 0, 'https://sv.wikipedia.org/wiki/Freden_i_Fredrikshamn'],
+      ['hh5', 'Vilket år bildades Kalmarunionen?', ['1319', '1397', '1523'], 1, 'https://sv.wikipedia.org/wiki/Kalmarunionen'],
+      ['hh6', 'Vem var Roms förste kejsare?', ['Julius Caesar', 'Nero', 'Augustus'], 2, 'https://en.wikipedia.org/wiki/Augustus'],
+      ['hh7', 'Vilket år avsattes den siste västromerske kejsaren, Romulus Augustulus?', ['410', '476', '527'], 1, 'https://en.wikipedia.org/wiki/Romulus_Augustulus'],
+      ['hh8', 'Vilket år stod slaget vid Poltava?', ['1700', '1709', '1718'], 1, 'https://sv.wikipedia.org/wiki/Slaget_vid_Poltava'],
+      ['hh9', 'Vilket år föll Berlinmuren?', ['1987', '1989', '1991'], 1, 'https://en.wikipedia.org/wiki/Berlin_Wall'],
+      ['hh10', 'Vilken farao lät enligt traditionen bygga Cheopspyramiden?', ['Khufu', 'Ramses II', 'Tutankhamon'], 0, 'https://en.wikipedia.org/wiki/Great_Pyramid_of_Giza'],
+      ['hh11', 'Vilket år dog Karl XII?', ['1709', '1718', '1721'], 1, 'https://sv.wikipedia.org/wiki/Karl_XII'],
+      ['hh12', 'Vilket år valdes Gustav Vasa till Sveriges kung?', ['1521', '1523', '1527'], 1, 'https://sv.wikipedia.org/wiki/Gustav_Vasa']] },
+    geografisvar: { namn: 'Geografi · svår', fragor: [
+      ['hg1', 'Vilken är Europas längsta flod?', ['Donau', 'Volga', 'Rhen'], 1, 'https://en.wikipedia.org/wiki/Volga'],
+      ['hg2', 'Vilket land har flest invånare?', ['Kina', 'USA', 'Indien'], 2, 'https://en.wikipedia.org/wiki/List_of_countries_by_population_(United_Nations)'],
+      ['hg3', 'Vilken stad är Kanadas huvudstad?', ['Toronto', 'Ottawa', 'Montréal'], 1, 'https://en.wikipedia.org/wiki/Ottawa'],
+      ['hg4', 'Vilken stad är Brasiliens huvudstad?', ['Rio de Janeiro', 'São Paulo', 'Brasília'], 2, 'https://en.wikipedia.org/wiki/Bras%C3%ADlia'],
+      ['hg5', 'Vilken är världens största ö?', ['Grönland', 'Nya Guinea', 'Borneo'], 0, 'https://en.wikipedia.org/wiki/Greenland'],
+      ['hg6', 'Vilket är Sveriges högsta berg?', ['Sarektjåkkå', 'Kebnekaise', 'Åreskutan'], 1, 'https://sv.wikipedia.org/wiki/Kebnekaise'],
+      ['hg7', 'Vilket är världens minsta land till ytan?', ['Monaco', 'San Marino', 'Vatikanstaten'], 2, 'https://en.wikipedia.org/wiki/Vatican_City'],
+      ['hg8', 'Vilket land har flest öar i världen?', ['Indonesien', 'Sverige', 'Filippinerna'], 1, 'https://en.wikipedia.org/wiki/List_of_countries_by_number_of_islands'],
+      ['hg9', 'Vilken är världens största varma öken?', ['Gobi', 'Kalahari', 'Sahara'], 2, 'https://en.wikipedia.org/wiki/Sahara'],
+      ['hg10', 'Vilket sund skiljer Asien från Nordamerika?', ['Berings sund', 'Gibraltar sund', 'Magellans sund'], 0, 'https://en.wikipedia.org/wiki/Bering_Strait'],
+      ['hg11', 'Vilket är världens högsta vattenfall?', ['Niagarafallen', 'Angel Falls', 'Victoriafallen'], 1, 'https://en.wikipedia.org/wiki/Angel_Falls'],
+      ['hg12', 'Vilken flod rinner genom Budapest?', ['Donau', 'Wisła', 'Elbe'], 0, 'https://en.wikipedia.org/wiki/Danube']] }
   };
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
