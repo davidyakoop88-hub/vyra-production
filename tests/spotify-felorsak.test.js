@@ -45,3 +45,25 @@ test('annat fel: Spotifys eget meddelande följer med', async () => {
 test('studion visar orsaken bredvid Inte ansluten', () => {
   assert.match(las('extras.js'), /statusEl\.textContent='Inte ansluten'\+\(state\.fel\?' — '\+state\.fel:''\)/);
 });
+
+// Spotifys riktiga 403 för ett konto utanför utvecklarappen är REN TEXT, inte JSON. Förut föll
+// response.json(), orsaken slängdes och studion visade "Spotify kunde inte utföra åtgärden".
+const textSvar = (status, text) => ({ status, ok: status < 300, text: async () => text, json: async () => JSON.parse(text) });
+
+test('403 som ren text: kontot som inte lagts till känns ändå igen', async () => {
+  const s = await spotify(textSvar(403, 'Check settings on developer.spotify.com/dashboard, the user may not be registered.')).status();
+  assert.equal(s.connected, false);
+  assert.match(s.fel, /inte tillagt i VYRA:s Spotify-app/);
+  assert.doesNotMatch(s.fel, /kunde inte utföra åtgärden/);
+});
+
+test('fel som ren text: texten följer med i stället för reservmeningen', async () => {
+  const s = await spotify(textSvar(502, 'Bad gateway')).status();
+  assert.equal(s.fel, 'Bad gateway');
+});
+
+test('JSON-svar med text(): profilen läses som förut', async () => {
+  const s = await spotify(textSvar(200, JSON.stringify({ id: 'david', display_name: 'David' }))).status();
+  assert.equal(s.connected, true);
+  assert.equal(s.profile.display_name, 'David');
+});
