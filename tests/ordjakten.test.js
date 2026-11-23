@@ -18,6 +18,7 @@ function sida(lagring) {
   w.eval('var wh=function(){return ""};var render=function(){};var props=function(){return ""};var bind=function(){};var selected=null;var view="editor";');
   w.state = { widgets: [] };
   w.setTimeout = () => 0;
+  w.eval(fs.readFileSync(path.join(ROOT, 'spelinnehall.js'), 'utf8'));
   w.eval(fs.readFileSync(path.join(ROOT, 'ordjakten.js'), 'utf8'));
   return dom;
 }
@@ -145,4 +146,38 @@ test('panelen: SÅ FUNKAR DET står överst med fem steg, och reglerna sägs int
     assert.match(box.textContent, /Inga gåvokrav, inga priser\./);
     assert.ok(box.querySelector('#ojNoll'), 'steg 5 pekar på Börja om-knappen');
   } finally { dom.window.close(); }
+});
+
+test('inbyggda ord: bara bokstäver, inga dubbletter, ledtråd finns, och de svåra orden ligger sist', () => {
+  const dom = sida(), O = dom.window.VyraOrdjakten;
+  try {
+    const sett = new Set();
+    for (const [ord, ledtrad] of O.ORD) {
+      assert.match(ord, /^[\p{Lu}]{4,14}$/u, 'ogiltigt ord: ' + ord);
+      assert.ok(!sett.has(ord), 'dubblett: ' + ord); sett.add(ord);
+      assert.ok(ledtrad && ledtrad.length <= 60, 'ledtråd saknas/för lång: ' + ord);
+      assert.ok(!ledtrad.toUpperCase().includes(ord), 'ledtråden avslöjar ordet: ' + ord);
+    }
+    assert.equal(O.ORD[0][0], 'BANAN', 'de första orden är oförändrade');
+    assert.ok(O.ORD.length >= 85, 'de svåra orden finns kvar');
+    assert.ok(O.ORD.findIndex(o => o[0] === 'FJÄRRKONTROLL') >= 32, 'svåra ord ligger efter de första 32');
+  } finally { dom.window.close(); }
+});
+
+test('rotation: varv 1 i listans ordning, senare varv blandade men lika i alla källor, aldrig samma ord två gånger i rad', () => {
+  const a = sida(), b = sida();
+  try {
+    const w = ny(), n = a.window.VyraOrdjakten.ordlista(w).length, ord = (d, nr) => d.window.VyraOrdjakten.runda(w, nr).ord;
+    const lista = a.window.VyraOrdjakten.ordlista(w).map(x => x[0]);
+    for (let i = 0; i < n; i++) assert.equal(ord(a, i), lista[i], 'första varvet följer listan');
+    for (const varv of [1, 2, 3]) {
+      const sett = [];
+      for (let i = 0; i < n; i++) sett.push(ord(a, varv * n + i));
+      assert.deepEqual([...sett].sort(), [...lista].sort(), 'varje ord exakt en gång per varv (varv ' + varv + ')');
+      assert.notEqual(sett.join(), lista.join(), 'varv ' + varv + ' ska vara blandat');
+      for (let i = 0; i < n; i++) assert.equal(ord(b, varv * n + i), sett[i], 'två källor ska ge samma ord');
+      assert.notEqual(sett[0], ord(a, varv * n - 1), 'ett nytt varv börjar inte med förra varvets sista ord');
+    }
+    assert.notEqual(Array.from({ length: n }, (_, i) => ord(a, n + i)).join(), Array.from({ length: n }, (_, i) => ord(a, 2 * n + i)).join(), 'varv 2 och 3 ska skilja sig');
+  } finally { a.window.close(); b.window.close(); }
 });

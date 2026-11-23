@@ -8,10 +8,10 @@
  "rastrering": "3e0f58bc",
  "antal": 258,
  "senaste": {
-  "motiv": "Ny widget Chattavatar 3 (flanell) i katalogen (PR 830/832)",
+  "motiv": "Ordjaktens räknare uppe till höger går från 1 / 32 till 1 / 93 eftersom ordlistan växte med svåra ord. Avsedd ändring.",
   "nycklar": 1,
-  "filter": "chattavatar:3",
-  "tid": "2026-11-23T10:02:01.019Z"
+  "filter": "ordjakten",
+  "tid": "2026-11-23T15:03:55.680Z"
  },
  "bilder": {
   "catalog:battlemvp:aurora": {

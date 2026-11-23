@@ -1979,6 +1979,11 @@ Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-energimatare]')){let css=document.createElement('link');css.rel='stylesheet';css.href='energimatare.css?v=20261108-3';css.dataset.energimatare='1';document.head.append(css)}
   const s=document.createElement('script');s.src='energimatare.js?v=20261108-2';s.async=false;s.onerror=()=>console.error('Kunde inte ladda energimatare.js');document.body.append(s);
 });
+// Spelinnehåll - frågorna till Quiz och orden till Ordjakten, skilda från widgetkoden (spelinnehall.js). Laddas FÖRE båda:
+// skripten läggs in med async=false och körs därför i den ordning de läggs in.
+Promise.resolve().then(()=>{
+  const s=document.createElement('script');s.src='spelinnehall.js?v=20261123-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda spelinnehall.js');document.body.append(s);
+});
 // Ordjakten - chatten gissar det blandade ordet, moderatorer styr med !nästa och !lösning (ordjakten.js).
 Promise.resolve().then(()=>{
   if(!document.querySelector('link[data-ordjakten]')){let css=document.createElement('link');css.rel='stylesheet';css.href='ordjakten.css?v=20261112-1';css.dataset.ordjakten='1';document.head.append(css)}
