@@ -2,7 +2,7 @@
 
 const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
 
-const { text, number, avatarOf, identityOf, baseUser, arGuardianEntrance, fansUppgradering, superfanFields,
+const { text, number, avatarOf, identityOf, baseUser, arVarden, arGuardianEntrance, fansUppgradering, superfanFields,
   battleStatusAv, mvpFields, envelopeFields } = require('./tiktok-fields');
 
 // Samma tider som tiktok-bridge/normalizer.js (STREAK_TYST_MS, STREAK_GLOMS_MS).
@@ -64,7 +64,9 @@ function createTikTokService({ onStatus, onEvent, log = () => {} }) {
     connection.on(WebcastEvent.CHAT, data => {
       // `content` ar faltet TikTok faktiskt skickar; `comment` finns inte. Se bridge.js.
       const comment = text(data?.content ?? data?.comment, 500);
-      emit(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', { ...baseUser(data), name: comment }, data);
+      // isHost: streamerns egna rader (arVarden i tiktok-fields.js). Bars bara nar det ar sant.
+      const avsandare = baseUser(data);
+      emit(comment.trim().startsWith('!') ? 'chatcommand' : 'chat', { ...avsandare, ...(arVarden({ userId: String(data?.user?.userId || data?.user?.id || ''), username: avsandare.username }, mittAnkarId, activeUsername) ? { isHost: true } : {}), name: comment }, data);
     });
     connection.on(WebcastEvent.GIFT, data => {
       // v3 keeps the type in gift.type and repeatEnd as a number; older shapes kept both flat.

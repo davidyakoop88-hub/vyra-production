@@ -128,6 +128,9 @@ const event={
     // live-client.js gor bara `!!e.isAnonymous`. #349
     isAnonymous:!!input?.isAnonymous,
     isModerator:!!input?.isModerator,
+    // Streamerns egna chattrader (tiktok-bridge/normalizer.js arVarden). Bars bara nar det ar sant:
+    // Quiz och Ordjakten tar !quiz/!nästa fran varden, som TikTok inte markerar som moderator.
+    ...(input?.isHost?{isHost:true}:{}),
     // Klienten harleder de har tva ur handelsetypen (live-client.js normalizeUserFlags), vilket
     // racker for follow- och member-eventet sjalvt men inte for nagot annat: en FOLJARE som
     // skickar en gava sag ut som en frammande. Det riktiga vardet OR:as med harledningen.
