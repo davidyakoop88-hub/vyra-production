@@ -714,3 +714,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Gift Campaign: gåvoraden syns fullt, stående rader klipps inte, Gåvoflödets kanter tonas mjukt (PR 827)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 6 av 177 (filter: giftcampaign:fokus,giftcampaign:classic,giftcampaign:flode) — catalog:giftcampaign:classic:landscape, catalog:giftcampaign:classic:portrait, catalog:giftcampaign:flode:landscape, catalog:giftcampaign:flode:portrait, catalog:giftcampaign:fokus:landscape, catalog:giftcampaign:fokus:portrait
+
+## 2026-11-23 — 1 referenser skrivna
+
+- **Motiv:** Ny widget Chattavatar 3 (flanell) i katalogen (PR 830/832)
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 178 (filter: chattavatar:3) — catalog:vyrapaket:chattavatar:3
