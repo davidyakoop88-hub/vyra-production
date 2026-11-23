@@ -2010,7 +2010,7 @@ Promise.resolve().then(()=>{
 
 // Testadaptrar for galleriets scen: Quiz, Hjartan & moln, Energimatare och Viewer Showcase (katalog-testadaptrar.js, David 2026-11-11).
 Promise.resolve().then(()=>{
-  const s=document.createElement('script');s.src='katalog-testadaptrar.js?v=20261111-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-testadaptrar.js');document.body.append(s);
+  const s=document.createElement('script');s.src='katalog-testadaptrar.js?v=20261123-1';s.async=false;s.onerror=()=>console.error('Kunde inte ladda katalog-testadaptrar.js');document.body.append(s);
 });
 
 // Social-alert - vaxlar mellan streamerns sociala konton, tva designer (social-alert.js).
