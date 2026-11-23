@@ -68,8 +68,10 @@ async function sida(kaka) {
   if (kaka) await context.addCookies([{ name: 'vyra_session', value: kaka, url: bas }]);
   return { context, page: await context.newPage() };
 }
+// STARTSIDAN 2026-11-22: inloggningskortet bor i ett stängt lager tills besökaren trycker Logga in,
+// så "framsidan syns" mäts på hjältens rubrik, det första en besökare ser.
 const synlig = page => page.evaluate(() => getComputedStyle(document.documentElement).visibility === 'visible'
-  && !!document.querySelector('[data-login]') && document.querySelector('[data-login]').getBoundingClientRect().height > 0);
+  && !!document.querySelector('.hero h1') && document.querySelector('.hero h1').getBoundingClientRect().height > 0);
 const vantaPa = async (fn, ms = 4000) => { const slut = Date.now() + ms; while (Date.now() < slut) { if (await fn()) return true; await new Promise(r => setTimeout(r, 50)) } return false };
 
 test('inloggad: framsidan skickar direkt till studion och syns aldrig emellan', { skip, timeout: 30000 }, async () => {

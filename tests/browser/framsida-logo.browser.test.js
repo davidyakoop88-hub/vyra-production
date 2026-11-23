@@ -73,12 +73,14 @@ test('märket ligger överst i heron, syns, och bilden laddar faktiskt',
   } finally { await context.close() }
 });
 
-test('märket trycker inte ner prisraden under vecket i en 900px-vy',
+// STARTSIDAN 2026-11-22: prisraden blev hjältens erbjudande — knappen "Testa 3 dagar gratis" med
+// villkoren under ([data-hero-pris]). Löftet är detsamma: det får inte kräva rullning.
+test('märket trycker inte ner erbjudandet under vecket i en 900px-vy',
   { skip, timeout: 60000 }, async () => {
   const { context, page } = await sidan({ width: 1440, height: 900 });
   try {
     const m = await page.evaluate(`(() => {
-      const rad = document.querySelector('.hero-prisrad');
+      const rad = document.querySelector('[data-hero-pris]');
       const marke = document.querySelector('[data-hero-marke]');
       if (!rad) return { saknas: true };
       const r = rad.getBoundingClientRect();
@@ -89,40 +91,32 @@ test('märket trycker inte ner prisraden under vecket i en 900px-vy',
       };
     })()`);
 
-    assert.ok(!m.saknas, '.hero-prisrad saknas');
+    assert.ok(!m.saknas, '[data-hero-pris] saknas');
     assert.ok(m.botten <= m.vy,
-      `prisraden slutar på y=${m.botten} i en ${m.vy}px-vy — den ligger under vecket. Märket är `
+      `erbjudandet slutar på y=${m.botten} i en ${m.vy}px-vy — det ligger under vecket. Märket är `
       + `${m.markeshojd} px högt; antingen krymper det i @media (max-height:1000px) eller så måste `
       + 'annan höjd ge vika. Raden är sidans löfte om tre gratisdagar och får inte kräva rullning.');
   } finally { await context.close() }
 });
 
 // Slutgranskningen 2026-10-21: "prisraden kräver en kort rullning i låga fönster". 1366 x 768 med
-// Chromes list ger ~657 px vy (uppmätt: raden slutade på y=816). Gäller fliken Logga in, som är det
-// besökaren ser först. Skapa konto är ~180 px högre av e-postkravet och villkorstexten, som MÅSTE
-// synas innan kontot skapas — där är en kort rullning rätt pris, och den som fyller i ett formulär
-// har redan sett priset.
-for (const flik of ['Logga in']) {
-  test(`prisraden syns utan rullning på en laptop med webbläsarlist (1366 x 657, ${flik})`,
-    { skip, timeout: 60000 }, async () => {
-    const { context, page } = await sidan({ width: 1366, height: 657 });
-    try {
-      if (flik !== 'Logga in') {
-        await page.evaluate(f => { const b = [...document.querySelectorAll('.login-flikar button')].find(x => x.textContent.trim() === f); if (b) b.click(); }, flik);
-        await page.waitForTimeout(300);
-      }
-      const m = await page.evaluate(`(() => {
-        const r = document.querySelector('.hero-prisrad').getBoundingClientRect();
-        const k = document.querySelector('.login-kort').getBoundingClientRect();
-        return { botten: Math.round(r.bottom), topp: Math.round(r.top), kortBotten: Math.round(k.bottom),
-          vy: innerHeight, bredd: document.documentElement.scrollWidth, vyBredd: innerWidth };
-      })()`);
-      assert.ok(m.botten <= m.vy, `prisraden slutar på y=${m.botten} i en ${m.vy}px-vy`);
-      assert.ok(m.kortBotten <= m.topp + 1, `kortet (botten y=${m.kortBotten}) ligger över prisraden (topp y=${m.topp})`);
-      assert.ok(m.bredd <= m.vyBredd, `sidan rullar i sidled: ${m.bredd} > ${m.vyBredd}`);
-    } finally { await context.close() }
-  });
-}
+// Chromes list ger ~657 px vy. STARTSIDAN 2026-11-22: kortet ligger inte längre i hjälten utan i
+// ett lager som Logga in öppnar, så det som ska synas utan rullning är erbjudandet självt.
+test('erbjudandet syns utan rullning på en laptop med webbläsarlist (1366 x 657)',
+  { skip, timeout: 60000 }, async () => {
+  const { context, page } = await sidan({ width: 1366, height: 657 });
+  try {
+    const m = await page.evaluate(`(() => {
+      const r = document.querySelector('[data-hero-pris]').getBoundingClientRect();
+      const lager = document.querySelector('[data-konto-lager]');
+      return { botten: Math.round(r.bottom), vy: innerHeight, lagerStangt: !lager || lager.hidden,
+        bredd: document.documentElement.scrollWidth, vyBredd: innerWidth };
+    })()`);
+    assert.ok(m.botten <= m.vy, `erbjudandet slutar på y=${m.botten} i en ${m.vy}px-vy`);
+    assert.ok(m.lagerStangt, 'inloggningslagret är öppet innan besökaren tryckt — det täcker erbjudandet');
+    assert.ok(m.bredd <= m.vyBredd, `sidan rullar i sidled: ${m.bredd} > ${m.vyBredd}`);
+  } finally { await context.close() }
+});
 
 test('märket krymper i ett kort fönster i stället för att äta prisraden',
   { skip, timeout: 60000 }, async () => {
@@ -143,81 +137,33 @@ test('märket krymper i ett kort fönster i stället för att äta prisraden',
   } finally { await stor.context.close(); await liten.context.close() }
 });
 
-test('kortet star till vanster och bilden i mitten', { skip, timeout: 60000 }, async () => {
-  // Formen andrades TVA ganger 2026-08-21 och provet foljer med, annars vaktar det ett beslut som
-  // inte galler: forst ett centrerat kort med mobilen bakom (efter en referens David visade), och
-  // sedan hans omval — glaset kvar, men kortet till VANSTER och bilden synlig i MITTEN.
-  //
-  // Bilden centreras i VYN, inte i "det som blir over". Lag kortet i floden hamnade mobilen 200 px
-  // hoger om mitten (uppmatt: x=804 i en 1440-vy), for den centrerades i ytan bredvid kortet.
-  // Kortet ar darfor lyft ur floden pa breda fonster.
+test('bilden star i mitten och inloggningsrutan ligger overst nar den oppnas', { skip, timeout: 60000 }, async () => {
+  // Formen andrades 2026-08-21 (kortet till vanster, bilden i MITTEN) och igen 2026-11-22: kortet
+  // flyttade ut ur hjalten till ett lager som Logga in oppnar. Kvar av det gamla kravet: bilden
+  // centreras i VYN, och kortet far aldrig hamna under scenen — annars stjal en gava klicket fran
+  // faltet. Det mats nu med en traff: mitt i det oppna kortets falt ska klicket landa i faltet.
   const { context, page } = await sidan({ width: 1440, height: 900 });
   try {
-    const m = await page.evaluate(`(() => {
-      const kort = document.querySelector('.login-kort');
+    const fore = await page.evaluate(`(() => {
       const scen = document.querySelector('.hero-mobil-scen');
-      if (!kort || !scen) return { saknas: true };
-      const k = kort.getBoundingClientRect(), s2 = scen.getBoundingClientRect();
-      return {
-        kortMitt: k.left + k.width / 2,
-        bildMitt: s2.left + s2.width / 2,
-        vyMitt: innerWidth / 2,
-        overlapp: k.right > s2.left,
-        kortZ: Number(getComputedStyle(kort).zIndex) || 0,
-        scenZ: Number(getComputedStyle(scen).zIndex) || 0
-      };
+      if (!scen) return { saknas: true };
+      const s2 = scen.getBoundingClientRect();
+      return { bildMitt: s2.left + s2.width / 2, vyMitt: innerWidth / 2 };
     })()`);
-    assert.ok(!m.saknas, 'kortet eller scenen saknas');
-    assert.ok(m.kortMitt < m.vyMitt - 100,
-      `kortet star pa ${Math.round(m.kortMitt)} i en ${Math.round(m.vyMitt * 2)} px vy — det ska `
-      + 'ligga tydligt till vanster');
-    assert.ok(Math.abs(m.bildMitt - m.vyMitt) <= 8,
-      `bilden har sin mitt pa ${Math.round(m.bildMitt)} men vyns mitt ar ${Math.round(m.vyMitt)} — `
-      + 'den ska centreras i VYN, inte i ytan som blir over bredvid kortet');
-    assert.equal(m.overlapp, false,
-      'kortet lapper over bilden; pa breda fonster ska de sta bredvid varandra utan att krocka');
-    // GAVORNA MATS OVER HELA VARVET, inte i det ogonblick provet rakar kora.
-    //
-    // Forsta versionen jamforde kortet mot scenens LAYOUTRUTA — som bara omsluter telefonen.
-    // Gavorna svavar langt utanfor den via transformer, sa vakten gav GRONT medan kortet i
-    // sjalva verket tackte en gava med 33 px (uppmatt: gavans vanstra kant 445, kortets hoger 478).
-    // David sag det pa en skarmbild som provet sa var i sin ordning.
-    //
-    // Banan ar en cirkel, sa dess ytterlage ar stabilt — men VILKEN gava som star dar vandrar.
-    // Darfor spolas animationerna igenom i 60 steg. Kontrollmatningen nedan bevisar att
-    // avspolningen faktiskt flyttar nagot; utan den kunde slingan mata samma bildruta 60 ganger.
-    const bana = await page.evaluate(`(() => {
-      const kort = document.querySelector('.login-kort').getBoundingClientRect();
-      const rot = document.querySelector('.hero-gavoring-rot');
-      const anims = rot ? rot.getAnimations({ subtree: true }) : [];
-      if (!anims.length) return { ingenBana: true };
-      const varv = anims[0].effect.getTiming().duration || 34000;
-      const forsta = document.querySelector('.hero-gava');
-      anims.forEach(a => { a.pause(); a.currentTime = 0 });
-      const vid0 = forsta.getBoundingClientRect().left;
-      anims.forEach(a => { a.currentTime = varv / 4 });
-      const vidKvart = forsta.getBoundingClientRect().left;
-      let minst = Infinity;
-      for (let i = 0; i < 60; i++) {
-        anims.forEach(a => { a.currentTime = varv * i / 60 });
-        for (const g of document.querySelectorAll('.hero-gava')) {
-          const l = g.getBoundingClientRect().left;
-          if (l < minst) minst = l;
-        }
-      }
-      anims.forEach(a => a.play());
-      return { kortHoger: kort.right, minstaGava: minst, rorSig: Math.round(vid0) !== Math.round(vidKvart) };
+    assert.ok(!fore.saknas, 'scenen saknas');
+    assert.ok(Math.abs(fore.bildMitt - fore.vyMitt) <= 8,
+      `bilden har sin mitt pa ${Math.round(fore.bildMitt)} men vyns mitt ar ${Math.round(fore.vyMitt)}`);
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.click('[data-konto-oppna="login"]');
+    await page.waitForTimeout(400);
+    const m = await page.evaluate(`(() => {
+      const falt = document.querySelector('#loginEmail');
+      const r = falt.getBoundingClientRect();
+      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      const traff = document.elementFromPoint(x, y);
+      return { syns: r.width > 0 && r.height > 0 && y > 0 && y < innerHeight, traffFaltet: !!traff && (traff === falt || falt.contains(traff)) };
     })()`);
-    assert.ok(!bana.ingenBana, 'hittar ingen gavobana att mata');
-    assert.equal(bana.rorSig, true,
-      'kontrollmatning: avspolningen flyttar inte gavorna, sa slingan mater samma bildruta 60 '
-      + 'ganger och sager ingenting om varvet');
-    assert.ok(bana.minstaGava > bana.kortHoger,
-      `kortet slutar pa x=${Math.round(bana.kortHoger)} men en gava nar x=${Math.round(bana.minstaGava)} `
-      + 'nagon gang under varvet — kortet tacker da bilden. Gor kortet smalare eller flytta det '
-      + 'narmare kanten.');
-    assert.ok(m.kortZ >= m.scenZ,
-      `kortet (z=${m.kortZ}) ligger under scenen (z=${m.scenZ}) — pa smalare fonster gar kortet `
-      + 'tillbaka i floden och maste anda ligga overst, annars stjal en gava klicket fran faltet');
+    assert.ok(m.syns, 'e-postfaltet syns inte i vyn nar rutan oppnats');
+    assert.ok(m.traffFaltet, 'ett klick mitt i e-postfaltet landar pa nagot annat — rutan ligger under scenen');
   } finally { await context.close() }
 });

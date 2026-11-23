@@ -44,9 +44,16 @@ async function lasFramsidan(viewport) {
           sektionText: (document.querySelector('#sa-funkar-det') || {}).innerText || '',
           prov: prov ? prov.innerText : '',
           provVillkorLank: !!(prov && prov.querySelector('a[href="terms.html"]')),
-          prisLankar: [...document.querySelectorAll('[data-hero-pris] ~ * a, .hero-prisrad a')].filter(synlig).map(a => a.getAttribute('href')),
-          loginKvar: synlig(document.querySelector('.login-kort[data-login] form #loginEmail')) && synlig(document.querySelector('.login-kort .login-knapp')),
+          prisLankar: [...document.querySelectorAll('[data-hero-pris] a, [data-hero-pris] ~ * a, .hero-prisrad a')].filter(synlig).map(a => a.getAttribute('href')),
         };
+      });
+      // STARTSIDAN 2026-11-22: kortet bor i ett lager som toppradens Logga in öppnar. Att det står
+      // kvar provas som en besökare når det: tryck, och kortet ska finnas där med sitt formulär.
+      await page.click('[data-konto-oppna="login"]');
+      await page.waitForTimeout(300);
+      m.loginKvar = await page.evaluate(() => {
+        const synlig = el => !!el && el.getBoundingClientRect().width > 0 && getComputedStyle(el).visibility !== 'hidden';
+        return synlig(document.querySelector('.login-kort[data-login] form #loginEmail')) && synlig(document.querySelector('.login-kort .login-knapp'));
       });
       return m;
     } finally { await page.close(); }

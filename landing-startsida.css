@@ -28,7 +28,9 @@
   border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px;transition:border-color .2s ease,color .2s ease}
 .hero-se:hover{color:#fff;border-color:var(--violet-light)}
 .hero-villkor{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;margin:0;
-  font-size:13px;color:#b4a7c6}
+  font-size:14px;color:#b4a7c6}
+.hero-villkor a{color:#d9cbef;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(217,203,239,.45)}
+.hero-villkor a:hover{color:#fff}
 .hero-villkor i{font-style:normal;color:#6f6380}
 .hero-funkar{margin:8px 0 0;font-size:12px;letter-spacing:.06em;color:#8f829f}
 
@@ -85,9 +87,9 @@
   .hero .lead{font-size:15px;line-height:1.55;padding:0 4px}
   .hero-cta{flex-direction:column;gap:14px;margin:22px 0 12px}
   .hero .hero-cta .hero-prova{width:min(320px,100%);justify-content:center}
-  .hero-villkor{font-size:12.5px;max-width:320px;margin:0 auto}
+  .hero-villkor{font-size:14px;max-width:320px;margin:0 auto}
   .hero-villkor i{display:none}
-  .hero-villkor span{flex-basis:100%}
+  .hero-villkor span,.hero-villkor a{flex-basis:100%}
   .hero .hero-botten{margin-top:18px}
   .hero-botten .hero-mobil-scen{order:0;margin:8px auto 34px}
 }

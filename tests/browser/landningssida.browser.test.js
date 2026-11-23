@@ -231,7 +231,10 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // 2026-11-09 (David: "fixa bredden, visa fler widgetar" + "jag vill inte visa ut alla våra
     // widget så de inte blir kopierade"): "Över 150 widgetdesigner" efter Gift Campaign — familjerna
     // i sex grupper, som TEXT. Vaktas av provet nedan.
-    assert.deepEqual(m.delar, ['hero', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'widgetar', 'logos', 'premium', 'avslut-cta', 'mini-sidfot'],
+    // 2026-11-22 (startsidan, Webbdesignern): "Prova direkt · utan konto" direkt under heron, så att
+    // en besökare kan skicka en gåva och se effekten före allt annat. "VYRA i korthet" och "Vanliga
+    // frågor" före den sista knappen. Inloggningen flyttade till ett lager utanför <main>.
+    assert.deepEqual(m.delar, ['hero', 'prova', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'widgetar', 'logos', 'premium', 'fakta-rad', 'vanliga-fragor', 'avslut-cta', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });
