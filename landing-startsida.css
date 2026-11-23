@@ -1,0 +1,217 @@
+/* landing-startsida.css — startsidan 2026-11-22 (Webbdesignern).
+   Målet: en ny besökare ska fatta vad VYRA är på 5 sekunder och starta de 3 gratisdagarna.
+   Laddas EFTER styles.css och skriver bara över det som behövs:
+     · hjälten: rubrik, förklaring och knappen direkt under — knappen ligger alltid på första skärmen
+     · inloggningskortet ligger i ett lager (öppnas från "Logga in" och "Testa 3 dagar gratis")
+     · två riktiga klipp från VYRA:s overlay bredvid mobilbilden (dator)
+     · fakta-rad och Vanliga frågor före slutknappen
+   Stil: tunna linjer, dämpad palett, lugn rörelse. */
+
+/* ---------- Logga in i hörnet, bredvid språkvalet ---------- */
+.topp-logga-in{position:absolute;top:18px;right:118px;z-index:50;
+  background:transparent;border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  padding:7px 16px;color:#e9defa;font:600 12.5px var(--font-body);letter-spacing:.02em;cursor:pointer;
+  transition:border-color .2s ease,background .2s ease}
+.topp-logga-in:hover{border-color:rgba(216,88,255,.55);background:rgba(168,58,239,.10)}
+.topp-logga-in:focus-visible{outline:2px solid var(--violet-light);outline-offset:3px}
+
+/* ---------- Hjälten ---------- */
+.hero .hero-topp{max-width:860px}
+.hero h1{margin:18px 0 14px}
+.hero .lead{max-width:600px;color:#bdb0cf}
+.hero-cta{display:flex;align-items:center;justify-content:center;gap:22px;margin:26px 0 12px;flex-wrap:wrap}
+.hero .hero-cta .hero-prova{margin:0;padding:15px 28px;font-size:15.5px;min-height:52px;
+  display:inline-flex;align-items:center;gap:10px}
+.hero-cta .hero-prova span{transition:transform .2s ease}
+.hero-cta .hero-prova:hover span{transform:translateX(3px)}
+.hero-se{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;
+  border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px;transition:border-color .2s ease,color .2s ease}
+.hero-se:hover{color:#fff;border-color:var(--violet-light)}
+.hero-villkor{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px;margin:0;
+  font-size:14px;color:#b4a7c6}
+.hero-villkor a{color:#d9cbef;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(217,203,239,.45)}
+.hero-villkor a:hover{color:#fff}
+.hero-villkor i{font-style:normal;color:#6f6380}
+.hero-funkar{margin:8px 0 0;font-size:12px;letter-spacing:.06em;color:#8f829f}
+
+/* Bildraden: klipp · mobil · klipp. Kortet är borta ur hjälten, så raden centreras fritt. */
+.hero .hero-botten{display:flex;justify-content:center;align-items:center;gap:clamp(170px,14vw,230px);
+  margin-top:30px;position:relative}
+.hero-klipp{margin:0;width:clamp(200px,17vw,250px);flex:none;position:relative;z-index:2;
+  border:1px solid rgba(255,255,255,.10);border-radius:16px;overflow:hidden;
+  background:linear-gradient(168deg,rgba(28,20,42,.72),rgba(12,8,20,.66));
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 30px 70px -36px #000,0 0 0 1px rgba(255,255,255,.04) inset}
+.hero-klipp-film{aspect-ratio:4/3;background:#070417}
+.hero-klipp-h .hero-klipp-film{aspect-ratio:4/5;background:#120c1a}
+.hero-klipp video{display:block;width:100%;height:100%;object-fit:cover}
+.hero-klipp figcaption{display:grid;gap:2px;padding:10px 14px 12px;text-align:left;
+  border-top:1px solid rgba(255,255,255,.07)}
+.hero-klipp figcaption b{font:700 13px var(--font-display);color:#f1e9ff;letter-spacing:.01em}
+.hero-klipp figcaption span{font-size:12px;color:#a99cba}
+.hero-klipp-v{transform:translateY(-14px)}
+.hero-klipp-h{transform:translateY(18px)}
+
+/* Gåvobanan svävar ~120 px under mobilens ruta — luft i botten så den inte möter nästa sektion. */
+.hero{padding-bottom:110px}
+
+/* Korta datorfönster: knappen ska alltid synas utan rullning — bilden ger vika, aldrig knappen. */
+@media (min-width:981px) and (max-height:1000px){
+  .hero h1{font-size:52px;margin:12px 0 10px}
+  .hero-cta{margin:20px 0 10px}
+  .hero .hero-botten{margin-top:22px}
+  .hero-klipp{width:clamp(180px,14vw,220px)}
+}
+@media (min-width:981px) and (max-height:820px){
+  .hero h1{font-size:44px}
+  .hero .lead{font-size:14.5px;line-height:1.5}
+  .hero-klipp{width:clamp(160px,12vw,190px)}
+}
+@media (min-width:981px) and (max-height:720px){
+  .hero h1{font-size:38px}
+  .hero-cta{margin:14px 0 8px}
+  .hero .hero-cta .hero-prova{padding:12px 22px;min-height:46px}
+  .hero-klipp{display:none}
+}
+
+/* Smalare: klippen tar för mycket plats bredvid gåvobanan — mobilbilden räcker. */
+@media (max-width:1180px){
+  .hero-klipp{display:none}
+}
+
+/* Telefon: rubriken får plats, knappen först, sedan bilden. */
+@media (max-width:760px){
+  .topp-logga-in{top:14px;right:104px;padding:6px 13px}
+  .hero{padding-top:60px}
+  .hero h1{font-size:38px;line-height:1.1}
+  .hero .lead{font-size:15px;line-height:1.55;padding:0 4px}
+  .hero-cta{flex-direction:column;gap:14px;margin:22px 0 12px}
+  .hero .hero-cta .hero-prova{width:min(320px,100%);justify-content:center}
+  .hero-villkor{font-size:14px;max-width:320px;margin:0 auto}
+  .hero-villkor i{display:none}
+  .hero-villkor span,.hero-villkor a{flex-basis:100%}
+  .hero .hero-botten{margin-top:18px}
+  .hero-botten .hero-mobil-scen{order:0;margin:8px auto 34px}
+}
+
+/* ---------- Kontolagret (inloggningskortet) ---------- */
+html.konto-oppet{overflow:hidden}
+.konto-lager{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:20px;overflow-y:auto}
+.konto-lager-bakgrund{position:fixed;inset:0;background:rgba(6,3,10,.72);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:kontoTona .2s ease}
+.konto-lager-ruta{position:relative;width:min(400px,100%);animation:kontoIn .25s ease}
+.konto-lager .login-kort{width:100%;margin:0;
+  background:linear-gradient(168deg,rgba(28,20,42,.94),rgba(12,8,20,.94));
+  border:1px solid rgba(255,255,255,.11);border-radius:20px;padding:26px 24px;
+  box-shadow:0 40px 90px -34px #000,0 0 0 1px rgba(255,255,255,.05) inset,0 0 60px -20px rgba(168,58,239,.34)}
+.konto-stang{position:absolute;top:-14px;right:-14px;z-index:3;width:34px;height:34px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.16);background:#140d1d;color:#e9defa;font-size:20px;line-height:1;cursor:pointer}
+.konto-stang:hover{border-color:var(--violet-light)}
+.konto-stang:focus-visible{outline:2px solid var(--violet-light);outline-offset:2px}
+@keyframes kontoTona{from{opacity:0}to{opacity:1}}
+@keyframes kontoIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (max-width:480px){.konto-stang{top:-10px;right:-4px}}
+@media (prefers-reduced-motion:reduce){.konto-lager-bakgrund,.konto-lager-ruta{animation:none}}
+
+/* ---------- Fakta-rad ---------- */
+.fakta-rad{position:relative;z-index:1;max-width:980px;margin:56px auto 0;padding:0 20px;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+.fakta-rad div{padding:22px 18px;text-align:center;display:grid;gap:4px}
+.fakta-rad div+div{border-left:1px solid rgba(255,255,255,.07)}
+.fakta-rad b{font:800 24px/1.1 var(--font-display);color:#f1e9ff;letter-spacing:-.01em}
+.fakta-rad span{font-size:12.5px;line-height:1.45;color:#a99cba}
+@media (max-width:760px){
+  .fakta-rad{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fakta-rad div:nth-child(3){border-left:0}
+  .fakta-rad div:nth-child(n+3){border-top:1px solid rgba(255,255,255,.07)}
+}
+
+/* ---------- Vanliga frågor ---------- */
+.faq#vanliga-fragor{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:72px 20px 0;text-align:left}
+.faq#vanliga-fragor>h2{font:800 34px/1.15 var(--font-display);letter-spacing:-.02em;text-align:center;margin:0 0 26px;color:#fff}
+.faq-lista{border-top:1px solid rgba(255,255,255,.09)}
+.faq-lista details{border-bottom:1px solid rgba(255,255,255,.09)}
+.faq-lista summary{list-style:none;cursor:pointer;padding:18px 36px 18px 2px;position:relative;
+  font:600 15px var(--font-body);color:#efe7fb}
+.faq-lista summary::-webkit-details-marker{display:none}
+.faq-lista summary::after{content:'';position:absolute;right:8px;top:50%;width:9px;height:9px;
+  border-right:1.5px solid #b9a6d6;border-bottom:1.5px solid #b9a6d6;transform:translateY(-70%) rotate(45deg);
+  transition:transform .25s ease}
+.faq-lista details[open] summary::after{transform:translateY(-30%) rotate(-135deg)}
+.faq-lista summary:hover{color:#fff}
+.faq-lista summary:focus-visible{outline:2px solid var(--violet-light);outline-offset:2px;border-radius:4px}
+.faq-lista p{margin:0 0 20px 2px;color:#b4a7c6;font-size:14px;line-height:1.7;max-width:640px}
+.faq-mer{margin:20px 0 0;text-align:center;font-size:13px;color:#a99cba}
+.faq-mer a{color:#d9cbef}
+.faq-mer .faq-hamta{display:block;margin-top:8px}
+
+/* ---------- Två styrkor under knappen (David 2026-11-22) ----------
+   Bara text och tunna linjeikoner — inga logotyper från Microsoft eller TikTok. */
+.hero-styrkor{position:relative;z-index:3;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 10px;margin:14px auto 0;padding:0;list-style:none;max-width:720px}
+.hero-styrkor li{display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 10px;
+  position:relative;z-index:3;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(14,9,22,.86);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-size:12.5px;line-height:1.35;color:#cfc2e2;text-align:left}
+.hero-styrkor svg{width:15px;height:15px;flex:none;fill:none;stroke:#d9b8ff;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+@media (min-width:981px) and (max-height:820px){.hero-styrkor{margin-top:10px}}
+@media (max-width:760px){.hero-styrkor{flex-direction:column;align-items:center;gap:6px}.hero-styrkor li{max-width:320px}}
+
+/* ---------- Prova en effekt direkt (idé 1) ----------
+   Samma ram som Fan Level Up-sektionen nedanför: 1040 px, tunna linjer, mörk panel. */
+.prova{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:56px 20px 40px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);grid-template-areas:"topp scen" "kontroll scen";
+  column-gap:44px;row-gap:0;align-items:center;
+  background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
+.prova-text{text-align:left}
+.prova-topp{grid-area:topp;align-self:end}
+.prova-kontroll{grid-area:kontroll;align-self:start}
+.prova-scen{grid-area:scen}
+.prova-text h2{margin:0 0 10px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text);letter-spacing:-.01em}
+.prova-ingress{margin:0 0 24px;max-width:440px;color:var(--muted);font-size:14.5px;line-height:1.65}
+.prova-gavor{display:flex;gap:12px;margin:0 0 18px}
+.prova-gava{display:flex;flex-direction:column;align-items:center;gap:8px;width:112px;padding:14px 10px 12px;cursor:pointer;
+  border:1px solid var(--line);border-radius:16px;background:linear-gradient(170deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+  color:#e9defa;font:600 13px var(--font-body);transition:border-color .25s ease,background .25s ease,transform .25s ease}
+.prova-gava img{width:56px;height:56px;object-fit:contain;transition:transform .35s ease}
+.prova-gava:hover{border-color:rgba(216,88,255,.45)}
+.prova-gava:hover img{transform:translateY(-2px)}
+.prova-gava[aria-pressed="true"]{border-color:rgba(228,179,90,.7);background:linear-gradient(170deg,rgba(228,179,90,.12),rgba(168,58,239,.06))}
+.prova-gava:focus-visible,.prova-design button:focus-visible,.prova-galleri:focus-visible{outline:2px solid var(--violet-light);outline-offset:3px}
+.prova-design{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 18px}
+.prova-etikett{margin-right:6px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8f829f}
+.prova-design button{padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:transparent;cursor:pointer;
+  color:#cfc2e2;font:600 12.5px var(--font-body);transition:border-color .2s ease,color .2s ease,background .2s ease}
+.prova-design button:hover{color:#fff;border-color:rgba(216,88,255,.45)}
+.prova-design button[aria-pressed="true"]{color:#fff;border-color:rgba(216,88,255,.6);background:rgba(168,58,239,.12)}
+.prova-not{margin:0 0 14px;max-width:440px;color:#8f829f;font-size:12.5px;line-height:1.6}
+.prova-galleri{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
+.prova-galleri:hover{color:#fff;border-color:var(--violet-light)}
+.prova-scen{margin:0;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:#0b0713;
+  box-shadow:0 34px 80px -44px #000,0 0 0 1px rgba(255,255,255,.03) inset}
+.prova-film{position:relative;aspect-ratio:5/4;background:radial-gradient(120% 90% at 50% 40%,#140c22 0%,#070417 70%)}
+.prova-film video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.prova-tips{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);margin:0;padding:6px 14px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);background:rgba(7,4,14,.72);color:#cfc2e2;font-size:12px;white-space:nowrap;
+  transition:opacity .3s ease}
+.prova-film.spelar .prova-tips{opacity:0}
+.prova-scen figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px 13px;
+  border-top:1px solid var(--line);background:var(--panel)}
+.prova-scen figcaption b{font:700 13.5px var(--font-display);color:var(--text)}
+.prova-scen figcaption span{font-size:12.5px;color:var(--muted);text-align:right}
+@media (max-width:860px){
+  .prova{grid-template-columns:minmax(0,1fr);grid-template-areas:"topp" "scen" "kontroll";row-gap:20px;padding:44px 16px 32px}
+  .prova-ingress{margin-bottom:0}
+  .prova-text{text-align:center}
+  .prova-ingress,.prova-not{margin-left:auto;margin-right:auto}
+  .prova-gavor,.prova-design{justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){
+  .prova-gava,.prova-gava img,.prova-tips{transition:none}
+  .prova-gava:hover img{transform:none}
+}
+
+/* Galleri-länken bredvid knappen under widgetlistan */
+.widgetar-knappar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 24px;margin-top:26px}
+.widgetar-knappar .widgetar-knapp{margin-top:0}
+.widgetar-galleri-lank{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
+.widgetar-galleri-lank:hover{color:#fff;border-color:var(--violet-light)}

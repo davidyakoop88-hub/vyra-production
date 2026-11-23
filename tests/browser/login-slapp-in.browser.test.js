@@ -95,6 +95,9 @@ async function loggaIn(opts = {}, fore = null) {
   page.on('console', m => { if (m.type() === 'error') page.__konsol.push(`konsol@${var_()}: ${m.text()}`) });
   page.on('pageerror', e => page.__konsol.push(`sidfel@${var_()}: ${e && e.message}`));
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
+  // STARTSIDAN 2026-11-22: kortet bor i ett stängt lager. Öppna det som en besökare gör,
+  // med toppradens Logga in, innan fälten fylls i.
+  if (await page.$('[data-konto-oppna="login"]')) await page.click('[data-konto-oppna="login"]');
   await page.waitForSelector('#loginEmail');
   // Hook for prov som behover andra sidan INNAN inloggningen (t.ex. sla av alla animationer).
   if (fore) await fore(page);

@@ -32,6 +32,10 @@ function startsidan({ svar = {} } = {}) {
   };
   w.matchMedia = () => ({ matches: true });   // reduced motion: ingen dörr, ingen väntan
   w.eval(las('landing-login.js'));
+  // STARTSIDAN 2026-11-22: kortet bor i ett lager (data-konto-lager) som öppnas från toppradens
+  // Logga in. Öppna det som en besökare gör innan kortets lägen mäts.
+  w.requestAnimationFrame = w.requestAnimationFrame || (f => setTimeout(f, 0));
+  w.document.querySelector('[data-konto-oppna="login"]').click();
   return { w, d: w.document, anrop };
 }
 const synlig = el => {
@@ -192,4 +196,29 @@ test('cachebustarna höjdes med filerna, i formatet datum-siffra', () => {
     assert.notEqual(v, '20261017-epost', `${fil} bär fortfarande versionen från före granskningen`);
     assert.match(v, /^\d{8}-\d+$/, `cachebusten för ${fil} ska vara datum-siffra: ${v}`);
   }
+});
+
+
+test('startsidan 2026-11-22: kortet bor i ett stängt lager som Logga in och Testa gratis öppnar med rätt flik', () => {
+  const html = las('index.html').replace(/<script[\s\S]*?<\/script>/g, '');
+  const ny = () => {
+    const w = new JSDOM(html, { runScripts: 'outside-only', url: 'https://vyra.test/' }).window;
+    w.fetch = async () => ({ ok: true, json: async () => ({}) });
+    w.matchMedia = () => ({ matches: true });
+    w.requestAnimationFrame = f => setTimeout(f, 0);
+    w.eval(las('landing-login.js'));
+    return w.document;
+  };
+  let d = ny();
+  const lager = d.querySelector('[data-konto-lager]');
+  assert.ok(lager && lager.contains(d.querySelector('[data-login]')), 'kortet ska ligga i lagret');
+  assert.equal(lager.hidden, true, 'lagret ska vara stängt när sidan laddas');
+  d.querySelector('[data-konto-oppna="login"]').click();
+  assert.equal(lager.hidden, false, 'Logga in i toppraden öppnar lagret');
+  assert.equal(d.querySelector('[data-login-flik="login"]').getAttribute('aria-selected'), 'true');
+
+  d = ny();
+  d.querySelector('[data-prova-gratis]').click();
+  assert.equal(d.querySelector('[data-konto-lager]').hidden, false, 'Testa gratis öppnar lagret');
+  assert.equal(d.querySelector('[data-login-flik="register"]').getAttribute('aria-selected'), 'true', 'Testa gratis ska visa Skapa konto');
 });
