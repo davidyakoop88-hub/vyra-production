@@ -720,3 +720,9 @@ Varje rad är en gång någon medvetet bytte ut hur en widget får se ut.
 - **Motiv:** Ny widget Chattavatar 3 (flanell) i katalogen (PR 830/832)
 - **Motor:** Google Chrome for Testing 151.0.7922.34
 - **Nycklar:** 1 av 178 (filter: chattavatar:3) — catalog:vyrapaket:chattavatar:3
+
+## 2026-11-23 — 1 referenser skrivna
+
+- **Motiv:** Ordjaktens räknare uppe till höger går från 1 / 32 till 1 / 93 eftersom ordlistan växte med svåra ord. Avsedd ändring.
+- **Motor:** Google Chrome for Testing 151.0.7922.34
+- **Nycklar:** 1 av 178 (filter: ordjakten) — catalog:vyrapaket:ordjakten
