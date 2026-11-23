@@ -75,14 +75,14 @@ test('ett nytt paket kräver namn och prefix, och kan inte heta egna eller som e
 test('ord: giltiga läggs sist, dubbletter (även mot nödlistan), ogiltiga och avslöjande ledtrådar avvisas', () => {
   const { data } = nuvarande(), antal = data.ordjakt.ord.length;
   const r = S.laggTill(data, { ordjakt: [
-    { ord: 'bergsbestigare', ledtrad: 'Tar sig upp på toppar' },
+    { ord: 'provordxq', ledtrad: 'Tar sig upp på toppar' },
     { ord: 'BANAN', ledtrad: 'finns i nödlistan' }, { ord: 'KOMPASS', ledtrad: 'finns i filen' },
     { ord: 'AB', ledtrad: 'för kort' }, { ord: 'RÄKNING1', ledtrad: 'siffra' }, { ord: 'FJÄRRSTYRNING', ledtrad: 'Ordet FJÄRRSTYRNING avslöjas' },
     { ord: 'LÅNGTLÅNGTORDHÄR', ledtrad: 'för långt' }, {}, null] }, { nod });
-  assert.deepEqual(r.tillagda.map(t => t.post[0]), ['BERGSBESTIGARE'], 'gemener görs till versaler');
+  assert.deepEqual(r.tillagda.map(t => t.post[0]), ['PROVORDXQ'], 'gemener görs till versaler');
   assert.equal(r.avvisade.length, 8);
   assert.equal(r.data.ordjakt.ord.length, antal + 1);
-  assert.deepEqual(r.data.ordjakt.ord.at(-1), ['BERGSBESTIGARE', 'Tar sig upp på toppar']);
+  assert.deepEqual(r.data.ordjakt.ord.at(-1), ['PROVORDXQ', 'Tar sig upp på toppar']);
 });
 
 test('för många förslag på en gång avvisas — en körning ska gå att läsa igenom', () => {
@@ -95,7 +95,7 @@ test('för många förslag på en gång avvisas — en körning ska gå att läs
 
 test('det verktyget släpper igenom godkänns också av widgetarna (samma regler, ingen tyst bortsortering)', () => {
   const t = lasa('spelinnehall.js'), { huvud, data } = S.las(t);
-  const r = S.laggTill(data, { quiz: { allmansvar: [fraga()], musiksvar: { namn: 'Musik · svår', prefix: 'hm', fragor: [fraga({ fraga: 'Vilken färg har gräs?', svar: ['Grön', 'Blå', 'Röd'], ratt: 0 })] } }, ordjakt: [{ ord: 'BERGSBESTIGARE', ledtrad: 'Tar sig upp på toppar' }] }, { nod });
+  const r = S.laggTill(data, { quiz: { allmansvar: [fraga()], musiksvar: { namn: 'Musik · svår', prefix: 'hm', fragor: [fraga({ fraga: 'Vilken färg har gräs?', svar: ['Grön', 'Blå', 'Röd'], ratt: 0 })] } }, ordjakt: [{ ord: 'PROVORDXQ', ledtrad: 'Tar sig upp på toppar' }] }, { nod });
   const dom = new JSDOM('<!doctype html><body></body>', { url: 'https://vyralive.app/studio.html?overlay=1', runScripts: 'dangerously' }), w = dom.window;
   try {
     w.eval('var wh=function(){return ""};var render=function(){};var props=function(){return ""};var bind=function(){};var selected=null;var view="editor";');
@@ -126,12 +126,12 @@ test('källkontroll: tal jämförs oavsett decimaltecken', () => {
 
 test('rapporten visar varje ny post, källkontrollens utfall och de avvisade förslagen', () => {
   const { data } = nuvarande();
-  const r = S.laggTill(data, { quiz: { allmansvar: [fraga({ fraga: 'Vilken färg har | gräs?', svar: ['Grön', 'Blå', 'Röd'], ratt: 0 }), fraga({ ratt: 7 })] }, ordjakt: [{ ord: 'BERGSBESTIGARE', ledtrad: 'Tar sig upp på toppar' }] }, { idag: '2026-12-07', nod });
+  const r = S.laggTill(data, { quiz: { allmansvar: [fraga({ fraga: 'Vilken färg har | gräs?', svar: ['Grön', 'Blå', 'Röd'], ratt: 0 }), fraga({ ratt: 7 })] }, ordjakt: [{ ord: 'PROVORDXQ', ledtrad: 'Tar sig upp på toppar' }] }, { idag: '2026-12-07', nod });
   const md = S.rapport({ ...r, kallor: new Map([[r.tillagda[0].post[0], { niva: 'varning', skal: 'svaret saknas' }]]), version: r.data.version });
   assert.match(md, /Nytt spelinnehåll · version 20261207-1/);
   assert.match(md, /1 frågor och 1 ord/);
   assert.match(md, /⚠️ svaret saknas/);
-  assert.match(md, /BERGSBESTIGARE/);
+  assert.match(md, /PROVORDXQ/);
   assert.match(md, /Avvisade förslag/);
   assert.match(md, /Vilken färg har \\\| gräs\?/, 'lodräta streck i en fråga bryter inte tabellen');
   assert.match(md, /granskad och sammanslagen/);
@@ -139,7 +139,7 @@ test('rapporten visar varje ny post, källkontrollens utfall och de avvisade fö
 
 test('kommandoraden: utan --skriv skrivs ingenting, och en förslagsfil krävs', () => {
   const fore = lasa('spelinnehall.js'), tmp = path.join(require('node:os').tmpdir(), 'vyra-forslag-' + process.pid + '.json');
-  fs.writeFileSync(tmp, JSON.stringify({ quiz: { allmansvar: [fraga()] }, ordjakt: [{ ord: 'BERGSBESTIGARE', ledtrad: 'Tar sig upp på toppar' }] }));
+  fs.writeFileSync(tmp, JSON.stringify({ quiz: { allmansvar: [fraga()] }, ordjakt: [{ ord: 'PROVORDXQ', ledtrad: 'Tar sig upp på toppar' }] }));
   try {
     const kor = (...a) => cp.spawnSync(process.execPath, [path.join(ROOT, 'scripts', 'spelinnehall-forslag.js'), ...a], { encoding: 'utf8' });
     const prov = kor('lagg-till', tmp);

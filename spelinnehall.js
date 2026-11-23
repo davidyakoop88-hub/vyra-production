@@ -16,7 +16,7 @@
 (function () {
   'use strict';
   window.VyraSpelinnehall = {
-    version: '20261123-1',
+    version: '20261123-2',
     quiz: { paket: {
     allmansvar: { namn: 'Allmänbildning · svår', fragor: [
       ['ha1', 'Vilken svensk fick Nobelpriset i litteratur 1909, som första svensk?', ['Verner von Heidenstam', 'Selma Lagerlöf', 'Pär Lagerkvist'], 1, 'https://sv.wikipedia.org/wiki/Selma_Lagerl%C3%B6f'],
@@ -75,7 +75,10 @@
       ['hs23', 'Vilket land var värd för fotbolls-VM 1958, där Pelé slog igenom?', ['Brasilien', 'Schweiz', 'Sverige'], 2, 'https://en.wikipedia.org/wiki/1958_FIFA_World_Cup'],
       ['hs24', 'Vad kallas ställningen 40–40 i tennis?', ['Advantage', 'Deuce', 'Tiebreak'], 1, 'https://en.wikipedia.org/wiki/Tennis_scoring_system'],
       ['hs25', 'Hur lång är ett varv på en vanlig friidrottsbana, innerbanan?', ['300 meter', '400 meter', '500 meter'], 1, 'https://en.wikipedia.org/wiki/Running_track'],
-      ['hs26', 'Vilket land vann herrarnas fotbolls-EM 2004?', ['Portugal', 'Grekland', 'Tjeckien'], 1, 'https://en.wikipedia.org/wiki/UEFA_Euro_2004']]
+      ['hs26', 'Vilket land vann herrarnas fotbolls-EM 2004?', ['Portugal', 'Grekland', 'Tjeckien'], 1, 'https://en.wikipedia.org/wiki/UEFA_Euro_2004'],
+      ['hs27', 'Hur många spelare per lag är på isen samtidigt i traditionell bandy?', ['Elva', 'Nio', 'Tretton'], 0, 'https://en.wikipedia.org/wiki/Bandy'],
+      ['hs28', 'Vilket land var värd för sommar-OS 1992?', ['Italien', 'Frankrike', 'Spanien'], 2, 'https://en.wikipedia.org/wiki/1992_Summer_Olympics'],
+      ['hs29', 'Hur många poäng ger ett fältmål i amerikansk fotboll?', ['Två', 'Tre', 'Fyra'], 1, 'https://en.wikipedia.org/wiki/Field_goal_(American_and_Canadian_football)']]
     },
     gamingsvar: { namn: 'Gaming · svår', fragor: [
       ['hv1', 'Vilket år släpptes Minecraft i version 1.0?', ['2009', '2011', '2013'], 1, 'https://en.wikipedia.org/wiki/Minecraft'],
@@ -103,7 +106,10 @@
       ['hv23', 'Vad heter Master Chiefs AI-följeslagare i Halo?', ['GLaDOS', 'EDI', 'Cortana'], 2, 'https://en.wikipedia.org/wiki/Cortana_(Halo)'],
       ['hv24', 'Vilket år släpptes Nintendo Switch?', ['2015', '2017', '2019'], 1, 'https://en.wikipedia.org/wiki/Nintendo_Switch'],
       ['hv25', 'Vilket år lanserades Sega Dreamcast i Japan?', ['1996', '1998', '2000'], 1, 'https://en.wikipedia.org/wiki/Dreamcast'],
-      ['hv26', 'Vilket svenskt studio utvecklar Battlefield-serien?', ['DICE', 'Mojang', 'Avalanche'], 0, 'https://en.wikipedia.org/wiki/Battlefield_(video_game_series)']]
+      ['hv26', 'Vilket svenskt studio utvecklar Battlefield-serien?', ['DICE', 'Mojang', 'Avalanche'], 0, 'https://en.wikipedia.org/wiki/Battlefield_(video_game_series)'],
+      ['hv27', 'I vilket land skapades Tetris av Alexej Pazjitnov?', ['Sovjetunionen', 'Japan', 'USA'], 0, 'https://en.wikipedia.org/wiki/Tetris'],
+      ['hv28', 'Vad hette Nintendos NES i Japan?', ['Super Famicom', 'Famicom', 'Game Boy'], 1, 'https://en.wikipedia.org/wiki/Nintendo_Entertainment_System'],
+      ['hv29', 'Vilket svenskt studio utvecklade It Takes Two?', ['Avalanche Studios', 'Mojang', 'Hazelight Studios'], 2, 'https://en.wikipedia.org/wiki/It_Takes_Two_(video_game)']]
     },
     historiasvar: { namn: 'Historia · svår', fragor: [
       ['hh1', 'Vilket år erövrade osmanerna Konstantinopel?', ['1453', '1492', '1517'], 0, 'https://en.wikipedia.org/wiki/Fall_of_Constantinople'],
@@ -131,7 +137,10 @@
       ['hh23', 'Vilket år ägde Stockholms blodbad rum?', ['1397', '1523', '1520'], 2, 'https://sv.wikipedia.org/wiki/Stockholms_blodbad'],
       ['hh24', 'Vilket år upplöstes unionen mellan Sverige och Norge?', ['1814', '1905', '1920'], 1, 'https://sv.wikipedia.org/wiki/Unionsuppl%C3%B6sningen_1905'],
       ['hh25', 'Vilket år undertecknades Versaillesfreden?', ['1918', '1920', '1919'], 2, 'https://en.wikipedia.org/wiki/Treaty_of_Versailles'],
-      ['hh26', 'Vilket år bröt första världskriget ut?', ['1914', '1912', '1916'], 0, 'https://en.wikipedia.org/wiki/World_War_I']]
+      ['hh26', 'Vilket år bröt första världskriget ut?', ['1914', '1912', '1916'], 0, 'https://en.wikipedia.org/wiki/World_War_I'],
+      ['hh27', 'Vilket år landade Apollo 11 på månen?', ['1965', '1969', '1972'], 1, 'https://en.wikipedia.org/wiki/Apollo_11'],
+      ['hh28', 'Vilket år gick Sverige över till högertrafik, på Dagen H?', ['1955', '1973', '1967'], 2, 'https://sv.wikipedia.org/wiki/Dagen_H'],
+      ['hh29', 'Vilket år flög bröderna Wright den första motordrivna flygningen?', ['1903', '1911', '1893'], 0, 'https://en.wikipedia.org/wiki/Wright_brothers']]
     },
     geografisvar: { namn: 'Geografi · svår', fragor: [
       ['hg1', 'Vilken är Europas längsta flod?', ['Donau', 'Volga', 'Rhen'], 1, 'https://en.wikipedia.org/wiki/Volga'],
@@ -159,7 +168,10 @@
       ['hg23', 'Vilken är Sveriges djupaste sjö?', ['Vättern', 'Vänern', 'Hornavan'], 2, 'https://sv.wikipedia.org/wiki/Hornavan'],
       ['hg24', 'Vilken stad är Mongoliets huvudstad?', ['Ulan Bator', 'Astana', 'Bisjkek'], 0, 'https://en.wikipedia.org/wiki/Ulaanbaatar'],
       ['hg25', 'Vilket hav ligger mellan Italien och Balkanhalvön?', ['Joniska havet', 'Adriatiska havet', 'Egeiska havet'], 1, 'https://en.wikipedia.org/wiki/Adriatic_Sea'],
-      ['hg26', 'Vilken är Sveriges största ö?', ['Öland', 'Orust', 'Gotland'], 2, 'https://sv.wikipedia.org/wiki/Gotland']]
+      ['hg26', 'Vilken är Sveriges största ö?', ['Öland', 'Orust', 'Gotland'], 2, 'https://sv.wikipedia.org/wiki/Gotland'],
+      ['hg27', 'Vilken stad är Marockos huvudstad?', ['Casablanca', 'Marrakech', 'Rabat'], 2, 'https://en.wikipedia.org/wiki/Rabat'],
+      ['hg28', 'Vilket land är helt omgivet av Sydafrika?', ['Lesotho', 'Eswatini', 'Botswana'], 0, 'https://en.wikipedia.org/wiki/Lesotho'],
+      ['hg29', 'Vilket är Norges högsta berg?', ['Kebnekaise', 'Galdhøpiggen', 'Glittertind'], 1, 'https://en.wikipedia.org/wiki/Galdh%C3%B8piggen']]
     }
     } },
     ordjakt: { ord: [
@@ -223,7 +235,19 @@
     ['VINDKRAFT', 'Energi från snurrande kvarnar'],
     ['BIBLIOTEKARIE', 'Jobbar bland böcker och lånekort'],
     ['ÖVERRASKNING', 'Något oväntat'],
-    ['FJÄLLVANDRING', 'Tur på stigar i höga berg']
+    ['FJÄLLVANDRING', 'Tur på stigar i höga berg'],
+    ['BÄVERDAMM', 'Gnagarens bygge i bäcken'],
+    ['VÄRMEBÖLJA', 'Flera heta dagar i rad'],
+    ['SEGELBÅT', 'Drivs fram av vinden'],
+    ['ISBJÖRN', 'Vitt rovdjur vid Nordpolen'],
+    ['TRÄDKOJA', 'Barnens gömställe uppe bland grenarna'],
+    ['KRYSSORD', 'Rutor att fylla i med ledtrådar'],
+    ['VATTENMELON', 'Stor grön frukt med rött, saftigt kött'],
+    ['MOTORCYKEL', 'Tvåhjuling som kräver körkort'],
+    ['VINDSVÅNING', 'Våningen närmast taket'],
+    ['BERGSBESTIGARE', 'Tar sig upp på höga toppar'],
+    ['CHOKLAD', 'Görs av kakaobönor'],
+    ['KAFFEKOPP', 'Man dricker morgondrycken ur den']
     ] }
   };
 })();
