@@ -68,7 +68,11 @@
       k.qzTid = 10; k.qzPaus = 3;                             // kortaste tillåtna tider, bara på klonen
       const s = quizLage(k);
       s.start = Date.now() - (10000 - QUIZ_FRAGA_MS); s.svar = { 0: {} }; s.namn = {};
-      const ratt = Q.alternativ(lista[0], s.start).findIndex(a => a.ratt), fel = (ratt + 1) % 3;
+      // Frågorna blandas per omgång ur starten (quiz.js fragor(w, start), #833). Rätt svar måste räknas
+      // på frågan widgeten faktiskt visar — den blandade listans första — annars svarar tittarna på en
+      // annan fråga, ingen får poäng och ledaren visas aldrig.
+      const visad = Q.fragor(k, s.start)[0] || lista[0];
+      const ratt = Q.alternativ(visad, s.start).findIndex(a => a.ratt), fel = (ratt + 1) % 3;
       const svara = (i, val) => { const uid = 'prov' + i; s.svar[0][uid] = val; s.namn[uid] = namnI(ex, i); ritaOmKlon(nod, k); };
       ritaOmKlon(nod, k);
       ctl.setTimeout(() => svara(0, ratt), 900);
