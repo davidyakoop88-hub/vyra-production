@@ -4,6 +4,21 @@
   const CLIENT_ID = '98200bcc03394a56889e42c9ac53eba2';
   const TOKEN_KEY = 'vyra-spotify-token-v1';
   const OAUTH_KEY = 'vyra-spotify-oauth-v1';
+  // EGET CLIENT ID (David 2026-11-23: "bygg att alla kan ansluta sig"). VYRA:s Spotify-app står i
+  // Spotifys utvecklarläge, och där släpper Spotify bara in fem konton som lagts till för hand. Utökad
+  // åtkomst kräver ett registrerat företag med 250 000 aktiva användare i månaden. Tills dess kan varje
+  // streamer skapa en egen gratis app på developer.spotify.com och klistra in dess Client ID här: då
+  // loggar hen in genom sin egen app, där hen själv är användaren, och VYRA:s tak gäller inte.
+  // Inloggningen är PKCE och behöver bara Client ID — ingen hemlig nyckel lämnar någonsin VYRA.
+  const CLIENT_ID_KEY = 'vyra-spotify-client-id-v1';
+  const CLIENT_ID_RE = /^[0-9a-f]{32}$/i;
+  function egetClientId() {
+    try {
+      const id = String(localStorage.getItem(CLIENT_ID_KEY) || '').trim();
+      return CLIENT_ID_RE.test(id) && id.toLowerCase() !== CLIENT_ID ? id.toLowerCase() : '';
+    } catch { return ''; }
+  }
+  const clientId = () => egetClientId() || CLIENT_ID;
   const SCOPES = [
     'user-read-private',
     'user-read-currently-playing',
@@ -29,12 +44,13 @@
     ? 'http://127.0.0.1:4173/spotify-callback.html'
     : 'https://vyralive.app/spotify-callback.html';
 
-  function saveToken(payload, previous) {
+  function saveToken(payload, previous, clientIdForNew) {
     const token = {
       accessToken: payload.access_token,
       refreshToken: payload.refresh_token || previous?.refreshToken || '',
       expiresAt: Date.now() + (Number(payload.expires_in || 3600) * 1000) - 30_000,
-      scope: payload.scope || previous?.scope || ''
+      scope: payload.scope || previous?.scope || '',
+      clientId: previous?.clientId || clientIdForNew || CLIENT_ID
     };
     localStorage.setItem(TOKEN_KEY, JSON.stringify(token));
     return token;
@@ -68,7 +84,7 @@
     if (!token?.refreshToken) return Promise.resolve(null);
     if (pagaendeFornyelse) return pagaendeFornyelse;
     pagaendeFornyelse = exchange({
-      client_id: CLIENT_ID,
+      client_id: token.clientId || CLIENT_ID,
       grant_type: 'refresh_token',
       refresh_token: token.refreshToken
     }).then(payload => saveToken(payload, token), error => {
@@ -153,14 +169,16 @@
     const verifier = randomValue();
     const state = randomValue();
     const challenge = toBase64Url(await sha256(verifier));
+    const id = clientId();
     localStorage.setItem(OAUTH_KEY, JSON.stringify({
+      clientId: id,
       verifier,
       state,
       redirectUri: redirectUri(),
       createdAt: Date.now()
     }));
     const params = new URLSearchParams({
-      client_id: CLIENT_ID,
+      client_id: id,
       response_type: 'code',
       redirect_uri: redirectUri(),
       scope: SCOPES.join(' '),
@@ -188,14 +206,15 @@
     if (!params.get('code') || params.get('state') !== oauth.state) {
       throw new Error('Spotify kunde inte verifiera inloggningen');
     }
+    const oauthClientId = oauth.clientId || CLIENT_ID;
     const payload = await exchange({
-      client_id: CLIENT_ID,
+      client_id: oauthClientId,
       grant_type: 'authorization_code',
       code: params.get('code'),
       redirect_uri: oauth.redirectUri,
       code_verifier: oauth.verifier
     });
-    saveToken(payload);
+    saveToken(payload, null, oauthClientId);
     localStorage.removeItem(OAUTH_KEY);
     try { window.opener?.postMessage({ type: 'vyra:spotify-connected' }, location.origin); } catch {}
     try { new BroadcastChannel('vyra-spotify').postMessage({ type: 'connected' }); } catch {}
@@ -208,7 +227,9 @@
   function lasbarOrsak(error) {
     const text = String(error && error.message || '');
     if (/not be registered|not registered|user may not/i.test(text)) {
-      return 'Spotify-kontot är inte tillagt i VYRA:s Spotify-app. Lägg till kontots e-post under User Management på developer.spotify.com och anslut igen.';
+      return egetClientId()
+        ? 'Spotify-kontot är inte tillagt i din egen Spotify-app. Lägg till kontots e-post under User Management i appen på developer.spotify.com och anslut igen.'
+        : 'Spotify-kontot är inte tillagt i VYRA:s Spotify-app. VYRA:s app släpper bara in fem konton — anslut med din egen Spotify-app nedan.';
     }
     return text.replace(/\. Uppspelning kräver Spotify Premium\.$/, '') || 'Spotify svarade inte';
   }
@@ -268,6 +289,18 @@
     return api('/me/player/queue');
   }
 
+  // Ett nytt Client ID gör den gamla kopplingen oanvändbar (tokenet förnyas bara med appen som gav det),
+  // så den kopplas från. Tom sträng går tillbaka till VYRA:s app.
+  function setClientId(value) {
+    const id = String(value || '').trim().toLowerCase();
+    if (id && !CLIENT_ID_RE.test(id)) throw new Error('Client ID är 32 tecken, bara siffror och a–f. Kopiera det från appens Settings på developer.spotify.com.');
+    const fore = egetClientId();
+    if (!id || id === CLIENT_ID) localStorage.removeItem(CLIENT_ID_KEY);
+    else localStorage.setItem(CLIENT_ID_KEY, id);
+    if (egetClientId() !== fore) disconnect();
+    return egetClientId();
+  }
+
   function disconnect() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(OAUTH_KEY);
@@ -284,5 +317,6 @@
     channel.onmessage = () => window.dispatchEvent(new CustomEvent('vyra:spotify-changed'));
   } catch {}
 
-  window.VyraSpotify = { connect, disconnect, status, current, play, queue, readQueue, next, handleCallback };
+  window.VyraSpotify = { connect, disconnect, status, current, play, queue, readQueue, next, handleCallback,
+    clientId, egetClientId, setClientId, redirectUri };
 })();

@@ -32,7 +32,8 @@ test('konto som inte lagts till i Spotify-appen: en begriplig orsak, inte "kräv
   const s = await spotify(svar(403, { error: { status: 403, message: 'Check settings on developer.spotify.com/dashboard, the user may not be registered.' } })).status();
   assert.equal(s.connected, false);
   assert.match(s.fel, /inte tillagt i VYRA:s Spotify-app/);
-  assert.match(s.fel, /User Management/);
+  // VYRA:s app släpper bara in fem konton (2026-11-23), så rådet pekar på kundens egen app.
+  assert.match(s.fel, /egen Spotify-app/);
   assert.doesNotMatch(s.fel, /Premium/);
 });
 

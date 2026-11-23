@@ -967,6 +967,7 @@
         "sound-alerts.js",
         "spotify-client.js",
         "spotify-kommandon.js",
+        "spotify-eget-id.js",
         "streamdeck.js",
         "scripts/streamdeck-ikoner.js",
         "streamdeck-plugin/*",
@@ -995,7 +996,8 @@
         "tests/browser/streamdeck-tva-vagar.browser.test.js",
         "tests/tts-instruktion-ord.test.js",
         "tests/spotify-kommandon.test.js",
-        "tests/spotify-enhet.test.js"
+        "tests/spotify-enhet.test.js",
+        "tests/spotify-eget-client-id.test.js"
       ],
       "matning": [],
       "risker": [
