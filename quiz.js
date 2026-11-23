@@ -159,7 +159,21 @@
       ['hg9', 'Vilken är världens största varma öken?', ['Gobi', 'Kalahari', 'Sahara'], 2, 'https://en.wikipedia.org/wiki/Sahara'],
       ['hg10', 'Vilket sund skiljer Asien från Nordamerika?', ['Berings sund', 'Gibraltar sund', 'Magellans sund'], 0, 'https://en.wikipedia.org/wiki/Bering_Strait'],
       ['hg11', 'Vilket är världens högsta vattenfall?', ['Niagarafallen', 'Angel Falls', 'Victoriafallen'], 1, 'https://en.wikipedia.org/wiki/Angel_Falls'],
-      ['hg12', 'Vilken flod rinner genom Budapest?', ['Donau', 'Wisła', 'Elbe'], 0, 'https://en.wikipedia.org/wiki/Danube']] }
+      ['hg12', 'Vilken flod rinner genom Budapest?', ['Donau', 'Wisła', 'Elbe'], 0, 'https://en.wikipedia.org/wiki/Danube'],
+      ['hg13', 'Vilket är Sydamerikas högsta berg?', ['Chimborazo', 'Huascarán', 'Aconcagua'], 2, 'https://en.wikipedia.org/wiki/Aconcagua'],
+      ['hg14', 'Vilket afrikanskt land har flest invånare?', ['Egypten', 'Nigeria', 'Etiopien'], 1, 'https://en.wikipedia.org/wiki/Demographics_of_Africa'],
+      ['hg15', 'Vilken stad är Turkiets huvudstad?', ['Ankara', 'Istanbul', 'Izmir'], 0, 'https://en.wikipedia.org/wiki/Ankara'],
+      ['hg16', 'Vilken stad är Nya Zeelands huvudstad?', ['Auckland', 'Christchurch', 'Wellington'], 2, 'https://en.wikipedia.org/wiki/Wellington'],
+      ['hg17', 'Vilken sjö ligger lägst belägen på land?', ['Kaspiska havet', 'Döda havet', 'Bajkalsjön'], 1, 'https://en.wikipedia.org/wiki/Dead_Sea'],
+      ['hg18', 'I vilket land ligger Kilimanjaro?', ['Kenya', 'Uganda', 'Tanzania'], 2, 'https://en.wikipedia.org/wiki/Mount_Kilimanjaro'],
+      ['hg19', 'Vilken är världens största insjö till ytan?', ['Överstesjön', 'Kaspiska havet', 'Victoriasjön'], 1, 'https://en.wikipedia.org/wiki/Caspian_Sea'],
+      ['hg20', 'I vilket land ligger staden Timbuktu?', ['Mali', 'Niger', 'Mauretanien'], 0, 'https://en.wikipedia.org/wiki/Timbuktu'],
+      ['hg21', 'Vilken stad ligger på både den europeiska och den asiatiska sidan av ett sund?', ['Kairo', 'Moskva', 'Istanbul'], 2, 'https://en.wikipedia.org/wiki/Istanbul'],
+      ['hg22', 'Vilket land är världens näst största till ytan?', ['Kina', 'Kanada', 'USA'], 1, 'https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_area'],
+      ['hg23', 'Vilken är Sveriges djupaste sjö?', ['Vättern', 'Vänern', 'Hornavan'], 2, 'https://sv.wikipedia.org/wiki/Hornavan'],
+      ['hg24', 'Vilken stad är Mongoliets huvudstad?', ['Ulan Bator', 'Astana', 'Bisjkek'], 0, 'https://en.wikipedia.org/wiki/Ulaanbaatar'],
+      ['hg25', 'Vilket hav ligger mellan Italien och Balkanhalvön?', ['Joniska havet', 'Adriatiska havet', 'Egeiska havet'], 1, 'https://en.wikipedia.org/wiki/Adriatic_Sea'],
+      ['hg26', 'Vilken är Sveriges största ö?', ['Öland', 'Orust', 'Gotland'], 2, 'https://sv.wikipedia.org/wiki/Gotland']] }
   };
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
