@@ -71,6 +71,16 @@ function nivaFranBadge(user, sceneType) {
   return 0;
 }
 
+// VARDENS EGNA CHATTRADER (2026-11-22) — samma regel som tiktok-bridge/normalizer.js arVarden.
+// TikTok markerar inte streamern som moderator i sitt eget rum, sa Quiz (!quiz) och Ordjakten
+// (!nästa, !lösning) kunde inte styras av streamern. falt = { userId, username } (desktopens baseUser bar inget userId).
+function arVarden(falt, ankarId, rumNamn) {
+  const id = String(falt && falt.userId || '').trim(), ankare = String(ankarId || '').trim();
+  if (ankare && id && id === ankare) return true;
+  const namn = String(falt && falt.username || '').trim().toLowerCase(), rum = String(rumNamn || '').trim().replace(/^@/, '').toLowerCase();
+  return !!(rum && namn && namn === rum);
+}
+
 function baseUser(data) {
   const user = data?.user || data;
   return {
@@ -156,7 +166,7 @@ function superfanFields(data) {
     superfanBand: bildUrl(data?.ribbonAnimation) };
 }
 
-module.exports = { battleStatusAv, armeMvp, mvpFields, text, number, avatarOf, identityOf, baseUser, nivaFranBadge,
+module.exports = { battleStatusAv, armeMvp, mvpFields, text, number, avatarOf, identityOf, baseUser, arVarden, nivaFranBadge,
   arGuardianEntrance, fansUppgradering, arSuperfanEntre, superfanFields,
   BADGE_FANKLUBB, BADGE_NIVA };
 
