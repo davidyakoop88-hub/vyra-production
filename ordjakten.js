@@ -18,8 +18,8 @@
   const TYP = 'templateWordHunt';
   const OVERLAY = (() => { try { return document.documentElement.classList.contains('overlay-output') || new URLSearchParams(location.search).has('overlay'); } catch (_) { return false; } })();
   const FARSKT_MS = 15000, LAGRING = 'vyra-ordjakten-', MAX_ORD = 200;
-  // Inbyggda ord: vardagliga svenska ord, 4–8 bokstäver, med en ledtråd.
-  const ORD = [
+  // NÖDLISTA: de 32 första orden, vardagliga svenska ord med en ledtråd. Resten av orden ligger i spelinnehall.js.
+  const NODORD = [
     ['BANAN', 'En frukt'], ['KATT', 'Ett husdjur'], ['LAMPA', 'Lyser upp rummet'], ['CYKEL', 'Ett fordon med två hjul'],
     ['VINTER', 'En årstid'], ['GITARR', 'Ett instrument med strängar'], ['KAFFE', 'En varm dryck'], ['SOFFA', 'Man sitter i den framför tv:n'],
     ['PIZZA', 'Italiensk mat'], ['REGN', 'Faller från himlen'], ['MOLN', 'Vitt eller grått på himlen'], ['FOTBOLL', 'En sport med boll och mål'],
@@ -27,26 +27,18 @@
     ['KANIN', 'Ett djur med långa öron'], ['JORDGUBBE', 'Ett rött bär'], ['TÅRTA', 'Äts på födelsedagar'], ['FJÄRIL', 'En insekt med färgglada vingar'],
     ['SKOLA', 'Där barn lär sig'], ['GLASS', 'Kall och söt'], ['MÅNE', 'Lyser på natten'], ['STJÄRNA', 'Blinkar på himlen'],
     ['PENNA', 'Man skriver med den'], ['SPEGEL', 'Man ser sig själv i den'], ['TRÄD', 'Har stam och blad'], ['BLOMMA', 'Växer i trädgården'],
-    ['DATOR', 'Man spelar och arbetar på den'], ['MUSIK', 'Något man lyssnar på'], ['KUDDE', 'Man sover på den'], ['TOFFEL', 'Varm sko inomhus'],
-    // Svåra ord (2026-11-23): 7–14 bokstäver. Ligger sist, så de lättare orden kommer först.
-    ['KOMPASS', 'Pekar mot norr'], ['SYMFONI', 'Långt stycke för orkester'], ['KÄNGURU', 'Hoppar runt i Australien'], ['KROKODIL', 'Reptil med kraftig käft'],
-    ['SKÄRGÅRD', 'Tusentals öar vid kusten'], ['LABYRINT', 'Man går vilse i den'], ['ÅSKVÄDER', 'Blixt och dunder'], ['SNÖSTORM', 'Vitt kaos utomhus'],
-    ['NORRSKEN', 'Gröna ljus på natthimlen'], ['ARKEOLOG', 'Gräver fram det förflutna'], ['ORKESTER', 'Många musiker som spelar tillsammans'], ['HÄNGMATTA', 'Gungar mellan två träd'],
-    ['MIKROSKOP', 'Gör det lilla stort'], ['ASTRONAUT', 'Reser utanför atmosfären'], ['FJÄLLRÄV', 'Vit päls i Arktis'], ['LOKOMOTIV', 'Drar tågvagnarna'],
-    ['KAMELEONT', 'Reptil som byter färg'], ['TRAMPOLIN', 'Man studsar högt på den'], ['SCHACKMATT', 'Slutet för kungen'], ['KANELBULLE', 'Snurrad fika på kafferasten'],
-    ['KRÄFTSKIVA', 'Fest i augusti med partyhattar'], ['TANGENTBORD', 'Knappar för varje bokstav'], ['CHOKLADBOLL', 'Rullad fika utan ugn'], ['ELEKTRICITET', 'Går genom sladdarna'],
-    ['SMÖRGÅSTÅRTA', 'Salt tårta på festen'], ['HOCKEYKLUBBA', 'Redskap på isen'], ['SPARKSTÖTTING', 'Vinterfordon med medar'], ['VULKANUTBROTT', 'Glödande lava sprutar upp'],
-    ['FJÄRRKONTROLL', 'Byter kanal på avstånd'],
-    // Fler svåra ord (2026-11-23).
-    ['ÄVENTYRARE', 'Söker det okända'], ['VATTENFALL', 'Forsar rakt ner'], ['SOLNEDGÅNG', 'Himlen färgas röd på kvällen'], ['REGNBÅGE', 'Syns efter skurar'],
-    ['SKRIVBORD', 'Plats för läxor och dator'], ['KYLSKÅP', 'Håller maten kall'], ['DAMMSUGARE', 'Plockar upp smuts från golvet'], ['BRANDMAN', 'Släcker eldar'],
-    ['ASTRONOMI', 'Läran om stjärnorna'], ['PARAPLY', 'Skydd när det öser ner'], ['VÄDERLEK', 'Sol, moln eller snö'], ['TRÄDGÅRD', 'Där blommor och grönsaker odlas'],
-    ['HAVSÖRN', 'Stor rovfågel vid kusten'], ['PINGVIN', 'Fågel som inte flyger och trivs i kyla'], ['ELEFANT', 'Har snabel och betar'], ['GIRAFF', 'Djur med mycket lång hals'],
-    ['SKORPION', 'Spindeldjur med gadd i svansen'], ['KNÄCKEBRÖD', 'Hårt och torrt bröd'], ['LAKRITS', 'Svart godis'], ['FLYGPLATS', 'Där planen lyfter'],
-    ['HELIKOPTER', 'Flyger med rotorblad'], ['SKRIDSKOR', 'Man glider på isen med dem'], ['SNÖSKOTER', 'Fordon med medar och motor'], ['TIDSMASKIN', 'Reser i tiden i sagor'],
-    ['DINOSAURIE', 'Utdöd jätte från urtiden'], ['ORIENTERING', 'Karta och kompass i skogen'], ['FÖDELSEDAG', 'Dagen man fyller år'], ['KÄRNKRAFT', 'Energi ur atomer'],
-    ['VINDKRAFT', 'Energi från snurrande kvarnar'], ['BIBLIOTEKARIE', 'Jobbar bland böcker och lånekort'], ['ÖVERRASKNING', 'Något oväntat'], ['FJÄLLVANDRING', 'Tur på stigar i höga berg']
+    ['DATOR', 'Man spelar och arbetar på den'], ['MUSIK', 'Något man lyssnar på'], ['KUDDE', 'Man sover på den'], ['TOFFEL', 'Varm sko inomhus']
   ];
+  // INNEHÅLLET kommer från spelinnehall.js (laddas före den här filen) och läggs SIST, efter nödlistan. Ogiltiga ord och
+  // dubbletter hoppas över — ett trasigt ord får aldrig stoppa en sändning.
+  const INNEHALL = (typeof window !== 'undefined' && window.VyraSpelinnehall) || {};
+  const INNEHALLSVERSION = typeof INNEHALL.version === 'string' ? INNEHALL.version.slice(0, 20) : '';
+  const giltigtOrd = o => Array.isArray(o) && typeof o[0] === 'string' && /^[\p{Lu}]{4,14}$/u.test(o[0]) && typeof o[1] === 'string' && o[1].length <= 60 && !o[1].toUpperCase().includes(o[0]);
+  const ORD = (() => {
+    const ut = NODORD.slice(), sett = new Set(ut.map(o => o[0])), data = INNEHALL.ordjakt && INNEHALL.ordjakt.ord;
+    if (Array.isArray(data)) for (const o of data) if (giltigtOrd(o) && !sett.has(o[0])) { sett.add(o[0]); ut.push([o[0], o[1]]); }
+    return ut;
+  })();
 
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const klamp = (v, min, max, f) => { const n = Number(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : f; };
@@ -216,7 +208,7 @@
       + `<li>Poängen ligger kvar mellan sändningar. Börja om här nedanför nollställer förhandsvisningen i studion – poängen i OBS ligger kvar.</li>`
       + `</ol></div>`
       + `<div class="property-group"><h4>ORDEN</h4><label>Egna ord (ett per rad: ORD; ledtråd)<textarea id="ojOrd" rows="5" placeholder="BANAN; En frukt">${esc(w.ojOrd || '')}</textarea></label>`
-      + `<small>${egna ? egna + ' egna ord.' : 'Inga egna ord ännu.'} ${ORD.length} inbyggda svenska ord finns också.</small>`
+      + `<small>${egna ? egna + ' egna ord.' : 'Inga egna ord ännu.'} ${ORD.length} inbyggda svenska ord finns också. ${INNEHALLSVERSION ? 'Innehåll ' + esc(INNEHALLSVERSION) + '.' : 'Innehållsfilen saknas — bara de första orden finns.'}</small>`
       + `<label><input id="ojBaraEgna" type="checkbox"${w.ojBaraEgna ? ' checked' : ''}> Använd bara mina egna ord</label></div>`
       + `<div class="property-group"><h4>REGLER</h4><label>Poäng för rätt svar<input id="ojPoang" type="number" min="1" max="1000" value="${klamp(w.ojPoang, 1, 1000, 100)}"></label>`
       + `<label>Paus före nästa ord (sekunder)<input id="ojPaus" type="number" min="2" max="60" value="${klamp(w.ojPaus, 2, 60, 8)}"></label>`
@@ -274,6 +266,6 @@
   // Stillbild för pixelvakten: första rundan, olöst, ingen topplista.
   function stilla() { for (const w of widgetar()) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; } ritaOm(); return document.querySelectorAll('.vyra-ordjakten').length; }
 
-  window.VyraOrdjakten = Object.freeze({ typ: TYP, ORD, norm, egnaOrd, ordlista, blanda, varvOrdning, runda, tolka, hantera, lage, nasta, losning, nollstall, stilla, _lage: LAGE });
+  window.VyraOrdjakten = Object.freeze({ typ: TYP, ORD, INNEHALLSVERSION, norm, egnaOrd, ordlista, blanda, varvOrdning, runda, tolka, hantera, lage, nasta, losning, nollstall, stilla, _lage: LAGE });
   ritaOm();
 })();

@@ -18,6 +18,7 @@ function sida(lagring) {
   w.eval('var wh=function(){return ""};var render=function(){};var props=function(){return ""};var bind=function(){};var selected=null;var view="editor";');
   w.state = { widgets: [] };
   w.setTimeout = () => 0;
+  w.eval(fs.readFileSync(path.join(ROOT, 'spelinnehall.js'), 'utf8'));
   w.eval(fs.readFileSync(path.join(ROOT, 'ordjakten.js'), 'utf8'));
   return dom;
 }
