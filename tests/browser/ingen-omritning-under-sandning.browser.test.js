@@ -141,3 +141,56 @@ for (const [namn, adress] of [['studion', 'studio.html'], ['OBS (overlay-läget)
     } finally { await ctx.close(); }
   });
 }
+
+// ETT PÅGÅENDE QUIZ RIVER INTE STUDION (David 2026-11-24, video: "varför min layout glappar den så").
+// Sändningsprovet ovan startar aldrig en quizomgång, så quizets klocka gick aldrig under det. I OBS
+// skrev klockan redan bara på quizets egen nod (ritaEgna), men i studion anropade den render() en gång
+// i sekunden under hela omgången: avataren, gåvoraden och allt annat revs och byggdes upp igen, och
+// layouten hoppade synligt. Chattens svar gjorde samma sak, ett render() per svar.
+test('studion: en pågående quizomgång med chattsvar skriver aldrig om hela layouten', { skip, timeout: 180000 }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1568, height: 900 } });
+  const sida = await ctx.newPage();
+  try {
+    await sida.goto(`${bas}/studio.html`, { waitUntil: 'load', timeout: 120000 });
+    await sida.waitForFunction(() => window.VyraWidgets && window.VyraQuiz && typeof render === 'function', null, { timeout: 60000 });
+    await sida.waitForTimeout(8000);
+    const ids = await sida.evaluate(() => {
+      state.widgets.length = 0;
+      const q = VyraWidgets.create('catalog:vyrapaket:quiz:fragerad'); q.x = 20; q.y = 20;
+      const a = VyraWidgets.create('catalog:vyrapaket:chattavatar'); a.x = 20; a.y = 420;
+      state.widgets.push(q, a);
+      try { view = 'editor'; selected = q.id; } catch (_) {}
+      render();
+      return { quiz: String(q.id), avatar: String(a.id) };
+    });
+    await sida.waitForTimeout(2000);
+    const r = await sida.evaluate(async ids => {
+      const vanta = ms => new Promise(k => setTimeout(k, ms));
+      const rot = document.getElementById('view');
+      let omritningar = 0;
+      new MutationObserver(l => { for (const m of l) if (m.target === rot && m.removedNodes.length + m.addedNodes.length > 0) omritningar += 1; }).observe(rot, { childList: true });
+      const avatarFore = [...document.querySelectorAll('.widget[data-id]')].find(n => n.dataset.id === ids.avatar);
+      const q = state.widgets.find(w => String(w.id) === ids.quiz);
+      VyraQuiz.starta(q);                             // klicket i panelen: en hel ritning är väntad här
+      await vanta(300);
+      const efterStart = omritningar;
+      const avatarStart = [...document.querySelectorAll('.widget[data-id]')].find(n => n.dataset.id === ids.avatar);
+      const klocka = () => (document.querySelector('.vyra-quiz') || {}).innerText || '';
+      const textFore = klocka();
+      for (let i = 0; i < 6; i += 1) {
+        window.dispatchEvent(new CustomEvent('vyra-live-event', { detail: { type: 'chat', userId: 'q' + i, nickname: 'Q' + i, comment: 'ABC'[i % 3], at: Date.now() } }));
+        await vanta(700);
+      }
+      const avatarEfter = [...document.querySelectorAll('.widget[data-id]')].find(n => n.dataset.id === ids.avatar);
+      return { efterStart, underOmgangen: omritningar - efterStart, startRitade: !!avatarFore,
+        avatarKvar: !!avatarStart && avatarStart === avatarEfter, quizLevde: klocka() !== textFore,
+        valt: !!(document.querySelector('.vyra-quiz.selected')) };
+    }, ids);
+    console.log(`[quiz i studion] ${r.underOmgangen} hela omritningar under omgången, avatarnoden kvar: ${r.avatarKvar}, quizet uppdaterades: ${r.quizLevde}`);
+    assert.ok(r.startRitade, 'avataren ritades aldrig — provet mäter ingenting');
+    assert.ok(r.quizLevde, 'quizet uppdaterades inte under omgången — klockan eller svaren syns inte');
+    assert.equal(r.underOmgangen, 0, `${r.underOmgangen} omritningar av HELA studion under en quizomgång — quizet ska bara skriva om sin egen nod`);
+    assert.ok(r.avatarKvar, 'avatarens nod byttes ut under quizomgången — den revs av quizet');
+    assert.ok(r.valt, 'quizet tappade sin markering i studion');
+  } finally { await ctx.close(); }
+});
