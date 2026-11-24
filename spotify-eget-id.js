@@ -23,6 +23,9 @@
   var REDIRECTS = ['https://vyralive.app/spotify-callback.html', 'http://127.0.0.1:4173/spotify-callback.html'];
   var DASHBOARD = 'https://developer.spotify.com/dashboard';
 
+  var KNAPP = '<a class="spe-hjalp" data-spotify-hjalp href="spotify-hjalp.html" target="_blank" rel="noopener">' +
+    '<span aria-hidden="true">▶</span>Så ansluter du Spotify – steg för steg med bilder och video</a>';
+
   function spotify() { return root.VyraSpotify; }
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function toast(t) { if (typeof root.toast === 'function') root.toast(t); }
@@ -98,6 +101,8 @@
     var ny = mall.firstChild;
     if (oppen) ny.open = true;
     if (fanns) fanns.replaceWith(ny); else rad.insertAdjacentElement('afterend', ny);
+    // Bildguiden syns alltid, inte bara i den hopfällda raden (David 2026-11-24: "ser inte de i appen").
+    if (!kort.querySelector('[data-spotify-hjalp]')) ny.insertAdjacentHTML('beforebegin', KNAPP);
     bind(ny);
     folj();
   }
@@ -146,7 +151,10 @@
       '.spotify-card .spe-rad input{flex:1 1 240px;min-width:0;font:inherit;font-size:13px;font-family:ui-monospace,Consolas,monospace;color:var(--text-primary,#f4eefa);background:var(--surface-2,#ffffff12);border:1px solid var(--border-subtle,#ffffff22);border-radius:8px;padding:8px 10px}',
       '.spotify-card .spe-fel{color:#ff8ea0}',
       '.spotify-card .spe-fel:empty{display:none}',
-      '.spotify-card .spe-not{opacity:.7}'
+      '.spotify-card .spe-not{opacity:.7}',
+      '.spotify-card .spe-hjalp{display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:11px 14px;border:1px solid #1db95466;border-radius:12px;background:#1db95414;color:var(--text-primary,#f4eefa);font-size:13px;font-weight:600;text-decoration:none}',
+      '.spotify-card .spe-hjalp:hover{border-color:#1db954;background:#1db95424}',
+      '.spotify-card .spe-hjalp span{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:#1db954;color:#06150b;font-size:10px}'
     ].join('\n');
     doc.head.appendChild(st);
   }

@@ -766,6 +766,7 @@
     'Klistra in Client ID': 'Paste the Client ID',
     'Öppna appen. ”Client ID” står överst under ”Basic Information”. Kopiera det och klistra in det här.': 'Open the app. The “Client ID” is at the top under “Basic Information”. Copy it and paste it here.',
     'Visa steg för steg med bilder': 'Show step by step with pictures',
+    'Så ansluter du Spotify – steg för steg med bilder och video': 'How to connect Spotify – step by step with pictures and video',
     'Client ID, 32 tecken': 'Client ID, 32 characters',
     'Client ID från din Spotify-app': 'Client ID from your Spotify app',
     'Spara och anslut': 'Save and connect',
