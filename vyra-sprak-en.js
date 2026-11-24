@@ -280,6 +280,7 @@
     'Integritet & cookies': 'Privacy & cookies',
     'Användarvillkor': 'Terms of use',
     'Driftstatus': 'System status',
+    'Anslut Spotify': 'Connect Spotify',
     '© 2026 VYRA. Inte anslutet till TikTok.': '© 2026 VYRA. Not affiliated with TikTok.',
     'Språk': 'Language',
 
