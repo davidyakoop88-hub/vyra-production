@@ -27,10 +27,12 @@
   }, true);
 
   var fullGo = go;
-  var MAX_LAYOUT_ITEMS = 30;
-
+  // INGET TAK I STUDION (David 2026-11-25: "fixa 30-gränsen så alla widgetar syns i studion"). Sedan 2026-07-24
+  // ritade studion bara state.widgets.slice(0, 30). Den 31:a och alla efter den syntes inte på duken och gick
+  // inte att markera eller flytta, fast OBS visade dem. Provet med 80 widgetar i
+  // tests/browser/ingen-omritning-under-sandning.browser.test.js kräver att alla ritas, utan sidfel.
   function layoutItems() {
-    return state.widgets.slice(0, MAX_LAYOUT_ITEMS);
+    return state.widgets.slice();
   }
 
   // OVERLAY-UTDATA KOR MED view === 'editor', och traffar darfor den har renderaren — inte
@@ -53,7 +55,7 @@
   // lank hittar sin widget aven om den ar standalone eller dold, och ett okant id ger
   // 'missing-widget'.
   //
-  // 30-taket foljer INTE med hit. Det ar en redigeringsgrans pa Studios Layout-sida — en
+  // Studion har inget tak langre (2026-11-25). Det hade fortfarande inte fatt folja med hit — en
   // sandning ska inte tappa sin trettioforsta widget for att redigeraren har ett tak.
   function dukensWidgetar() {
     if (!iOverlayLage()) return { widgets: layoutItems(), error: null };
@@ -75,7 +77,7 @@
   function renderLayerList(host) {
     host.innerHTML =
       '<section class="live-layer-panel">' +
-        '<header><div><b>LIVE-LAGER</b><span>Visar ' + Math.min(state.widgets.length, MAX_LAYOUT_ITEMS) + ' av ' + state.widgets.length + ' sparade lager</span></div></header>' +
+        '<header><div><b>LIVE-LAGER</b><span>' + state.widgets.length + ' sparade lager</span></div></header>' +
         '<div class="live-layer-list">' +
           (state.widgets.length
             ? layoutItems().map(function (widget) {
