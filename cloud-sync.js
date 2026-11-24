@@ -88,7 +88,7 @@
   const VERIFIERING_NOTE='Ändringarna sparas på den här datorn. OBS-länken skapas när du öppnat länken i verifieringsmejlet och laddat om sidan.';
   const epostkrav=e=>!!(e&&e.emailVerificationRequired);
   let statusText=STATUS_TEXT.local;
-  function setStatus(next,text){status=next;statusText=text||STATUS_TEXT[next];if(next==='synced')bekraftadVid=Date.now();paint();offlineNote()}
+  function setStatus(next,text){if(next!=='offline')serverFel=null;status=next;statusText=text||STATUS_TEXT[next];if(next==='synced')bekraftadVid=Date.now();paint();offlineNote()}
   // Tidpunkten for senaste LYCKADE skrivning, satt av agarens egen signal nedan. Visas som
   // suffix pa statusen i stallet for som eget element: .cloud-status ager redan fragan
   // "ar det sparat?", och tva element for samma svar ar dubbelkontrollen Etapp 3 tog bort.
@@ -126,6 +126,21 @@
   // Samma signal markerar en osynkad ändring DIREKT (F03), i stället för när tickern hunnit se den
   // och debouncen gått — fram till dess sade raden "Sparat i molnet ✓" om något servern inte sett.
   root.addEventListener('vyra-session-state-saved',e=>{sparatVid=e.detail&&e.detail.at||Date.now();try{koaLokalAndring()}catch(_){}paint();offlineNote()});
+  // RUTAN SÄGER VAD SERVERN SVARADE (David 2026-11-24: rutan "Ingen kontakt med molnet" stod kvar medan servern
+  // svarade 200 på allt annat). Varje skrivning som inte var 409/401/403 hamnade i offline-grenen: en för stor
+  // layout (413), en layout servern underkände (400), för många skrivningar (429) och ett serverfel (5xx) sade
+  // alla "Ingen kontakt med molnet", fast kontakten fanns. Då felsöker man nätet i stället för layouten.
+  // serverFel är serverns svar på den senaste misslyckade skrivningen; null betyder att inget svar kom (nätet).
+  let serverFel=null;
+  function felRuta(){
+    const k=serverFel&&serverFel.status;
+    const t=String(serverFel&&serverFel.text||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    if(k===413)return['Layouten är för stor för servern','Servern tar emot högst 5 MB per layout. Ta bort eller byt ut en stor bild eller video som ligger direkt i layouten. '+OFFLINE_NOTE];
+    if(k===400)return['Servern godtog inte layouten','Servern svarade: '+(t||'ogiltig layout')+'. '+OFFLINE_NOTE];
+    if(k===429)return['För många sparningar just nu','Servern ber om en kort paus. Sparningen försöker igen av sig själv. '+OFFLINE_NOTE];
+    if(k>=500)return['Servern har problem just nu','Felet sitter hos VYRA, inte hos dig (kod '+k+'). Sparningen försöker igen av sig själv. '+OFFLINE_NOTE];
+    if(k)return['Servern tog inte emot ändringen','Servern svarade med kod '+k+(t?': '+t:'')+'. '+OFFLINE_NOTE];
+    return['Ingen kontakt med molnet',OFFLINE_NOTE]}
   let noteHtml=null;
   function offlineNote(){
     const bar=document.querySelector('.overlay-link-bar');
@@ -136,7 +151,7 @@
     const n=antalOsynkade(),tillagg=(n>0?` ${andringar(n)} syns inte i OBS än.`:'')+(bekraftadVid?` Senast bekräftat av servern kl. ${klockan(bekraftadVid)}.`:'');
     const html=status==='verifiering'?'<b>Verifiera din e-post</b><span>'+VERIFIERING_NOTE+'</span>'
       :status==='utloggad'?'<b>Du är utloggad</b><span>'+UTLOGGAD_NOTE+tillagg+'</span><button type="button" class="primary" data-cs-logga-in>Logga in igen</button>'
-      :'<b>Ingen kontakt med molnet</b><span>'+OFFLINE_NOTE+tillagg+'</span>';
+      :(([rubrik,text])=>'<b>'+rubrik+'</b><span>'+text+tillagg+'</span>')(felRuta());
     // Skrivs bara om när texten faktiskt ändrats: anropas vid varje sparning, och en knapp som
     // byts ut mitt i ett klick tappar klicket.
     if(html===noteHtml&&note.innerHTML)return;
@@ -186,7 +201,7 @@
       // Tillatelsen forbrukas nar skrivningen LYCKATS, inte nar den forsoktes. Lag raderingen i ett
       // finally forsvann anvandarens avsikt aven vid versionskonflikt eller natverksfel, och varje
       // retry blockerades da av serverns emptyBlocked — layouten kunde aldrig tommas.
-      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;obekraftade=[];localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e&&e.status===409){/* F03: en 409 kan vara VÅR EGEN skrivning, vars svar aldrig kom fram. Den förklaras innan någon konflikt visas. */if(mine===session){let remote=null;try{remote=await getRemote(overlay.id)}catch{}if(mine===session&&forklara(remote))return{ok:true,reason:'egen-skrivning'}}if(mine!==session)return{ok:false,status:0,reason:'superseded'};localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(e&&e.status===401){/* Avgörs av push(): förnyad CSRF eller utgången session. Statusen lämnas åt den. */localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;return{ok:false,status:401,reason:'auth'}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('offline');return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
+      if(emptied)delete root.__vyraUserEmptiedWidgets;if(tappade)delete root.__vyraUserRemovedWidget;if(mine!==session)return{ok:false,status:0,reason:'superseded'};overlay=d.overlay;obekraftade=[];localStorage.removeItem(QUEUE());lastLocal=skickad;const nuLokal=localStorage.getItem('vyra-state');/* Andrades layouten UNDER resan ar den an sa lange oskickad. Den skrivs till koadLokal och schemalaggs har, i stallet for att lamnas at tickern: dels gar den fram direkt i stallet for att vanta pa nasta sekund, dels ser tickern da att den redan ar koad och koar inte om den. Utan den detaljen skickas samma andring TVA ganger. */if(nuLokal!==lastLocal){koadLokal=nuLokal;localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:payload()}));saveMeta();setStatus('synced');schedule();return{ok:true}}koadLokal=null;saveMeta();setStatus('synced');return{ok:true}}catch(e){if(e&&e.status===409){/* F03: en 409 kan vara VÅR EGEN skrivning, vars svar aldrig kom fram. Den förklaras innan någon konflikt visas. */if(mine===session){let remote=null;try{remote=await getRemote(overlay.id)}catch{}if(mine===session&&forklara(remote))return{ok:true,reason:'egen-skrivning'}}if(mine!==session)return{ok:false,status:0,reason:'superseded'};localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('conflict');showConflict();return{ok:false,status:409}}else if(e&&e.status===401){/* Avgörs av push(): förnyad CSRF eller utgången session. Statusen lämnas åt den. */localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;return{ok:false,status:401,reason:'auth'}}else if(epostkrav(e)){localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;setStatus('verifiering');return{ok:false,status:403}}else{localStorage.setItem(QUEUE(),JSON.stringify({at:Date.now(),state:data}));koadLokal=null;serverFel=e&&e.status?{status:Number(e.status),text:String(e.message||'').slice(0,120)}:null;setStatus('offline',serverFel?felRuta()[0]:undefined);return{ok:false,status:e&&e.status?e.status:0}}}finally{syncing=false}}
   // push() är skicka() plus beslutet om en 401. Första 401:an försöker förnya CSRF-token: servern
   // svarar 401 'Inte inloggad' också när token roterats av ett annat GET /api/auth/me (en annan flik,
   // skrivbordsappen, "Jag har verifierat"-knappen), och då lever sessionen. Bara när /api/auth/me
@@ -418,7 +433,7 @@
     if(root.VyraAuth?.isLocalSession?.()){root.VyraSessionState.projectLocalSession();return}
     const d=root.VyraAuth?.lastDetail?.();
     if(d?.workspaces?.length)initialize(d);
-  },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>setStatus('offline'));
+  },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>{serverFel=null;setStatus('offline')});
   // ---- REDIGERAREN FOLJER MOLNET (Davids beslut 2026-10-10) -----------------------------------
   //
   // Appen och webben delar redan molnets layout: appens lokala server proxar konto- och

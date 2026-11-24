@@ -50,6 +50,7 @@ function skapaServer(startState) {
     }
     if (srv.sessionUte) throw Object.assign(new Error('Inte inloggad'), { status: 401 });
     if (metod === 'PUT') {
+      if (srv.fel) { const f = srv.fel; if (f.natet) throw new TypeError('Failed to fetch'); throw Object.assign(new Error(f.text), { status: f.status }) }
       if (srv.csrfRoterad) throw Object.assign(new Error('Inte inloggad'), { status: 401 });
       const kropp = JSON.parse(options.body);
       if (kropp.version !== srv.version) throw Object.assign(new Error('Overlayn har ändrats i en annan session'), { status: 409 });
@@ -442,4 +443,50 @@ test('D4 · under den konflikten skriver tickern inte över molnet på egen hand
   await sida.korSchemalagda();
   assert.equal(srv.putar.length, 0, 'tickern skickade under en öppen konflikt');
   assert.equal(xPaServern(srv), 55);
+});
+
+// ---- E · rutan säger vad servern svarade -------------------------------------------------------
+// David 2026-11-24: "Ingen kontakt med molnet" stod kvar medan vyralive.app svarade 200 på allt annat.
+// Varje skrivfel utom 409/401/403 gav samma rubrik, så en för stor layout såg ut som ett nätverksfel.
+for (const [kod, text, rubrik, maste] of [
+  [413, 'Payload för stor', /Layouten är för stor för servern/, /högst 5 MB/],
+  [400, 'Ogiltig overlay eller version', /Servern godtog inte layouten/, /Ogiltig overlay eller version/],
+  [429, 'För många förfrågningar', /För många sparningar just nu/, /försöker igen av sig själv/],
+  [503, 'Service Unavailable', /Servern har problem just nu/, /kod 503/],
+]) {
+  test(`E · ett ${kod}-svar visar varför, inte "Ingen kontakt med molnet"`, async () => {
+    const { sida, srv } = await iFas();
+    srv.fel = { status: kod, text };
+    sida.redigera(100);
+    await sida.korSchemalagda();
+    const not = sida.not();
+    assert.ok(not, 'ingen ruta visades när skrivningen misslyckades');
+    assert.doesNotMatch(not.textContent, /Ingen kontakt med molnet/, `rutan sade "Ingen kontakt med molnet" fast servern svarade ${kod}`);
+    assert.match(not.textContent, rubrik);
+    assert.match(not.textContent, maste);
+    assert.match(not.textContent, /1 ändring syns inte i OBS än/, 'rutan ska fortfarande säga vad OBS inte sett');
+    assert.equal(xPaServern(srv), 20, 'kontrollmätning: servern har inte fått ändringen');
+    srv.fel = null;
+    sida.redigera(110);
+    await sida.korSchemalagda();
+    assert.equal(sida.not(), null, 'rutan stod kvar när servern tog emot ändringen');
+    assert.equal(xPaServern(srv), 110);
+  });
+}
+
+test('E · utan svar från servern står det fortfarande "Ingen kontakt med molnet"', async () => {
+  const { sida, srv } = await iFas();
+  srv.fel = { natet: true };
+  sida.redigera(100);
+  await sida.korSchemalagda();
+  assert.match(sida.not().textContent, /Ingen kontakt med molnet/);
+});
+
+test('E · serverns text kan inte bära HTML in i rutan', async () => {
+  const { sida, srv } = await iFas();
+  srv.fel = { status: 400, text: '<img src=x onerror=alert(1)>' };
+  sida.redigera(100);
+  await sida.korSchemalagda();
+  assert.equal(sida.not().querySelector('img'), null, 'serverns text ritades som HTML');
+  assert.match(sida.not().textContent, /<img src=x/);
 });
