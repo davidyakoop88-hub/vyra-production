@@ -159,7 +159,7 @@
   // (uppmätt med Match 1 vs 1, som gjorde samma sak varje sekund: Battle MVP syntes 0,8 s i stället
   // för 10 s och Top Gifts gåvovideo kom aldrig igång). I overlayn finns ingen panel att bygga om, så
   // där skrivs widgetens egen nod om med wh() — samma mönster som triggerBattleMvp i media.js.
-  // I studion är det render() som förut: där ska panelen och katalogen följa med.
+  // I studion är det render() bara för panelens knappar; klockan och chatten använder ritaLevande() nedan.
   function ritaEgna() {
     if (typeof wh !== 'function') return false;
     const noder = [...document.querySelectorAll('.widget[data-id]')];
@@ -174,6 +174,12 @@
     return alla;
   }
   const ritaOm = () => { try { if (OVERLAY && ritaEgna()) return; if (typeof render === 'function') render(); } catch (_) {} };
+  // KLOCKAN OCH CHATTEN RITAR BARA QUIZETS EGNA NODER — ÄVEN I STUDION (David 2026-11-24, video: "varför min
+  // layout glappar den så"). Förut anropade de render() i studion: en gång i sekunden under hela omgången och
+  // en gång per chattsvar. Varje gång revs avataren, gåvoraden och allt annat och byggdes upp igen, och
+  // layouten hoppade synligt. Panelen visar ingenting som klockan eller svaren ändrar, så den behöver inte
+  // följa med. Panelens egna knappar (starta, nollställ, inställningar) använder fortfarande ritaOm().
+  const ritaLevande = () => { try { if (ritaEgna()) return; if (typeof render === 'function') render(); } catch (_) {} };
 
   // ---------- render ----------
   let STILLA = false;
@@ -211,7 +217,7 @@
     const nu = Date.now();
     const aktiv = widgetar().filter(w => !w.hidden && lage(w).start && fas(w, lage(w).start, nu).fas !== 'vila');
     const nyckel = aktiv.map(w => { const f = fas(w, lage(w).start, nu); return w.id + f.fas + f.i + f.kvar; }).join('|');
-    if (nyckel !== senastFas) { senastFas = nyckel; if (aktiv.length) ritaOm(); }
+    if (nyckel !== senastFas) { senastFas = nyckel; if (aktiv.length) ritaLevande(); }
   }, 500);
 
   // ---------- chatten ----------
@@ -222,7 +228,7 @@
     if (typ !== 'chat' && typ !== 'chatcommand') return;
     const at = Number(e.at || (e.timestamp && Date.parse(e.timestamp)));
     if (Number.isFinite(at) && at > 0 && Date.now() - at > FARSKT_MS) return;
-    for (const w of widgetar()) if (!w.hidden) { try { if (hantera(w, e, Date.now())) ritaOm(); } catch (_) {} }
+    for (const w of widgetar()) if (!w.hidden) { try { if (hantera(w, e, Date.now())) ritaLevande(); } catch (_) {} }
   });
 
   // ---------- panelen ----------
