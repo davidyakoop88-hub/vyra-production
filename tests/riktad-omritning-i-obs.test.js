@@ -4,8 +4,9 @@
 // render() bygger om varje widget i layouten. Match 1 vs 1 gjorde det varje sekund under en match:
 // Battle MVP syntes 0,8 s i stället för 10 s och Top Gifts gåvovideo kom aldrig igång. Quiz, Ordjakten
 // och Viewer Showcase gjorde samma sak när något hände i dem (ett svar, ett löst ord, en framlyft
-// tittare). I overlay-läget skriver de nu bara om sin egen nod; i studion är det render() som förut,
-// eftersom panelen ska följa med.
+// tittare). I overlay-läget skriver de nu bara om sin egen nod; i studion är det render() för panelens
+// knappar, eftersom panelen ska följa med. Ordjaktens rundor (löst ord, nästa ord) skriver sedan 2026-11-24
+// bara sin egen nod även i studion — de rev avataren och resten av layouten två gånger per löst ord.
 const test = require('node:test'), assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path');
 const { JSDOM } = require('jsdom');
@@ -14,7 +15,7 @@ const F = require(path.join(ROOT, 'widget-factory.js'));
 
 const FALL = [
   { fil: 'quiz.js', nyckel: 'catalog:vyrapaket:quiz:quizshow', api: 'VyraQuiz', gor: (A, w) => A.starta(w, Date.now()) },
-  { fil: 'ordjakten.js', nyckel: 'catalog:vyrapaket:ordjakten', api: 'VyraOrdjakten', gor: (A, w) => A.nasta(w) },
+  { fil: 'ordjakten.js', nyckel: 'catalog:vyrapaket:ordjakten', api: 'VyraOrdjakten', gor: (A, w) => A.nasta(w), panel: (A, w) => A.nollstall(w), rundanIStudion: true },
   { fil: 'viewer-showcase.js', nyckel: 'catalog:vyrapaket:showcase:spotlight', api: 'VyraViewerShowcase', gor: (A, w) => A.spela(w, { namn: 'Lisa', avatar: '' }) },
 ];
 
@@ -74,8 +75,24 @@ for (const fall of FALL) {
       win.document.body.insertAdjacentHTML('beforeend', win.wh(w));
       let renders = 0;
       win.render = () => { renders += 1; };
-      fall.gor(win[fall.api], w);
+      (fall.panel || fall.gor)(win[fall.api], w);
       assert.equal(renders, 1);
+    } finally { dom.window.close(); }
+  });
+
+  if (fall.rundanIStudion) test(`${fall.fil} i studion: rundan skriver bara widgetens egen nod, render() anropas inte`, () => {
+    const dom = sida(fall.fil, 'https://vyralive.app/studio.html'), win = dom.window;
+    try {
+      const w = Object.assign(F.create(fall.nyckel), { id: 'egen-4' });
+      win.state.widgets.push(w);
+      win.document.body.insertAdjacentHTML('beforeend', win.wh(w) + '<div class="widget" data-id="annan"></div>');
+      const fore = win.document.querySelector('.widget[data-id="egen-4"]').outerHTML, annan = win.document.querySelector('[data-id="annan"]');
+      let renders = 0;
+      win.render = () => { renders += 1; };
+      fall.gor(win[fall.api], w);
+      assert.equal(renders, 0, 'hela studion ritades om av rundan');
+      assert.notEqual(win.document.querySelector('.widget[data-id="egen-4"]').outerHTML, fore, 'widgetens nod skrevs inte om — nästa ord syns inte');
+      assert.equal(win.document.querySelector('[data-id="annan"]'), annan, 'en annan widget i studion byttes ut');
     } finally { dom.window.close(); }
   });
 }

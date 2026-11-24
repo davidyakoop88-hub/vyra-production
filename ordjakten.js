@@ -137,6 +137,11 @@
     return alla;
   }
   const ritaOm = () => { try { if (OVERLAY && ritaEgna()) return; if (typeof render === 'function') render(); } catch (_) {} };
+  // RUNDORNA RITAR BARA ORDJAKTENS EGNA NODER — ÄVEN I STUDION (2026-11-24). Ett löst ord, en lösning och nästa
+  // ord anropade förut render() i studion: två hela omritningar per löst ord, och avataren och resten av layouten
+  // revs och hoppade (samma fel som quizets klocka). Panelen visar ingenting som rundan ändrar. Panelens
+  // inställningar och Börja om använder fortfarande ritaOm().
+  const ritaLevande = () => { try { if (ritaEgna()) return; if (typeof render === 'function') render(); } catch (_) {} };
   function planeraNasta(w) {
     const s = lage(w);
     clearTimeout(s.timer);
@@ -150,8 +155,8 @@
     for (let i = 0; i < lista.length * 2 && losta.has(runda(w, nr).ord); i++) nr += 1;
     return nr;
   }
-  function nasta(w) { const s = lage(w); clearTimeout(s.timer); s.nr = nastaOlosta(w, s); s.lost = null; spara(w); ritaOm(); }
-  function losning(w) { const s = lage(w); if (s.lost) return; s.lost = { namn: '', sjalv: true }; spara(w); ritaOm(); planeraNasta(w); }
+  function nasta(w) { const s = lage(w); clearTimeout(s.timer); s.nr = nastaOlosta(w, s); s.lost = null; spara(w); ritaLevande(); }
+  function losning(w) { const s = lage(w); if (s.lost) return; s.lost = { namn: '', sjalv: true }; spara(w); ritaLevande(); planeraNasta(w); }
   function vinnare(w, uid, namn) {
     const s = lage(w);
     if (s.lost) return false;
@@ -161,7 +166,7 @@
     s.lost = { namn, sjalv: false, p };
     const ord = runda(w, s.nr).ord;
     if (!s.losta.includes(ord)) s.losta.push(ord);
-    spara(w); ritaOm(); planeraNasta(w);
+    spara(w); ritaLevande(); planeraNasta(w);
     return true;
   }
   function nollstall(w) { const s = lage(w); clearTimeout(s.timer); s.nr = 0; s.lost = null; s.poang = {}; s.losta = []; spara(w); ritaOm(); }

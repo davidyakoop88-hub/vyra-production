@@ -194,3 +194,47 @@ test('studion: en pågående quizomgång med chattsvar skriver aldrig om hela la
     assert.ok(r.valt, 'quizet tappade sin markering i studion');
   } finally { await ctx.close(); }
 });
+
+// ORDJAKTEN RIVER INTE STUDION NÄR ETT ORD LÖSES (2026-11-24). Samma fel som quizet: ett rätt svar och
+// nästa ord (efter pausen) anropade render() i studion, två hela omritningar per löst ord. Uppmätt före
+// rättningen: 6 omritningar för 3 lösta ord, och avatarens nod byttes ut.
+test('studion: Ordjakten skriver aldrig om hela layouten när ord löses och byts', { skip, timeout: 180000 }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1568, height: 900 } });
+  const sida = await ctx.newPage();
+  try {
+    await sida.goto(`${bas}/studio.html`, { waitUntil: 'load', timeout: 120000 });
+    await sida.waitForFunction(() => window.VyraWidgets && window.VyraOrdjakten && typeof render === 'function', null, { timeout: 60000 });
+    await sida.waitForTimeout(8000);
+    const r = await sida.evaluate(async () => {
+      const vanta = ms => new Promise(k => setTimeout(k, ms));
+      state.widgets.length = 0;
+      const o = VyraWidgets.create('catalog:vyrapaket:ordjakten'); o.x = 20; o.y = 20; o.ojPaus = 2;
+      const a = VyraWidgets.create('catalog:vyrapaket:chattavatar'); a.x = 20; a.y = 420;
+      state.widgets.push(o, a);
+      try { view = 'editor'; selected = o.id; } catch (_) {}
+      render();
+      await vanta(1500);
+      const rot = document.getElementById('view');
+      let omritningar = 0;
+      new MutationObserver(l => { for (const m of l) if (m.target === rot && m.removedNodes.length + m.addedNodes.length > 0) omritningar += 1; }).observe(rot, { childList: true });
+      const avatar = () => [...document.querySelectorAll('.widget[data-id]')].find(n => n.dataset.id === String(a.id));
+      const avatarFore = avatar(), nrFore = VyraOrdjakten.lage(o).nr;
+      let sagsLost = false;
+      for (let i = 0; i < 3; i += 1) {
+        const ord = VyraOrdjakten.runda(o, VyraOrdjakten.lage(o).nr).ord;
+        window.dispatchEvent(new CustomEvent('vyra-live-event', { detail: { type: 'chat', userId: 'oj' + i, nickname: 'OJ' + i, comment: ord, at: Date.now() } }));
+        await vanta(200);
+        sagsLost = sagsLost || !!document.querySelector('.vyra-ordjakten.oj-lost');
+        await vanta(2800);
+      }
+      return { omritningar, avatarKvar: !!avatarFore && avatarFore === avatar(), sagsLost, byttOrd: VyraOrdjakten.lage(o).nr !== nrFore,
+        valt: !!document.querySelector('.vyra-ordjakten.selected') };
+    });
+    console.log(`[Ordjakten i studion] ${r.omritningar} hela omritningar för 3 lösta ord, avatarnoden kvar: ${r.avatarKvar}`);
+    assert.ok(r.sagsLost, 'ett löst ord syntes aldrig i widgeten — provet mäter ingenting');
+    assert.ok(r.byttOrd, 'Ordjakten gick aldrig vidare till nästa ord');
+    assert.equal(r.omritningar, 0, `${r.omritningar} omritningar av HELA studion när ord löstes — Ordjakten ska bara skriva om sin egen nod`);
+    assert.ok(r.avatarKvar, 'avatarens nod byttes ut när ett ord löstes');
+    assert.ok(r.valt, 'Ordjakten tappade sin markering i studion');
+  } finally { await ctx.close(); }
+});
