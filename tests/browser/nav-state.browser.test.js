@@ -213,3 +213,52 @@ test('inga synliga navetiketter kapas', { skip, timeout: 90000 }, async () => {
       'varje navetikett ska fa plats i sin yta, men dessa kapas');
   } finally { await page.close() }
 });
+
+// ---- Prov 5 · Live-kontroll tar inte tillbaka sidan ------------------------------------------
+// David 2026-11-24, under en match i skrivbordsappen: "jag klickade på live-kontroll sen jag skulle
+// klicka på overlay men jag kom tillbaka till live-kontroll". live-control.js satte opened=true när
+// panelen öppnades och nollställde den aldrig. Varje TikTok-händelse och varje serverstatus ritade
+// sedan panelen över den sida man bytt till — under en match kommer händelser hela tiden.
+for (const mal of ['overlay', 'actions']) {
+  test(`efter Live-kontroll stannar "${mal}" kvar när händelser kommer in`, { skip, timeout: 90000 }, async () => {
+    const page = await oppnaStudio();
+    try {
+      await klicka(page, 'liveControl');
+      assert.ok(await page.evaluate(() => !!document.querySelector('#view .lc-page')), 'Live-kontroll öppnades inte — provet mäter ingenting');
+      await klicka(page, mal);
+      const fore = await page.evaluate(() => !!document.querySelector('#view .lc-page'));
+      await page.evaluate(async () => {
+        const vanta = ms => new Promise(r => setTimeout(r, ms));
+        for (let i = 0; i < 8; i += 1) {
+          window.dispatchEvent(new CustomEvent('vyra-live-event', { detail: { type: i % 2 ? 'gift' : 'battle', username: 'u' + i, giftName: 'Rose', coins: 1, scoreUs: i, scoreThem: i, at: Date.now() } }));
+          window.dispatchEvent(new CustomEvent('vyra-server-status', { detail: { connection: { connected: true, state: 'connected', username: 'prov' } } }));
+          window.dispatchEvent(new CustomEvent('vyra-live-tillstand'));
+          await vanta(100);
+        }
+      });
+      await page.waitForTimeout(400);
+      const efter = await page.evaluate(() => ({
+        lc: !!document.querySelector('#view .lc-page'),
+        aktiva: [...document.querySelectorAll('[data-view],[data-extra]')].filter(b => b.classList.contains('active')).map(b => b.dataset.view || b.dataset.extra),
+        titel: (document.querySelector('#title') || {}).textContent || '',
+      }));
+      assert.equal(fore, false, `"${mal}" öppnades inte efter Live-kontroll`);
+      assert.equal(efter.lc, false, `Live-kontroll ritade sig över "${mal}" när händelser kom in (titel: "${efter.titel}", aktiva: [${efter.aktiva.join(', ')}])`);
+      assert.deepEqual(efter.aktiva, [mal], `fel navval aktivt efter händelserna: [${efter.aktiva.join(', ')}]`);
+    } finally { await page.close() }
+  });
+}
+
+test('Live-kontroll uppdateras fortfarande när den är öppen', { skip, timeout: 90000 }, async () => {
+  const page = await oppnaStudio();
+  try {
+    await klicka(page, 'liveControl');
+    const r = await page.evaluate(async () => {
+      const fore = document.querySelector('#view .lc-page');
+      window.dispatchEvent(new CustomEvent('vyra-live-event', { detail: { type: 'gift', username: 'provgivare', giftName: 'Rose', coins: 1, at: Date.now() } }));
+      await new Promise(r => setTimeout(r, 300));
+      return { syns: document.querySelector('#view').innerText.includes('provgivare'), ny: document.querySelector('#view .lc-page') !== fore };
+    });
+    assert.ok(r.syns, 'en ny händelse syns inte i Live-kontroll medan den är öppen');
+  } finally { await page.close() }
+});
