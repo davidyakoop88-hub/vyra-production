@@ -72,8 +72,28 @@ test.after(async () => {
 // spelade sekvensen i CI. Bada satts nu, och laget MATS efterat — ett antagande om vad en
 // riggflagga gor ar precis lika osakert som ett antagande om maskinen.
 async function loggaIn(opts = {}, fore = null) {
+  const { senBildruta, ...sidval } = opts;
   const page = await browser.newPage(Object.assign(
-    { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, opts));
+    { viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' }, sidval));
+  // En utsvulten maskin, gjord med flit och utan slump: sidans bildrutor hålls inne och kommer i
+  // det SAMRE av två ögonblick — när lösenordsfältet får markören (då hinner Playwright fokusera
+  // fältet men inte skriva i det), eller `senBildruta` ms efter att lagret öppnats om det aldrig
+  // händer. Playwright räknar sina egna bildrutor i en isolerad värld och påverkas inte.
+  if (senBildruta) await page.addInitScript(ms => {
+    const orig = window.requestAnimationFrame.bind(window);
+    let ko = [], slappt = false;
+    const slapp = () => {
+      if (slappt) return;
+      slappt = true;
+      const nu = performance.now();
+      ko.splice(0).forEach(cb => { try { cb(nu) } catch (e) { setTimeout(() => { throw e }) } });
+    };
+    window.requestAnimationFrame = cb => { if (slappt) return orig(cb); ko.push(cb); return 0 };
+    addEventListener('focusin', e => { if (e.target && e.target.id === 'loginPassword') setTimeout(slapp) }, true);
+    addEventListener('click', e => {
+      if (e.target && e.target.closest && e.target.closest('[data-konto-oppna]')) setTimeout(slapp, ms);
+    }, true);
+  }, senBildruta);
   // ANDRA VAGEN ATT SATTA LAGET. Contextvalet ovan RACKTE INTE i CI 2026-08-21: dorren kom
   // aldrig, och slappIn() har bara en enda vag ut — `prefers-reduced-motion: reduce`. Att satta
   // det pa sidan ocksa ar en annan kodvag i Playwright (Emulation.setEmulatedMedia mot en redan
@@ -97,7 +117,16 @@ async function loggaIn(opts = {}, fore = null) {
   await page.goto(`${bas}/index.html`, { waitUntil: 'load' });
   // STARTSIDAN 2026-11-22: kortet bor i ett stängt lager. Öppna det som en besökare gör,
   // med toppradens Logga in, innan fälten fylls i.
-  if (await page.$('[data-konto-oppna="login"]')) await page.click('[data-konto-oppna="login"]');
+  //
+  // VANTA UT LAGRETS EGET FOKUSSTEG INNAN NAGOT SKRIVS. oppnaLager() lagger markoren i e-postfaltet
+  // en bildruta EFTER oppningen. Skrev provet direkt kunde bildrutan komma mitt i ifyllningen:
+  // markoren hoppade, losenordet hamnade i e-posten och formularet skickades aldrig — sex prov i
+  // filen foll sa i CI, alltid efter 60 s. Se provet "en SEN bildruta" langst ner.
+  if (await page.$('[data-konto-oppna="login"]')) {
+    await page.click('[data-konto-oppna="login"]');
+    await page.waitForFunction(() => document.activeElement
+      && document.activeElement.id === 'loginEmail');
+  }
   await page.waitForSelector('#loginEmail');
   // Hook for prov som behover andra sidan INNAN inloggningen (t.ex. sla av alla animationer).
   if (fore) await fore(page);
@@ -107,6 +136,12 @@ async function loggaIn(opts = {}, fore = null) {
     () => matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduce' : 'no-preference');
   await page.fill('#loginEmail', 'prov@vyra.test');
   await page.fill('#loginPassword', 'ettlangtlosenord123');
+  // Det som skrevs ska sta dar det skrevs. Annars skickas formularet aldrig, och provet star
+  // tyst i 60 s i stallet for att saga varfor.
+  const ifyllt = await page.evaluate(() => [document.querySelector('#loginEmail').value,
+    document.querySelector('#loginPassword').value]);
+  assert.deepEqual(ifyllt, ['prov@vyra.test', 'ettlangtlosenord123'],
+    'falten innehaller inte det provet skrev — markoren hoppade mitt i ifyllningen');
   // Haka pa svaret INNAN klicket, annars kan det hinna komma medan vi staller oss i ko.
   page.__inloggningssvar = page
     .waitForResponse(r => /\/api\/auth\/login/.test(r.url()), { timeout: 90000 })
@@ -217,6 +252,23 @@ async function navigeringsAnteckning(page) {
   }
   const rad = await page.evaluate(() => sessionStorage.getItem('vyra-prov-navigering'));
   return rad == null ? null : JSON.parse(rad);
+}
+
+// Vad sidan sjalv visar nar navigeringen uteblev. "Timeout" utesluter ingenting; faltens varden,
+// knappen och felraden sager om formularet ens skickades.
+async function lage(page) {
+  const l = await page.evaluate(() => {
+    const v = s => document.querySelector(s);
+    return {
+      url: location.href.split('/').pop(),
+      epost: v('#loginEmail') && v('#loginEmail').value,
+      losenLangd: v('#loginPassword') && v('#loginPassword').value.length,
+      knappAv: v('.login-knapp') && v('.login-knapp').disabled,
+      fel: v('#loginError') && v('#loginError').textContent,
+    };
+  }).catch(e => ({ kunde_inte_lasa: String(e && e.message) }));
+  return 'Lage: ' + JSON.stringify(l) + ' · '
+    + (page.__konsol.length ? page.__konsol.join(' ; ') : 'inga konsolfel');
 }
 
 // Sekvensens avsedda langd, sa som koden ber om den.
@@ -352,6 +404,21 @@ test('en TRASIG festyta slapper anda in anvandaren (fail-open)', { skip, timeout
     assert.ok(!a.timrar.includes(SEKVENS_MS),
       'sekvensens timer registrerades trots att bygget kastade — da gick vi inte via fail-open '
       + 'utan vantade ut en sekvens som inte finns');
+  } finally { await page.close() }
+});
+
+test('en SEN bildruta skriver aldrig losenordet i e-postfaltet', { skip, timeout: 240000 },
+  async () => {
+  // DET SOM FALLDE CI SOM "FLAKIGT" 2026-11-20–25 (korningar 45499755004, 45509858085 m.fl.):
+  // lagret lagger markoren i e-postfaltet EN BILDRUTA efter att det oppnats. Kommer bildrutan
+  // sent hinner provet borja skriva losenordet — markoren hoppar, losenordet hamnar i e-posten,
+  // losenordsfaltet ar tomt och webblasaren vagrar skicka formularet. Uppmatt lokalt i det
+  // strandade laget: epost "prov@vyra.testettlangtlosenord123", knappen aldrig avstangd, inget
+  // felbesked. Sex prov i filen kunde falla sa, alltid efter 60 s, aldrig med en forklaring.
+  const page = await loggaIn({ senBildruta: 1500 });
+  try {
+    const a = await navigeringsAnteckning(page);
+    assert.notEqual(a, null, 'navigeringen initierades aldrig med en sen bildruta. ' + await lage(page));
   } finally { await page.close() }
 });
 

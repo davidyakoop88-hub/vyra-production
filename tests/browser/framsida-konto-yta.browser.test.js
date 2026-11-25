@@ -45,7 +45,13 @@ async function sidan(vy) {
 // Kortets fyra lägen, i samma ordning som en besökare når dem.
 async function lage(page, namn) {
   // STARTSIDAN 2026-11-22: kortet bor i ett stängt lager. Öppna det som en besökare gör.
-  if (await page.$('[data-konto-lager][hidden]')) { await page.click('[data-konto-oppna="login"]'); await page.waitForTimeout(150) }
+  // Vänta ut lagrets eget fokussteg (en bildruta efter öppningen) i stället för att gissa en tid:
+  // kom bildrutan mitt i ifyllningen hoppade markören och lösenordet hamnade i e-posten
+  // (tests/browser/login-slapp-in, "en SEN bildruta").
+  if (await page.$('[data-konto-lager][hidden]')) {
+    await page.click('[data-konto-oppna="login"]');
+    await page.waitForFunction(() => document.activeElement && document.activeElement.id === 'loginEmail');
+  }
   if (namn === 'register') await page.click('[data-login-flik="register"]');
   if (namn === 'forgot') await page.click('[data-login-glomt]');
   if (namn === 'mfa') {
