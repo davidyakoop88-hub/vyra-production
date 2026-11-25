@@ -130,26 +130,28 @@ jobs:
       # i BÅDA flödena, så att bilderna skrivs och jämförs under samma förutsättningar.
       # Samma resonemang som den pinnade Chromium-binären strax intill: vakten har nolltolerans och
       # kan inte skilja "widgeten ändrades" från "rastreraren ändrades".
+      # CACHAD, INTE HÄMTAD VARJE GÅNG — se scripts/cjk-typsnitt.sh. Två körningar 2026-11-23 föll på
+      # att spegeln stannade mitt i paketets 61 MB, innan ett enda prov körts.
+      - name: 'Visuell · CJK-typsnittet ur cachen'
+        id: cjk
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/vyra-cjk
+          key: cjk-noto-20240730-1build1-${{ runner.os }}
+
       - name: 'Visuell · pinnat CJK-typsnitt'
         timeout-minutes: 15
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          set -eu
-          # Samma omförsöksmönster som steget ovanför, och av samma skäl: spegelns dagsform får
-          # inte göra ett väntat hack till ett rött bygge.
-          for i in 1 2 3; do
-            if sudo apt-get install -y --no-install-recommends fonts-noto-cjk; then
-              fc-cache -f > /dev/null
-              echo "CJK-typsnitt på plats:"
-              fc-list | grep -i "noto sans cjk" | head -3
-              exit 0
-            fi
-            echo "Forsok $i gav upp — provar igen om 20 s"
-            sudo apt-get update || true
-            sleep 20
-          done
-          exit 1
+        run: bash scripts/cjk-typsnitt.sh
+
+      # Sparas DIREKT efter hämtningen, inte i jobbets slut: faller vakten senare ska nästa körning
+      # ändå slippa spegeln.
+      - name: 'Visuell · spara CJK-typsnittet i cachen'
+        if: steps.cjk.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/vyra-cjk
+          key: cjk-noto-20240730-1build1-${{ runner.os }}
 
       # VILKEN MASKIN RITADE? 2026-10-17 gav en löpare ett annat textavtryck med samma avbild och
       # samma typsnittspaket, och ingenting i loggen sa vad den maskinen var. Nu gör det det.

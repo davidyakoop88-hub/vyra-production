@@ -139,7 +139,8 @@ jobs:
   # Nu kor de tre parallellt pa var sin runner:
   #   test-client              node-sviterna, svar inom ~4 min
   #   test-client-webblasare   test:browser, skarvat i fyra delar
-  #   test-visuell             pinnad Chromium + pixelvakten
+  #   test-visuell-maskin      pinnad Chromium + pixelvakten, pa tva lopare samtidigt
+  #   test-visuell             domen: den lopare som ritar som referenserna avgor
   #
   # NAMNET test-client BEHALLS pa det forsta jobbet med flit: det ar det namn grenskyddet kraver,
   # och ett omdopt obligatoriskt prov blir ett som aldrig kors i stallet for ett som faller.
@@ -264,10 +265,18 @@ jobs:
 
   # VISUELL REGRESSION — jamfor varje katalognyckel pixel for pixel mot en incheckad referens.
   #
-  # ETT ENDA JOBB, aldrig skarvat. Vakten har NOLLTOLERANS och skiljer inte pa "widgeten andrades"
-  # och "rastreraren andrades". Tva runners ar tva maskiner; att dela bilderna mellan dem hade
-  # gjort maskinskillnaden till ett rott prov. Jobbet ar anda bara ~10 min — det var aldrig det
-  # som kostade tid.
+  # ALDRIG SKARVAT. Vakten har NOLLTOLERANS och skiljer inte pa "widgeten andrades" och
+  # "rastreraren andrades". Tva runners ar tva maskiner; att dela bilderna mellan dem hade gjort
+  # maskinskillnaden till ett rott prov. Jobbet ar anda bara ~10 min — det var aldrig det som
+  # kostade tid.
+  #
+  # MEN DUBBELKORT, och det ar nagot annat (2026-11-25). Bada lopare i matrisen `maskin` jamfor
+  # ALLA nycklar. GitHub servar ibland en maskin som ritar text som 0a5592fd i stallet for
+  # referensernas 3e0f58bc — tre roda korningar 23–24 november, varje gang samma 34 nycklar, och
+  # maskinen gar inte att valja bort. En lopare som avviker hoppar darfor over jamforelsen och
+  # sager det; jobbet test-visuell langst ned later den som ritar som referenserna doma
+  # (scripts/visuell-dom.js). Bara om BADA avviker blir det rott, och da star det varfor.
+  # test-visuell ar det namn grenskyddet kraver, sa domen bar det namnet.
   #
   # Steget installerar playwright-core:s EGNA pinnade Chromium i stallet for att anvanda
   # ubuntu-latest:s Google Chrome, av samma skal: referensbilderna ar bara giltiga pa exakt den
@@ -282,11 +291,15 @@ jobs:
   # Proven bor i tests/visual/ och inte i tests/browser/ just for att test:browser ovanfor INTE ska
   # plocka upp dem: dar hade de kort en gang till pa runnerns Google Chrome och fallit av fel skal.
   # tests/browser-rigg.test.js vaktar bada katalogerna.
-  test-visuell:
+  test-visuell-maskin:
     runs-on: ubuntu-latest
     # Uppmatt 10 min 3 s (kedjan 31 s + rigg 57 s + vakten 7 min 56 s). 45 ger rum for en trog
     # apt-spegel i de tva beroendestegen, som har egna tak pa 25 respektive 15 minuter.
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        maskin: [1, 2]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -361,26 +374,28 @@ jobs:
       # i BÅDA flödena, så att bilderna skrivs och jämförs under samma förutsättningar.
       # Samma resonemang som den pinnade Chromium-binären strax intill: vakten har nolltolerans och
       # kan inte skilja "widgeten ändrades" från "rastreraren ändrades".
+      # CACHAD, INTE HÄMTAD VARJE GÅNG — se scripts/cjk-typsnitt.sh. Två körningar 2026-11-23 föll på
+      # att spegeln stannade mitt i paketets 61 MB, innan ett enda prov körts.
+      - name: 'Visuell · CJK-typsnittet ur cachen'
+        id: cjk
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/vyra-cjk
+          key: cjk-noto-20240730-1build1-${{ runner.os }}
+
       - name: 'Visuell · pinnat CJK-typsnitt'
         timeout-minutes: 15
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          set -eu
-          # Samma omförsöksmönster som steget ovanför, och av samma skäl: spegelns dagsform får
-          # inte göra ett väntat hack till ett rött bygge.
-          for i in 1 2 3; do
-            if sudo apt-get install -y --no-install-recommends fonts-noto-cjk; then
-              fc-cache -f > /dev/null
-              echo "CJK-typsnitt på plats:"
-              fc-list | grep -i "noto sans cjk" | head -3
-              exit 0
-            fi
-            echo "Forsok $i gav upp — provar igen om 20 s"
-            sudo apt-get update || true
-            sleep 20
-          done
-          exit 1
+        run: bash scripts/cjk-typsnitt.sh
+
+      # Sparas DIREKT efter hämtningen, inte i jobbets slut: faller vakten senare ska nästa körning
+      # ändå slippa spegeln.
+      - name: 'Visuell · spara CJK-typsnittet i cachen'
+        if: steps.cjk.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/vyra-cjk
+          key: cjk-noto-20240730-1build1-${{ runner.os }}
 
       # VILKEN MASKIN RITADE? 2026-10-17 gav en löpare ett annat textavtryck med samma avbild och
       # samma typsnittspaket, och ingenting i loggen sa vad den maskinen var. Nu gör det det.
@@ -405,6 +420,7 @@ jobs:
         run: node node_modules/playwright-core/cli.js install chromium
 
       - name: 'Visuell · riggproven (jamforaren muterad, CSS-andring)'
+        id: rigg
         timeout-minutes: 15
         run: npm run test:visual:rigg
 
@@ -414,8 +430,40 @@ jobs:
       # som anvander regeln. Faller de, sager vaktens 166 grona nycklar ingenting — da ar det
       # riggen som ar trasig, inte widgetarna, och ordningen har gor det synligt i loggen.
       - name: 'Visuell · alla katalognycklar mot referens'
+        id: vakt
         timeout-minutes: 30
+        env:
+          VYRA_VISUELL_TVA_MASKINER: '1'
+          VYRA_VISUELL_AVTRYCK_FIL: ${{ runner.temp }}/visuell-avtryck.json
         run: npm run test:visual
+
+      # VAD DEN HAR LOPAREN SAG — domen langst ned laser det. Skrivs alltid, aven nar ett tidigare
+      # steg foll: en lopare som aldrig kom fram ska synas som just det, inte som tystnad.
+      - name: 'Visuell · utfallet for domen'
+        if: always()
+        env:
+          MASKIN: ${{ matrix.maskin }}
+          RIGG: ${{ steps.rigg.outcome }}
+          VAKT: ${{ steps.vakt.outcome }}
+          AVTRYCK: ${{ runner.temp }}/visuell-avtryck.json
+        run: |
+          mkdir -p visuell-utfall
+          node -e "
+            const fs = require('fs'), e = process.env;
+            let avtryck = null;
+            try { avtryck = JSON.parse(fs.readFileSync(e.AVTRYCK, 'utf8')) } catch (_) {}
+            const u = { maskin: e.MASKIN, rigg: e.RIGG, vakt: e.VAKT, avtryck };
+            fs.writeFileSync('visuell-utfall/utfall.json', JSON.stringify(u));
+            console.log(JSON.stringify(u));
+          "
+
+      - name: 'Visuell · utfallet ut ur loparen'
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visuell-utfall-${{ matrix.maskin }}
+          path: visuell-utfall/utfall.json
+          retention-days: 3
 
       # DIFFBILDERNA UT UR LOPAREN. Felmeddelandet pekar pa tests/visual/diff/, och den katalogen
       # forsvinner nar jobbet ar slut — i CI, alltsa pa det enda stalle dar vakten normalt faller,
@@ -425,10 +473,31 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: visuella-diffar-ci
+          name: visuella-diffar-ci-${{ matrix.maskin }}
           path: tests/visual/diff/
           if-no-files-found: ignore
           retention-days: 14
+
+  # PIXELVAKTENS DOM — se kommentaren ovanfor test-visuell-maskin och scripts/visuell-dom.js.
+  # Bar namnet test-visuell for att det ar det grenskyddet kraver. if: always(), annars hade en
+  # fallen lopare hoppat over domen och lamnat kontrollen "skipped" — vilket grenskyddet raknar
+  # som godkant.
+  test-visuell:
+    runs-on: ubuntu-latest
+    needs: test-visuell-maskin
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: visuell-utfall-*
+          path: visuell-utfall
+        continue-on-error: true
+      - name: 'Visuell · domen'
+        run: node scripts/visuell-dom.js visuell-utfall
 
   # Caddyfilen ar det enda i repot som kan ta ner HELA sajten utan att nagot test marker det:
   # den kopieras rakt in i imagen av Dockerfile:55 och las forst av Caddy vid start. Ett syntaxfel
