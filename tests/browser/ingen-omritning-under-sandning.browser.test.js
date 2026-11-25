@@ -238,3 +238,42 @@ test('studion: Ordjakten skriver aldrig om hela layouten när ord löses och byt
     assert.ok(r.valt, 'Ordjakten tappade sin markering i studion');
   } finally { await ctx.close(); }
 });
+
+// STUDION VISAR ALLA WIDGETAR (David 2026-11-25: "fixa 30-gränsen så alla widgetar syns i studion").
+// layout-safe.js ritade state.widgets.slice(0, 30) i studion sedan 2026-07-24 ("Bound Layout rendering to
+// prevent crashes"). Den 31:a och alla efter den syntes inte på duken och gick inte att markera eller flytta,
+// men de syntes i OBS. Provet lägger 80 widgetar och kräver att alla ritas, att lagerlistan räknar alla och
+// att studion fortfarande ritar om snabbt.
+test('studion: en layout med 80 widgetar ritar alla 80 på duken och i lagerlistan', { skip, timeout: 180000 }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1568, height: 900 } });
+  const sida = await ctx.newPage();
+  const sidfel = [];
+  sida.on('pageerror', e => sidfel.push(String(e && e.message || e).slice(0, 200)));
+  try {
+    await sida.goto(`${bas}/studio.html`, { waitUntil: 'load', timeout: 120000 });
+    await sida.waitForFunction(() => window.VyraWidgets && typeof render === 'function', null, { timeout: 60000 });
+    await sida.waitForTimeout(8000);
+    const r = await sida.evaluate(async () => {
+      state.widgets.length = 0;
+      for (let i = 0; i < 80; i += 1) {
+        const w = VyraWidgets.create(i % 2 ? 'catalog:vyrapaket:ordjakten' : 'catalog:vyrapaket:chattavatar');
+        w.x = 10 + (i % 10) * 90; w.y = 10 + Math.floor(i / 10) * 110; state.widgets.push(w);
+      }
+      try { view = 'editor'; selected = state.widgets[79].id; } catch (_) {}
+      const t0 = performance.now(); render(); const ms = performance.now() - t0;
+      await new Promise(k => setTimeout(k, 500));
+      const pa = new Set([...document.querySelectorAll('#view .widget[data-id]')].map(n => n.dataset.id));
+      const sista = state.widgets[79];
+      return { ritade: state.widgets.filter(w => pa.has(String(w.id))).length, sistaSyns: pa.has(String(sista.id)),
+        sistaVald: !!document.querySelector(`#view .widget.selected[data-id="${sista.id}"]`),
+        lager: document.querySelectorAll('[data-safe-layer]').length, rubrik: (document.querySelector('.live-layer-panel header span') || {}).textContent || '', ms: Math.round(ms) };
+    });
+    console.log(`[80 widgetar i studion] ${r.ritade} ritade, lagerlistan ${r.lager} rader ("${r.rubrik}"), render() ${r.ms} ms; sidfel: ${sidfel.slice(0, 2).join(' | ') || 'inga'}`);
+    assert.equal(r.ritade, 80, `bara ${r.ritade} av 80 widgetar ritades i studion`);
+    assert.ok(r.sistaSyns && r.sistaVald, 'den 80:e widgeten syns inte, eller går inte att markera');
+    if (r.lager) assert.equal(r.lager, 80, `lagerlistan visar ${r.lager} av 80`);
+    assert.doesNotMatch(r.rubrik, /Visar \d+ av/, `lagerlistan säger fortfarande "${r.rubrik}"`);
+    assert.ok(r.ms < 3000, `render() med 80 widgetar tog ${r.ms} ms`);
+    assert.deepEqual(sidfel, [], 'sidan kastade fel med 80 widgetar');
+  } finally { await ctx.close(); }
+});
