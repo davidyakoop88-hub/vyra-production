@@ -108,8 +108,10 @@ sjuttio minuter att få veta om.
 
 Därför kör `test-client` numera som **tre parallella jobb**: node-sviterna svarar på ~4 min,
 `test-client-webblasare` skarvar `test:browser` i sex delar (fyra fram till 2026-10-20, då delarna slog i 45-minutersgränsen) (`scripts/browser-skarva.js`, packade
-efter uppmätt vikt i `tests/browser-tider.json`), och `test-visuell` kör pixelvakten odelad — den
-har nolltolerans och tål inte att bilderna jämförs på flera maskiner. Väggklockan är ~10 min i
+efter uppmätt vikt i `tests/browser-tider.json`), och pixelvakten körs odelad — den har nolltolerans
+och tål inte att bilderna delas mellan maskiner. Den körs däremot HEL på två löpare samtidigt
+(`test-visuell-maskin`), för GitHub servar ibland en maskin som ritar text annorlunda; jobbet
+`test-visuell` låter den löpare som ritar som referenserna döma (`scripts/visuell-dom.js`). Väggklockan är ~10 min i
 stället för 70. `tests/browser-skarvning.test.js` vaktar att delarna täcker katalogen exakt en gång.
 
 ## Inför en riktig sändning

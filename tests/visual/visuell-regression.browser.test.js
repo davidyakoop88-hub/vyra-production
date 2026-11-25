@@ -54,6 +54,25 @@ let skip = hoppaOver();
 // uppvärmningen en kommentar och inte en vakt.
 let uppvarmning = null;
 
+// TVÅ MASKINER, EN DOM (2026-11-25). GitHub servar då och då en löpare som ritar text som 0a5592fd
+// i stället för referensernas 3e0f58bc — samma avbild, samma typsnitt, och varje gång exakt samma
+// 34 nycklar med 2–227 px skillnad. Den maskinen går inte att välja bort, och en andra uppsättning
+// referenser för den går inte att hålla aktuell: varje widgetändring hade krävt nya bilder just på
+// den maskin man inte kan beställa.
+//
+// Därför kör ci.yml vakten på två löpare samtidigt (test-visuell-maskin, matrisen `maskin`), och
+// jobbet test-visuell låter den som ritar som referenserna döma — scripts/visuell-dom.js. Med
+// VYRA_VISUELL_TVA_MASKINER=1 faller därför inte en avvikande maskin: den säger att den avviker,
+// skriver det till VYRA_VISUELL_AVTRYCK_FIL och hoppar över jämförelsen. Utan variabeln — lokalt,
+// och i referensflödet — faller provet precis som förut.
+let avvikandeMaskin = false;
+function skrivAvtryck(lagrat, nu) {
+  const fil = process.env.VYRA_VISUELL_AVTRYCK_FIL;
+  if (!fil) return;
+  fs.mkdirSync(path.dirname(fil), { recursive: true });
+  fs.writeFileSync(fil, JSON.stringify({ lagrat: lagrat || null, nu, lika: !lagrat || lagrat === nu }));
+}
+
 /* DEN FÖRSTA SESSIONEN KASTAS — SAMMA DISCIPLIN SOM REFERENSSKRIPTET REDAN HAR.
  *
  * UPPMÄTT 2026-08-19 (står i scripts/visuell-referens.js): den FÖRSTA webbläsarsessionen på en
@@ -194,13 +213,20 @@ test('rastreraren ritar som den gjorde när referenserna togs', { skip, timeout:
 
   // ETT MANIFEST UTAN AVTRYCK ÄR INTE ETT FEL — bara äldre än den här vakten. Provet hoppar då,
   // högljutt, i stället för att falla på något referenserna aldrig lovade.
+  const nu = await V.rastreringsAvtryck(sida);
+  skrivAvtryck(lagrat, nu);
   if (!lagrat) {
     console.log('# referensmanifestet bär inget rastreringsavtryck ännu — tas vid nästa '
       + 'omkörning av visuell-referenser.yml. Kontrollen hoppas.');
     return;
   }
 
-  const nu = await V.rastreringsAvtryck(sida);
+  if (nu !== lagrat && process.env.VYRA_VISUELL_TVA_MASKINER === '1') {
+    avvikandeMaskin = true;
+    console.log(`# AVVIKANDE MASKIN: den här löparen ritar text som ${nu}, referenserna togs på `
+      + `${lagrat}. Katalogjämförelsen hoppas här — den andra löparen i matrisen dömer.`);
+    return;
+  }
   assert.equal(nu, lagrat,
     `RASTRERAREN HAR BYTTS. Referenserna togs på en maskin vars textavtryck är ${lagrat}; den `
     + `här maskinen ger ${nu}. Binären och typsnitten stämmer — det är maskinen UNDER dem som `
@@ -532,7 +558,8 @@ test('tröskeln släpper igenom 6 av 255 och fäller 7 — på en enda pixel', {
   assert.equal(svar.sjuPaEn.storsta, 7, 'största kanalskillnaden ska rapporteras rätt');
 });
 
-test('varje katalognyckel ser ut som sin referens', { skip }, async () => {
+test('varje katalognyckel ser ut som sin referens', { skip }, async (t) => {
+  if (avvikandeMaskin) { t.skip('avvikande maskin — den andra löparen dömer'); return; }
   fs.mkdirSync(V.DIFFKAT, { recursive: true });
   const saknas = [], avviker = [], trasiga = [], tomma = [], oreproducerade = [];
 

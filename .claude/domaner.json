@@ -1179,7 +1179,10 @@
         "tests/visual/*",
         "scripts/visuell-referens.js",
         "scripts/browser-skarva.js",
-        "tests/browser-tider.json"
+        "tests/browser-tider.json",
+        "scripts/visuell-dom.js",
+        "scripts/cjk-typsnitt.sh",
+        "tests/visuell-dom.test.js"
       ],
       "tester": [
         "tests/skip-dirs.test.js",
@@ -1187,7 +1190,8 @@
         "tests/visual/visuell-regression.browser.test.js",
         "tests/visuell-rastreringskrock.test.js",
         "tests/browser-rigg.test.js",
-        "tests/browser-skarvning.test.js"
+        "tests/browser-skarvning.test.js",
+        "tests/visuell-dom.test.js"
       ],
       "matning": [],
       "risker": [
