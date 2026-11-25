@@ -234,7 +234,10 @@ test('sidan har tre delar i ratt ordning', { skip, timeout: 60000 }, async () =>
     // 2026-11-22 (startsidan, Webbdesignern): "Prova direkt · utan konto" direkt under heron, så att
     // en besökare kan skicka en gåva och se effekten före allt annat. "VYRA i korthet" och "Vanliga
     // frågor" före den sista knappen. Inloggningen flyttade till ett lager utanför <main>.
-    assert.deepEqual(m.delar, ['hero', 'prova', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'widgetar', 'logos', 'premium', 'fakta-rad', 'vanliga-fragor', 'avslut-cta', 'mini-sidfot'],
+    // 2026-11-24 (David: avatar för hemsidan som förklarar hur VYRA fungerar): "Så fungerar VYRA, på en minut" —
+    // AI-guidefilmen — mellan "Prova direkt" och arbetsflödet. Platshållare tills filmen är inspelad. Vaktas av
+    // tests/avatar-guide.test.js (märkning, ordning, inget autoplay, film under assets/ eller public/).
+    assert.deepEqual(m.delar, ['hero', 'prova', 'guide-film', 'sa-funkar-det', 'fan-level-up', 'gift-campaign', 'widgetar', 'logos', 'premium', 'fakta-rad', 'vanliga-fragor', 'avslut-cta', 'mini-sidfot'],
       `sidans delar i ordning: ${m.delar.join(', ')}`);
   } finally { await context.close() }
 });

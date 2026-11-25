@@ -215,3 +215,34 @@ html.konto-oppet{overflow:hidden}
 .widgetar-knappar .widgetar-knapp{margin-top:0}
 .widgetar-galleri-lank{color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
 .widgetar-galleri-lank:hover{color:#fff;border-color:var(--violet-light)}
+
+/* AI-guidefilmen (platshållare tills filmen finns, se docs/avatar-guide.md) */
+.avatarguide{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:56px 20px 40px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:44px;row-gap:0;align-items:center;
+  background:var(--bg);box-shadow:0 0 0 100vmax var(--bg);clip-path:inset(0 -100vmax)}
+.avatarguide-text{text-align:left}
+.avatarguide-text h2{margin:0 0 10px;font:800 clamp(24px,3vw,32px)/1.15 var(--font-display);color:var(--text);letter-spacing:-.01em}
+.avatarguide-ingress{margin:0 0 18px;max-width:440px;color:var(--muted);font-size:14.5px;line-height:1.65}
+.avatarguide-lank{display:inline-block;color:#d9cbef;font:600 14px var(--font-body);text-decoration:none;border-bottom:1px solid rgba(217,203,239,.35);padding-bottom:2px}
+.avatarguide-lank:hover{color:#fff;border-color:var(--violet-light)}
+.avatarguide-lank:focus-visible,.avatarguide-manus summary:focus-visible{outline:2px solid var(--violet-light);outline-offset:3px}
+.avatarguide-scen{margin:0;border:1px solid var(--line);border-radius:var(--radius-lg);overflow:hidden;background:#0b0713}
+.avatarguide-film{position:relative;aspect-ratio:16/9;background:radial-gradient(120% 90% at 50% 40%,#140c22 0%,#070417 70%)}
+.avatarguide-film video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.avatarguide-plats{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center}
+.avatarguide-plats p{margin:0;color:var(--muted);font:600 13.5px var(--font-body)}
+.avatarguide-spela{position:relative;width:64px;height:64px;border-radius:50%;border:1px solid rgba(228,179,90,.55);background:rgba(228,179,90,.1)}
+.avatarguide-spela::after{content:"";position:absolute;left:25px;top:20px;border-style:solid;border-width:12px 0 12px 19px;border-color:transparent transparent transparent #e4b35a}
+.avatarguide-scen figcaption{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px 16px 13px;
+  border-top:1px solid var(--line);background:var(--panel)}
+.avatarguide-scen figcaption b{font:700 13.5px var(--font-display);color:var(--text)}
+.avatarguide-scen figcaption span{font-size:12.5px;color:var(--muted);text-align:right}
+.avatarguide-manus{grid-column:1/-1;width:100%;max-width:640px;margin:28px auto 0;padding-top:14px;border-top:1px solid var(--line)}
+.avatarguide-manus summary{cursor:pointer;color:var(--muted);font:600 13.5px var(--font-body)}
+.avatarguide-manus p{margin:10px 0 0;color:var(--muted);font-size:13.5px;line-height:1.6}
+@media (max-width:860px){
+  .avatarguide{grid-template-columns:minmax(0,1fr);row-gap:20px;padding:44px 16px 32px}
+  .avatarguide-text{text-align:center}
+  .avatarguide-ingress{margin-left:auto;margin-right:auto}
+  .avatarguide-manus{margin-top:8px}
+}
