@@ -279,3 +279,81 @@ test('filtret på "katalog nycklar" ger bara giltiga nycklar, och avvisade nämn
   const alla = kor(f, 'katalog', 'nycklar').ut;
   if (JSON.parse(kor(f, '--json', 'katalog', 'nycklar').ut).avvisade > 0) assert.match(alla, /avvisas av fabriken/);
 });
+
+// ---- granskningsfynd 3–6 ---------------------------------------------------------------------------------
+const stackspar = s => /\n\s+at .+\(.+:\d+:\d+\)|TypeError|ENOENT.*\n\s+at /.test(s);
+
+test('en fil utan widgets-lista avvisas med ett felmeddelande, aldrig ett stackspår', () => {
+  for (const [namn, innehall] of [['tomt objekt', '{}'], ['null', 'null'], ['lista', '[]'], ['tal', '5']]) {
+    const f = nyFil(); fs.writeFileSync(f, innehall);
+    for (const args of [['widget', 'lagg-till', 'catalog:topgift:neon'], ['widget', 'lista'], ['action', 'ny', 'A'], ['scen', 'lista']]) {
+      const r = kor(f, ...args);
+      assert.equal(r.kod, 1, `${namn}: ${args.join(' ')} skulle avvisas`);
+      assert.match(r.fel, /ingen VYRA-state/);
+      assert.ok(!stackspar(r.fel), `${namn}: stackspår i utdata:\n${r.fel}`);
+    }
+    assert.equal(fs.readFileSync(f, 'utf8'), innehall, `${namn}: en avvisad körning får inte skriva något`);
+  }
+});
+
+test('validera rapporterar en trasig form med exit 2 i stället för att avvisas eller krascha', () => {
+  for (const innehall of ['{}', 'null']) {
+    const f = nyFil(); fs.writeFileSync(f, innehall);
+    const r = kor(f, 'validera');
+    assert.equal(r.kod, 2, `validera på ${innehall}`);
+    assert.match(r.ut, /Saknar widgets-lista/);
+    assert.ok(!stackspar(r.fel));
+  }
+  assert.deepEqual(lib.validera(null), [{ niva: 'fel', text: 'Saknar widgets-lista' }]);
+});
+
+test('en skrivning som misslyckas ger ett felmeddelande, även som --json, och lämnar ingen tempfil', () => {
+  const dir = path.join(tmp, 'finns-inte');
+  const f = path.join(dir, 's.json');
+  const r = kor(f, '--json', 'ny');
+  assert.equal(r.kod, 1);
+  assert.ok(!stackspar(r.fel), r.fel);
+  const j = JSON.parse(r.fel);
+  assert.equal(j.ok, false);
+  assert.match(j.fel, /Kunde inte skriva/);
+  assert.ok(!fs.existsSync(dir), 'CLI:t skapade en mapp som ingen bad om');
+});
+
+test('--flagga=värde delas vid första "=" så värdet får innehålla fler', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'action', 'ny', 'A');
+  const r = kor(f, '--json', 'event', 'koppla', '--trigger=chatCommand', '--villkor=a=b=c', '--action=A');
+  assert.equal(r.kod, 0, r.fel);
+  assert.equal(JSON.parse(r.ut).event.condition, 'a=b=c');
+  assert.equal(aeAv(f).events[0].trigger, 'chatCommand');
+});
+
+test('en Action vars namn innehåller komma kan kopplas, och en upprepad Action räknas en gång', () => {
+  const f = nyFil(); kor(f, 'ny');
+  kor(f, 'action', 'ny', 'Tack, Rose'); kor(f, 'action', 'ny', 'A'); kor(f, 'action', 'ny', 'B');
+
+  const komma = JSON.parse(kor(f, '--json', 'event', 'koppla', '--trigger', 'gift', '--action', 'Tack, Rose').ut);
+  const o1 = aeAv(f);
+  assert.equal(komma.event.actionId, o1.actions.find(a => a.name === 'Tack, Rose').id);
+  assert.ok(!('allActionIds' in komma.event), 'namnet delades vid kommat');
+
+  const dubbel = JSON.parse(kor(f, '--json', 'event', 'koppla', '--trigger', 'follow', '--action', 'A,A').ut);
+  assert.equal(dubbel.ignorerade, 1);
+  assert.ok(dubbel.event.actionId && !('allActionIds' in dubbel.event), 'A,A ska bli ett Event med en Action');
+
+  const blandat = JSON.parse(kor(f, '--json', 'event', 'koppla', '--trigger', 'share', '--action', 'A,B,A').ut);
+  assert.equal(blandat.ignorerade, 1);
+  assert.equal(blandat.event.allActionIds.length, 2);
+
+  const text = kor(f, 'event', 'koppla', '--trigger', 'member', '--action', 'A,A').ut;
+  assert.match(text, /ignorerades/);
+});
+
+test('fabriken kan hämtas flera gånger i samma process', () => {
+  const gammal = global.window;
+  try {
+    const a = lib.laddaFabrik(), b = lib.laddaFabrik();
+    assert.equal(a, b, 'samma fabrik ska komma tillbaka');
+    assert.equal(typeof b.create, 'function');
+    assert.equal(b.create('catalog:topgift:neon', { placement: 'standalone' }).type, 'templateTopGift');
+  } finally { global.window = gammal; }
+});

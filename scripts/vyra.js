@@ -30,14 +30,20 @@ const PLACERINGAR = { top: [160, 80, 760], center: [160, 690, 760], bottom: [160
 const MAX_WIDGETS = 500; // server/security.js validOverlayState
 
 // ---- fabriken -------------------------------------------------------------------------------------------
+let FABRIK = null;
 function laddaFabrik() {
+  if (FABRIK) return FABRIK;
   const fil = path.join(ROT, 'widget-factory.js');
   if (!fs.existsSync(fil)) fel(`Hittar inte ${fil}. Sätt VYRA_ROOT till repots rot.`);
   const w = { crypto: require('node:crypto').webcrypto };
   global.window = w;
+  // require cachar modulen, och en cachad modul körs inte om: den skulle aldrig sätta VyraWidgets på DEN HÄR
+  // window. Det gäller även när någon annan i processen redan laddat filen (t.ex. ett prov).
+  delete require.cache[require.resolve(fil)];
   require(fil);
   if (!w.VyraWidgets) fel('widget-factory.js gav ingen VyraWidgets');
-  return w.VyraWidgets;
+  FABRIK = w.VyraWidgets;
+  return FABRIK;
 }
 
 // ---- hjälpare -------------------------------------------------------------------------------------------
@@ -61,7 +67,7 @@ function tolka(argv) {
     const a = argv[i];
     if (a === '-p') flaggor.p = argv[++i];
     else if (a.startsWith('--')) {
-      const [k, v] = a.slice(2).split('=');
+      const eq = a.indexOf('='), k = eq < 0 ? a.slice(2) : a.slice(2, eq), v = eq < 0 ? undefined : a.slice(eq + 1);
       if (v !== undefined) flaggor[k] = v;
       else if (BOOL.has(k)) flaggor[k] = true; // rena flaggor tar aldrig nästa ord som värde
       else if (arVarde(argv[i + 1])) flaggor[k] = argv[++i];
@@ -72,9 +78,14 @@ function tolka(argv) {
 }
 
 const tom = () => ({ widgets: [], __vyraBackup: { schema: 1, createdAt: Date.now(), storage: {} } });
-function las(fil) {
+// krav=false används av "validera", som själv ska rapportera en trasig form (exit 2) i stället för att avvisas här.
+function las(fil, krav = true) {
   if (!fs.existsSync(fil)) fel(`Filen finns inte: ${fil} (skapa den med "ny")`);
-  try { return JSON.parse(fs.readFileSync(fil, 'utf8')); } catch (e) { return fel(`Ogiltig JSON i ${fil}: ${e.message}`); }
+  let state;
+  try { state = JSON.parse(fs.readFileSync(fil, 'utf8')); } catch (e) { return fel(`Ogiltig JSON i ${fil}: ${e.message}`); }
+  if (krav && !(state && typeof state === 'object' && Array.isArray(state.widgets)))
+    fel(`${fil} är ingen VYRA-state: saknar en widgets-lista (kör "validera" för detaljer)`);
+  return state;
 }
 // Lagringen (extras) bor i __vyraBackup.storage. En äldre fil med __vyraCloud läses och flyttas vid nästa skrivning.
 const lagring = state => state.__vyraBackup?.storage || state.__vyraCloud?.storage || {};
@@ -83,8 +94,13 @@ function skriv(fil, state) {
   delete state.__vyraCloud;
   state.__vyraBackup = { schema: 1, createdAt: Date.now(), storage };
   const tmp = fil + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
-  fs.renameSync(tmp, fil); // atomiskt: en avbruten skrivning lämnar aldrig en halv fil
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
+    fs.renameSync(tmp, fil); // atomiskt: en avbruten skrivning lämnar aldrig en halv fil
+  } catch (e) {
+    try { fs.rmSync(tmp, { force: true }); } catch { /* städningen får inte dölja det riktiga felet */ }
+    fel(`Kunde inte skriva ${fil}: ${e.message}`);
+  }
 }
 // Läsarna i appen normaliserar till arrayer (tests/action-state-form.test.js). Gör samma.
 function ae(state) {
@@ -108,8 +124,8 @@ const csv = v => String(v || '').split(',').map(s => s.trim()).filter(Boolean);
 
 // ---- validering (appens regler + serverns) ----------------------------------------------------------------
 function validera(state) {
+  if (!state || typeof state !== 'object' || !Array.isArray(state.widgets)) return [{ niva: 'fel', text: 'Saknar widgets-lista' }];
   const p = [], o = ae(state);
-  if (!state || !Array.isArray(state.widgets)) return [{ niva: 'fel', text: 'Saknar widgets-lista' }];
   if (state.widgets.length > MAX_WIDGETS) p.push({ niva: 'fel', text: `${state.widgets.length} widgets, max är ${MAX_WIDGETS}` });
   const ids = new Set();
   state.widgets.forEach((w, i) => {
@@ -234,17 +250,22 @@ K['action lista'] = (_a, fil) => {
 K['event koppla'] = ({ f }, fil) => {
   const trigger = f.trigger;
   if (!TRIGGERS.includes(trigger)) fel(`--trigger måste vara en av: ${TRIGGERS.join(', ')}`);
-  const val = csv(f.action);
-  if (!val.length) fel('--action krävs (namn eller id, komma-separerat). Action skapas först.');
+  if (!csv(f.action).length) fel('--action krävs (namn eller id, komma-separerat). Action skapas först.');
   const s = las(fil), o = ae(s);
-  const ids = val.map(v => (o.actions.find(a => a.id === v) || o.actions.find(a => a.name === v) || fel(`Action "${v}" finns inte — skapa den först med "action ny"`)).id);
+  const hitta1 = v => o.actions.find(a => a.id === v) || o.actions.find(a => a.name === v);
+  // Hela värdet först: ett Action-namn får innehålla komma ("Tack, Rose"). Annars delas det vid komma.
+  const hel = typeof f.action === 'string' ? hitta1(f.action.trim()) : null;
+  const alla = (hel ? [f.action.trim()] : csv(f.action)).map(v => (hitta1(v) || fel(`Action "${v}" finns inte — skapa den först med "action ny"`)).id);
+  const ids = [...new Set(alla)]; // samma Action två gånger skulle spelas två gånger
+  const ignorerade = alla.length - ids.length;
   const e = { id: nyttId('e', new Set(o.events.map(e => e.id))), enabled: true, trigger, condition: f.villkor === true ? '' : String(f.villkor || '') };
   if (ids.length === 1) e.actionId = ids[0];
   else if (f.slump) e.randomActionIds = ids;
   else e.allActionIds = ids;
   if (!e.actionId) e.actionId = ids[0]; // appen skriver alltid actionId (action-event.js:665)
   o.events.push(e); skrivAe(s, o); skriv(fil, s);
-  ut({ event: e }, `Event ${e.id}: ${trigger}${e.condition ? ' = ' + e.condition : ''} → ${ids.join(', ')}`);
+  ut({ event: e, ignorerade }, `Event ${e.id}: ${trigger}${e.condition ? ' = ' + e.condition : ''} → ${ids.join(', ')}` +
+    (ignorerade ? `\n(${ignorerade} upprepad${ignorerade === 1 ? '' : 'e'} Action ignorerades)` : ''));
 };
 
 K['scen lista'] = (_a, fil) => {
@@ -262,7 +283,7 @@ K['scen lista'] = (_a, fil) => {
 };
 
 K['validera'] = (_a, fil) => {
-  const s = las(fil), p = validera(s), fe = p.filter(x => x.niva === 'fel');
+  const s = las(fil, false), p = validera(s), fe = p.filter(x => x.niva === 'fel');
   const text = (fe.length ? `✗ ${fe.length} fel` : '✓ Inga fel') + (p.length - fe.length ? `, ${p.length - fe.length} varning(ar)` : '') +
     (p.length ? '\n' + p.map(x => `  ${x.niva === 'fel' ? '✗' : '!'} ${x.text}`).join('\n') : '');
   process.stdout.write(JSON_UT ? JSON.stringify({ ok: !fe.length, problem: p }, null, 2) + '\n' : text + '\n');
@@ -294,4 +315,4 @@ function main() {
   fn({ pos, f }, fil);
 }
 if (require.main === module) main();
-module.exports = { ACTION_TYPER, TRIGGERS, PLACERINGAR, validera, AE_KEY };
+module.exports = { ACTION_TYPER, TRIGGERS, PLACERINGAR, validera, laddaFabrik, AE_KEY };
