@@ -257,6 +257,7 @@
         "widget-background.js",
         "widget-factory.js",
         "widget-fas.js",
+        "scripts/vyra.js",
         "battle-mvp-celebrations.js",
         "battle-mvp-particles.js",
         "gift-supernova-panel.js",
@@ -288,6 +289,7 @@
       ],
       "tester": [
         "tests/widget-factory.test.js",
+        "tests/vyra-cli.test.js",
         "tests/panelregister.test.js",
         "tests/utan-bildvaljare.test.js",
         "tests/browser/mediaval.browser.test.js",
