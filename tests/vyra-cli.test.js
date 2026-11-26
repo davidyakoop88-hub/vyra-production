@@ -1,0 +1,205 @@
+'use strict';
+// VYRA-CLI (scripts/vyra.js) — redigerar en LOKAL state-fil. Domän: widgets.
+//
+// Provet vaktar tre saker som går sönder tyst över tid:
+//   1. Listorna över Action-typer och triggers är avlästa ur action-event.js. Lägger någon till en typ
+//      där måste CLI:t följa med, annars avvisar det en giltig typ eller släpper igenom en ogiltig.
+//   2. Filen CLI:t skriver är appens BACKUPformat (__vyraBackup). Molnformatet (__vyraCloud) släpps
+//      tyst av appens filimport — Actions och Events försvinner utan felmeddelande (uppmätt i
+//      riktig Studio). Extras-nycklarna måste vara de state-backup.js faktiskt läser.
+//   3. Widgets kommer från widget-factory.js, aldrig handskrivna.
+const test = require('node:test'), assert = require('node:assert/strict');
+const fs = require('fs'), os = require('os'), path = require('path');
+const { spawnSync } = require('child_process');
+
+const ROT = path.join(__dirname, '..');
+const CLI = path.join(ROT, 'scripts', 'vyra.js');
+const lib = require(CLI);
+const kalla = f => fs.readFileSync(path.join(ROT, f), 'utf8');
+
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vyra-cli-'));
+test.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
+
+let n = 0;
+const nyFil = () => path.join(tmp, `s${++n}.json`);
+function kor(fil, ...args) {
+  const r = spawnSync(process.execPath, [CLI, '-p', fil, ...args], { encoding: 'utf8' });
+  return { kod: r.status, ut: r.stdout, fel: r.stderr };
+}
+const json = f => JSON.parse(fs.readFileSync(f, 'utf8'));
+const aeAv = f => JSON.parse(json(f).__vyraBackup.storage[lib.AE_KEY]);
+
+// ---- 1. listorna följer källan ------------------------------------------------------------------------
+test('ACTION_TYPER är exakt de typer action-event.js erbjuder', () => {
+  const kod = kalla('action-event.js');
+  const start = kod.indexOf('const actionTypes=['), slut = kod.indexOf('\n  ];', start);
+  assert.ok(start > 0 && slut > start, 'hittade inte actionTypes i action-event.js');
+  const fran = [...kod.slice(start, slut).matchAll(/\['(\w+)',/g)].map(m => m[1]);
+  assert.ok(fran.length >= 12, 'läste för få typer ur källan');
+  assert.deepEqual([...lib.ACTION_TYPER].sort(), fran.sort());
+});
+
+test('TRIGGERS är exakt de triggers action-event.js erbjuder', () => {
+  const kod = kalla('action-event.js');
+  const m = /const triggerNames=\{([^}]*)\}/.exec(kod);
+  assert.ok(m, 'hittade inte triggerNames i action-event.js');
+  const fran = [...m[1].matchAll(/(\w+):'/g)].map(x => x[1]);
+  assert.deepEqual([...lib.TRIGGERS].sort(), fran.sort());
+});
+
+test('scenplaceringarna är de som action-scenes.js använder', () => {
+  const m = /const presets = \{([^}]*)\}/.exec(kalla('action-scenes.js'));
+  assert.ok(m, 'hittade inte presets i action-scenes.js');
+  for (const [namn, v] of Object.entries(lib.PLACERINGAR))
+    assert.ok(m[1].includes(`${namn}:[${v.join(',')}]`), `placeringen ${namn} har ändrats i action-scenes.js`);
+});
+
+// ---- 2. backupformatet --------------------------------------------------------------------------------
+test('ny fil är i backupformat och godkänns av appens och serverns validering', () => {
+  const f = nyFil();
+  assert.equal(kor(f, 'ny').kod, 0);
+  const s = json(f);
+  assert.ok(s.__vyraBackup && s.__vyraBackup.schema === 1, 'saknar __vyraBackup');
+  assert.ok(!('__vyraCloud' in s), 'molnformatet får aldrig skrivas');
+  // state-backup.js validate(): widgets-array där varje widget har id.
+  assert.ok(Array.isArray(s.widgets));
+  assert.deepEqual(lib.validera(s), []);
+});
+
+// Serverns regel läses som TEXT, inte require:as — rotprov får inte köra kod ur ett paket med egna
+// beroenden (tests/rotsvitens-beroenden.test.js). CLI:ts gräns och id-regel måste vara samma.
+test('CLI:ts widgetgräns och id-regel är serverns validOverlayState', () => {
+  const m = /function validOverlayState\(v\)\{([^\n]*)\}/.exec(kalla('server/security.js'));
+  assert.ok(m, 'hittade inte validOverlayState i server/security.js');
+  assert.match(m[1], /v\.widgets\.length<=500/, 'serverns widgetgräns har ändrats');
+  assert.match(m[1], /w\.id\.length<=160/, 'serverns id-längd har ändrats');
+  const fyrahundra = Array.from({ length: 500 }, (_, i) => ({ id: 'w' + i, x: 0, y: 0 }));
+  assert.deepEqual(lib.validera({ widgets: fyrahundra }), [], '500 widgets ska gå igenom');
+  assert.ok(lib.validera({ widgets: [...fyrahundra, { id: 'w500', x: 0, y: 0 }] }).some(p => p.niva === 'fel'), '501 ska avvisas');
+  assert.ok(lib.validera({ widgets: [{ id: 'x'.repeat(161), x: 0, y: 0 }] }).some(p => p.niva === 'fel'), 'id över 160 tecken ska avvisas');
+});
+
+test('extras-nycklarna är de state-backup.js läser', () => {
+  const m = /EXTRA_KEYS=\[([^\]]*)\]/.exec(kalla('state-backup.js'));
+  assert.ok(m, 'hittade inte EXTRA_KEYS i state-backup.js');
+  assert.ok(m[1].includes(`'${lib.AE_KEY}'`), 'state-backup.js läser inte längre Action/Event-nyckeln');
+});
+
+test('en äldre molnformatfil läses och migreras till backupformat vid skrivning', () => {
+  const f = nyFil();
+  const ae = { actions: [{ id: 'a1', name: 'Gammal', types: ['alert'], scene: { number: 1 } }], events: [] };
+  fs.writeFileSync(f, JSON.stringify({ widgets: [], __vyraCloud: { schema: 1, storage: { [lib.AE_KEY]: JSON.stringify(ae) } } }));
+  assert.match(kor(f, 'action', 'lista').ut, /Gammal/);
+  assert.equal(kor(f, 'action', 'ny', 'Ny').kod, 0);
+  const s = json(f);
+  assert.ok(!('__vyraCloud' in s));
+  assert.deepEqual(aeAv(f).actions.map(a => a.name), ['Gammal', 'Ny']);
+});
+
+// ---- 3. widgets, actions, events ----------------------------------------------------------------------
+test('widget skapas av fabriken och kan döljas, flyttas och tas bort', () => {
+  const f = nyFil(); kor(f, 'ny');
+  const r = kor(f, '--json', 'widget', 'lagg-till', 'catalog:topgift:neon', '--x', '50', '--y', '200');
+  assert.equal(r.kod, 0, r.fel);
+  const w = JSON.parse(r.ut).widget;
+  assert.equal(w.type, 'templateTopGift');
+  assert.equal(w.createdFrom, 'catalog:topgift:neon');
+  assert.equal(w.x, 50);
+  kor(f, 'widget', 'dold', w.id);
+  assert.equal(json(f).widgets[0].hidden, true);
+  kor(f, 'widget', 'visa', w.id);
+  assert.ok(!('hidden' in json(f).widgets[0]));
+  kor(f, 'widget', 'flytta', w.id, '--x', '5', '--width', '300');
+  assert.deepEqual([json(f).widgets[0].x, json(f).widgets[0].width], [5, 300]);
+  assert.equal(kor(f, 'widget', 'ta-bort', w.id).kod, 0);
+  assert.equal(json(f).widgets.length, 0);
+});
+
+test('okänd katalognyckel, okänt id och icke-numeriska värden avvisas', () => {
+  const f = nyFil(); kor(f, 'ny');
+  assert.equal(kor(f, 'widget', 'lagg-till', 'catalog:finns-inte:x').kod, 1);
+  assert.equal(kor(f, 'widget', 'dold', 'saknas').kod, 1);
+  assert.equal(kor(f, 'widget', 'lagg-till', 'catalog:topgift:neon', '--x', 'abc').kod, 1);
+  assert.equal(json(f).widgets.length, 0, 'en avvisad körning får inte skriva något');
+});
+
+test('Action skapas först — ett Event kan inte peka på en Action som saknas', () => {
+  const f = nyFil(); kor(f, 'ny');
+  const utanAction = kor(f, 'event', 'koppla', '--trigger', 'gift', '--action', 'Finns inte');
+  assert.equal(utanAction.kod, 1);
+  assert.match(utanAction.fel, /skapa den först/);
+  assert.equal(kor(f, 'action', 'ny', 'Tack', '--typ', 'alert,audio', '--scen', '2', '--placering', 'top').kod, 0);
+  assert.equal(kor(f, 'event', 'koppla', '--trigger', 'gift', '--villkor', 'Rose', '--action', 'Tack').kod, 0);
+  const o = aeAv(f);
+  assert.equal(o.events[0].actionId, o.actions[0].id);
+  assert.equal(o.events[0].enabled, true);
+  assert.deepEqual(o.actions[0].scene, { number: 2, placement: 'top', x: 160, y: 80, width: 760 });
+});
+
+test('ogiltig trigger, typ, scen och placering avvisas', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'action', 'ny', 'A');
+  assert.equal(kor(f, 'event', 'koppla', '--trigger', 'bogus', '--action', 'A').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'B', '--typ', 'nonsens').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'C', '--scen', '11').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'D', '--placering', 'mitt').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'A').kod, 1, 'dubbelt Action-namn');
+});
+
+test('flera Actions på ett Event: alla eller slump, och actionId skrivs alltid', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'action', 'ny', 'A'); kor(f, 'action', 'ny', 'B');
+  kor(f, 'event', 'koppla', '--trigger', 'follow', '--action', 'A,B');
+  kor(f, 'event', 'koppla', '--trigger', 'share', '--action', 'A,B', '--slump');
+  const [alla, slump] = aeAv(f).events;
+  assert.equal(alla.allActionIds.length, 2); assert.ok(alla.actionId);
+  assert.equal(slump.randomActionIds.length, 2); assert.ok(slump.actionId);
+});
+
+test('id:n är unika även när många Actions skapas samma millisekund', () => {
+  const f = nyFil(); kor(f, 'ny');
+  for (let i = 0; i < 6; i++) kor(f, 'action', 'ny', 'Akt' + i);
+  const ids = aeAv(f).actions.map(a => a.id);
+  assert.equal(new Set(ids).size, ids.length);
+});
+
+// ---- validering och utdata ----------------------------------------------------------------------------
+test('validera: exit 0 på en hel fil, exit 2 på en trasig', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'widget', 'lagg-till', 'catalog:lastx:card');
+  assert.equal(kor(f, 'validera').kod, 0);
+  const s = json(f); s.widgets.push({ ...s.widgets[0], x: 'abc' });
+  fs.writeFileSync(f, JSON.stringify(s));
+  const r = kor(f, 'validera');
+  assert.equal(r.kod, 2);
+  assert.match(r.ut, /dubbelt id/);
+});
+
+test('validera hittar ett Event som pekar på en borttagen Action', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'action', 'ny', 'A'); kor(f, 'event', 'koppla', '--trigger', 'follow', '--action', 'A');
+  const s = json(f), o = JSON.parse(s.__vyraBackup.storage[lib.AE_KEY]);
+  o.actions = []; s.__vyraBackup.storage[lib.AE_KEY] = JSON.stringify(o);
+  fs.writeFileSync(f, JSON.stringify(s));
+  const r = kor(f, 'validera');
+  assert.equal(r.kod, 2);
+  assert.match(r.ut, /finns inte/);
+});
+
+test('--json ger giltig JSON även när flaggan står före kommandot', () => {
+  const f = nyFil(); kor(f, 'ny');
+  const r = kor(f, '--json', 'scen', 'lista');
+  assert.equal(r.kod, 0);
+  assert.equal(JSON.parse(r.ut).ok, true);
+});
+
+test('ny skriver inte över en befintlig fil utan --force', () => {
+  const f = nyFil(); kor(f, 'ny'); kor(f, 'action', 'ny', 'A');
+  assert.equal(kor(f, 'ny').kod, 1);
+  assert.equal(aeAv(f).actions.length, 1, 'filen skrevs över');
+  assert.equal(kor(f, 'ny', '--force').kod, 0);
+});
+
+test('katalog familjer och nycklar kommer från fabriken och katalogkartan', () => {
+  const f = nyFil();
+  const fam = JSON.parse(kor(f, '--json', 'katalog', 'familjer').ut);
+  assert.ok(fam.antal >= 30 && fam.familjer.includes('topgift'));
+  const nyck = JSON.parse(kor(f, '--json', 'katalog', 'nycklar', 'giftjar').ut);
+  assert.ok(nyck.antal > 0 && nyck.nycklar.every(k => k.startsWith('catalog:giftjar')));
+});
