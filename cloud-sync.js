@@ -21,6 +21,15 @@
      sekunder; nästa sparning en stund senare gav INGENTING på sju sekunder med status 'synced',
      och en explicit push() fick fram den direkt (1939 -> 1940). */
   let koadLokal=null;
+  /* OVERLAY-UTGÅNGEN TAR ALDRIG STUDIONS SPARLÅS (uppmätt 2026-11-26 på lokala kedjan). overlay.html är
+     studio.html?overlay=1 och laddar samma cloud-sync. Öppnad i samma webbläsare som en inloggad studio
+     — en vanlig flik, eller ramen i Overlay-kontrollen — projicerade den molnets layout med mode
+     'studio-committed' och vann markören. Studions nästa sparning fick då 'lost-ownership', fliken gick
+     till 'studio-readonly' och varje ändring efter det nekades med 'not-writable' — utan ett ord i UI:t.
+     Overlayn ska bara VISA molnets layout: i minnet, utan lås och utan markör, precis som en OBS-länk
+     med ?access= (session-state projectReadonlyOverlay). Den skickar ingenting, skriver ingen meta och
+     rör aldrig studions kö. Se tests/cloud-sync-overlay-las.test.js. */
+  const arOverlay=()=>{try{return new URLSearchParams(location.search).has('overlay')||document.documentElement.classList.contains('overlay-output')}catch{return false}};
   // Sessionsgeneration: varje async operation fangar den fore sitt await och avbryter tyst om den
   // hunnit bytas. Utan den kan en PUT som startade som A landa - och skriva state - som B.
   let session=0,pendingChoice=null,tickTimer=null;
@@ -67,7 +76,7 @@
   // Molnlayouten projiceras av agaren: den tar laset, skriver markoren, nycklarna och kor
   // cacherna, och mutera globala state-objektet in-place. Utan det kunde tva flikar committa
   // varsin layout och den forlorande rulla tillbaka ovanpa vinnaren.
-  async function apply(remote){if(!remote||!Array.isArray(remote.widgets))throw new Error('Online-layouten ar ogiltig');const data={...remote},meta=data.__vyraCloud;delete data.__vyraCloud;const extras={};Object.entries(meta?.storage||{}).forEach(([k,v])=>{if(EXTRA.includes(k)&&typeof v==='string')extras[k]=v});const token=root.VyraSessionState.beginProjection();const out=await root.VyraSessionState.projectActive(token,{mode:'studio-committed',workspaceId:workspace&&workspace.id,overlayId:overlay&&overlay.id,state:data,extras});if(!out.ok)throw new Error('Sessionen kunde inte projiceras');lastLocal=localStorage.getItem('vyra-state');root.render?.()}
+  async function apply(remote){if(!remote||!Array.isArray(remote.widgets))throw new Error('Online-layouten ar ogiltig');const data={...remote},meta=data.__vyraCloud;delete data.__vyraCloud;const extras={};Object.entries(meta?.storage||{}).forEach(([k,v])=>{if(EXTRA.includes(k)&&typeof v==='string')extras[k]=v});if(arOverlay()){await root.VyraSessionState.projectReadonlyOverlay({state:data,extras});root.render?.();return}const token=root.VyraSessionState.beginProjection();const out=await root.VyraSessionState.projectActive(token,{mode:'studio-committed',workspaceId:workspace&&workspace.id,overlayId:overlay&&overlay.id,state:data,extras});if(!out.ok)throw new Error('Sessionen kunde inte projiceras');lastLocal=localStorage.getItem('vyra-state');root.render?.()}
   const STATUS_TEXT={synced:'Sparat i molnet ✓',saving:'Sparar…',offline:'Ingen kontakt med molnet',verifiering:'Verifiera din e-post för att spara i molnet',conflict:'Synkkonflikt',utloggad:'Du är utloggad',local:'Lokalt läge'};
   // UTGÅNGEN SESSION ÄR INTE ETT AVBROTT. Servern svarar 401 på en skrivning när sessionen gått ut —
   // eller när CSRF-token roterats bort av ett annat /api/auth/me (en annan flik, skrivbordsappen).
@@ -273,6 +282,7 @@
   async function initialize(detail){
     if(initialized||!detail?.workspaces?.length)return;
     initialized=true;workspace=detail.workspaces[0];const mine=++session;
+    if(arOverlay())return visaIOverlay(mine);
     mountStatus();setStatus('saving','Ansluter cloud…');
     try{
       settleLegacy();
@@ -422,6 +432,7 @@
   // gamla sessionen som vid en vanlig utloggning (parkerar arbetet under sitt eget workspace)
   // innan det nya kontot initieras — A:s layout får aldrig skickas till B:s overlay.
   function ateruppta(detail){
+    if(arOverlay())return;
     const ws=detail&&detail.workspaces&&detail.workspaces[0];if(!ws)return;
     if(ws.id!==workspace.id){const ss=root.VyraSessionState;
       Promise.resolve(ss&&ss.beginLogout?ss.beginLogout():resetSession()).catch(()=>{}).then(()=>{if(initialized)resetSession();initialize(detail)});return}
@@ -433,7 +444,7 @@
     if(root.VyraAuth?.isLocalSession?.()){root.VyraSessionState.projectLocalSession();return}
     const d=root.VyraAuth?.lastDetail?.();
     if(d?.workspaces?.length)initialize(d);
-  },400);addEventListener('online',()=>{if(workspace)schedule()});addEventListener('offline',()=>{serverFel=null;setStatus('offline')});
+  },400);addEventListener('online',()=>{if(workspace&&!arOverlay())schedule()});addEventListener('offline',()=>{serverFel=null;setStatus('offline')});
   // ---- REDIGERAREN FOLJER MOLNET (Davids beslut 2026-10-10) -----------------------------------
   //
   // Appen och webben delar redan molnets layout: appens lokala server proxar konto- och
@@ -472,6 +483,20 @@
       return{ok:true,reason:'hamtad',version:overlay.version};
     }catch(e){/* En GET kräver ingen CSRF: 401 här är en utgången session, inget annat. */if(e&&e.status===401&&mine===session&&status!=='utloggad')hanteraUtloggad();return{ok:false,reason:'fel',error:e&&e.message}}
     finally{foljer=false}
+  }
+  // Overlayns egen följare: samma lista var tionde sekund, men bara läsning — ingen kö, ingen meta,
+  // ingen konfliktbanderoll. Det är studions sak att avgöra vad som är osparat, inte utgångens.
+  async function visaIOverlay(mine){
+    try{
+      const items=(await list()).overlays||[];if(mine!==session||!items.length)return;
+      const meta=read(META()),valt=items.find(x=>x.id===meta?.overlayId)||items[0];
+      overlay=await getRemote(valt.id);if(mine!==session)return;await apply(overlay.state);
+    }catch(e){return}
+    if(foljTimer)return;
+    foljTimer=setInterval(async()=>{if(document.hidden||foljer||mine!==session||!overlay)return;foljer=true;try{
+      const remote=((await list()).overlays||[]).find(x=>x.id===overlay.id);if(mine!==session)return;
+      if(remote&&Number(remote.version)>Number(overlay.version)){const h=await getRemote(overlay.id);if(mine!==session)return;overlay=h;await apply(overlay.state)}
+    }catch{}finally{foljer=false}},FOLJ_MS);
   }
   function startFoljare(){if(foljTimer)return;foljTimer=setInterval(()=>{if(document.hidden)return;foljMolnet()},FOLJ_MS)}
   /* EN ANDRING KOAS NAR DEN SPARAS, INTE NAR TICKERN HINNER SE DEN (2026-11-18). Forr vantade en flyttad widget
