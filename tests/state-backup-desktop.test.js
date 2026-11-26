@@ -24,9 +24,22 @@ const WEB = 'https://vyralive.app/studio.html';
 const DESKTOP = 'http://127.0.0.1:4173/studio.html?desktop=1';
 const flush = () => new Promise(r => setTimeout(r, 30));
 
-function studio({ url, localSession = false, state = { widgets: [{ id: 'a' }] }, respond, restoreOk = true } = {}) {
+// STUDIONS RIKTIGA INSTÄLLNINGSSIDA, hämtad ur studio.js (mallsträngen i settings()) i stället för en
+// handbyggd. Den innehåller abonnemangsrutan, som bär samma klass (.vb-settings) som backupraden.
+// Testsidan nedan hade ingen sådan ruta, så vakten `card.querySelector('.vb-settings')` i
+// injectSettings() såg aldrig kollisionen: i den riktiga Studion ritades varken Exportera/Importera
+// JSON (webben) eller Hantera backup (Desktop).
+function riktigaInstallningar() {
+  const kalla = fs.readFileSync(path.join(ROOT, 'studio.js'), 'utf8');
+  const m = /function settings\(\)\{return `([\s\S]*?)`\}\n/.exec(kalla);
+  assert.ok(m, 'hittade inte settings() i studio.js — provet behöver följa med om funktionen flyttats');
+  return new Function('state', 'return `' + m[1] + '`')({ user: 'Streamer', tiktok: '' });
+}
+
+function studio({ url, localSession = false, state = { widgets: [{ id: 'a' }] }, respond, restoreOk = true, riktigSida = false } = {}) {
   const dom = new JSDOM('<!doctype html><div id="view"><div class="settings-page"></div></div>', { url, runScripts: 'outside-only' });
   const w = dom.window;
+  if (riktigSida) w.document.querySelector('#view').innerHTML = riktigaInstallningar();
   const calls = [], intervals = [], toasts = [], restored = [];
   w.fetch = (u, opts = {}) => {
     calls.push({ url: String(u), method: opts.method || 'GET' });
@@ -136,3 +149,35 @@ test('Desktop: versionslistan skiljer "finns inte här" från "servern svarar in
   assert.doesNotMatch(text, /svarar inte/);
   gone.close();
 });
+
+// ---- backupraden i Studions riktiga inställningssida ---------------------------------------------
+// Granskningsfynd från arbetet med #848: "Importera JSON" syntes inte i webb-Studion. Orsaken var vakten i
+// injectSettings(), som letade efter klassen .vb-settings och hittade abonnemangsrutans.
+for (const [namn, url, knappar, saknas] of [
+  ['webben', WEB, ['#vbExport', '#vbImport'], ['#openBackupManager']],
+  ['Desktop', DESKTOP, ['#openBackupManager'], ['#vbExport', '#vbImport']],
+]) {
+  test(`${namn}: backupraden ritas även när abonnemangsrutan (samma klass) redan finns`, () => {
+    const s = studio({ url, riktigSida: true });
+    const d = s.w.document;
+    assert.ok(d.querySelector('#hanteraAbonnemang'), 'förutsättning: den riktiga sidan har abonnemangsrutan');
+    s.w.VyraBackup.injectSettings();
+    for (const id of knappar) assert.ok(d.querySelector(id), `${id} ska finnas i den riktiga inställningssidan`);
+    for (const id of saknas) assert.equal(d.querySelector(id), null, `${id} hör inte hemma i ${namn}`);
+    assert.equal(d.querySelectorAll('.vb-settings[data-sektion="backup"]').length, 1, 'exakt en backuprad');
+    s.close();
+  });
+
+  test(`${namn}: backupraden ritas bara en gång och rör inte abonnemangsrutan`, () => {
+    const s = studio({ url, riktigSida: true });
+    const d = s.w.document;
+    const fore = d.querySelector('[data-sektion="abonnemang"]').outerHTML;
+    s.w.VyraBackup.injectSettings();
+    s.w.VyraBackup.injectSettings();
+    s.w.VyraBackup.injectSettings();
+    assert.equal(d.querySelectorAll('[data-sektion="backup"]').length, 1, 'tre anrop ska fortfarande ge en rad');
+    assert.equal(d.querySelectorAll('[data-sektion="abonnemang"]').length, 1);
+    assert.equal(d.querySelector('[data-sektion="abonnemang"]').outerHTML, fore, 'abonnemangsrutan ska vara orörd');
+    s.close();
+  });
+}
