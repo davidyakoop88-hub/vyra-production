@@ -7,7 +7,7 @@ Det ar sjalva poangen: rubriker som pastod fel antal, knappar utan katalognyckel
 tva sektioner som aldrig byggdes sag alla korrekta ut i koden. Det syns bara nar man
 startar sidan och raknar.
 
-Commit: `154bb437`
+Commit: `2c10e69b`
 
 > **Vilken session kartan mott:** **utloggad**, utan konto och utan cloud-synk.
 >
@@ -56,7 +56,7 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 | BATTLE MVP · FIRANDE · 9 KOREOGRAFIER | 9 | 9/9 | 9/9 | 9/9 | 2026-11-04 | [#727](https://github.com/davidyakoop88-hub/vyra-production/pull/727) |
 | Battle-paket · VIDEO FX · 9 paket | 9 | 9/9 | 0/9 ⚠️ | 9/9 | 2026-11-07 | [#738](https://github.com/davidyakoop88-hub/vyra-production/pull/738) |
 | NEW FOLLOWER ALERT · 3 TEMAN | 3 | 3/3 | 3/3 | 3/3 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| GIFTER LEVEL UP · VARJE MODELL SEPARAT | 9 | 9/9 | 9/9 | 9/9 | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
 | FAN LEVEL UP · 14 MODELLER | 14 | 14/14 | 14/14 | 14/14 | 2026-11-06 | [#732](https://github.com/davidyakoop88-hub/vyra-production/pull/732) |
 | HEART ME GOAL · VARJE TEMA SEPARAT | 12 | 12/12 | 12/12 | 12/12 | 2026-10-19 | [#660](https://github.com/davidyakoop88-hub/vyra-production/pull/660) |
 | TOP GIFT · DESIGNVAL | 4 | 4/4 | 1/4 ⚠️ | 4/4 | 2026-10-19 | [#655](https://github.com/davidyakoop88-hub/vyra-production/pull/655) |
@@ -266,15 +266,15 @@ Tandningsregeln for alerts bor i en shadow root och far inte finnas i
 
 | Design | Katalognyckel | Shadow | Ritar | Senast andrad | PR |
 |---|---|---|---|---|---|
-| Modell 1 · Profil i orbit | `catalog:gifterlevel:profile` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 2 · Stort nivånummer | `catalog:gifterlevel:number` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 3 · Diamantstapel | `catalog:gifterlevel:stack` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 4 · Sidobadge | `catalog:gifterlevel:sidebadge` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 5 · Diamantreveal | `catalog:gifterlevel:reveal` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 6 · Orbitnivå | `catalog:gifterlevel:orbitlevel` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 7 · Stigande nivåer | `catalog:gifterlevel:risingtier` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
-| Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-10-19 | [#657](https://github.com/davidyakoop88-hub/vyra-production/pull/657) |
+| Modell 1 · Profil i orbit | `catalog:gifterlevel:profile` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 2 · Stort nivånummer | `catalog:gifterlevel:number` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 3 · Diamantstapel | `catalog:gifterlevel:stack` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 4 · Sidobadge | `catalog:gifterlevel:sidebadge` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 5 · Diamantreveal | `catalog:gifterlevel:reveal` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 6 · Orbitnivå | `catalog:gifterlevel:orbitlevel` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 7 · Stigande nivåer | `catalog:gifterlevel:risingtier` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 8 · Myntvändning | `catalog:gifterlevel:flip` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
+| Modell 9 · Kompakt duo | `catalog:gifterlevel:duo` | ✓ | ✓ | 2026-11-26 | [#850](https://github.com/davidyakoop88-hub/vyra-production/pull/850) |
 
 ### FAN LEVEL UP · 14 MODELLER
 
