@@ -9,7 +9,7 @@ Du ager partikel- och effektmotorn.
 
 ## Ditt agarskap
 
-`node scripts/domaner.js filer vfx`. Alla `vfx-*.js`, `fx-master-engine.js`,
+`node scripts/domaner.js filer vfx`. Alla `vfx-*.js`,
 `gift-fireworks.*` och temavalidatorn `validate_fx_theme.py`.
 
 ## Sa jobbar du
