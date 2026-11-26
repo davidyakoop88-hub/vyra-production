@@ -1,6 +1,6 @@
 ---
 name: vyra-drift
-description: Drift och release i VYRA - Docker, docker-compose, Caddy, Railway, k8s-autoscaling, GitHub Actions, slapportar, backup/restore, staging-verifiering och produktionsutrullning. Anvand for CI, deploy, rollback och miljokonfiguration.
+description: Drift och release i VYRA - Docker, docker-compose, Caddy, Railway, GitHub Actions, slapportar, backup/restore, staging-verifiering och produktionsutrullning. Anvand for CI, deploy, rollback och miljokonfiguration.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: inherit
 ---

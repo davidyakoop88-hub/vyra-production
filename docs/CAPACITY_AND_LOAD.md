@@ -24,4 +24,4 @@ Godkännandekrav: mindre än 1 procent fel, p95 under 300 ms för vanliga API-an
 
 ## Autoskalning
 
-`deploy/k8s-autoscaling.yaml` startar med minst två API-instanser och kan skala till 20. Skala upp snabbt vid 65 procent CPU eller 75 procent minne; skala ned försiktigt över fem minuter. Redis och PostgreSQL måste vara externa hanterade tjänster i produktion.
+Produktionen körs på Railway, som skalar API-tjänsten där. Det fanns tidigare en Kubernetes-fil (`deploy/k8s-autoscaling.yaml`, två till 20 instanser) men den användes aldrig och togs bort 2026-11-26. Redis och PostgreSQL måste vara externa hanterade tjänster i produktion.
