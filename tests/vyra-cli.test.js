@@ -203,3 +203,79 @@ test('katalog familjer och nycklar kommer från fabriken och katalogkartan', () 
   const nyck = JSON.parse(kor(f, '--json', 'katalog', 'nycklar', 'giftjar').ut);
   assert.ok(nyck.antal > 0 && nyck.nycklar.every(k => k.startsWith('catalog:giftjar')));
 });
+
+// ---- flaggtolkning: tal ----------------------------------------------------------------------------------
+// Granskningsfynd: `--x -50` lästes som en ensam flagga (true), Number(true) är 1, och x skrevs tyst som 1.
+test('negativa tal i --x/--y/--width skrivs som de är, med både "--x -50" och "--x=-50"', () => {
+  const f = nyFil(); kor(f, 'ny');
+  const a = kor(f, '--json', 'widget', 'lagg-till', 'catalog:topgift:neon', '--x', '-50', '--y', '-.5', '--width', '-3');
+  assert.equal(a.kod, 0, a.fel);
+  const w = JSON.parse(a.ut).widget;
+  assert.deepEqual([w.x, w.y, w.width], [-50, -0.5, -3]);
+  const b = kor(f, 'widget', 'flytta', w.id, '--x=-120');
+  assert.equal(b.kod, 0, b.fel);
+  assert.equal(json(f).widgets[0].x, -120);
+});
+
+test('en talflagga utan värde eller med text avvisas och skriver inget', () => {
+  const f = nyFil(); kor(f, 'ny');
+  for (const args of [['--x'], ['--x', '--dold'], ['--x='], ['--y', 'abc'], ['--width', 'Infinity']]) {
+    const r = kor(f, 'widget', 'lagg-till', 'catalog:topgift:neon', ...args);
+    assert.equal(r.kod, 1, `${args.join(' ')} skulle avvisas`);
+    assert.match(r.fel, /måste vara ett tal/);
+  }
+  assert.equal(json(f).widgets.length, 0, 'en avvisad körning får inte skriva något');
+});
+
+test('--varaktighet och --scen: saknat värde, negativt och noll avvisas; ett tal skrivs', () => {
+  const f = nyFil(); kor(f, 'ny');
+  assert.equal(kor(f, 'action', 'ny', 'A', '--varaktighet', '-5').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'B', '--varaktighet', '0').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'C', '--varaktighet').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'D', '--scen').kod, 1, '--scen utan värde blev tidigare tyst scen 1');
+  assert.equal(kor(f, 'action', 'ny', 'E', '--scen', '-3').kod, 1);
+  assert.equal(kor(f, 'action', 'ny', 'F', '--varaktighet', '7.5').kod, 0);
+  assert.deepEqual(aeAv(f).actions.map(a => [a.name, a.duration]), [['F', 7.5]]);
+});
+
+test('en annan flagga efter en flagga läses inte som dess värde', () => {
+  const f = nyFil(); kor(f, 'ny');
+  const r = kor(f, '--json', 'widget', 'lagg-till', 'catalog:topgift:neon', '--dold', '--x', '30');
+  assert.equal(r.kod, 0, r.fel);
+  const w = JSON.parse(r.ut).widget;
+  assert.equal(w.x, 30);
+  assert.equal(w.hidden, true);
+});
+
+// ---- katalog nycklar ----------------------------------------------------------------------------------------
+// Granskningsfynd: kartan nämner också nycklar i löptext; 15 av 172 avvisades av fabriken men listades ändå.
+test('varje nyckel som "katalog nycklar" listar går att skapa med fabriken', () => {
+  const lista = JSON.parse(kor(nyFil(), '--json', 'katalog', 'nycklar').ut);
+  assert.ok(lista.antal >= 100, 'för få nycklar — provet skulle annars vara tomt');
+  assert.equal(typeof lista.avvisade, 'number');
+
+  const gammal = global.window;
+  global.window = { crypto: require('node:crypto').webcrypto };
+  try {
+    require(path.join(ROT, 'widget-factory.js'));
+    const fabrik = global.window.VyraWidgets;
+    const fel = lista.nycklar.filter(k => { try { fabrik.create(k, { placement: 'standalone' }); return false; } catch { return true; } });
+    assert.deepEqual(fel, [], 'nycklar som listas men som fabriken avvisar');
+  } finally { global.window = gammal; }
+});
+
+test('listade och avvisade nycklar tillsammans är alla unika nycklar i katalogkartan', () => {
+  const lista = JSON.parse(kor(nyFil(), '--json', 'katalog', 'nycklar').ut);
+  const unika = new Set(kalla('docs/katalogkarta.md').match(/catalog:[a-z0-9:_.-]+/g));
+  assert.equal(lista.antal + lista.avvisade, unika.size, 'en nyckel försvann eller dök upp utan att räknas');
+});
+
+test('filtret på "katalog nycklar" ger bara giltiga nycklar, och avvisade nämns i texten', () => {
+  const f = nyFil();
+  const r = kor(f, 'katalog', 'nycklar', 'glovesnipe');
+  assert.equal(r.kod, 0, r.fel);
+  const j = JSON.parse(kor(f, '--json', 'katalog', 'nycklar', 'glovesnipe').ut);
+  assert.ok(j.nycklar.every(k => k.includes('glovesnipe')));
+  const alla = kor(f, 'katalog', 'nycklar').ut;
+  if (JSON.parse(kor(f, '--json', 'katalog', 'nycklar').ut).avvisade > 0) assert.match(alla, /avvisas av fabriken/);
+});

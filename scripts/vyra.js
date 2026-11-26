@@ -46,6 +46,15 @@ function fel(msg, kod = 1) { process.stderr.write((JSON_UT ? JSON.stringify({ ok
 function ut(data, text) { process.stdout.write(JSON_UT ? JSON.stringify({ ok: true, ...data }, null, 2) + '\n' : text + '\n'); }
 
 const BOOL = new Set(['json', 'dold', 'force', 'slump', 'help']);
+// Nästa ord är flaggans värde om det inte är en annan flagga. "-50" och "-.5" är tal, inte flaggor.
+const arVarde = s => s !== undefined && (!s.startsWith('-') || /^-\.?\d/.test(s));
+// Talflaggor: ett saknat värde (flaggan står ensam, alltså true) eller ett icke-tal avvisas.
+// Utan det blev Number(true) = 1 och --x -50 skrevs tyst som x=1.
+function tal(namn, v) {
+  const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : NaN;
+  if (!Number.isFinite(n)) fel(`--${namn} måste vara ett tal`);
+  return n;
+}
 function tolka(argv) {
   const pos = [], flaggor = {};
   for (let i = 0; i < argv.length; i++) {
@@ -55,7 +64,7 @@ function tolka(argv) {
       const [k, v] = a.slice(2).split('=');
       if (v !== undefined) flaggor[k] = v;
       else if (BOOL.has(k)) flaggor[k] = true; // rena flaggor tar aldrig nästa ord som värde
-      else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('-')) flaggor[k] = argv[++i];
+      else if (arVarde(argv[i + 1])) flaggor[k] = argv[++i];
       else flaggor[k] = true;
     } else pos.push(a);
   }
@@ -147,9 +156,16 @@ K['katalog nycklar'] = ({ pos }) => {
   const karta = path.join(ROT, 'docs', 'katalogkarta.md');
   if (!fs.existsSync(karta)) fel('docs/katalogkarta.md saknas');
   const filter = (pos[2] || '').toLowerCase();
-  const alla = [...new Set([...fs.readFileSync(karta, 'utf8').matchAll(/catalog:[a-z0-9:_.-]+/g)].map(m => m[0]))].sort();
-  const val = filter ? alla.filter(k => k.includes(filter)) : alla;
-  ut({ antal: val.length, nycklar: val }, `${val.length} nycklar${filter ? ` som matchar "${filter}"` : ''}:\n  ` + val.join('\n  '));
+  const raa = [...new Set([...fs.readFileSync(karta, 'utf8').matchAll(/catalog:[a-z0-9:_.-]+/g)].map(m => m[0]))].sort();
+  // Kartan nämner också nycklar i löptext. Bara de fabriken kan bygga får listas, annars väljer
+  // användaren en nyckel som "widget lagg-till" sedan avvisar.
+  const fabrik = laddaFabrik();
+  const giltiga = raa.filter(k => { try { fabrik.create(k, { placement: 'standalone' }); return true; } catch { return false; } });
+  const avvisade = raa.length - giltiga.length;
+  const val = filter ? giltiga.filter(k => k.includes(filter)) : giltiga;
+  ut({ antal: val.length, avvisade, nycklar: val },
+    `${val.length} nycklar${filter ? ` som matchar "${filter}"` : ''}:\n  ` + val.join('\n  ') +
+    (avvisade ? `\n(${avvisade} nycklar i katalogkartan avvisas av fabriken och visas inte)` : ''));
 };
 
 K['widget lagg-till'] = ({ pos, f }, fil) => {
@@ -159,9 +175,7 @@ K['widget lagg-till'] = ({ pos, f }, fil) => {
   if (state.widgets.length >= MAX_WIDGETS) fel(`Max ${MAX_WIDGETS} widgets`);
   let w;
   try { w = laddaFabrik().create(nyckel, { placement: 'standalone' }); } catch (e) { return fel(e.message); }
-  for (const k of ['x', 'y', 'width']) if (f[k] !== undefined) {
-    const n = Number(f[k]); if (!Number.isFinite(n)) fel(`--${k} måste vara ett tal`); w[k] = n;
-  }
+  for (const k of ['x', 'y', 'width']) if (f[k] !== undefined) w[k] = tal(k, f[k]);
   if (f.dold) w.hidden = true;
   state.widgets.push(w);
   skriv(fil, state);
@@ -179,7 +193,7 @@ K['widget dold'] = ({ pos }, fil) => { const s = las(fil), w = hitta(s, pos[2]);
 K['widget visa'] = ({ pos }, fil) => { const s = las(fil), w = hitta(s, pos[2]); delete w.hidden; skriv(fil, s); ut({ id: w.id, dold: false }, `${w.id} är synlig`); };
 K['widget flytta'] = ({ pos, f }, fil) => {
   const s = las(fil), w = hitta(s, pos[2]);
-  for (const k of ['x', 'y', 'width']) if (f[k] !== undefined) { const n = Number(f[k]); if (!Number.isFinite(n)) fel(`--${k} måste vara ett tal`); w[k] = n; }
+  for (const k of ['x', 'y', 'width']) if (f[k] !== undefined) w[k] = tal(k, f[k]);
   skriv(fil, s); ut({ id: w.id, x: w.x, y: w.y, width: w.width }, `${w.id} → (${w.x},${w.y}) ${w.width}px`);
 };
 K['widget ta-bort'] = ({ pos }, fil) => {
@@ -194,16 +208,18 @@ K['action ny'] = ({ pos, f }, fil) => {
   const typer = csv(f.typ || 'alert');
   const okanda = typer.filter(t => !ACTION_TYPER.includes(t));
   if (okanda.length) fel(`Okänd typ: ${okanda.join(', ')}. Giltiga: ${ACTION_TYPER.join(', ')}`);
-  const nr = f.scen === undefined ? 1 : Number(f.scen);
+  const nr = f.scen === undefined ? 1 : tal('scen', f.scen);
   if (!(Number.isInteger(nr) && nr >= 1 && nr <= 10)) fel('--scen måste vara ett heltal 1–10');
   const plats = f.placering || 'bottom';
   if (!PLACERINGAR[plats]) fel(`--placering måste vara ${Object.keys(PLACERINGAR).join(' | ')}`);
+  const varaktighet = f.varaktighet === undefined ? 10 : tal('varaktighet', f.varaktighet);
+  if (varaktighet <= 0) fel('--varaktighet måste vara större än 0');
   const s = las(fil), o = ae(s);
   if (o.actions.some(a => a.name === namn)) fel(`Det finns redan en Action som heter "${namn}"`);
   const [x, y, width] = PLACERINGAR[plats];
   const a = {
     id: nyttId('a', new Set(o.actions.map(a => a.id))), name: namn, types: typer, config: { addPointsAmount: 10, removePointsAmount: 10 },
-    duration: Number(f.varaktighet) || 10, cooldown: 0, userCooldown: 0, volume: 100, fade: false, repeatCombo: false, skipOnNext: false, prioritet: '',
+    duration: varaktighet, cooldown: 0, userCooldown: 0, volume: 100, fade: false, repeatCombo: false, skipOnNext: false, prioritet: '',
     scene: { number: nr, placement: plats, x, y, width },
   };
   o.actions.push(a); skrivAe(s, o); skriv(fil, s);
