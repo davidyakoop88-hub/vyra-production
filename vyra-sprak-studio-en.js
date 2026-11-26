@@ -1081,6 +1081,27 @@
     'Exporterar scener, widgets och Action & Event som en JSON-fil.': 'Exports scenes, widgets and Action & Event as a JSON file.',
     '↓ Exportera studion': '↓ Export the studio',
     '↑ Importera studion': '↑ Import the studio',
+
+    // Backup och versionshistorik (state-backup.js). Raden saknades i Inställningar tills 2026-11-26 (se
+    // injectSettings), så ordlistan fick aldrig dess text — den visas i webben (JSON-filer) och i Desktop
+    // (Hantera backup, versionshistorik).
+    'Backup och versionshistorik': 'Backup and version history',
+    'Automatiskt skydd för layout, widgets och automationer.': 'Automatic protection for layout, widgets and automations.',
+    'Hantera backup': 'Manage backup',
+    'Automatisk backup och versionshistorik finns i VYRA Desktop. Här kan du spara och läsa in layouten som JSON-fil.': 'Automatic backup and version history are available in VYRA Desktop. Here you can save and load the layout as a JSON file.',
+    'Exportera JSON': 'Export JSON',
+    'Importera JSON': 'Import JSON',
+    'BACKUP & ÅTERSTÄLLNING': 'BACKUP & RESTORE',
+    'Versionshistorik': 'Version history',
+    'Skapa version nu': 'Create version now',
+    'Laddar versioner…': 'Loading versions…',
+    'Automatisk backup körs efter ändringar och högst var femte minut. De 20 senaste versionerna sparas.': 'Automatic backup runs after changes and at most every five minutes. The 20 latest versions are kept.',
+    'Senaste version': 'Latest version',
+    'Tidigare version': 'Earlier version',
+    'Återställ': 'Restore',
+    'Ingen versionshistorik ännu.': 'No version history yet.',
+    'Versionshistorik finns bara i VYRA Desktop.': 'Version history is only available in VYRA Desktop.',
+    'VYRA Desktop-servern svarar inte. Starta om VYRA Desktop och försök igen.': 'The VYRA Desktop server is not responding. Restart VYRA Desktop and try again.',
     'Logga ut med osparade ändringar?': 'Log out with unsaved changes?',
     'Dina senaste ändringar är inte sparade i molnet ännu. De ligger kvar på den här enheten och skickas nästa gång du loggar in här, men syns inte på andra enheter eller i OBS förrän dess.':
       "Your latest changes aren't saved in the cloud yet. They stay on this device and are sent the next time you log in here, but don't show on other devices or in OBS until then.",
