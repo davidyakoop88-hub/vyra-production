@@ -5,7 +5,7 @@
   // (pointer-events:none i widget-las.css), och man låser upp den i lagerlistan — som i TikControl.
   //
   // ETT STÄLLE STOPPAR ALLT. Sju olika vägar flyttar eller skalar en widget: studio.js:s drag
-  // (el.onpointerdown), layout-safe.js och layout-standalone.js som lindar den, widget-handles.js
+  // (el.onpointerdown), layout-safe.js som lindar den, widget-handles.js
   // (åtta handtag + rotation), media.js:s och custom-widgets.js:s hörnhandtag, vyra-dra-text.js
   // (rubrik/namn/värde) och gift-fireworks.js:s follower-drag. Alla startar på `pointerdown` på en
   // nod INUTI widgeten (handtagen läggs i widgeten, widget-handles.js appendChild). En enda lyssnare
