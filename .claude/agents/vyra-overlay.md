@@ -10,7 +10,7 @@ Du ager det som sanden faktiskt ser.
 ## Ditt agarskap
 
 `node scripts/domaner.js filer overlay`. `overlay-access.*`, `overlay-preview.js`,
-`overlay-sanitize.js`, `overlay-diagnostics.*`, `overlay-packages.js`, `layout-standalone.*`,
+`overlay-sanitize.js`, `overlay-diagnostics.*`, `overlay-packages.js`,
 `standalone-links.js`, `standalone-widgets.js`.
 
 ## Sa jobbar du

@@ -563,8 +563,6 @@
         "battle-fx-auto.js",
         "overlay-preview.js",
         "overlay-sanitize.js",
-        "layout-standalone.js",
-        "layout-standalone.css",
         "standalone-links.js",
         "standalone-widgets.js",
         "overlay-dolda.js",
